@@ -1,0 +1,64 @@
+spring:
+  batch:
+    job:
+      enabled: false  # Jobs triggered via REST or CLI, not on startup
+    jdbc:
+      initialize-schema: always
+  datasource:
+    url: jdbc:h2:file:./carddemo-db
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  sql:
+    init:
+      mode: always
+
+  h2:
+    console:
+      enabled: true
+
+# Job-specific file paths (replacing JCL DD statements)
+carddemo:
+  files:
+    daily-transaction: classpath:data/dailytran.dat
+    daily-rejects: output/dailyrejects.dat
+    transaction-report: output/tranrept.txt
+    transaction-backup: output/tranbkup.dat
+    export-file: output/export.dat
+    import-file: input/import.dat
+    combine-input: classpath:data/combtran.dat
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.carddemo.batch: INFO
+    org.springframework.batch: INFO
+
+---
+# PostgreSQL production profile
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:postgresql://localhost:5432/carddemo
+    driver-class-name: org.postgresql.Driver
+    username: carddemo
+    password: carddemo
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  sql:
+    init:
+      mode: never
+  h2:
+    console:
+      enabled: false
