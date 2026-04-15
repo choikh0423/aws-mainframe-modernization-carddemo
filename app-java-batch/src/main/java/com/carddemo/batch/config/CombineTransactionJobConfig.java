@@ -20,7 +20,7 @@ import org.springframework.batch.item.file.transform.Range;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.PathResource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.transaction.PlatformTransactionManager;
 
 /**
@@ -39,14 +39,17 @@ public class CombineTransactionJobConfig {
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
     private final TransactionRepository transactionRepository;
+    private final ResourceLoader resourceLoader;
 
     public CombineTransactionJobConfig(
             JobRepository jobRepository,
             PlatformTransactionManager transactionManager,
-            TransactionRepository transactionRepository) {
+            TransactionRepository transactionRepository,
+            ResourceLoader resourceLoader) {
         this.jobRepository = jobRepository;
         this.transactionManager = transactionManager;
         this.transactionRepository = transactionRepository;
+        this.resourceLoader = resourceLoader;
     }
 
     @Bean
@@ -72,7 +75,7 @@ public class CombineTransactionJobConfig {
             @Value("#{jobParameters['inputFile'] ?: '${carddemo.files.combine-input:classpath:data/combtran.dat}'}") String filePath) {
         return new FlatFileItemReaderBuilder<DailyTransaction>()
                 .name("combineTransactionReader")
-                .resource(new PathResource(filePath))
+                .resource(resourceLoader.getResource(filePath))
                 .fixedLength()
                 .columns(
                         new Range(1, 16),    // TRAN-ID

@@ -23,7 +23,7 @@ import org.springframework.batch.item.file.transform.Range;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.PathResource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import java.math.BigDecimal;
@@ -48,6 +48,7 @@ public class PostTransactionJobConfig {
     private final TransactionPostWriter transactionPostWriter;
     private final RejectRecordWriter rejectRecordWriter;
     private final JobCompletionListener jobCompletionListener;
+    private final ResourceLoader resourceLoader;
 
     public PostTransactionJobConfig(
             JobRepository jobRepository,
@@ -56,7 +57,8 @@ public class PostTransactionJobConfig {
             TransactionPostProcessor postProcessor,
             TransactionPostWriter transactionPostWriter,
             RejectRecordWriter rejectRecordWriter,
-            JobCompletionListener jobCompletionListener) {
+            JobCompletionListener jobCompletionListener,
+            ResourceLoader resourceLoader) {
         this.jobRepository = jobRepository;
         this.transactionManager = transactionManager;
         this.validationProcessor = validationProcessor;
@@ -64,6 +66,7 @@ public class PostTransactionJobConfig {
         this.transactionPostWriter = transactionPostWriter;
         this.rejectRecordWriter = rejectRecordWriter;
         this.jobCompletionListener = jobCompletionListener;
+        this.resourceLoader = resourceLoader;
     }
 
     @Bean
@@ -99,7 +102,7 @@ public class PostTransactionJobConfig {
             @Value("#{jobParameters['dailyTranFile'] ?: '${carddemo.files.daily-transaction:classpath:data/dailytran.dat}'}") String filePath) {
         return new FlatFileItemReaderBuilder<DailyTransaction>()
                 .name("dailyTransactionReader")
-                .resource(new PathResource(filePath))
+                .resource(resourceLoader.getResource(filePath))
                 .fixedLength()
                 .columns(
                         new Range(1, 16),    // TRAN-ID           PIC X(16)

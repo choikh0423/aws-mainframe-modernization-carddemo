@@ -27,6 +27,7 @@ public class JobCompletionListener implements JobExecutionListener {
 
     @Override
     public void beforeJob(JobExecution jobExecution) {
+        rejectRecordWriter.resetCount();
         log.info("Job {} starting at {}", jobExecution.getJobInstance().getJobName(),
                 jobExecution.getStartTime());
     }
