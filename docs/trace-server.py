@@ -4,8 +4,9 @@ Devin Live Trace Server
 =======================
 A lightweight Python server that:
 1. Serves the live-trace-demo.html frontend
-2. Creates a Devin child session to trace COBOL dynamic calls
-3. Polls session messages and streams events to the frontend via SSE
+2. Creates a Devin session using the "Live COBOL Flow Trace" playbook
+3. Polls session messages for structured JSON trace_step blocks
+4. Streams trace events to the frontend via SSE in real-time
 
 Usage:
     export DEVIN_API_KEY="cog_your_key_here"
@@ -20,55 +21,57 @@ Alternatively, pass credentials via the frontend UI (they'll be sent as query pa
 import json
 import os
 import re
-import sys
 import time
-import threading
 import urllib.request
 import urllib.error
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
+from urllib.parse import urlparse, parse_qs
 
 API_BASE = "https://api.devin.ai/v3"
 REPO = "choikh0423/aws-mainframe-modernization-carddemo"
 
-# The prompt that the child Devin session will execute
-TRACE_PROMPT = """You are performing a live dynamic call resolution trace of the "Add Transaction" flow in the AWS CardDemo COBOL application (repo: choikh0423/aws-mainframe-modernization-carddemo).
+# Playbook ID for "Live COBOL Flow Trace"
+PLAYBOOK_ID = "playbook-9e1bfe742b43446eae8c9be94e4a044a"
 
-Trace through the code step by step. For each step, read the actual source file and explain what you found. Be concise.
-
-**Step 1 - MENU DISPATCH**: Read app/cpy/COMEN02Y.cpy. Find menu option 8 and show which program name it maps to. Explain the REDEFINES overlay. Then read the XCTL in app/cbl/COMEN01C.cbl lines 184-187.
-
-**Step 2 - XCTL TRANSFER**: Explain how COMEN01C transfers control to COTRN02C via CICS XCTL with COMMAREA.
-
-**Step 3 - XREF LOOKUP**: In app/cbl/COTRN02C.cbl, find where it reads CCXREF and CXACAIX files. Show the variable dataset names and explain CICS FCT resolution.
-
-**Step 4 - DATE VALIDATION CALL**: Find CALL 'CSUTLDTC' in COTRN02C.cbl. Then read app/cbl/CSUTLDTC.cbl and map the positional parameters from the caller's USING clause to the callee's LINKAGE SECTION.
-
-**Step 5 - CEEDAYS CHAIN**: In CSUTLDTC.cbl, find the CALL "CEEDAYS" and explain the IBM LE runtime call with its parameter types.
-
-**Step 6 - DATA MUTATION**: Find the WRITE to TRANSACT file in COTRN02C.cbl. Show how the transaction ID is auto-generated (STARTBR, READPREV, ADD 1).
-
-**Step 7 - BATCH CONNECTION**: Read app/cbl/CBTRN02C.cbl. Show how the batch program reads from the same TRANSACT file and updates ACCOUNT and TCATBAL files.
-
-Output each step clearly with the step number. This is a live trace demonstration of semantic COBOL code reading."""
-
-# Keywords that map session messages to trace steps
-STEP_KEYWORDS = [
-    # Step 0: Menu dispatch
-    {"keywords": ["COMEN02Y", "option 8", "menu", "REDEFINES"], "step_index": 0},
-    # Step 1: XCTL transfer
-    {"keywords": ["XCTL", "COMMAREA", "COTRN02C", "transfer"], "step_index": 1},
-    # Step 2: XREF lookup
-    {"keywords": ["CCXREF", "CXACAIX", "cross-ref", "FCT"], "step_index": 2},
-    # Step 3: Date validation
-    {"keywords": ["CSUTLDTC", "LINKAGE", "date valid", "positional"], "step_index": 3},
-    # Step 4: CEEDAYS
-    {"keywords": ["CEEDAYS", "Lilian", "LE runtime", "Language Environment"], "step_index": 4},
-    # Step 5: Data mutation
-    {"keywords": ["TRANSACT", "WRITE", "STARTBR", "READPREV", "mutation"], "step_index": 5},
-    # Step 6: Batch
-    {"keywords": ["CBTRN02C", "batch", "ACCOUNT", "TCATBAL", "ACCT-CURR-BAL"], "step_index": 6},
-]
+# Structured output schema -- Devin extracts trace_steps matching this schema
+# and populates them in the session's structured_output field automatically.
+STRUCTURED_OUTPUT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "trace_steps": {
+            "type": "array",
+            "description": "Each step discovered during the live trace",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "step_index": {
+                        "type": "integer",
+                        "description": "0-6 for trace steps, -1 for completion"
+                    },
+                    "title": {
+                        "type": "string",
+                        "description": "Short title for this trace step"
+                    },
+                    "file": {
+                        "type": "string",
+                        "description": "Source file(s) read in this step"
+                    },
+                    "finding": {
+                        "type": "string",
+                        "description": "What was discovered in this step"
+                    },
+                    "code_snippet": {
+                        "type": "string",
+                        "description": "Key COBOL source lines"
+                    }
+                },
+                "required": ["step_index", "title", "finding"]
+            }
+        }
+    },
+    "required": ["trace_steps"]
+}
 
 
 def devin_api_request(method, path, api_key, data=None):
@@ -92,17 +95,18 @@ def devin_api_request(method, path, api_key, data=None):
         raise
 
 
-def create_trace_session(api_key, org_id):
-    """Create a child Devin session that traces through the COBOL code."""
+def create_trace_session(api_key, org_id, user_question):
+    """Create a Devin session with the live trace playbook and structured output."""
     data = {
-        "prompt": TRACE_PROMPT,
+        "prompt": user_question,
+        "playbook_id": PLAYBOOK_ID,
+        "structured_output_schema": STRUCTURED_OUTPUT_SCHEMA,
     }
-    result = devin_api_request("POST", f"/organizations/{org_id}/sessions", api_key, data)
-    return result
+    return devin_api_request("POST", f"/organizations/{org_id}/sessions", api_key, data)
 
 
 def get_session_status(api_key, org_id, session_id):
-    """Get the current status of a session."""
+    """Get the current status of a session, including structured_output."""
     return devin_api_request("GET", f"/organizations/{org_id}/sessions/{session_id}", api_key)
 
 
@@ -114,17 +118,28 @@ def get_session_messages(api_key, org_id, session_id, after=None):
     return devin_api_request("GET", path, api_key)
 
 
-def detect_step(message_text, triggered_steps):
-    """Detect which trace step a message corresponds to."""
-    text_lower = message_text.lower()
-    for step_def in STEP_KEYWORDS:
-        idx = step_def["step_index"]
-        if idx in triggered_steps:
-            continue
-        matches = sum(1 for kw in step_def["keywords"] if kw.lower() in text_lower)
-        if matches >= 2:  # require at least 2 keyword matches
-            return idx
-    return None
+def extract_trace_steps_from_message(text):
+    """Extract any {"trace_step": {...}} JSON blocks from a message."""
+    steps = []
+    for match in re.finditer(r'\{["\s]*trace_step["\s]*:', text):
+        start = match.start()
+        depth = 0
+        i = start
+        while i < len(text):
+            if text[i] == '{':
+                depth += 1
+            elif text[i] == '}':
+                depth -= 1
+                if depth == 0:
+                    try:
+                        parsed = json.loads(text[start:i + 1])
+                        if "trace_step" in parsed:
+                            steps.append(parsed["trace_step"])
+                    except json.JSONDecodeError:
+                        pass
+                    break
+            i += 1
+    return steps
 
 
 class TraceHandler(SimpleHTTPRequestHandler):
@@ -170,17 +185,25 @@ class TraceHandler(SimpleHTTPRequestHandler):
 
     def handle_sse(self):
         """Handle SSE connection for live trace events."""
-        # Parse query params
-        from urllib.parse import urlparse, parse_qs
         parsed = urlparse(self.path)
         params = parse_qs(parsed.query)
 
         api_key = params.get("api_key", [os.environ.get("DEVIN_API_KEY", "")])[0]
         org_id = params.get("org_id", [os.environ.get("DEVIN_ORG_ID", "")])[0]
+        option_num = params.get("option", ["8"])[0]
+        option_name = params.get("option_name", ["Add Transaction"])[0]
 
         if not api_key or not org_id:
             self.send_error(400, "Missing api_key or org_id")
             return
+
+        # Build the user question based on the selected menu option
+        user_question = (
+            f"I'm looking at the CardDemo mainframe application. "
+            f"I selected menu option {option_num} ({option_name}). "
+            f"What does this flow do? Trace through the COBOL source code "
+            f"and show me each program call, data access, and how the pieces connect."
+        )
 
         # Set up SSE headers
         self.send_response(200)
@@ -191,9 +214,13 @@ class TraceHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
         try:
-            # Create child session
-            self.send_sse_event({"type": "status", "message": "Creating Devin trace session..."})
-            session = create_trace_session(api_key, org_id)
+            self.send_sse_event({
+                "type": "status",
+                "message": f"Creating Devin session to trace option {option_num}..."
+            })
+
+            # Create session with playbook + structured output
+            session = create_trace_session(api_key, org_id, user_question)
             session_id = session.get("session_id", "")
             session_url = session.get("url", "")
 
@@ -203,63 +230,85 @@ class TraceHandler(SimpleHTTPRequestHandler):
                 "session_url": session_url,
             })
 
-            # Poll for messages and detect trace steps
+            # Poll for messages and extract trace_step JSON blocks
             triggered_steps = set()
             cursor = None
-            max_polls = 120  # 10 minutes max
+            prev_structured_count = 0
+            max_polls = 180  # 15 minutes max
             poll_count = 0
 
-            while poll_count < max_polls and len(triggered_steps) < 7:
+            while poll_count < max_polls:
                 time.sleep(5)
                 poll_count += 1
 
                 try:
-                    # Check session status
+                    # Check session status + structured output
                     status_resp = get_session_status(api_key, org_id, session_id)
                     status = status_resp.get("status", "unknown")
 
-                    if status in ("exit", "error"):
-                        break
+                    # Check structured_output for trace steps
+                    structured = status_resp.get("structured_output", {})
+                    if structured and isinstance(structured, dict):
+                        steps_list = structured.get("trace_steps", [])
+                        if len(steps_list) > prev_structured_count:
+                            for step_data in steps_list[prev_structured_count:]:
+                                idx = step_data.get("step_index", -99)
+                                if idx not in triggered_steps:
+                                    triggered_steps.add(idx)
+                                    self.send_sse_event({
+                                        "type": "step",
+                                        "step_index": idx,
+                                        "title": step_data.get("title", ""),
+                                        "file": step_data.get("file", ""),
+                                        "finding": step_data.get("finding", ""),
+                                        "code_snippet": step_data.get("code_snippet", ""),
+                                    })
+                                    if idx == -1:
+                                        break
+                            prev_structured_count = len(steps_list)
 
-                    # Get new messages
-                    msg_resp = get_session_messages(api_key, org_id, session_id, after=cursor)
+                    # Also scan messages for trace_step JSON blocks (fallback)
+                    msg_resp = get_session_messages(
+                        api_key, org_id, session_id, after=cursor
+                    )
                     items = msg_resp.get("items", [])
-
                     for msg in items:
                         content = msg.get("content", "") or msg.get("message", "")
                         if not content:
                             continue
+                        for step_data in extract_trace_steps_from_message(content):
+                            idx = step_data.get("step_index", -99)
+                            if idx not in triggered_steps:
+                                triggered_steps.add(idx)
+                                self.send_sse_event({
+                                    "type": "step",
+                                    "step_index": idx,
+                                    "title": step_data.get("title", ""),
+                                    "file": step_data.get("file", ""),
+                                    "finding": step_data.get("finding", ""),
+                                    "code_snippet": step_data.get("code_snippet", ""),
+                                })
 
-                        # Detect which step this message relates to
-                        step_idx = detect_step(content, triggered_steps)
-                        if step_idx is not None:
-                            triggered_steps.add(step_idx)
-                            self.send_sse_event({
-                                "type": "step",
-                                "step_index": step_idx,
-                                "message": content[:200],
-                            })
-
-                        # Also send raw file reading events
-                        file_match = re.search(r'(?:reading|opened?|app/(?:cbl|cpy)/\w+\.\w+)', content, re.I)
-                        if file_match:
-                            self.send_sse_event({
-                                "type": "reading_file",
-                                "file": file_match.group(0),
-                                "message": content[:150],
-                            })
-
-                    # Update cursor for pagination
                     new_cursor = msg_resp.get("end_cursor")
                     if new_cursor:
                         cursor = new_cursor
+
+                    # Check if complete
+                    if -1 in triggered_steps:
+                        break
+                    if status in ("exit", "error"):
+                        break
 
                 except Exception as e:
                     print(f"Poll error: {e}")
                     continue
 
             # Send completion
-            self.send_sse_event({"type": "complete", "steps_resolved": len(triggered_steps)})
+            self.send_sse_event({
+                "type": "complete",
+                "steps_resolved": len([s for s in triggered_steps if s >= 0]),
+                "session_url": session_url,
+            })
 
         except Exception as e:
             self.send_sse_event({"type": "error", "message": str(e)})
@@ -376,7 +425,8 @@ LANDING_HTML = """
   <h1><span>Devin</span> &mdash; Dynamic Call Resolution</h1>
   <p class="subtitle">
     Interactive demo tracing COBOL dynamic calls through the<br>
-    CardDemo &ldquo;Add Transaction&rdquo; flow (COMEN01C &rarr; COTRN02C &rarr; CSUTLDTC &rarr; CEEDAYS)
+    CardDemo application. Select a menu option and ask Devin:<br>
+    &ldquo;What does this flow do?&rdquo;
   </p>
   <div class="cards">
     <a href="/static" class="card static">
@@ -392,14 +442,17 @@ LANDING_HTML = """
       <div class="badge">REQUIRES DEVIN API KEY</div>
       <h2>/live</h2>
       <p>
-        Creates a real Devin child session via the API. The call tree
-        highlights in real-time as Devin reads through the COBOL source
-        files and resolves each dynamic call. Truly live.
+        Ask Devin &ldquo;what does this flow do?&rdquo; and watch the call
+        tree light up in real-time as Devin reads through the COBOL source
+        and discovers each dynamic call. Powered by the Live COBOL Flow
+        Trace playbook.
       </p>
     </a>
   </div>
   <div class="footer">
     Repo: <a href="https://github.com/choikh0423/aws-mainframe-modernization-carddemo">choikh0423/aws-mainframe-modernization-carddemo</a>
+    &nbsp;&bull;&nbsp;
+    <a href="https://app.devin.ai/settings/playbooks/9e1bfe742b43446eae8c9be94e4a044a">Playbook</a>
   </div>
 </div>
 </body>
@@ -411,21 +464,24 @@ def main():
     port = int(os.environ.get("PORT", 8765))
     server = HTTPServer(("0.0.0.0", port), TraceHandler)
     print(f"""
-╔══════════════════════════════════════════════════════════════╗
-║  Devin Dynamic Call Resolution Demo Server                   ║
-║  ─────────────────────────────────────────────────────────── ║
-║                                                              ║
-║  Routes:                                                     ║
-║    http://localhost:{port}          Landing page               ║
-║    http://localhost:{port}/static   Pre-recorded replay        ║
-║    http://localhost:{port}/live     Live API-powered trace     ║
-║                                                              ║
-║  Configuration (optional — can also set via UI):             ║
-║    DEVIN_API_KEY  = {os.environ.get('DEVIN_API_KEY', '(not set)')[:20]}...  ║
-║    DEVIN_ORG_ID   = {os.environ.get('DEVIN_ORG_ID', '(not set)')[:20]}...  ║
-║                                                              ║
-║  Press Ctrl+C to stop                                        ║
-╚══════════════════════════════════════════════════════════════╝
++==============================================================+
+|  Devin Live COBOL Flow Trace Server                          |
+|  ----------------------------------------------------------- |
+|                                                              |
+|  Routes:                                                     |
+|    http://localhost:{port}          Landing page               |
+|    http://localhost:{port}/static   Pre-recorded replay        |
+|    http://localhost:{port}/live     Live trace (asks Devin)    |
+|                                                              |
+|  Playbook: Live COBOL Flow Trace                             |
+|    {PLAYBOOK_ID}                                             |
+|                                                              |
+|  Configuration (optional - can also set via UI):             |
+|    DEVIN_API_KEY  = {os.environ.get('DEVIN_API_KEY', '(not set)')[:20]}...  |
+|    DEVIN_ORG_ID   = {os.environ.get('DEVIN_ORG_ID', '(not set)')[:20]}...  |
+|                                                              |
+|  Press Ctrl+C to stop                                        |
++==============================================================+
 """)
     try:
         server.serve_forever()
