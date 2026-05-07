@@ -348,6 +348,157 @@
     vertical-align: middle;
     margin-left: 2px;
   }
+
+  /* 3270 Terminal Overlay */
+  #terminal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  #terminal-overlay.open { display: flex; }
+  .terminal-screen {
+    background: #0a0a0a;
+    border: 3px solid #33ff33;
+    border-radius: 8px;
+    width: 640px;
+    padding: 0;
+    box-shadow: 0 0 40px rgba(51,255,51,0.15), inset 0 0 80px rgba(51,255,51,0.03);
+    font-family: 'Courier New', 'Lucida Console', monospace;
+    overflow: hidden;
+  }
+  .terminal-header {
+    background: #111;
+    border-bottom: 1px solid #33ff33;
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .terminal-header span {
+    color: #33ff33;
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+  .terminal-header .terminal-close {
+    color: #666;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .terminal-header .terminal-close:hover { color: #ff6b6b; }
+  .terminal-body {
+    padding: 16px 20px;
+    color: #33ff33;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  .terminal-body .term-title {
+    color: #33ff33;
+    font-weight: 700;
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+  }
+  .terminal-body .term-subtitle {
+    color: #22aa22;
+    font-size: 11px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .terminal-body .term-divider {
+    border-top: 1px dashed #226622;
+    margin: 8px 0;
+  }
+  .menu-option {
+    display: flex;
+    align-items: center;
+    padding: 3px 8px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: background 0.15s;
+  }
+  .menu-option:hover {
+    background: #33ff33;
+    color: #000;
+  }
+  .menu-option:hover .opt-num,
+  .menu-option:hover .opt-name,
+  .menu-option:hover .opt-pgm {
+    color: #000;
+  }
+  .menu-option .opt-num {
+    color: #ffff33;
+    width: 30px;
+    font-weight: 700;
+  }
+  .menu-option .opt-name {
+    color: #33ff33;
+    flex: 1;
+  }
+  .menu-option .opt-pgm {
+    color: #22aa22;
+    font-size: 11px;
+  }
+  .menu-option.selected {
+    background: #33ff33;
+    color: #000;
+  }
+  .menu-option.selected .opt-num,
+  .menu-option.selected .opt-name,
+  .menu-option.selected .opt-pgm {
+    color: #000;
+  }
+  .terminal-input-row {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .terminal-input-row span {
+    color: #33ff33;
+  }
+  #term-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #33ff33;
+    color: #ffff33;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    width: 40px;
+    text-align: center;
+    outline: none;
+    caret-color: #33ff33;
+  }
+  .terminal-status {
+    margin-top: 8px;
+    padding: 6px 8px;
+    font-size: 11px;
+    color: #22aa22;
+    min-height: 20px;
+  }
+  .terminal-status.resolving {
+    color: #ffff33;
+  }
+  .terminal-status .resolved-pgm {
+    color: #33ff33;
+    font-weight: 700;
+  }
+  @keyframes termBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+  .term-cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: #33ff33;
+    animation: termBlink 0.6s step-end infinite;
+    vertical-align: middle;
+  }
 </style>
 </head>
 <body>
@@ -356,10 +507,33 @@
   <h1><span>Devin</span> &mdash; Dynamic Call Resolution Trace <span class="mode-badge">STATIC REPLAY</span></h1>
   <div class="controls">
     <a href="/live" class="nav-link">Switch to Live Mode</a>
-    <button id="play-btn" onclick="startReplay()">Play Trace</button>
+    <button id="play-btn" onclick="showTerminal()">Play Trace</button>
     <button id="reset-btn" onclick="resetAll()">Reset</button>
   </div>
 </header>
+
+<!-- 3270 Terminal Overlay -->
+<div id="terminal-overlay">
+  <div class="terminal-screen">
+    <div class="terminal-header">
+      <span>CICS TRANSACTION SERVER &mdash; CARDDEMO</span>
+      <span class="terminal-close" onclick="closeTerminal()">&times;</span>
+    </div>
+    <div class="terminal-body">
+      <div class="term-title">CARDDEMO MAIN MENU</div>
+      <div class="term-subtitle">COMEN01C &mdash; Program: COMEN02Y.cpy Data Table</div>
+      <div class="term-divider"></div>
+      <div id="menu-options"></div>
+      <div class="term-divider"></div>
+      <div class="terminal-input-row">
+        <span>OPTION ==&gt;</span>
+        <input type="text" id="term-input" maxlength="2" autocomplete="off" />
+        <span class="term-cursor"></span>
+      </div>
+      <div id="terminal-status" class="terminal-status">Enter option number (1-11) or click a menu item</div>
+    </div>
+  </div>
+</div>
 
 <main>
   <div id="diagram-panel">
@@ -479,7 +653,7 @@
     <h3>Devin Response History</h3>
     <div id="event-log">
       <div style="padding: 16px; color: #555; font-size: 11px; text-align: center;">
-        Click <b>Play Trace</b> to replay Devin's pre-recorded dynamic call resolution
+        Click <b>Play Trace</b> to open the CICS terminal and select a menu option
       </div>
     </div>
   </div>
@@ -491,6 +665,99 @@
 //  These are actual Devin analysis outputs from tracing through
 //  the CardDemo COBOL source code.
 // ============================================================
+// ============================================================
+//  COMEN02Y MENU OPTIONS (from app/cpy/COMEN02Y.cpy)
+// ============================================================
+const MENU_OPTIONS = [
+  { num: 1,  name: 'Account View',              pgm: 'COACTVWC' },
+  { num: 2,  name: 'Account Update',             pgm: 'COACTUPC' },
+  { num: 3,  name: 'Credit Card List',           pgm: 'COCRDLIC' },
+  { num: 4,  name: 'Credit Card View',           pgm: 'COCRDSLC' },
+  { num: 5,  name: 'Credit Card Update',         pgm: 'COCRDUPC' },
+  { num: 6,  name: 'Transaction List',           pgm: 'COTRN00C' },
+  { num: 7,  name: 'Transaction View',           pgm: 'COTRN01C' },
+  { num: 8,  name: 'Transaction Add',            pgm: 'COTRN02C' },
+  { num: 9,  name: 'Transaction Reports',        pgm: 'CORPT00C' },
+  { num: 10, name: 'Bill Payment',               pgm: 'COBIL00C' },
+  { num: 11, name: 'Pending Authorization View', pgm: 'COPAUS0C' }
+];
+
+let selectedOption = null;
+
+// Build menu in terminal
+function buildTerminalMenu() {
+  const container = document.getElementById('menu-options');
+  container.innerHTML = MENU_OPTIONS.map(opt => `
+    <div class="menu-option" onclick="selectMenuOption(${opt.num})">
+      <span class="opt-num">${String(opt.num).padStart(2,' ')}.</span>
+      <span class="opt-name">${opt.name}</span>
+      <span class="opt-pgm">${opt.pgm}</span>
+    </div>
+  `).join('');
+}
+
+function showTerminal() {
+  if (isRunning) return;
+  resetAll();
+  buildTerminalMenu();
+  document.getElementById('terminal-overlay').classList.add('open');
+  document.getElementById('term-input').value = '';
+  document.getElementById('terminal-status').className = 'terminal-status';
+  document.getElementById('terminal-status').textContent = 'Enter option number (1-11) or click a menu item';
+  setTimeout(() => document.getElementById('term-input').focus(), 100);
+}
+
+function closeTerminal() {
+  document.getElementById('terminal-overlay').classList.remove('open');
+}
+
+function selectMenuOption(num) {
+  const opt = MENU_OPTIONS.find(o => o.num === num);
+  if (!opt) return;
+  selectedOption = opt;
+
+  // Highlight selected row
+  document.querySelectorAll('.menu-option').forEach((el, i) => {
+    el.classList.toggle('selected', MENU_OPTIONS[i].num === num);
+  });
+  document.getElementById('term-input').value = num;
+
+  // Show resolving animation
+  const status = document.getElementById('terminal-status');
+  status.className = 'terminal-status resolving';
+  status.innerHTML = `Resolving XCTL PROGRAM(CDEMO-MENU-OPT-PGMNAME(${num}))...`;
+
+  setTimeout(() => {
+    status.innerHTML = `RESOLVED &rarr; <span class="resolved-pgm">${opt.pgm}</span> (${opt.name})`;
+    // Update the SVG edge label to show selected option
+    const edgeLabel = document.getElementById('elabel-terminal-comen01c');
+    if (edgeLabel) edgeLabel.textContent = `option ${num}`;
+    setTimeout(() => {
+      closeTerminal();
+      startReplay(opt);
+    }, 1200);
+  }, 800);
+}
+
+// Handle keyboard input in terminal
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('term-input');
+  if (input) {
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const val = parseInt(input.value);
+        if (val >= 1 && val <= 11) {
+          selectMenuOption(val);
+        } else {
+          const status = document.getElementById('terminal-status');
+          status.className = 'terminal-status';
+          status.textContent = 'INVALID OPTION. Enter 1-11.';
+        }
+      }
+    });
+  }
+});
+
 const STATIC_TRACE = [
   {
     title: 'Step 1: Menu Dispatch',
@@ -679,32 +946,115 @@ let isRunning = false;
 // ============================================================
 //  REPLAY
 // ============================================================
-async function startReplay() {
+async function startReplay(opt) {
   if (isRunning) return;
+  const chosen = opt || selectedOption || MENU_OPTIONS[7]; // default option 8
   isRunning = true;
   document.getElementById('play-btn').disabled = true;
   document.getElementById('event-log').innerHTML = '';
 
-  // Initial "session" log entry
+  // Update SVG labels to reflect chosen option
+  const edgeLabel = document.getElementById('elabel-terminal-comen01c');
+  if (edgeLabel) edgeLabel.textContent = `option ${chosen.num}`;
+
+  // Initial "session" log entry showing terminal selection
   addLogEntry({
-    title: 'Trace Session',
+    title: 'CICS Terminal Input',
     file: '',
-    devinResponse: '<div class="devin-label">Pre-recorded Devin Session</div>This is a replay of Devin\'s dynamic call resolution trace through the CardDemo "Add Transaction" flow. Each step shows the actual files Devin read and the analysis it produced.'
+    devinResponse: `<div class="devin-label">User selected menu option ${chosen.num}</div>The 3270 terminal operator selected option <b>${chosen.num}</b> (<b>${chosen.name}</b>) from the CARDDEMO main menu. COMEN01C will now resolve the dynamic XCTL target from the COMEN02Y data table.`
   });
 
   await sleep(1500);
 
-  for (let i = 0; i < STATIC_TRACE.length; i++) {
-    if (!isRunning) break;
-    const step = STATIC_TRACE[i];
-    highlightStep(step);
-    addLogEntry(step);
-    await sleep(step.delay);
-  }
+  // Step 1: Menu Dispatch — dynamically show the selected option's resolution
+  const step1 = {
+    ...STATIC_TRACE[0],
+    devinResponse: `<div class="devin-label">Devin reading COMEN02Y.cpy</div>
+I found the menu data table at <code>app/cpy/COMEN02Y.cpy</code>. The structure uses a <code>REDEFINES</code> overlay to map option numbers to program names.
 
-  if (isRunning) {
-    showStepIndicator('Trace Complete', 'All dynamic calls resolved');
-    addCompletionEntry();
+For option ${chosen.num} (${chosen.name}):
+<div class="cobol-block"><span class="cmt">* COMEN02Y.cpy — option ${chosen.num}:</span>
+10 FILLER  PIC 9(02) VALUE <span class="resolved">${chosen.num}</span>.
+10 FILLER  PIC X(35) VALUE
+    <span class="str">'${chosen.name}'</span>.
+10 FILLER  PIC X(08) VALUE <span class="resolved">'${chosen.pgm}'</span>.</div>
+The menu dispatch program <code>COMEN01C</code> reads the user's selection, indexes into this table via the <code>REDEFINES</code> overlay <code>CDEMO-MENU-OPT-PGMNAME(${chosen.num})</code>, and uses CICS XCTL to transfer control to <b>${chosen.pgm}</b>.${chosen.num !== 8 ? '\n\n<b style="color:#ffa94d;">Note:</b> This is a different program than option 8 (COTRN02C). The XCTL target changes entirely based on user input — this is what makes it a <b>dynamic call</b>.' : ''}`
+  };
+  highlightStep(step1);
+  addLogEntry(step1);
+  await sleep(step1.delay);
+
+  if (chosen.num === 8) {
+    // Full trace for option 8 (Transaction Add)
+    // Update COTRN02C node sublabel
+    for (let i = 1; i < STATIC_TRACE.length; i++) {
+      if (!isRunning) break;
+      const step = STATIC_TRACE[i];
+      highlightStep(step);
+      addLogEntry(step);
+      await sleep(step.delay);
+    }
+    if (isRunning) {
+      showStepIndicator('Trace Complete', 'All dynamic calls resolved');
+      addCompletionEntry();
+    }
+  } else {
+    // For non-option-8: show XCTL transfer to different program, then prompt
+    if (!isRunning) { isRunning = false; document.getElementById('play-btn').disabled = false; return; }
+
+    const step2alt = {
+      title: 'Step 2: XCTL Transfer',
+      subtitle: `Control transfers to ${chosen.pgm} via CICS XCTL + COMMAREA`,
+      nodes: ['node-cotrn02c'],
+      edges: ['edge-comen01c-cotrn02c'],
+      edgeLabels: ['elabel-comen01c-cotrn02c'],
+      nodeClass: 'active',
+      edgeClass: 'active',
+      file: `app/cbl/${chosen.pgm}.cbl`,
+      badge: null,
+      devinResponse: `<div class="devin-label">Devin resolving XCTL target</div>
+COMEN01C transfers control to <b>${chosen.pgm}</b> (${chosen.name}) via CICS XCTL with the COMMAREA:
+<div class="cobol-block"><span class="kw">EXEC CICS</span>
+    <span class="kw">XCTL PROGRAM</span>(CDEMO-MENU-OPT-PGMNAME(<span class="resolved">${chosen.num}</span>))
+    <span class="cmt">&larr; resolves to '${chosen.pgm}'</span>
+    <span class="kw">COMMAREA</span>(CARDDEMO-COMMAREA)
+<span class="kw">END-EXEC</span></div>
+<b style="color:#ffa94d;">Different path:</b> Option ${chosen.num} resolves to <code>${chosen.pgm}</code>, not <code>COTRN02C</code>. This proves the XCTL target is truly dynamic — the same instruction dispatches to <b>11 different programs</b> depending on runtime input.
+
+<div style="margin-top:8px;padding:8px;background:rgba(255,169,77,0.1);border:1px solid rgba(255,169,77,0.3);border-radius:4px;">
+<b style="color:#ffa94d;">Try Option 8</b> (Transaction Add) for the full deep trace including VSAM I/O, dynamic CALLs to CSUTLDTC/CEEDAYS, data mutation, and batch processing.
+</div>`
+    };
+
+    // Update the COTRN02C node label temporarily to show the resolved program
+    const cotrn02cLabel = document.querySelector('#node-cotrn02c .node-label');
+    const cotrn02cSublabel = document.querySelector('#node-cotrn02c .node-sublabel');
+    const origLabel = cotrn02cLabel ? cotrn02cLabel.textContent : '';
+    const origSublabel = cotrn02cSublabel ? cotrn02cSublabel.textContent : '';
+    if (cotrn02cLabel) cotrn02cLabel.textContent = chosen.pgm;
+    if (cotrn02cSublabel) cotrn02cSublabel.textContent = chosen.name;
+
+    highlightStep(step2alt);
+    addLogEntry(step2alt);
+    await sleep(3000);
+
+    if (isRunning) {
+      showStepIndicator('Trace Paused', `Full deep trace available for Option 8 (Transaction Add)`);
+      addLogEntry({
+        title: 'END OF TRACE',
+        file: '',
+        devinResponse: `<div class="devin-label">Devin Summary</div>
+<b>Dynamic call resolution proved:</b> Option ${chosen.num} resolved XCTL to <code>${chosen.pgm}</code> (${chosen.name}), while option 8 would resolve to <code>COTRN02C</code> (Transaction Add).
+
+The same <code>XCTL PROGRAM(variable)</code> instruction dispatches to a completely different program based on user input at runtime. This is invisible to grep — you must read the COMEN02Y data table to resolve it.
+
+<div style="margin-top:8px;"><b>Click Reset, then Play Trace again and select Option 8</b> for the full 7-step trace including VSAM I/O, CALL chains, data mutation, and batch processing.</div>`
+      });
+    }
+
+    // Restore original labels for next run
+    if (cotrn02cLabel) cotrn02cLabel.textContent = origLabel;
+    if (cotrn02cSublabel) cotrn02cSublabel.textContent = origSublabel;
   }
   isRunning = false;
   document.getElementById('play-btn').disabled = false;
@@ -799,9 +1149,18 @@ function resetAll() {
   document.getElementById('step-indicator').classList.remove('visible');
   document.getElementById('event-log').innerHTML = `
     <div style="padding: 16px; color: #555; font-size: 11px; text-align: center;">
-      Click <b>Play Trace</b> to replay Devin's pre-recorded dynamic call resolution
+      Click <b>Play Trace</b> to open the CICS terminal and select a menu option
     </div>
   `;
+  selectedOption = null;
+  // Restore COTRN02C labels if they were changed
+  const cotrn02cLabel = document.querySelector('#node-cotrn02c .node-label');
+  const cotrn02cSublabel = document.querySelector('#node-cotrn02c .node-sublabel');
+  if (cotrn02cLabel) cotrn02cLabel.textContent = 'COTRN02C';
+  if (cotrn02cSublabel) cotrn02cSublabel.textContent = 'Add Transaction';
+  // Restore edge label
+  const edgeLabel = document.getElementById('elabel-terminal-comen01c');
+  if (edgeLabel) edgeLabel.textContent = 'option 8';
 }
 
 function sleep(ms) {
