@@ -1318,18 +1318,8 @@ function highlightLiveStep(data, stepNum) {
   // Resolve node IDs for matched programs
   const nodeIds = programs.map(p => PROGRAM_NODE_MAP[p]);
 
-  // Determine highlight style from keywords
-  let nodeClass = 'active';
-  let edgeClass = 'active';
-  const textUpper = text.toUpperCase();
-  if (/\b(WRITE|REWRITE|MUTATE|INSERT|UPDATE|DELETE|ADD)\b/.test(textUpper) &&
-      !(/\bREAD.ONLY\b/.test(textUpper))) {
-    nodeClass = 'mutation';
-    edgeClass = 'mutation';
-  } else if (/\b(BATCH|NIGHTLY|CBTRN)/.test(textUpper)) {
-    nodeClass = 'batch';
-    edgeClass = 'batch';
-  }
+  const nodeClass = 'active';
+  const edgeClass = 'active';
 
   // Show step indicator
   showStepIndicator(
