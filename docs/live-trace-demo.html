@@ -1115,7 +1115,10 @@ async function startLiveTrace() {
 
     // Live mode: dynamically match Devin's responses to diagram nodes
     let liveStepCount = 0;
-    let shownNoDiagramPopup = false;
+    let liveMatchedAnyNode = false;
+
+    // Pre-highlight starting nodes — every option flows through these
+    highlightStartingNodes(optNum);
 
     evtSource.onmessage = function(event) {
       const data = JSON.parse(event.data);
@@ -1123,6 +1126,10 @@ async function startLiveTrace() {
         const stepIdx = data.step_index;
 
         if (stepIdx === -1) {
+          // Trace finished — show popup only if no option-specific nodes ever matched
+          if (!liveMatchedAnyNode) {
+            showNoDiagramPopup(optNum, optName);
+          }
           showStepIndicator('Trace Complete', 'All dynamic calls resolved');
           addLogEntry({
             title: 'TRACE COMPLETE',
@@ -1134,10 +1141,7 @@ async function startLiveTrace() {
           liveStepCount++;
           // Parse program names from Devin's response and light up matching nodes
           const matched = highlightLiveStep(data, liveStepCount);
-          if (!matched && !shownNoDiagramPopup) {
-            shownNoDiagramPopup = true;
-            showNoDiagramPopup(optNum, optName);
-          }
+          if (matched) liveMatchedAnyNode = true;
           addLogEntry({
             title: data.title || `Step ${liveStepCount}`,
             file: data.file || '',
@@ -1146,6 +1150,10 @@ async function startLiveTrace() {
           });
         }
       } else if (data.type === 'complete') {
+        // Trace finished — show popup only if no option-specific nodes ever matched
+        if (!liveMatchedAnyNode) {
+          showNoDiagramPopup(optNum, optName);
+        }
         showStepIndicator('Trace Complete', `${data.steps_resolved || 0} steps resolved`);
         if (data.session_url) {
           addLogEntry({
@@ -1256,8 +1264,37 @@ const NODE_BADGES = {
   'node-carddat':  'badge-readonly'
 };
 
+// Starting nodes that are common to ALL options (shared top section)
+const STARTING_NODES = ['node-terminal', 'node-comen01c', 'node-comen02y'];
+
 // Track which nodes have been highlighted so far in the live session
 let liveHighlightedNodes = new Set();
+
+function highlightStartingNodes(optNum) {
+  // Light up terminal → COMEN01C → COMEN02Y (shared starting path)
+  for (const nodeId of STARTING_NODES) {
+    const g = document.getElementById(nodeId);
+    if (!g) continue;
+    const rect = g.querySelector('.node-rect');
+    const label = g.querySelector('.node-label');
+    const sublabel = g.querySelector('.node-sublabel');
+    if (rect) rect.classList.add('active');
+    if (label) label.classList.add('active');
+    if (sublabel) sublabel.classList.add('active');
+    liveHighlightedNodes.add(nodeId);
+  }
+  // Light up shared edges
+  const e1 = document.getElementById('edge-terminal-comen01c');
+  const l1 = document.getElementById('elabel-terminal-comen01c');
+  const e2 = document.getElementById('edge-comen01c-comen02y');
+  const l2 = document.getElementById('elabel-comen01c-comen02y');
+  if (e1) e1.classList.add('active');
+  if (l1) { l1.classList.add('active'); l1.textContent = `option ${optNum}`; }
+  if (e2) e2.classList.add('active');
+  if (l2) l2.classList.add('active');
+
+  showStepIndicator('Starting Trace', 'COMEN01C → Menu Dispatch');
+}
 
 function extractProgramNames(text) {
   const upper = text.toUpperCase();
