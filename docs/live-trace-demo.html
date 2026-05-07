@@ -1113,31 +1113,14 @@ async function startLiveTrace() {
       `${serverUrl}/events?option=${encodeURIComponent(optNum)}&option_name=${encodeURIComponent(optName)}`
     );
 
-    // Pick the correct pre-defined step array for the selected option
-    const liveSteps = getLiveStepsForOption(optNum);
-    const hasDiagram = liveSteps.length > 0;
-    if (!hasDiagram) {
-      showNoDiagramPopup(optNum, optName);
-    }
+    // Live mode: dynamically match Devin's responses to diagram nodes
+    let liveStepCount = 0;
+    let shownNoDiagramPopup = false;
 
     evtSource.onmessage = function(event) {
       const data = JSON.parse(event.data);
       if (data.type === 'step') {
         const stepIdx = data.step_index;
-
-        // Try pre-defined step array first, then fall back to text matching
-        let matched = false;
-        if (hasDiagram && stepIdx >= 0 && stepIdx < liveSteps.length) {
-          highlightStep(liveSteps[stepIdx]);
-          matched = true;
-        } else if (hasDiagram) {
-          // Fast parse: scan title/file/finding for known program names
-          const matchedStep = matchStepByProgramName(data, liveSteps);
-          if (matchedStep) {
-            highlightStep(matchedStep);
-            matched = true;
-          }
-        }
 
         if (stepIdx === -1) {
           showStepIndicator('Trace Complete', 'All dynamic calls resolved');
@@ -1148,8 +1131,15 @@ async function startLiveTrace() {
             code: ''
           });
         } else {
+          liveStepCount++;
+          // Parse program names from Devin's response and light up matching nodes
+          const matched = highlightLiveStep(data, liveStepCount);
+          if (!matched && !shownNoDiagramPopup) {
+            shownNoDiagramPopup = true;
+            showNoDiagramPopup(optNum, optName);
+          }
           addLogEntry({
-            title: data.title || (liveSteps[stepIdx] && liveSteps[stepIdx].title) || `Step ${stepIdx}`,
+            title: data.title || `Step ${liveStepCount}`,
             file: data.file || '',
             message: data.finding || '',
             code: data.code_snippet || ''
@@ -1218,18 +1208,10 @@ async function startLiveTrace() {
 }
 
 // ============================================================
-//  OPTION → STEP ARRAY MAPPING & FAST PROGRAM-NAME MATCH
+//  LIVE TRACE: DYNAMIC PROGRAM-NAME MATCHING
 // ============================================================
-const OPTION_STEPS = {
-  3: COCRDLIC_STEPS,
-  8: TRACE_STEPS
-};
 
-function getLiveStepsForOption(optNum) {
-  return OPTION_STEPS[parseInt(optNum)] || [];
-}
-
-// Map known COBOL program names → diagram node IDs
+// Map known COBOL program/file names → diagram node IDs
 const PROGRAM_NODE_MAP = {
   'COMEN01C': 'node-comen01c',
   'COMEN02Y': 'node-comen02y',
@@ -1248,30 +1230,125 @@ const PROGRAM_NODE_MAP = {
   'COCRDUPC': 'node-cocrdupc'
 };
 
-function matchStepByProgramName(data, steps) {
-  // Combine all text fields from the SSE event for scanning
-  const text = [data.title, data.file, data.finding, data.code_snippet]
-    .filter(Boolean).join(' ').toUpperCase();
+// Edge adjacency derived from SVG edge IDs (edge-{src}-{tgt})
+// Maps "srcNodeId|tgtNodeId" → { edgeId, labelId }
+const EDGE_ADJACENCY = {
+  'node-terminal|node-comen01c':   { edge: 'edge-terminal-comen01c',  label: 'elabel-terminal-comen01c' },
+  'node-comen01c|node-comen02y':   { edge: 'edge-comen01c-comen02y',  label: 'elabel-comen01c-comen02y' },
+  'node-comen01c|node-cotrn02c':   { edge: 'edge-comen01c-cotrn02c',  label: 'elabel-comen01c-cotrn02c' },
+  'node-cotrn02c|node-ccxref':     { edge: 'edge-cotrn02c-ccxref',    label: 'elabel-cotrn02c-ccxref' },
+  'node-cotrn02c|node-cxacaix':    { edge: 'edge-cotrn02c-cxacaix',   label: 'elabel-cotrn02c-cxacaix' },
+  'node-cotrn02c|node-csutldtc':   { edge: 'edge-cotrn02c-csutldtc',  label: 'elabel-cotrn02c-csutldtc' },
+  'node-csutldtc|node-ceedays':    { edge: 'edge-csutldtc-ceedays',   label: 'elabel-csutldtc-ceedays' },
+  'node-cotrn02c|node-transact':   { edge: 'edge-cotrn02c-transact',  label: 'elabel-cotrn02c-transact' },
+  'node-transact|node-cbtrn02c':   { edge: 'edge-transact-cbtrn02c',  label: 'elabel-transact-cbtrn02c' },
+  'node-cbtrn02c|node-account':    { edge: 'edge-cbtrn02c-account',   label: 'elabel-cbtrn02c-account' },
+  'node-cbtrn02c|node-tcatbal':    { edge: 'edge-cbtrn02c-tcatbal',   label: 'elabel-cbtrn02c-tcatbal' },
+  'node-comen01c|node-cocrdlic':   { edge: 'edge-comen01c-cocrdlic',  label: 'elabel-comen01c-cocrdlic' },
+  'node-cocrdlic|node-carddat':    { edge: 'edge-cocrdlic-carddat',   label: 'elabel-cocrdlic-carddat' },
+  'node-cocrdlic|node-cocrdslc':   { edge: 'edge-cocrdlic-cocrdslc',  label: 'elabel-cocrdlic-cocrdslc' },
+  'node-cocrdlic|node-cocrdupc':   { edge: 'edge-cocrdlic-cocrdupc',  label: 'elabel-cocrdlic-cocrdupc' }
+};
 
-  // Find which pre-defined step mentions the same programs
-  let bestStep = null;
-  let bestScore = 0;
-  for (const step of steps) {
-    let score = 0;
-    for (const nodeId of (step.nodes || [])) {
-      // Check if any program name that maps to this node appears in the text
-      for (const [pgm, nid] of Object.entries(PROGRAM_NODE_MAP)) {
-        if (nid === nodeId && text.includes(pgm)) {
-          score++;
-        }
-      }
-    }
-    if (score > bestScore) {
-      bestScore = score;
-      bestStep = step;
+// Badge hints: if a node is mentioned with a write/mutate context, show the badge
+const NODE_BADGES = {
+  'node-transact': 'badge-mutation',
+  'node-carddat':  'badge-readonly'
+};
+
+// Track which nodes have been highlighted so far in the live session
+let liveHighlightedNodes = new Set();
+
+function extractProgramNames(text) {
+  const upper = text.toUpperCase();
+  const found = [];
+  for (const pgm of Object.keys(PROGRAM_NODE_MAP)) {
+    if (upper.includes(pgm)) {
+      found.push(pgm);
     }
   }
-  return bestStep;
+  return found;
+}
+
+function highlightLiveStep(data, stepNum) {
+  // Combine all text fields from the SSE event
+  const text = [data.title, data.file, data.finding, data.code_snippet]
+    .filter(Boolean).join(' ');
+
+  const programs = extractProgramNames(text);
+  if (programs.length === 0) return false;
+
+  // Resolve node IDs for matched programs
+  const nodeIds = programs.map(p => PROGRAM_NODE_MAP[p]);
+
+  // Determine highlight style from keywords
+  let nodeClass = 'active';
+  let edgeClass = 'active';
+  const textUpper = text.toUpperCase();
+  if (/\b(WRITE|REWRITE|MUTATE|INSERT|UPDATE|DELETE|ADD)\b/.test(textUpper) &&
+      !(/\bREAD.ONLY\b/.test(textUpper))) {
+    nodeClass = 'mutation';
+    edgeClass = 'mutation';
+  } else if (/\b(BATCH|NIGHTLY|CBTRN)/.test(textUpper)) {
+    nodeClass = 'batch';
+    edgeClass = 'batch';
+  }
+
+  // Show step indicator
+  showStepIndicator(
+    data.title || `Step ${stepNum}`,
+    data.file || programs.join(' → ')
+  );
+
+  // Highlight each matched node
+  for (const nodeId of nodeIds) {
+    const g = document.getElementById(nodeId);
+    if (!g) continue;
+    const rect = g.querySelector('.node-rect');
+    const label = g.querySelector('.node-label');
+    const sublabel = g.querySelector('.node-sublabel');
+    if (rect) { rect.classList.add(nodeClass); rect.classList.add('active-pulse'); }
+    if (label) label.classList.add(nodeClass);
+    if (sublabel) sublabel.classList.add(nodeClass);
+    setTimeout(() => { if (rect) rect.classList.remove('active-pulse'); }, 2000);
+
+    // Show badge if applicable
+    if (NODE_BADGES[nodeId]) {
+      const badge = document.getElementById(NODE_BADGES[nodeId]);
+      if (badge) badge.classList.add('visible');
+    }
+
+    // Light up edges connecting previously-highlighted nodes to this one
+    for (const prevNode of liveHighlightedNodes) {
+      // Check both directions
+      const keyFwd = prevNode + '|' + nodeId;
+      const keyRev = nodeId + '|' + prevNode;
+      const adj = EDGE_ADJACENCY[keyFwd] || EDGE_ADJACENCY[keyRev];
+      if (adj) {
+        const edgeEl = document.getElementById(adj.edge);
+        const labelEl = document.getElementById(adj.label);
+        if (edgeEl) edgeEl.classList.add(edgeClass);
+        if (labelEl) labelEl.classList.add(edgeClass);
+      }
+    }
+
+    // Also light up edges between nodes in the same step
+    for (const otherNode of nodeIds) {
+      if (otherNode === nodeId) continue;
+      const key = nodeId + '|' + otherNode;
+      const adj = EDGE_ADJACENCY[key];
+      if (adj) {
+        const edgeEl = document.getElementById(adj.edge);
+        const labelEl = document.getElementById(adj.label);
+        if (edgeEl) edgeEl.classList.add(edgeClass);
+        if (labelEl) labelEl.classList.add(edgeClass);
+      }
+    }
+
+    liveHighlightedNodes.add(nodeId);
+  }
+
+  return true;
 }
 
 function showNoDiagramPopup(optNum, optName) {
@@ -1432,6 +1509,7 @@ function resetAll() {
     </div>
   `;
   selectedOption = null;
+  liveHighlightedNodes = new Set();
   // Restore edge label
   const edgeLabel = document.getElementById('elabel-terminal-comen01c');
   if (edgeLabel) edgeLabel.textContent = 'option 8';
