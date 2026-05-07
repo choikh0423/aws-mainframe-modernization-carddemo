@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Devin Live Trace: Dynamic Call Resolution</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a1a;
+    color: #e0e0e0;
+    font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    background: linear-gradient(90deg, #0d1b2a 0%, #1b2838 100%);
+    border-bottom: 1px solid #1e3a5f;
+    height: 56px;
+  }
+  header h1 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #4da6ff;
+    letter-spacing: 0.5px;
+  }
+  header h1 span { color: #00ff88; }
+  .controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .controls label {
+    font-size: 11px;
+    color: #888;
+  }
+  .controls input {
+    background: #1a1a2e;
+    border: 1px solid #333;
+    color: #e0e0e0;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 12px;
+    width: 180px;
+  }
+  button {
+    padding: 6px 16px;
+    border: none;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  #start-btn {
+    background: #00ff88;
+    color: #0a0a1a;
+  }
+  #start-btn:hover { background: #00cc6a; }
+  #start-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+  #simulate-btn {
+    background: transparent;
+    border: 1px solid #4da6ff;
+    color: #4da6ff;
+  }
+  #simulate-btn:hover { background: rgba(77,166,255,0.1); }
+  #simulate-btn:disabled { border-color: #333; color: #555; cursor: not-allowed; }
+  #reset-btn {
+    background: transparent;
+    border: 1px solid #555;
+    color: #888;
+  }
+  #reset-btn:hover { background: rgba(255,255,255,0.05); }
+
+  /* Main layout */
+  main {
+    display: flex;
+    height: calc(100vh - 56px);
+  }
+
+  /* Diagram panel */
+  #diagram-panel {
+    flex: 1;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  #call-tree {
+    width: 100%;
+    height: 100%;
+    max-width: 900px;
+    max-height: 800px;
+  }
+
+  /* Step indicator overlay */
+  #step-indicator {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.85);
+    border: 1px solid #4da6ff;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 14px;
+    color: #4da6ff;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.5s;
+    z-index: 10;
+    pointer-events: none;
+  }
+  #step-indicator.visible { opacity: 1; }
+  #step-indicator .step-num {
+    color: #00ff88;
+    font-weight: 700;
+  }
+
+  /* Event panel (right sidebar) */
+  #event-panel {
+    width: 380px;
+    background: #0d1117;
+    border-left: 1px solid #1e3a5f;
+    display: flex;
+    flex-direction: column;
+  }
+  #event-panel h3 {
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #4da6ff;
+    border-bottom: 1px solid #1e3a5f;
+    font-weight: 600;
+  }
+  #event-log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+  }
+  .log-entry {
+    padding: 8px 16px;
+    border-bottom: 1px solid #111;
+    font-size: 11px;
+    line-height: 1.5;
+    opacity: 0;
+    animation: fadeIn 0.5s forwards;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .log-entry .log-step {
+    color: #00ff88;
+    font-weight: 700;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+  }
+  .log-entry .log-file {
+    color: #ffa94d;
+    font-size: 10px;
+  }
+  .log-entry .log-msg {
+    color: #c9d1d9;
+    margin-top: 2px;
+  }
+  .log-entry .log-code {
+    background: #161b22;
+    border: 1px solid #21262d;
+    border-radius: 4px;
+    padding: 6px 8px;
+    margin-top: 4px;
+    font-size: 10px;
+    color: #8b949e;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .log-entry .log-code .kw { color: #ff7b72; }
+  .log-entry .log-code .str { color: #a5d6ff; }
+  .log-entry .log-code .resolved { color: #00ff88; font-weight: 700; }
+
+  /* SVG styles */
+  .node-rect {
+    fill: #1a1a2e;
+    stroke: #333;
+    stroke-width: 2;
+    rx: 8;
+    transition: all 0.8s ease;
+  }
+  .node-rect.active {
+    fill: #0a2e1a;
+    stroke: #00ff88;
+    stroke-width: 2.5;
+    filter: drop-shadow(0 0 8px rgba(0,255,136,0.4));
+  }
+  .node-rect.mutation {
+    fill: #2e1a0a;
+    stroke: #ff6b6b;
+    stroke-width: 2.5;
+    filter: drop-shadow(0 0 8px rgba(255,107,107,0.4));
+  }
+  .node-rect.batch {
+    fill: #1a1a2e;
+    stroke: #ffa94d;
+    stroke-width: 2.5;
+    filter: drop-shadow(0 0 8px rgba(255,169,77,0.3));
+  }
+  .node-label {
+    fill: #555;
+    font-family: 'SF Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    text-anchor: middle;
+    transition: fill 0.8s ease;
+    pointer-events: none;
+  }
+  .node-label.active { fill: #00ff88; }
+  .node-label.mutation { fill: #ff6b6b; }
+  .node-label.batch { fill: #ffa94d; }
+  .node-sublabel {
+    fill: #444;
+    font-family: 'SF Mono', monospace;
+    font-size: 9px;
+    text-anchor: middle;
+    transition: fill 0.8s ease;
+    pointer-events: none;
+  }
+  .node-sublabel.active { fill: #88ffbb; }
+  .node-sublabel.mutation { fill: #ffaaaa; }
+  .node-sublabel.batch { fill: #ffcc88; }
+  .edge-line {
+    stroke: #2a2a3e;
+    stroke-width: 2;
+    fill: none;
+    transition: all 0.8s ease;
+    marker-end: url(#arrow-gray);
+  }
+  .edge-line.active {
+    stroke: #00ff88;
+    stroke-width: 2.5;
+    marker-end: url(#arrow-green);
+    filter: drop-shadow(0 0 4px rgba(0,255,136,0.3));
+  }
+  .edge-line.mutation {
+    stroke: #ff6b6b;
+    stroke-width: 2.5;
+    marker-end: url(#arrow-red);
+    filter: drop-shadow(0 0 4px rgba(255,107,107,0.3));
+  }
+  .edge-line.batch {
+    stroke: #ffa94d;
+    stroke-width: 2.5;
+    marker-end: url(#arrow-orange);
+  }
+  .edge-label {
+    fill: #333;
+    font-family: 'SF Mono', monospace;
+    font-size: 9px;
+    text-anchor: middle;
+    transition: fill 0.8s ease;
+    pointer-events: none;
+  }
+  .edge-label.active { fill: #00ff88; }
+  .edge-label.mutation { fill: #ff6b6b; }
+  .edge-label.batch { fill: #ffa94d; }
+  .batch-line {
+    stroke: #ffa94d;
+    stroke-width: 1;
+    stroke-dasharray: 8 4;
+    opacity: 0.4;
+  }
+  .batch-label {
+    fill: #ffa94d;
+    font-family: 'SF Mono', monospace;
+    font-size: 10px;
+    text-anchor: middle;
+    opacity: 0.4;
+  }
+  .data-badge {
+    opacity: 0;
+    transition: opacity 0.8s ease;
+  }
+  .data-badge.visible { opacity: 1; }
+  .data-badge rect {
+    fill: #ff6b6b;
+    rx: 4;
+  }
+  .data-badge text {
+    fill: #fff;
+    font-family: 'SF Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    text-anchor: middle;
+  }
+
+  /* Config modal */
+  #config-modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  #config-modal.open { display: flex; }
+  .modal-content {
+    background: #1a1a2e;
+    border: 1px solid #1e3a5f;
+    border-radius: 12px;
+    padding: 24px;
+    width: 460px;
+  }
+  .modal-content h2 {
+    font-size: 16px;
+    color: #4da6ff;
+    margin-bottom: 16px;
+  }
+  .modal-content p {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+  .form-group {
+    margin-bottom: 12px;
+  }
+  .form-group label {
+    display: block;
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 4px;
+  }
+  .form-group input {
+    width: 100%;
+    background: #0a0a1a;
+    border: 1px solid #333;
+    color: #e0e0e0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 12px;
+  }
+  .form-group input:focus {
+    outline: none;
+    border-color: #4da6ff;
+  }
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    justify-content: flex-end;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #0d1117; }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+  /* Pulse animation for active node */
+  @keyframes pulse {
+    0%, 100% { filter: drop-shadow(0 0 8px rgba(0,255,136,0.4)); }
+    50% { filter: drop-shadow(0 0 16px rgba(0,255,136,0.7)); }
+  }
+  .node-rect.active-pulse {
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span>Devin</span> &mdash; Dynamic Call Resolution Live Trace</h1>
+  <div class="controls">
+    <button id="simulate-btn" onclick="startSimulation()">Simulate Demo</button>
+    <button id="start-btn" onclick="openConfig()">Start Live Trace</button>
+    <button id="reset-btn" onclick="resetAll()">Reset</button>
+  </div>
+</header>
+
+<main>
+  <div id="diagram-panel">
+    <div id="step-indicator"><span class="step-num"></span> <span class="step-text"></span></div>
+
+    <svg id="call-tree" viewBox="0 0 920 820" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow-gray" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#2a2a3e"/>
+        </marker>
+        <marker id="arrow-green" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+        </marker>
+        <marker id="arrow-red" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b6b"/>
+        </marker>
+        <marker id="arrow-orange" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#ffa94d"/>
+        </marker>
+      </defs>
+
+      <!-- ===== NODES ===== -->
+      <!-- Terminal -->
+      <g id="node-terminal">
+        <rect class="node-rect" x="370" y="15" width="180" height="48" />
+        <text class="node-label" x="460" y="43">3270 Terminal</text>
+        <text class="node-sublabel" x="460" y="55">User Input</text>
+      </g>
+
+      <!-- COMEN01C -->
+      <g id="node-comen01c">
+        <rect class="node-rect" x="180" y="110" width="180" height="48" />
+        <text class="node-label" x="270" y="138">COMEN01C</text>
+        <text class="node-sublabel" x="270" y="150">Menu Dispatch</text>
+      </g>
+
+      <!-- COMEN02Y -->
+      <g id="node-comen02y">
+        <rect class="node-rect" x="560" y="110" width="180" height="48" />
+        <text class="node-label" x="650" y="138">COMEN02Y</text>
+        <text class="node-sublabel" x="650" y="150">Menu Data Table</text>
+      </g>
+
+      <!-- COTRN02C -->
+      <g id="node-cotrn02c">
+        <rect class="node-rect" x="370" y="210" width="180" height="48" />
+        <text class="node-label" x="460" y="238">COTRN02C</text>
+        <text class="node-sublabel" x="460" y="250">Add Transaction</text>
+      </g>
+
+      <!-- CCXREF -->
+      <g id="node-ccxref">
+        <rect class="node-rect" x="60" y="330" width="160" height="48" />
+        <text class="node-label" x="140" y="358">CCXREF</text>
+        <text class="node-sublabel" x="140" y="370">Card XREF VSAM</text>
+      </g>
+
+      <!-- CXACAIX -->
+      <g id="node-cxacaix">
+        <rect class="node-rect" x="260" y="330" width="160" height="48" />
+        <text class="node-label" x="340" y="358">CXACAIX</text>
+        <text class="node-sublabel" x="340" y="370">Acct AIX VSAM</text>
+      </g>
+
+      <!-- CSUTLDTC -->
+      <g id="node-csutldtc">
+        <rect class="node-rect" x="580" y="330" width="180" height="48" />
+        <text class="node-label" x="670" y="358">CSUTLDTC</text>
+        <text class="node-sublabel" x="670" y="370">Date Validator</text>
+      </g>
+
+      <!-- CEEDAYS -->
+      <g id="node-ceedays">
+        <rect class="node-rect" x="620" y="430" width="180" height="48" />
+        <text class="node-label" x="710" y="458">CEEDAYS</text>
+        <text class="node-sublabel" x="710" y="470">IBM LE Runtime</text>
+      </g>
+
+      <!-- TRANSACT -->
+      <g id="node-transact">
+        <rect class="node-rect" x="350" y="530" width="220" height="56" />
+        <text class="node-label" x="460" y="558">TRANSACT</text>
+        <text class="node-sublabel" x="460" y="572">Transaction VSAM File</text>
+      </g>
+      <!-- Data mutation badge -->
+      <g id="badge-mutation" class="data-badge">
+        <rect x="578" y="538" width="108" height="22" />
+        <text x="632" y="553">DATA MUTATED</text>
+      </g>
+
+      <!-- Batch boundary -->
+      <line class="batch-line" x1="40" y1="618" x2="880" y2="618" />
+      <text class="batch-label" x="460" y="632">BATCH (Nightly Cycle)</text>
+
+      <!-- CBTRN02C -->
+      <g id="node-cbtrn02c">
+        <rect class="node-rect" x="370" y="660" width="180" height="48" />
+        <text class="node-label" x="460" y="688">CBTRN02C</text>
+        <text class="node-sublabel" x="460" y="700">Batch Post</text>
+      </g>
+
+      <!-- ACCOUNT -->
+      <g id="node-account">
+        <rect class="node-rect" x="180" y="760" width="180" height="48" />
+        <text class="node-label" x="270" y="788">ACCTFILE</text>
+        <text class="node-sublabel" x="270" y="800">Account Master</text>
+      </g>
+
+      <!-- TCATBAL -->
+      <g id="node-tcatbal">
+        <rect class="node-rect" x="560" y="760" width="180" height="48" />
+        <text class="node-label" x="650" y="788">TCATBALF</text>
+        <text class="node-sublabel" x="650" y="800">Category Balance</text>
+      </g>
+
+      <!-- ===== EDGES ===== -->
+      <!-- Terminal -> COMEN01C -->
+      <line id="edge-terminal-comen01c" class="edge-line" x1="420" y1="63" x2="310" y2="108" />
+      <text id="elabel-terminal-comen01c" class="edge-label" x="350" y="82">option 8</text>
+
+      <!-- COMEN01C -> COMEN02Y -->
+      <line id="edge-comen01c-comen02y" class="edge-line" x1="360" y1="134" x2="558" y2="134" />
+      <text id="elabel-comen01c-comen02y" class="edge-label" x="460" y="127">reads table</text>
+
+      <!-- COMEN01C -> COTRN02C -->
+      <line id="edge-comen01c-cotrn02c" class="edge-line" x1="310" y1="158" x2="420" y2="208" />
+      <text id="elabel-comen01c-cotrn02c" class="edge-label" x="345" y="188">XCTL + COMMAREA</text>
+
+      <!-- COTRN02C -> CCXREF -->
+      <line id="edge-cotrn02c-ccxref" class="edge-line" x1="400" y1="258" x2="180" y2="328" />
+      <text id="elabel-cotrn02c-ccxref" class="edge-label" x="270" y="288">CICS READ</text>
+
+      <!-- COTRN02C -> CXACAIX -->
+      <line id="edge-cotrn02c-cxacaix" class="edge-line" x1="430" y1="258" x2="360" y2="328" />
+      <text id="elabel-cotrn02c-cxacaix" class="edge-label" x="380" y="296">CICS READ</text>
+
+      <!-- COTRN02C -> CSUTLDTC -->
+      <line id="edge-cotrn02c-csutldtc" class="edge-line" x1="520" y1="258" x2="640" y2="328" />
+      <text id="elabel-cotrn02c-csutldtc" class="edge-label" x="600" y="288">CALL (dynamic)</text>
+
+      <!-- CSUTLDTC -> CEEDAYS -->
+      <line id="edge-csutldtc-ceedays" class="edge-line" x1="690" y1="378" x2="710" y2="428" />
+      <text id="elabel-csutldtc-ceedays" class="edge-label" x="720" y="408">CALL (chained)</text>
+
+      <!-- COTRN02C -> TRANSACT (WRITE) -->
+      <line id="edge-cotrn02c-transact" class="edge-line" x1="460" y1="258" x2="460" y2="528" />
+      <text id="elabel-cotrn02c-transact" class="edge-label" x="475" y="410">VSAM WRITE</text>
+
+      <!-- TRANSACT -> CBTRN02C (batch read) -->
+      <line id="edge-transact-cbtrn02c" class="edge-line" x1="460" y1="586" x2="460" y2="658" />
+      <text id="elabel-transact-cbtrn02c" class="edge-label" x="480" y="640">batch READ</text>
+
+      <!-- CBTRN02C -> ACCOUNT -->
+      <line id="edge-cbtrn02c-account" class="edge-line" x1="410" y1="708" x2="310" y2="758" />
+      <text id="elabel-cbtrn02c-account" class="edge-label" x="340" y="738">REWRITE</text>
+
+      <!-- CBTRN02C -> TCATBAL -->
+      <line id="edge-cbtrn02c-tcatbal" class="edge-line" x1="510" y1="708" x2="610" y2="758" />
+      <text id="elabel-cbtrn02c-tcatbal" class="edge-label" x="580" y="738">WRITE/REWRITE</text>
+    </svg>
+  </div>
+
+  <div id="event-panel">
+    <h3>Devin Trace Log</h3>
+    <div id="event-log">
+      <div style="padding: 16px; color: #555; font-size: 11px; text-align: center;">
+        Click <b>Simulate Demo</b> or <b>Start Live Trace</b> to begin
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Config Modal -->
+<div id="config-modal">
+  <div class="modal-content">
+    <h2>Configure Live Trace</h2>
+    <p>
+      Enter your Devin API credentials to create a live tracing session.
+      Devin will read through the COBOL source files and resolve dynamic calls in real-time.
+      The diagram will highlight each path as it is resolved.
+    </p>
+    <div class="form-group">
+      <label>Devin API Key (starts with cog_)</label>
+      <input type="password" id="api-key" placeholder="cog_..." />
+    </div>
+    <div class="form-group">
+      <label>Organization ID</label>
+      <input type="text" id="org-id" placeholder="org-..." />
+    </div>
+    <div class="form-group">
+      <label>Server URL (if using proxy)</label>
+      <input type="text" id="server-url" placeholder="http://localhost:8765" value="http://localhost:8765" />
+    </div>
+    <div class="modal-actions">
+      <button onclick="closeConfig()" style="background:transparent;border:1px solid #555;color:#888;">Cancel</button>
+      <button onclick="startLiveTrace()" id="start-btn" style="background:#00ff88;color:#0a0a1a;">Start Trace</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  TRACE STEPS — defines the animation sequence
+// ============================================================
+const TRACE_STEPS = [
+  {
+    id: 'step1',
+    title: 'Step 1: Menu Dispatch',
+    subtitle: 'Resolving dynamic XCTL from COMEN02Y data table',
+    nodes: ['node-terminal', 'node-comen01c', 'node-comen02y'],
+    edges: ['edge-terminal-comen01c', 'edge-comen01c-comen02y'],
+    edgeLabels: ['elabel-terminal-comen01c', 'elabel-comen01c-comen02y'],
+    nodeClass: 'active',
+    edgeClass: 'active',
+    file: 'COMEN02Y.cpy + COMEN01C.cbl',
+    message: 'Reading menu data table... Option 8 maps to program name via REDEFINES overlay.',
+    code: `10 FILLER PIC 9(02) VALUE 8.\n10 FILLER PIC X(35) VALUE\n   'Transaction Add'.\n10 FILLER PIC X(08) VALUE <span class="resolved">'COTRN02C'</span>.\n\n<span class="kw">EXEC CICS</span>\n  <span class="kw">XCTL PROGRAM</span>(CDEMO-MENU-OPT-PGMNAME(WS-OPTION))\n  COMMAREA(CARDDEMO-COMMAREA)\n<span class="kw">END-EXEC</span>`,
+    delay: 2500
+  },
+  {
+    id: 'step2',
+    title: 'Step 2: XCTL Transfer',
+    subtitle: 'Control transfers to COTRN02C via CICS XCTL + COMMAREA',
+    nodes: ['node-cotrn02c'],
+    edges: ['edge-comen01c-cotrn02c'],
+    edgeLabels: ['elabel-comen01c-cotrn02c'],
+    nodeClass: 'active',
+    edgeClass: 'active',
+    file: 'COTRN02C.cbl',
+    message: 'XCTL transfers control to COTRN02C with COMMAREA carrying user context (ID, flags, source program).',
+    code: `<span class="kw">PERFORM</span> VALIDATE-INPUT-KEY-FIELDS\n<span class="kw">PERFORM</span> VALIDATE-INPUT-DATA-FIELDS\n...\n<span class="kw">PERFORM</span> ADD-TRANSACTION`,
+    delay: 2000
+  },
+  {
+    id: 'step3',
+    title: 'Step 3: Cross-Reference Lookup',
+    subtitle: 'Variable dataset names resolved by CICS File Control Table',
+    nodes: ['node-ccxref', 'node-cxacaix'],
+    edges: ['edge-cotrn02c-ccxref', 'edge-cotrn02c-cxacaix'],
+    edgeLabels: ['elabel-cotrn02c-ccxref', 'elabel-cotrn02c-cxacaix'],
+    nodeClass: 'active',
+    edgeClass: 'active',
+    file: 'COTRN02C.cbl (lines 330-365)',
+    message: 'CICS READ with variable dataset names: WS-CCXREF-FILE and WS-CXACAIX-FILE resolved at runtime via FCT.',
+    code: `05 WS-CCXREF-FILE  PIC X(08) VALUE <span class="str">'CCXREF  '</span>.\n05 WS-CXACAIX-FILE PIC X(08) VALUE <span class="str">'CXACAIX '</span>.\n\n<span class="kw">EXEC CICS READ</span>\n  DATASET(WS-CCXREF-FILE)   <span class="resolved">&larr; FCT resolved</span>\n  INTO(CARD-XREF-RECORD)\n  RIDFLD(WS-CARD-RID-CARDNUM)\n<span class="kw">END-EXEC</span>`,
+    delay: 2500
+  },
+  {
+    id: 'step4',
+    title: 'Step 4: Dynamic CALL — Date Validation',
+    subtitle: 'OS loader resolves CSUTLDTC at runtime; positional param mapping',
+    nodes: ['node-csutldtc'],
+    edges: ['edge-cotrn02c-csutldtc'],
+    edgeLabels: ['elabel-cotrn02c-csutldtc'],
+    nodeClass: 'active',
+    edgeClass: 'active',
+    file: 'COTRN02C.cbl (line 393) + CSUTLDTC.cbl',
+    message: 'CALL \'CSUTLDTC\' — positional mapping: Param1→LS-DATE X(10), Param2→LS-DATE-FORMAT X(10), Param3→LS-RESULT X(80).',
+    code: `<span class="kw">CALL</span> <span class="str">'CSUTLDTC'</span> <span class="kw">USING</span>\n  CSUTLDTC-DATE         <span class="resolved">&rarr; LS-DATE</span>\n  CSUTLDTC-DATE-FORMAT  <span class="resolved">&rarr; LS-DATE-FORMAT</span>\n  CSUTLDTC-RESULT       <span class="resolved">&rarr; LS-RESULT</span>\n\n<span class="kw">LINKAGE SECTION.</span>\n  01 LS-DATE        PIC X(10).\n  01 LS-DATE-FORMAT PIC X(10).\n  01 LS-RESULT      PIC X(80).`,
+    delay: 3000
+  },
+  {
+    id: 'step5',
+    title: 'Step 5: Chained CALL — CEEDAYS',
+    subtitle: 'Nested dynamic CALL to IBM Language Environment runtime service',
+    nodes: ['node-ceedays'],
+    edges: ['edge-csutldtc-ceedays'],
+    edgeLabels: ['elabel-csutldtc-ceedays'],
+    nodeClass: 'active',
+    edgeClass: 'active',
+    file: 'CSUTLDTC.cbl (line 116)',
+    message: 'CSUTLDTC chains to CEEDAYS (IBM LE) — converts date to Lilian day number for validation.',
+    code: `<span class="kw">CALL</span> <span class="str">"CEEDAYS"</span> <span class="kw">USING</span>\n  WS-DATE-TO-TEST     <span class="resolved">(vstring)</span>\n  WS-DATE-FORMAT      <span class="resolved">(vstring)</span>\n  OUTPUT-LILLIAN      <span class="resolved">S9(9) BINARY</span>\n  FEEDBACK-CODE       <span class="resolved">8-byte struct</span>`,
+    delay: 2000
+  },
+  {
+    id: 'step6',
+    title: 'Step 6: DATA MUTATION',
+    subtitle: 'New transaction written to TRANSACT VSAM file',
+    nodes: ['node-transact'],
+    edges: ['edge-cotrn02c-transact'],
+    edgeLabels: ['elabel-cotrn02c-transact'],
+    nodeClass: 'mutation',
+    edgeClass: 'mutation',
+    badge: 'badge-mutation',
+    file: 'COTRN02C.cbl (lines 442-466)',
+    message: 'STARTBR→READPREV to get max ID, ADD 1, then WRITE new TRAN-RECORD. THIS IS THE DATA CHANGE.',
+    code: `<span class="kw">MOVE</span> HIGH-VALUES <span class="kw">TO</span> TRAN-ID\n<span class="kw">PERFORM</span> STARTBR-TRANSACT-FILE\n<span class="kw">PERFORM</span> READPREV-TRANSACT-FILE\n<span class="kw">ADD</span> 1 <span class="kw">TO</span> WS-TRAN-ID-N\n...\n<span class="kw">EXEC CICS WRITE</span>\n  DATASET(WS-TRANSACT-FILE)\n  FROM(<span class="resolved">TRAN-RECORD</span>)\n  RIDFLD(<span class="resolved">TRAN-ID</span>)\n<span class="kw">END-EXEC</span>`,
+    delay: 3000
+  },
+  {
+    id: 'step7',
+    title: 'Step 7: Batch Processing',
+    subtitle: 'CBTRN02C reads TRANSACT, updates ACCOUNT + TCATBAL',
+    nodes: ['node-cbtrn02c', 'node-account', 'node-tcatbal'],
+    edges: ['edge-transact-cbtrn02c', 'edge-cbtrn02c-account', 'edge-cbtrn02c-tcatbal'],
+    edgeLabels: ['elabel-transact-cbtrn02c', 'elabel-cbtrn02c-account', 'elabel-cbtrn02c-tcatbal'],
+    nodeClass: 'batch',
+    edgeClass: 'batch',
+    file: 'CBTRN02C.cbl',
+    message: 'Batch cycle reads same TRANSACT file, posts to ACCOUNT (balance update) and TCATBAL (category tracking).',
+    code: `<span class="kw">PERFORM</span> 2700-UPDATE-TCATBAL\n<span class="kw">PERFORM</span> 2800-UPDATE-ACCOUNT-REC\n\n<span class="kw">ADD</span> DALYTRAN-AMT <span class="kw">TO</span> ACCT-CURR-BAL\n<span class="kw">REWRITE</span> FD-ACCTFILE-REC\n  <span class="kw">FROM</span> <span class="resolved">ACCOUNT-RECORD</span>`,
+    delay: 2500
+  }
+];
+
+// ============================================================
+//  STATE
+// ============================================================
+let isRunning = false;
+let simulationTimer = null;
+
+// ============================================================
+//  SIMULATION MODE
+// ============================================================
+async function startSimulation() {
+  if (isRunning) return;
+  isRunning = true;
+  document.getElementById('simulate-btn').disabled = true;
+  document.getElementById('start-btn').disabled = true;
+  document.getElementById('event-log').innerHTML = '';
+
+  for (let i = 0; i < TRACE_STEPS.length; i++) {
+    if (!isRunning) break;
+    const step = TRACE_STEPS[i];
+    highlightStep(step);
+    addLogEntry(step);
+    await sleep(step.delay);
+  }
+
+  if (isRunning) {
+    showStepIndicator('Trace Complete', 'All dynamic calls resolved');
+    addCompletionEntry();
+  }
+  isRunning = false;
+  document.getElementById('simulate-btn').disabled = false;
+  document.getElementById('start-btn').disabled = false;
+}
+
+// ============================================================
+//  LIVE TRACE MODE
+// ============================================================
+function openConfig() {
+  document.getElementById('config-modal').classList.add('open');
+}
+function closeConfig() {
+  document.getElementById('config-modal').classList.remove('open');
+}
+
+async function startLiveTrace() {
+  const apiKey = document.getElementById('api-key').value.trim();
+  const orgId = document.getElementById('org-id').value.trim();
+  const serverUrl = document.getElementById('server-url').value.trim();
+
+  if (!apiKey || !orgId) {
+    alert('Please enter both API Key and Organization ID');
+    return;
+  }
+
+  closeConfig();
+  isRunning = true;
+  document.getElementById('simulate-btn').disabled = true;
+  document.getElementById('start-btn').disabled = true;
+  document.getElementById('event-log').innerHTML = '';
+  addLogEntry({
+    title: 'Connecting...',
+    file: 'Devin API',
+    message: 'Creating child Devin session to trace Add Transaction flow...',
+    code: ''
+  });
+
+  try {
+    // Connect to local proxy server via SSE
+    const evtSource = new EventSource(
+      `${serverUrl}/events?api_key=${encodeURIComponent(apiKey)}&org_id=${encodeURIComponent(orgId)}`
+    );
+
+    evtSource.onmessage = function(event) {
+      const data = JSON.parse(event.data);
+      if (data.type === 'step') {
+        const stepIdx = data.step_index;
+        if (stepIdx >= 0 && stepIdx < TRACE_STEPS.length) {
+          const step = TRACE_STEPS[stepIdx];
+          highlightStep(step);
+          addLogEntry(step);
+        }
+      } else if (data.type === 'complete') {
+        showStepIndicator('Trace Complete', 'All dynamic calls resolved');
+        addCompletionEntry();
+        evtSource.close();
+        isRunning = false;
+        document.getElementById('simulate-btn').disabled = false;
+        document.getElementById('start-btn').disabled = false;
+      } else if (data.type === 'session_created') {
+        addLogEntry({
+          title: 'Session Created',
+          file: data.session_url || '',
+          message: `Devin session started: ${data.session_id}`,
+          code: ''
+        });
+      } else if (data.type === 'reading_file') {
+        addLogEntry({
+          title: 'Reading File',
+          file: data.file,
+          message: data.message || `Devin is reading ${data.file}...`,
+          code: ''
+        });
+      }
+    };
+
+    evtSource.onerror = function(err) {
+      console.error('SSE error:', err);
+      addLogEntry({
+        title: 'Connection Error',
+        file: '',
+        message: 'Lost connection to trace server. Using simulation mode as fallback.',
+        code: ''
+      });
+      evtSource.close();
+      // Fallback to simulation
+      setTimeout(() => startSimulation(), 1000);
+    };
+  } catch (err) {
+    console.error('Failed to start live trace:', err);
+    addLogEntry({
+      title: 'Error',
+      file: '',
+      message: `Failed to connect: ${err.message}. Falling back to simulation.`,
+      code: ''
+    });
+    setTimeout(() => startSimulation(), 1000);
+  }
+}
+
+// ============================================================
+//  DIAGRAM MANIPULATION
+// ============================================================
+function highlightStep(step) {
+  // Show step indicator
+  showStepIndicator(step.title, step.subtitle);
+
+  // Highlight nodes
+  (step.nodes || []).forEach(nodeId => {
+    const g = document.getElementById(nodeId);
+    if (!g) return;
+    const rect = g.querySelector('.node-rect');
+    const label = g.querySelector('.node-label');
+    const sublabel = g.querySelector('.node-sublabel');
+    if (rect) { rect.classList.add(step.nodeClass); rect.classList.add('active-pulse'); }
+    if (label) label.classList.add(step.nodeClass);
+    if (sublabel) sublabel.classList.add(step.nodeClass);
+
+    // Remove pulse after 2s (keep the highlight)
+    setTimeout(() => { if (rect) rect.classList.remove('active-pulse'); }, 2000);
+  });
+
+  // Highlight edges
+  (step.edges || []).forEach(edgeId => {
+    const el = document.getElementById(edgeId);
+    if (el) el.classList.add(step.edgeClass);
+  });
+
+  // Highlight edge labels
+  (step.edgeLabels || []).forEach(labelId => {
+    const el = document.getElementById(labelId);
+    if (el) el.classList.add(step.edgeClass);
+  });
+
+  // Show badge if any
+  if (step.badge) {
+    const badge = document.getElementById(step.badge);
+    if (badge) badge.classList.add('visible');
+  }
+}
+
+function showStepIndicator(title, subtitle) {
+  const indicator = document.getElementById('step-indicator');
+  indicator.querySelector('.step-num').textContent = title;
+  indicator.querySelector('.step-text').textContent = subtitle ? '— ' + subtitle : '';
+  indicator.classList.add('visible');
+}
+
+function addLogEntry(step) {
+  const log = document.getElementById('event-log');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `
+    <div class="log-step">${step.title}</div>
+    ${step.file ? `<div class="log-file">${step.file}</div>` : ''}
+    <div class="log-msg">${step.message}</div>
+    ${step.code ? `<div class="log-code">${step.code}</div>` : ''}
+  `;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+}
+
+function addCompletionEntry() {
+  const log = document.getElementById('event-log');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `
+    <div class="log-step" style="color:#4da6ff;">TRACE COMPLETE</div>
+    <div class="log-msg">All 7 dynamic call resolution steps traced successfully.<br>
+    <br>
+    <b style="color:#00ff88;">Programs resolved:</b> COMEN01C &rarr; COTRN02C &rarr; CSUTLDTC &rarr; CEEDAYS &rarr; CBTRN02C<br>
+    <b style="color:#ff6b6b;">Data mutations:</b> TRANSACT (online write) &rarr; ACCOUNT + TCATBAL (batch update)<br>
+    <b style="color:#ffa94d;">Resolution mechanisms:</b> XCTL data table, CALL positional params, CICS FCT, OS loader
+    </div>
+  `;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+}
+
+// ============================================================
+//  RESET
+// ============================================================
+function resetAll() {
+  isRunning = false;
+  document.getElementById('simulate-btn').disabled = false;
+  document.getElementById('start-btn').disabled = false;
+
+  // Reset all nodes
+  document.querySelectorAll('.node-rect').forEach(el => {
+    el.className = 'node-rect';
+  });
+  document.querySelectorAll('.node-label').forEach(el => {
+    el.className = 'node-label';
+  });
+  document.querySelectorAll('.node-sublabel').forEach(el => {
+    el.className = 'node-sublabel';
+  });
+
+  // Reset all edges
+  document.querySelectorAll('.edge-line').forEach(el => {
+    el.className = 'edge-line';
+  });
+  document.querySelectorAll('.edge-label').forEach(el => {
+    el.className = 'edge-label';
+  });
+
+  // Reset badges
+  document.querySelectorAll('.data-badge').forEach(el => {
+    el.classList.remove('visible');
+  });
+
+  // Reset step indicator
+  document.getElementById('step-indicator').classList.remove('visible');
+
+  // Reset log
+  document.getElementById('event-log').innerHTML = `
+    <div style="padding: 16px; color: #555; font-size: 11px; text-align: center;">
+      Click <b>Simulate Demo</b> or <b>Start Live Trace</b> to begin
+    </div>
+  `;
+}
+
+// ============================================================
+//  UTILITY
+// ============================================================
+function sleep(ms) {
+  return new Promise(resolve => {
+    simulationTimer = setTimeout(resolve, ms);
+  });
+}
+</script>
+</body>
+</html>
