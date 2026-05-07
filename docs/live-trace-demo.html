@@ -245,6 +245,42 @@
   }
   .edge-label.active { fill: #00ff88; }
 
+  /* Decision diamond nodes */
+  .decision-node polygon {
+    fill: #1a1a2e;
+    stroke: #4da6ff;
+    stroke-width: 2;
+    transition: all 0.8s ease;
+  }
+  .decision-node polygon.active {
+    fill: #0a1a2e;
+    stroke: #00ff88;
+    stroke-width: 2.5;
+    filter: drop-shadow(0 0 8px rgba(0,255,136,0.4));
+  }
+  .decision-node text {
+    fill: #4da6ff;
+    font-family: 'SF Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    text-anchor: middle;
+    pointer-events: none;
+    transition: fill 0.8s ease;
+  }
+  .decision-node text.active { fill: #00ff88; }
+  .decision-label {
+    fill: #555;
+    font-family: 'SF Mono', monospace;
+    font-size: 8px;
+    text-anchor: middle;
+    pointer-events: none;
+    transition: fill 0.8s ease;
+  }
+  .decision-label.active { fill: #00ff88; }
+  .edge-line.dashed {
+    stroke-dasharray: 6 3;
+  }
+
   /* Scrollbar */
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: #0d1117; }
@@ -513,7 +549,7 @@
   <div id="diagram-panel">
     <div id="step-indicator"><span class="step-num"></span> <span class="step-text"></span></div>
 
-    <svg id="call-tree" viewBox="0 0 1300 820" xmlns="http://www.w3.org/2000/svg">
+    <svg id="call-tree" viewBox="0 0 1300 920" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <marker id="arrow-gray" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto">
           <polygon points="0 0, 10 3.5, 0 7" fill="#2a2a3e"/>
@@ -582,13 +618,33 @@
 
       <!-- Left tree edges -->
       <line id="edge-cotrn02c-ccxref" class="edge-line" x1="220" y1="258" x2="115" y2="338" />
-      <text id="elabel-cotrn02c-ccxref" class="edge-label" x="155" y="293">CICS READ</text>
+      <text id="elabel-cotrn02c-ccxref" class="edge-label" x="148" y="293">Card# &rarr; READ</text>
       <line id="edge-cotrn02c-cxacaix" class="edge-line" x1="260" y1="258" x2="272" y2="338" />
-      <text id="elabel-cotrn02c-cxacaix" class="edge-label" x="255" y="303">CICS READ</text>
+      <text id="elabel-cotrn02c-cxacaix" class="edge-label" x="248" y="303">Acct ID &rarr; READ</text>
       <line id="edge-cotrn02c-csutldtc" class="edge-line" x1="360" y1="258" x2="430" y2="338" />
       <text id="elabel-cotrn02c-csutldtc" class="edge-label" x="405" y="293">CALL (dynamic)</text>
       <line id="edge-csutldtc-ceedays" class="edge-line" x1="470" y1="388" x2="485" y2="438" />
       <text id="elabel-csutldtc-ceedays" class="edge-label" x="500" y="418">CALL (chained)</text>
+
+      <!-- Decision: Confirm Y/N? (after validation) -->
+      <g id="decision-confirm" class="decision-node">
+        <polygon points="485,508 510,530 485,552 460,530" />
+        <text x="485" y="534">Y/N</text>
+      </g>
+      <text id="dlabel-confirm" class="decision-label" x="530" y="535">Confirm?</text>
+
+      <!-- TRANSACT write endpoint -->
+      <g id="node-transact">
+        <rect class="node-rect" x="395" y="575" width="180" height="48" />
+        <text class="node-label" x="485" y="603">TRANSACT</text>
+        <text class="node-sublabel" x="485" y="615">VSAM WRITE</text>
+      </g>
+
+      <!-- Edges: CEEDAYS -> Confirm -> TRANSACT -->
+      <line id="edge-ceedays-confirm" class="edge-line" x1="485" y1="488" x2="485" y2="506" />
+      <text id="elabel-ceedays-confirm" class="edge-label" x="510" y="500">validated</text>
+      <line id="edge-confirm-transact" class="edge-line" x1="485" y1="552" x2="485" y2="573" />
+      <text id="elabel-confirm-transact" class="edge-label" x="520" y="567">Y &rarr; WRITE</text>
 
       <!-- ===== RIGHT TREE: Option 3 — Credit Card List ===== -->
       <text class="subtree-label" x="980" y="198">Option 3 — Credit Card List</text>
@@ -627,6 +683,54 @@
       <text id="elabel-cocrdlic-cocrdslc" class="edge-label" x="895" y="395">XCTL (select S)</text>
       <line id="edge-cocrdlic-cocrdupc" class="edge-line" x1="1020" y1="258" x2="1085" y2="498" />
       <text id="elabel-cocrdlic-cocrdupc" class="edge-label" x="1065" y="395">XCTL (select U)</text>
+
+      <!-- ===== BOTTOM: Option 10 — Bill Payment ===== -->
+      <line class="separator-line" x1="20" y1="660" x2="1280" y2="660" />
+      <text class="subtree-label" x="650" y="688">Option 10 — Bill Payment</text>
+
+      <g id="node-cobil00c">
+        <rect class="node-rect" x="540" y="710" width="180" height="48" />
+        <text class="node-label" x="630" y="738">COBIL00C</text>
+        <text class="node-sublabel" x="630" y="750">Bill Payment</text>
+      </g>
+      <text class="edge-label" x="630" y="702">XCTL from COMEN01C</text>
+
+      <!-- Decision: Balance > 0? Confirm Y/N? -->
+      <g id="decision-balance" class="decision-node">
+        <polygon points="420,790 445,812 420,834 395,812" />
+        <text x="420" y="816">?</text>
+      </g>
+      <text id="dlabel-balance" class="decision-label" x="420" y="852">Bal&gt;0 &amp; Confirm?</text>
+
+      <g id="node-acctdat">
+        <rect class="node-rect" x="220" y="800" width="155" height="48" />
+        <text class="node-label" x="297" y="828">ACCTDAT</text>
+        <text class="node-sublabel" x="297" y="840">Account VSAM</text>
+      </g>
+      <g id="badge-readwrite" class="readonly-badge">
+        <rect x="382" y="808" width="95" height="22" />
+        <text x="429" y="823">READ+REWRITE</text>
+      </g>
+
+      <g id="node-cxacaix-bp">
+        <rect class="node-rect" x="555" y="870" width="155" height="48" />
+        <text class="node-label" x="632" y="898">CXACAIX</text>
+        <text class="node-sublabel" x="632" y="910">Card XREF</text>
+      </g>
+
+      <g id="node-transact-bp">
+        <rect class="node-rect" x="760" y="870" width="155" height="48" />
+        <text class="node-label" x="837" y="898">TRANSACT</text>
+        <text class="node-sublabel" x="837" y="910">Payment WRITE</text>
+      </g>
+
+      <!-- Option 10 edges -->
+      <line id="edge-cobil00c-acctdat" class="edge-line" x1="580" y1="758" x2="340" y2="798" />
+      <text id="elabel-cobil00c-acctdat" class="edge-label" x="440" y="773">READ balance</text>
+      <line id="edge-cobil00c-cxacaix-bp" class="edge-line" x1="630" y1="758" x2="632" y2="868" />
+      <text id="elabel-cobil00c-cxacaix-bp" class="edge-label" x="655" y="818">READ card#</text>
+      <line id="edge-cobil00c-transact-bp" class="edge-line" x1="680" y1="758" x2="800" y2="868" />
+      <text id="elabel-cobil00c-transact-bp" class="edge-label" x="770" y="808">WRITE payment</text>
     </svg>
   </div>
 
@@ -810,6 +914,22 @@ const TRACE_STEPS = [
     code: `<span class="kw">CALL</span> <span class="str">"CEEDAYS"</span> <span class="kw">USING</span>\n  WS-DATE-TO-TEST     <span class="resolved">(vstring)</span>\n  WS-DATE-FORMAT      <span class="resolved">(vstring)</span>\n  OUTPUT-LILLIAN      <span class="resolved">S9(9) BINARY</span>\n  FEEDBACK-CODE       <span class="resolved">8-byte struct</span>`,
     delay: 2000
   },
+  {
+    id: 'step6',
+    title: 'Step 6: User Confirmation → TRANSACT WRITE',
+    subtitle: 'Confirm Y/N decision point — writes new transaction record',
+    nodes: ['node-transact'],
+    edges: ['edge-ceedays-confirm', 'edge-confirm-transact'],
+    edgeLabels: ['elabel-ceedays-confirm', 'elabel-confirm-transact'],
+    decisions: ['decision-confirm'],
+    decisionLabels: ['dlabel-confirm'],
+    nodeClass: 'active',
+    edgeClass: 'active',
+    file: 'COTRN02C.cbl (ADD-TRANSACTION para)',
+    message: 'After all validation passes, user confirms Y/N. If Y: STARTBR at HIGH-VALUES → READPREV (last ID) → ENDBR → increment → WRITE new record.',
+    code: `<span class="kw">IF</span> WS-RETURN-MSG-OFF = 0\n  <span class="kw">IF</span> CONFIRMI = <span class="str">'Y'</span> OR <span class="str">'y'</span>\n    <span class="kw">PERFORM</span> ADD-TRANSACTION\n  <span class="kw">ELSE</span>\n    MOVE <span class="str">'Confirm to add this transaction'</span>\n    TO WS-RETURN-MSG\n\n<span class="cmt">* ADD-TRANSACTION:</span>\n<span class="kw">EXEC CICS STARTBR</span> DATASET(WS-TRANSACT-FILE)\n  RIDFLD(<span class="resolved">HIGH-VALUES</span>) GTEQ\n<span class="kw">END-EXEC</span>\n<span class="kw">EXEC CICS READPREV</span> → last TRAN-ID\n<span class="kw">EXEC CICS WRITE</span> DATASET(WS-TRANSACT-FILE)\n  FROM(<span class="resolved">TRAN-RECORD</span>)`,
+    delay: 3000
+  },
 ];
 
 // ============================================================
@@ -876,6 +996,71 @@ const COCRDLIC_STEPS = [
 ];
 
 // ============================================================
+//  COBIL00C TRACE STEPS (Option 10 — Bill Payment)
+// ============================================================
+const COBIL00C_STEPS = [
+  {
+    id: 'bp-step1',
+    title: 'Step 1: Menu Dispatch',
+    subtitle: 'Resolving dynamic XCTL from COMEN02Y data table',
+    nodes: ['node-terminal', 'node-comen01c', 'node-comen02y'],
+    edges: ['edge-terminal-comen01c', 'edge-comen01c-comen02y'],
+    edgeLabels: ['elabel-terminal-comen01c', 'elabel-comen01c-comen02y'],
+    nodeClass: 'active',
+    edgeClass: 'active',
+    file: 'COMEN02Y.cpy',
+    message: 'Reading menu data table... Option 10 maps to COBIL00C — a completely different flow from options 3 and 8.',
+    code: `10 FILLER PIC 9(02) VALUE <span class="resolved">10</span>.\n10 FILLER PIC X(35) VALUE\n   <span class="str">'Bill Payment'</span>.\n10 FILLER PIC X(08) VALUE <span class="resolved">'COBIL00C'</span>.\n\n<span class="kw">EXEC CICS</span>\n  <span class="kw">XCTL PROGRAM</span>(CDEMO-MENU-OPT-PGMNAME(10))\n  COMMAREA(CARDDEMO-COMMAREA)\n<span class="kw">END-EXEC</span>`,
+    delay: 2500
+  },
+  {
+    id: 'bp-step2',
+    title: 'Step 2: XCTL to COBIL00C',
+    subtitle: 'Bill Payment program — pseudo-conversational CICS',
+    nodes: ['node-cobil00c'],
+    edges: [],
+    edgeLabels: [],
+    nodeClass: 'active',
+    edgeClass: 'active',
+    file: 'COBIL00C.cbl',
+    message: 'COBIL00C is a pseudo-conversational CICS program. Key difference from COTRN02C: NO CALL statements at all — all I/O is inline CICS commands.',
+    code: `<span class="kw">EXEC CICS</span>\n  <span class="kw">XCTL PROGRAM</span>(<span class="resolved">COBIL00C</span>)\n  COMMAREA(CARDDEMO-COMMAREA)\n<span class="kw">END-EXEC</span>\n\n<span class="cmt">* Key difference: NO CALL chains</span>\n<span class="cmt">* All VSAM I/O is direct CICS READ/WRITE</span>\n<span class="cmt">* Balance check + Confirm Y/N branching</span>`,
+    delay: 2000
+  },
+  {
+    id: 'bp-step3',
+    title: 'Step 3: Account Lookup + Balance Check',
+    subtitle: 'READ ACCTDAT to validate account and check balance > 0',
+    nodes: ['node-acctdat'],
+    edges: ['edge-cobil00c-acctdat'],
+    edgeLabels: ['elabel-cobil00c-acctdat'],
+    decisions: ['decision-balance'],
+    decisionLabels: ['dlabel-balance'],
+    badge: 'badge-readwrite',
+    nodeClass: 'active',
+    edgeClass: 'active',
+    file: 'COBIL00C.cbl',
+    message: 'User enters Account ID → READ ACCTDAT to get balance. If balance ≤ 0 → error. If > 0 → prompt Confirm Y/N. This is a user-input decision point.',
+    code: `<span class="kw">EXEC CICS READ</span>\n  DATASET(<span class="str">'ACCTDAT'</span>)\n  INTO(<span class="resolved">ACCOUNT-RECORD</span>)\n  RIDFLD(ACCT-ID)\n  UPDATE\n<span class="kw">END-EXEC</span>\n\n<span class="kw">IF</span> ACCT-CURR-BAL > 0\n  MOVE <span class="str">'Confirm payment (Y/N)?'</span>\n<span class="kw">ELSE</span>\n  MOVE <span class="str">'Nothing to pay'</span> TO WS-MSG`,
+    delay: 2500
+  },
+  {
+    id: 'bp-step4',
+    title: 'Step 4: Confirm → Payment Processing',
+    subtitle: 'READ CXACAIX + WRITE TRANSACT + REWRITE ACCTDAT',
+    nodes: ['node-cxacaix-bp', 'node-transact-bp'],
+    edges: ['edge-cobil00c-cxacaix-bp', 'edge-cobil00c-transact-bp'],
+    edgeLabels: ['elabel-cobil00c-cxacaix-bp', 'elabel-cobil00c-transact-bp'],
+    nodeClass: 'active',
+    edgeClass: 'active',
+    file: 'COBIL00C.cbl (PROCESS-PAYMENT)',
+    message: 'Confirm=Y triggers: READ CXACAIX (get card#) → generate new TRAN-ID via STARTBR/READPREV → WRITE TRANSACT (payment record) → REWRITE ACCTDAT (balance=0).',
+    code: `<span class="cmt">* Confirm = Y path:</span>\n<span class="kw">EXEC CICS READ</span> DATASET(<span class="str">'CXACAIX'</span>)\n  INTO(CARD-XREF-RECORD) RIDFLD(ACCT-ID)\n<span class="kw">END-EXEC</span>\n\n<span class="kw">EXEC CICS WRITE</span> DATASET(<span class="str">'TRANSACT'</span>)\n  FROM(<span class="resolved">TRAN-RECORD</span>)  <span class="cmt">&larr; payment</span>\n<span class="kw">END-EXEC</span>\n\n<span class="kw">EXEC CICS REWRITE</span> DATASET(<span class="str">'ACCTDAT'</span>)\n  FROM(<span class="resolved">ACCOUNT-RECORD</span>)  <span class="cmt">&larr; bal=0</span>\n<span class="kw">END-EXEC</span>`,
+    delay: 3000
+  }
+];
+
+// ============================================================
 //  STATE
 // ============================================================
 let isRunning = false;
@@ -913,8 +1098,20 @@ async function startSimulation(opt) {
       await sleep(TRACE_STEPS[i].delay);
     }
     if (isRunning) {
-      showStepIndicator('Trace Complete', 'All 7 dynamic call resolution steps traced');
+      showStepIndicator('Trace Complete', 'All 6 call resolution + decision steps traced');
       addCompletionEntry();
+    }
+  } else if (chosen.num === 10) {
+    // ===== OPTION 10: Full 4-step COBIL00C trace (bottom tree) =====
+    for (let i = 0; i < COBIL00C_STEPS.length; i++) {
+      if (!isRunning) break;
+      highlightStep(COBIL00C_STEPS[i]);
+      addLogEntry(COBIL00C_STEPS[i]);
+      await sleep(COBIL00C_STEPS[i].delay);
+    }
+    if (isRunning) {
+      showStepIndicator('Trace Complete', 'COBIL00C bill payment flow traced');
+      addCobil00cCompletionEntry();
     }
   } else if (chosen.num === 3) {
     // ===== OPTION 3: Full 4-step COCRDLIC trace (right tree) =====
@@ -938,11 +1135,11 @@ async function startSimulation(opt) {
     await sleep(step1.delay);
 
     if (isRunning) {
-      showStepIndicator('Trace Paused', 'Select Option 3 or 8 for full traced flows');
+      showStepIndicator('Trace Paused', 'Select Option 3, 8, or 10 for full traced flows');
       addLogEntry({
         title: 'END OF TRACE',
         file: '',
-        message: `Option ${chosen.num} resolved to ${chosen.pgm} (${chosen.name}). Try Option 3 (right tree) or Option 8 (left tree) for full traced flows.`,
+        message: `Option ${chosen.num} resolved to ${chosen.pgm} (${chosen.name}). Try Option 3 (right tree), Option 8 (left tree), or Option 10 (bottom tree) for full traced flows.`,
         code: ''
       });
     }
@@ -1101,31 +1298,49 @@ const PROGRAM_NODE_MAP = {
   'CXACAIX':  'node-cxacaix',
   'CSUTLDTC': 'node-csutldtc',
   'CEEDAYS':  'node-ceedays',
+  'TRANSACT': 'node-transact',
   'COCRDLIC': 'node-cocrdlic',
   'CARDDAT':  'node-carddat',
   'COCRDSLC': 'node-cocrdslc',
-  'COCRDUPC': 'node-cocrdupc'
+  'COCRDUPC': 'node-cocrdupc',
+  'COBIL00C': 'node-cobil00c',
+  'ACCTDAT':  'node-acctdat'
+};
+
+// For option 10 live mode, map shared file names to bill-payment-specific nodes
+const PROGRAM_NODE_MAP_BP = {
+  'COMEN01C': 'node-comen01c',
+  'COMEN02Y': 'node-comen02y',
+  'COBIL00C': 'node-cobil00c',
+  'ACCTDAT':  'node-acctdat',
+  'CXACAIX':  'node-cxacaix-bp',
+  'TRANSACT': 'node-transact-bp'
 };
 
 // Edge adjacency derived from SVG edge IDs (edge-{src}-{tgt})
 // Maps "srcNodeId|tgtNodeId" → { edgeId, labelId }
 const EDGE_ADJACENCY = {
-  'node-terminal|node-comen01c':   { edge: 'edge-terminal-comen01c',  label: 'elabel-terminal-comen01c' },
-  'node-comen01c|node-comen02y':   { edge: 'edge-comen01c-comen02y',  label: 'elabel-comen01c-comen02y' },
-  'node-comen01c|node-cotrn02c':   { edge: 'edge-comen01c-cotrn02c',  label: 'elabel-comen01c-cotrn02c' },
-  'node-cotrn02c|node-ccxref':     { edge: 'edge-cotrn02c-ccxref',    label: 'elabel-cotrn02c-ccxref' },
-  'node-cotrn02c|node-cxacaix':    { edge: 'edge-cotrn02c-cxacaix',   label: 'elabel-cotrn02c-cxacaix' },
-  'node-cotrn02c|node-csutldtc':   { edge: 'edge-cotrn02c-csutldtc',  label: 'elabel-cotrn02c-csutldtc' },
-  'node-csutldtc|node-ceedays':    { edge: 'edge-csutldtc-ceedays',   label: 'elabel-csutldtc-ceedays' },
-  'node-comen01c|node-cocrdlic':   { edge: 'edge-comen01c-cocrdlic',  label: 'elabel-comen01c-cocrdlic' },
-  'node-cocrdlic|node-carddat':    { edge: 'edge-cocrdlic-carddat',   label: 'elabel-cocrdlic-carddat' },
-  'node-cocrdlic|node-cocrdslc':   { edge: 'edge-cocrdlic-cocrdslc',  label: 'elabel-cocrdlic-cocrdslc' },
-  'node-cocrdlic|node-cocrdupc':   { edge: 'edge-cocrdlic-cocrdupc',  label: 'elabel-cocrdlic-cocrdupc' }
+  'node-terminal|node-comen01c':       { edge: 'edge-terminal-comen01c',     label: 'elabel-terminal-comen01c' },
+  'node-comen01c|node-comen02y':       { edge: 'edge-comen01c-comen02y',     label: 'elabel-comen01c-comen02y' },
+  'node-comen01c|node-cotrn02c':       { edge: 'edge-comen01c-cotrn02c',     label: 'elabel-comen01c-cotrn02c' },
+  'node-cotrn02c|node-ccxref':         { edge: 'edge-cotrn02c-ccxref',       label: 'elabel-cotrn02c-ccxref' },
+  'node-cotrn02c|node-cxacaix':        { edge: 'edge-cotrn02c-cxacaix',      label: 'elabel-cotrn02c-cxacaix' },
+  'node-cotrn02c|node-csutldtc':       { edge: 'edge-cotrn02c-csutldtc',     label: 'elabel-cotrn02c-csutldtc' },
+  'node-csutldtc|node-ceedays':        { edge: 'edge-csutldtc-ceedays',      label: 'elabel-csutldtc-ceedays' },
+  'node-ceedays|node-transact':        { edge: 'edge-confirm-transact',      label: 'elabel-confirm-transact' },
+  'node-comen01c|node-cocrdlic':       { edge: 'edge-comen01c-cocrdlic',     label: 'elabel-comen01c-cocrdlic' },
+  'node-cocrdlic|node-carddat':        { edge: 'edge-cocrdlic-carddat',      label: 'elabel-cocrdlic-carddat' },
+  'node-cocrdlic|node-cocrdslc':       { edge: 'edge-cocrdlic-cocrdslc',     label: 'elabel-cocrdlic-cocrdslc' },
+  'node-cocrdlic|node-cocrdupc':       { edge: 'edge-cocrdlic-cocrdupc',     label: 'elabel-cocrdlic-cocrdupc' },
+  'node-cobil00c|node-acctdat':        { edge: 'edge-cobil00c-acctdat',      label: 'elabel-cobil00c-acctdat' },
+  'node-cobil00c|node-cxacaix-bp':     { edge: 'edge-cobil00c-cxacaix-bp',   label: 'elabel-cobil00c-cxacaix-bp' },
+  'node-cobil00c|node-transact-bp':    { edge: 'edge-cobil00c-transact-bp',  label: 'elabel-cobil00c-transact-bp' }
 };
 
 // Badge hints: if a node is mentioned with a write/mutate context, show the badge
 const NODE_BADGES = {
-  'node-carddat':  'badge-readonly'
+  'node-carddat':  'badge-readonly',
+  'node-acctdat':  'badge-readwrite'
 };
 
 // Starting nodes that are common to ALL options (shared top section)
@@ -1157,13 +1372,24 @@ function highlightStartingNodes(optNum) {
   if (e2) e2.classList.add('active');
   if (l2) l2.classList.add('active');
 
-  showStepIndicator('Starting Trace', 'COMEN01C → Menu Dispatch');
+  // For option 10, also pre-highlight the COBIL00C node label annotation
+  if (parseInt(optNum) === 10) {
+    showStepIndicator('Starting Trace', 'COMEN01C → COBIL00C (Bill Payment)');
+  } else {
+    showStepIndicator('Starting Trace', 'COMEN01C → Menu Dispatch');
+  }
+}
+
+function getActiveNodeMap() {
+  const optNum = selectedOption ? selectedOption.num : 8;
+  return (optNum === 10) ? PROGRAM_NODE_MAP_BP : PROGRAM_NODE_MAP;
 }
 
 function extractProgramNames(text) {
   const upper = text.toUpperCase();
   const found = [];
-  for (const pgm of Object.keys(PROGRAM_NODE_MAP)) {
+  const map = getActiveNodeMap();
+  for (const pgm of Object.keys(map)) {
     if (upper.includes(pgm)) {
       found.push(pgm);
     }
@@ -1179,8 +1405,9 @@ function highlightLiveStep(data, stepNum) {
   const programs = extractProgramNames(text);
   if (programs.length === 0) return false;
 
-  // Resolve node IDs for matched programs
-  const nodeIds = programs.map(p => PROGRAM_NODE_MAP[p]);
+  // Resolve node IDs for matched programs (context-aware for option 10)
+  const map = getActiveNodeMap();
+  const nodeIds = programs.map(p => map[p]).filter(Boolean);
 
   const nodeClass = 'active';
   const edgeClass = 'active';
@@ -1207,6 +1434,27 @@ function highlightLiveStep(data, stepNum) {
     if (NODE_BADGES[nodeId]) {
       const badge = document.getElementById(NODE_BADGES[nodeId]);
       if (badge) badge.classList.add('visible');
+    }
+
+    // Light up decision diamonds when relevant nodes activate
+    if (nodeId === 'node-transact') {
+      // Confirm decision lights up when TRANSACT is reached
+      const dc = document.getElementById('decision-confirm');
+      if (dc) { const p = dc.querySelector('polygon'); const t = dc.querySelector('text'); if (p) p.classList.add('active'); if (t) t.classList.add('active'); }
+      const dl = document.getElementById('dlabel-confirm');
+      if (dl) dl.classList.add('active');
+      // Also light up the edges through the confirm diamond
+      const ec = document.getElementById('edge-ceedays-confirm');
+      const lc = document.getElementById('elabel-ceedays-confirm');
+      if (ec) ec.classList.add('active');
+      if (lc) lc.classList.add('active');
+    }
+    if (nodeId === 'node-acctdat' || nodeId === 'node-cxacaix-bp' || nodeId === 'node-transact-bp') {
+      // Balance/Confirm decision lights up for bill payment nodes
+      const db = document.getElementById('decision-balance');
+      if (db) { const p = db.querySelector('polygon'); const t = db.querySelector('text'); if (p) p.classList.add('active'); if (t) t.classList.add('active'); }
+      const dl = document.getElementById('dlabel-balance');
+      if (dl) dl.classList.add('active');
     }
 
     // Light up edges connecting previously-highlighted nodes to this one
@@ -1248,7 +1496,7 @@ function showNoDiagramPopup(optNum, optName) {
   document.getElementById('ndp-body').textContent =
     `This option's call flow is not included in the current diagram. ` +
     `Devin is still tracing it live — check the log panel on the right for results. ` +
-    `Options 3 and 8 have full diagram support.`;
+    `Options 3, 8, and 10 have full diagram support.`;
   popup.classList.add('visible');
 }
 
@@ -1291,6 +1539,20 @@ function highlightStep(step) {
     const badge = document.getElementById(step.badge);
     if (badge) badge.classList.add('visible');
   }
+
+  // Highlight decision diamonds
+  (step.decisions || []).forEach(decId => {
+    const g = document.getElementById(decId);
+    if (!g) return;
+    const poly = g.querySelector('polygon');
+    const txt = g.querySelector('text');
+    if (poly) poly.classList.add(step.nodeClass);
+    if (txt) txt.classList.add(step.nodeClass);
+  });
+  (step.decisionLabels || []).forEach(lblId => {
+    const el = document.getElementById(lblId);
+    if (el) el.classList.add(step.nodeClass);
+  });
 }
 
 function showStepIndicator(title, subtitle) {
@@ -1320,12 +1582,34 @@ function addCompletionEntry() {
   entry.className = 'log-entry';
   entry.innerHTML = `
     <div class="log-step" style="color:#4da6ff;">TRACE COMPLETE — Option 8 (Left Tree)</div>
-    <div class="log-msg">All 5 CICS call resolution steps traced successfully.<br>
+    <div class="log-msg">All 6 call resolution + decision steps traced successfully.<br>
     <br>
-    <b style="color:#00ff88;">Programs resolved:</b> COMEN01C &rarr; COTRN02C &rarr; CCXREF / CXACAIX &rarr; CSUTLDTC &rarr; CEEDAYS<br>
+    <b style="color:#00ff88;">Programs resolved:</b> COMEN01C &rarr; COTRN02C &rarr; CCXREF / CXACAIX &rarr; CSUTLDTC &rarr; CEEDAYS &rarr; TRANSACT<br>
     <b style="color:#00ff88;">Resolution mechanisms:</b> XCTL data table, CALL positional params, CICS FCT, OS loader<br>
+    <b style="color:#4da6ff;">Decision points:</b> Acct ID vs Card# (different VSAM reads), Confirm Y/N (write or loop)<br>
     <br>
-    <b style="color:#4ecdc4;">Now try Option 3</b> (Credit Card List) to see the right tree light up — a completely different flow.
+    <b style="color:#4ecdc4;">Now try Option 3</b> (Credit Card List) or <b style="color:#4ecdc4;">Option 10</b> (Bill Payment) for different flows.
+    </div>
+  `;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+}
+
+function addCobil00cCompletionEntry() {
+  const log = document.getElementById('event-log');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `
+    <div class="log-step" style="color:#ff6b9d;">TRACE COMPLETE — Option 10 (Bottom Tree)</div>
+    <div class="log-msg">All 4 COBIL00C bill payment steps traced.<br>
+    <br>
+    <b style="color:#00ff88;">Programs resolved:</b> COMEN01C &rarr; COBIL00C &rarr; ACCTDAT / CXACAIX / TRANSACT<br>
+    <b style="color:#4da6ff;">Decision points:</b> Balance &gt; 0? + Confirm Y/N (payment or error)<br>
+    <b style="color:#ff6b9d;">Data operations:</b> READ+REWRITE ACCTDAT, READ CXACAIX, WRITE TRANSACT<br>
+    <br>
+    <b>Key contrast vs Option 8:</b> COBIL00C has NO CALL statements at all — no CSUTLDTC, no CEEDAYS chain. All I/O is direct inline CICS commands. But it shares CXACAIX and TRANSACT VSAM files with COTRN02C.<br>
+    <br>
+    <b style="color:#4ecdc4;">Try Option 8</b> (Transaction Add) to see the CALL chain + input branching contrast.
     </div>
   `;
   log.appendChild(entry);
@@ -1344,7 +1628,9 @@ function addCocrdlicCompletionEntry() {
     <b style="color:#4ecdc4;">Data access:</b> CARDDAT VSAM (read-only browse)<br>
     <b style="color:#ffa94d;">Resolution:</b> XCTL data table + CCARD-NEXT-PROG variable indirection<br>
     <br>
-    <b>Key contrast:</b> Option 8 has dynamic CALL chains (CSUTLDTC &rarr; CEEDAYS). Option 3 is read-only with no CALL statements. Same XCTL dispatch, completely different runtime behavior.
+    <b>Key contrast:</b> Option 8 has dynamic CALL chains (CSUTLDTC &rarr; CEEDAYS) + user input decisions. Option 3 is read-only with no CALL statements. Same XCTL dispatch, completely different runtime behavior.<br>
+    <br>
+    <b style="color:#4ecdc4;">Also try Option 10</b> (Bill Payment) — inline CICS I/O with balance check + confirm branching.
     </div>
   `;
   log.appendChild(entry);
@@ -1381,6 +1667,17 @@ function resetAll() {
   // Reset badges
   document.querySelectorAll('.readonly-badge').forEach(el => {
     el.classList.remove('visible');
+  });
+
+  // Reset decision diamonds
+  document.querySelectorAll('.decision-node polygon').forEach(el => {
+    el.classList.remove('active');
+  });
+  document.querySelectorAll('.decision-node text').forEach(el => {
+    el.classList.remove('active');
+  });
+  document.querySelectorAll('.decision-label').forEach(el => {
+    el.classList.remove('active');
   });
 
   // Reset step indicator
