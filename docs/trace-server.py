@@ -9,13 +9,12 @@ A lightweight Python server that:
 4. Streams trace events to the frontend via SSE in real-time
 
 Usage:
-    export DEVIN_API_KEY="cog_your_key_here"
-    export DEVIN_ORG_ID="org-your_org_id"
+    export DEVIN_API_KEY="cog_your_key_here"  # org-scoped service user key
     python trace-server.py
 
     Then open http://localhost:8765 in your browser.
 
-Alternatively, pass credentials via the frontend UI (they'll be sent as query params).
+The server auto-detects the org ID from the API key via GET /v3/self.
 """
 
 import json
@@ -72,6 +71,22 @@ STRUCTURED_OUTPUT_SCHEMA = {
     },
     "required": ["trace_steps"]
 }
+
+
+# Resolved at startup by calling /v3/self
+_ORG_ID = None
+
+
+def resolve_org_id(api_key):
+    """Auto-detect org_id from an org-scoped service user key via /v3/self."""
+    resp = devin_api_request("GET", "/self", api_key)
+    org_id = resp.get("org_id")
+    if not org_id:
+        raise RuntimeError(
+            "API key is not org-scoped (org_id is null). "
+            "Please use an org-scoped service user key."
+        )
+    return org_id
 
 
 def devin_api_request(method, path, api_key, data=None):
@@ -189,12 +204,12 @@ class TraceHandler(SimpleHTTPRequestHandler):
         params = parse_qs(parsed.query)
 
         api_key = os.environ.get("DEVIN_API_KEY", "")
-        org_id = os.environ.get("DEVIN_ORG_ID", "")
+        org_id = _ORG_ID
         option_num = params.get("option", ["8"])[0]
         option_name = params.get("option_name", ["Add Transaction"])[0]
 
         if not api_key or not org_id:
-            self.send_error(500, "Server missing DEVIN_API_KEY or DEVIN_ORG_ID environment variables")
+            self.send_error(500, "Server not configured — restart with DEVIN_API_KEY set")
             return
 
         # Build the user question based on the selected menu option
@@ -461,7 +476,23 @@ LANDING_HTML = """
 
 
 def main():
+    global _ORG_ID
     port = int(os.environ.get("PORT", 8765))
+
+    api_key = os.environ.get("DEVIN_API_KEY", "")
+    if not api_key:
+        print("ERROR: DEVIN_API_KEY environment variable is not set.")
+        print("       Use an org-scoped service user key (starts with cog_).")
+        return
+
+    print("Resolving org ID from API key...")
+    try:
+        _ORG_ID = resolve_org_id(api_key)
+        print(f"  Org ID: {_ORG_ID}")
+    except Exception as e:
+        print(f"ERROR: Could not resolve org ID: {e}")
+        return
+
     server = HTTPServer(("0.0.0.0", port), TraceHandler)
     print(f"""
 +==============================================================+
@@ -476,9 +507,7 @@ def main():
 |  Playbook: Live COBOL Flow Trace                             |
 |    {PLAYBOOK_ID}                                             |
 |                                                              |
-|  Configuration (required env vars):                          |
-|    DEVIN_API_KEY  = {os.environ.get('DEVIN_API_KEY', '(not set)')[:20]}...  |
-|    DEVIN_ORG_ID   = {os.environ.get('DEVIN_ORG_ID', '(not set)')[:20]}...  |
+|  Org ID (auto-detected): {_ORG_ID}                           |
 |                                                              |
 |  Press Ctrl+C to stop                                        |
 +==============================================================+
