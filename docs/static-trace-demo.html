@@ -499,6 +499,32 @@
     animation: termBlink 0.6s step-end infinite;
     vertical-align: middle;
   }
+  /* Subtree labels & separator */
+  .subtree-label {
+    fill: #4a4a6a;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    text-anchor: middle;
+    letter-spacing: 0.5px;
+  }
+  .separator-line {
+    stroke: #1a1a2e;
+    stroke-width: 1;
+    stroke-dasharray: 6,6;
+  }
+  .readonly-badge { display: none; }
+  .readonly-badge.visible rect {
+    fill: #4ecdc4;
+    rx: 4; ry: 4;
+  }
+  .readonly-badge.visible text {
+    fill: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    text-anchor: middle;
+  }
 </style>
 </head>
 <body>
@@ -539,7 +565,7 @@
   <div id="diagram-panel">
     <div id="step-indicator"><span class="step-num"></span> <span class="step-text"></span></div>
 
-    <svg id="call-tree" viewBox="0 0 920 820" xmlns="http://www.w3.org/2000/svg">
+    <svg id="call-tree" viewBox="0 0 1300 820" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <marker id="arrow-gray" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto">
           <polygon points="0 0, 10 3.5, 0 7" fill="#2a2a3e"/>
@@ -555,97 +581,144 @@
         </marker>
       </defs>
 
-      <!-- NODES -->
+      <!-- ===== SHARED TOP SECTION ===== -->
       <g id="node-terminal">
-        <rect class="node-rect" x="370" y="15" width="180" height="48" />
-        <text class="node-label" x="460" y="43">3270 Terminal</text>
-        <text class="node-sublabel" x="460" y="55">User Input</text>
+        <rect class="node-rect" x="560" y="15" width="180" height="48" />
+        <text class="node-label" x="650" y="43">3270 Terminal</text>
+        <text class="node-sublabel" x="650" y="55">User Input</text>
       </g>
       <g id="node-comen01c">
-        <rect class="node-rect" x="180" y="110" width="180" height="48" />
-        <text class="node-label" x="270" y="138">COMEN01C</text>
-        <text class="node-sublabel" x="270" y="150">Menu Dispatch</text>
+        <rect class="node-rect" x="370" y="110" width="180" height="48" />
+        <text class="node-label" x="460" y="138">COMEN01C</text>
+        <text class="node-sublabel" x="460" y="150">Menu Dispatch</text>
       </g>
       <g id="node-comen02y">
-        <rect class="node-rect" x="560" y="110" width="180" height="48" />
-        <text class="node-label" x="650" y="138">COMEN02Y</text>
-        <text class="node-sublabel" x="650" y="150">Menu Data Table</text>
-      </g>
-      <g id="node-cotrn02c">
-        <rect class="node-rect" x="370" y="210" width="180" height="48" />
-        <text class="node-label" x="460" y="238">COTRN02C</text>
-        <text class="node-sublabel" x="460" y="250">Add Transaction</text>
-      </g>
-      <g id="node-ccxref">
-        <rect class="node-rect" x="60" y="330" width="160" height="48" />
-        <text class="node-label" x="140" y="358">CCXREF</text>
-        <text class="node-sublabel" x="140" y="370">Card XREF VSAM</text>
-      </g>
-      <g id="node-cxacaix">
-        <rect class="node-rect" x="260" y="330" width="160" height="48" />
-        <text class="node-label" x="340" y="358">CXACAIX</text>
-        <text class="node-sublabel" x="340" y="370">Acct AIX VSAM</text>
-      </g>
-      <g id="node-csutldtc">
-        <rect class="node-rect" x="580" y="330" width="180" height="48" />
-        <text class="node-label" x="670" y="358">CSUTLDTC</text>
-        <text class="node-sublabel" x="670" y="370">Date Validator</text>
-      </g>
-      <g id="node-ceedays">
-        <rect class="node-rect" x="620" y="430" width="180" height="48" />
-        <text class="node-label" x="710" y="458">CEEDAYS</text>
-        <text class="node-sublabel" x="710" y="470">IBM LE Runtime</text>
-      </g>
-      <g id="node-transact">
-        <rect class="node-rect" x="350" y="530" width="220" height="56" />
-        <text class="node-label" x="460" y="558">TRANSACT</text>
-        <text class="node-sublabel" x="460" y="572">Transaction VSAM File</text>
-      </g>
-      <g id="badge-mutation" class="data-badge">
-        <rect x="578" y="538" width="108" height="22" />
-        <text x="632" y="553">DATA MUTATED</text>
-      </g>
-      <line class="batch-line" x1="40" y1="618" x2="880" y2="618" />
-      <text class="batch-label" x="460" y="632">BATCH (Nightly Cycle)</text>
-      <g id="node-cbtrn02c">
-        <rect class="node-rect" x="370" y="660" width="180" height="48" />
-        <text class="node-label" x="460" y="688">CBTRN02C</text>
-        <text class="node-sublabel" x="460" y="700">Batch Post</text>
-      </g>
-      <g id="node-account">
-        <rect class="node-rect" x="180" y="760" width="180" height="48" />
-        <text class="node-label" x="270" y="788">ACCTFILE</text>
-        <text class="node-sublabel" x="270" y="800">Account Master</text>
-      </g>
-      <g id="node-tcatbal">
-        <rect class="node-rect" x="560" y="760" width="180" height="48" />
-        <text class="node-label" x="650" y="788">TCATBALF</text>
-        <text class="node-sublabel" x="650" y="800">Category Balance</text>
+        <rect class="node-rect" x="730" y="110" width="180" height="48" />
+        <text class="node-label" x="820" y="138">COMEN02Y</text>
+        <text class="node-sublabel" x="820" y="150">Menu Data Table</text>
       </g>
 
-      <!-- EDGES -->
-      <line id="edge-terminal-comen01c" class="edge-line" x1="420" y1="63" x2="310" y2="108" />
-      <text id="elabel-terminal-comen01c" class="edge-label" x="350" y="82">option 8</text>
-      <line id="edge-comen01c-comen02y" class="edge-line" x1="360" y1="134" x2="558" y2="134" />
-      <text id="elabel-comen01c-comen02y" class="edge-label" x="460" y="127">reads table</text>
-      <line id="edge-comen01c-cotrn02c" class="edge-line" x1="310" y1="158" x2="420" y2="208" />
-      <text id="elabel-comen01c-cotrn02c" class="edge-label" x="345" y="188">XCTL + COMMAREA</text>
-      <line id="edge-cotrn02c-ccxref" class="edge-line" x1="400" y1="258" x2="180" y2="328" />
-      <text id="elabel-cotrn02c-ccxref" class="edge-label" x="270" y="288">CICS READ</text>
-      <line id="edge-cotrn02c-cxacaix" class="edge-line" x1="430" y1="258" x2="360" y2="328" />
-      <text id="elabel-cotrn02c-cxacaix" class="edge-label" x="380" y="296">CICS READ</text>
-      <line id="edge-cotrn02c-csutldtc" class="edge-line" x1="520" y1="258" x2="640" y2="328" />
-      <text id="elabel-cotrn02c-csutldtc" class="edge-label" x="600" y="288">CALL (dynamic)</text>
-      <line id="edge-csutldtc-ceedays" class="edge-line" x1="690" y1="378" x2="710" y2="428" />
-      <text id="elabel-csutldtc-ceedays" class="edge-label" x="720" y="408">CALL (chained)</text>
-      <line id="edge-cotrn02c-transact" class="edge-line" x1="460" y1="258" x2="460" y2="528" />
-      <text id="elabel-cotrn02c-transact" class="edge-label" x="475" y="410">VSAM WRITE</text>
-      <line id="edge-transact-cbtrn02c" class="edge-line" x1="460" y1="586" x2="460" y2="658" />
-      <text id="elabel-transact-cbtrn02c" class="edge-label" x="480" y="640">batch READ</text>
-      <line id="edge-cbtrn02c-account" class="edge-line" x1="410" y1="708" x2="310" y2="758" />
-      <text id="elabel-cbtrn02c-account" class="edge-label" x="340" y="738">REWRITE</text>
-      <line id="edge-cbtrn02c-tcatbal" class="edge-line" x1="510" y1="708" x2="610" y2="758" />
-      <text id="elabel-cbtrn02c-tcatbal" class="edge-label" x="580" y="738">WRITE/REWRITE</text>
+      <!-- Shared edges -->
+      <line id="edge-terminal-comen01c" class="edge-line" x1="610" y1="63" x2="500" y2="108" />
+      <text id="elabel-terminal-comen01c" class="edge-label" x="540" y="82">option 8</text>
+      <line id="edge-comen01c-comen02y" class="edge-line" x1="550" y1="134" x2="728" y2="134" />
+      <text id="elabel-comen01c-comen02y" class="edge-label" x="640" y="127">reads table</text>
+
+      <!-- ===== VERTICAL SEPARATOR ===== -->
+      <line class="separator-line" x1="630" y1="195" x2="630" y2="810" />
+
+      <!-- ===== LEFT TREE: Option 8 — Transaction Add ===== -->
+      <text class="subtree-label" x="280" y="198">Option 8 — Transaction Add</text>
+      <line id="edge-comen01c-cotrn02c" class="edge-line" x1="420" y1="158" x2="320" y2="208" />
+      <text id="elabel-comen01c-cotrn02c" class="edge-label" x="350" y="188">XCTL</text>
+
+      <g id="node-cotrn02c">
+        <rect class="node-rect" x="190" y="210" width="180" height="48" />
+        <text class="node-label" x="280" y="238">COTRN02C</text>
+        <text class="node-sublabel" x="280" y="250">Add Transaction</text>
+      </g>
+      <g id="node-ccxref">
+        <rect class="node-rect" x="20" y="340" width="155" height="48" />
+        <text class="node-label" x="97" y="368">CCXREF</text>
+        <text class="node-sublabel" x="97" y="380">Card XREF VSAM</text>
+      </g>
+      <g id="node-cxacaix">
+        <rect class="node-rect" x="195" y="340" width="155" height="48" />
+        <text class="node-label" x="272" y="368">CXACAIX</text>
+        <text class="node-sublabel" x="272" y="380">Acct AIX VSAM</text>
+      </g>
+      <g id="node-csutldtc">
+        <rect class="node-rect" x="375" y="340" width="160" height="48" />
+        <text class="node-label" x="455" y="368">CSUTLDTC</text>
+        <text class="node-sublabel" x="455" y="380">Date Validator</text>
+      </g>
+      <g id="node-ceedays">
+        <rect class="node-rect" x="405" y="440" width="160" height="48" />
+        <text class="node-label" x="485" y="468">CEEDAYS</text>
+        <text class="node-sublabel" x="485" y="480">IBM LE Runtime</text>
+      </g>
+      <g id="node-transact">
+        <rect class="node-rect" x="170" y="540" width="200" height="56" />
+        <text class="node-label" x="270" y="568">TRANSACT</text>
+        <text class="node-sublabel" x="270" y="582">Transaction VSAM File</text>
+      </g>
+      <g id="badge-mutation" class="data-badge">
+        <rect x="378" y="548" width="108" height="22" />
+        <text x="432" y="563">DATA MUTATED</text>
+      </g>
+      <line class="batch-line" x1="20" y1="628" x2="580" y2="628" />
+      <text class="batch-label" x="300" y="642">BATCH (Nightly Cycle)</text>
+      <g id="node-cbtrn02c">
+        <rect class="node-rect" x="190" y="670" width="180" height="48" />
+        <text class="node-label" x="280" y="698">CBTRN02C</text>
+        <text class="node-sublabel" x="280" y="710">Batch Post</text>
+      </g>
+      <g id="node-account">
+        <rect class="node-rect" x="50" y="760" width="170" height="48" />
+        <text class="node-label" x="135" y="788">ACCTFILE</text>
+        <text class="node-sublabel" x="135" y="800">Account Master</text>
+      </g>
+      <g id="node-tcatbal">
+        <rect class="node-rect" x="310" y="760" width="170" height="48" />
+        <text class="node-label" x="395" y="788">TCATBALF</text>
+        <text class="node-sublabel" x="395" y="800">Category Balance</text>
+      </g>
+
+      <!-- Left tree edges -->
+      <line id="edge-cotrn02c-ccxref" class="edge-line" x1="220" y1="258" x2="115" y2="338" />
+      <text id="elabel-cotrn02c-ccxref" class="edge-label" x="155" y="293">CICS READ</text>
+      <line id="edge-cotrn02c-cxacaix" class="edge-line" x1="260" y1="258" x2="272" y2="338" />
+      <text id="elabel-cotrn02c-cxacaix" class="edge-label" x="255" y="303">CICS READ</text>
+      <line id="edge-cotrn02c-csutldtc" class="edge-line" x1="360" y1="258" x2="430" y2="338" />
+      <text id="elabel-cotrn02c-csutldtc" class="edge-label" x="405" y="293">CALL (dynamic)</text>
+      <line id="edge-csutldtc-ceedays" class="edge-line" x1="470" y1="388" x2="485" y2="438" />
+      <text id="elabel-csutldtc-ceedays" class="edge-label" x="500" y="418">CALL (chained)</text>
+      <line id="edge-cotrn02c-transact" class="edge-line" x1="280" y1="258" x2="270" y2="538" />
+      <text id="elabel-cotrn02c-transact" class="edge-label" x="295" y="420">VSAM WRITE</text>
+      <line id="edge-transact-cbtrn02c" class="edge-line" x1="270" y1="596" x2="280" y2="668" />
+      <text id="elabel-transact-cbtrn02c" class="edge-label" x="295" y="648">batch READ</text>
+      <line id="edge-cbtrn02c-account" class="edge-line" x1="230" y1="718" x2="170" y2="758" />
+      <text id="elabel-cbtrn02c-account" class="edge-label" x="185" y="742">REWRITE</text>
+      <line id="edge-cbtrn02c-tcatbal" class="edge-line" x1="330" y1="718" x2="380" y2="758" />
+      <text id="elabel-cbtrn02c-tcatbal" class="edge-label" x="370" y="742">WRITE/REWRITE</text>
+
+      <!-- ===== RIGHT TREE: Option 3 — Credit Card List ===== -->
+      <text class="subtree-label" x="980" y="198">Option 3 — Credit Card List</text>
+      <line id="edge-comen01c-cocrdlic" class="edge-line" x1="540" y1="158" x2="940" y2="208" />
+      <text id="elabel-comen01c-cocrdlic" class="edge-label" x="730" y="178">XCTL</text>
+
+      <g id="node-cocrdlic">
+        <rect class="node-rect" x="890" y="210" width="180" height="48" />
+        <text class="node-label" x="980" y="238">COCRDLIC</text>
+        <text class="node-sublabel" x="980" y="250">Credit Card List</text>
+      </g>
+      <g id="node-carddat">
+        <rect class="node-rect" x="890" y="360" width="180" height="48" />
+        <text class="node-label" x="980" y="388">CARDDAT</text>
+        <text class="node-sublabel" x="980" y="400">Card Data VSAM</text>
+      </g>
+      <g id="badge-readonly" class="readonly-badge">
+        <rect x="1078" y="368" width="95" height="22" />
+        <text x="1125" y="383">READ ONLY</text>
+      </g>
+      <g id="node-cocrdslc">
+        <rect class="node-rect" x="790" y="500" width="170" height="48" />
+        <text class="node-label" x="875" y="528">COCRDSLC</text>
+        <text class="node-sublabel" x="875" y="540">Card Detail View</text>
+      </g>
+      <g id="node-cocrdupc">
+        <rect class="node-rect" x="1000" y="500" width="170" height="48" />
+        <text class="node-label" x="1085" y="528">COCRDUPC</text>
+        <text class="node-sublabel" x="1085" y="540">Card Update</text>
+      </g>
+
+      <!-- Right tree edges -->
+      <line id="edge-cocrdlic-carddat" class="edge-line" x1="980" y1="258" x2="980" y2="358" />
+      <text id="elabel-cocrdlic-carddat" class="edge-label" x="1010" y="315">VSAM BROWSE</text>
+      <line id="edge-cocrdlic-cocrdslc" class="edge-line" x1="940" y1="258" x2="875" y2="498" />
+      <text id="elabel-cocrdlic-cocrdslc" class="edge-label" x="895" y="395">XCTL (select S)</text>
+      <line id="edge-cocrdlic-cocrdupc" class="edge-line" x1="1020" y1="258" x2="1085" y2="498" />
+      <text id="elabel-cocrdlic-cocrdupc" class="edge-label" x="1065" y="395">XCTL (select U)</text>
     </svg>
   </div>
 
@@ -939,6 +1012,117 @@ This completes the full data lineage: <b>online WRITE &rarr; batch READ &rarr; a
 ];
 
 // ============================================================
+//  COCRDLIC TRACE (Option 3 — Credit Card List)
+// ============================================================
+const COCRDLIC_TRACE = [
+  {
+    title: 'Step 1: Menu Dispatch',
+    subtitle: 'Resolving dynamic XCTL from COMEN02Y data table',
+    nodes: ['node-terminal', 'node-comen01c', 'node-comen02y'],
+    edges: ['edge-terminal-comen01c', 'edge-comen01c-comen02y'],
+    edgeLabels: ['elabel-terminal-comen01c', 'elabel-comen01c-comen02y'],
+    nodeClass: 'active',
+    edgeClass: 'active',
+    file: 'app/cpy/COMEN02Y.cpy (lines 37-39)',
+    badge: null,
+    devinResponse: `<div class="devin-label">Devin reading COMEN02Y.cpy</div>
+I found the menu data table at <code>app/cpy/COMEN02Y.cpy</code>. The structure uses a <code>REDEFINES</code> overlay to map option numbers to program names.
+
+For option 3 (Credit Card List):
+<div class="cobol-block"><span class="cmt">* COMEN02Y.cpy &mdash; option 3:</span>
+10 FILLER  PIC 9(02) VALUE <span class="resolved">3</span>.
+10 FILLER  PIC X(35) VALUE
+    <span class="str">'Credit Card List'</span>.
+10 FILLER  PIC X(08) VALUE <span class="resolved">'COCRDLIC'</span>.</div>
+The menu dispatch resolves option 3 to <code>COCRDLIC</code> &mdash; a <b>completely different program</b> than option 8's <code>COTRN02C</code>. Same XCTL instruction, different runtime target.`,
+    delay: 4000
+  },
+  {
+    title: 'Step 2: XCTL to COCRDLIC',
+    subtitle: 'Control transfers to Credit Card List program + COMMAREA',
+    nodes: ['node-cocrdlic'],
+    edges: ['edge-comen01c-cocrdlic'],
+    edgeLabels: ['elabel-comen01c-cocrdlic'],
+    nodeClass: 'active',
+    edgeClass: 'active',
+    file: 'app/cbl/COCRDLIC.cbl',
+    badge: null,
+    devinResponse: `<div class="devin-label">Devin reading COCRDLIC.cbl</div>
+COCRDLIC is a <b>pseudo-conversational CICS program</b> that lists credit cards with pagination. It follows the standard SEND-then-RETURN pattern:
+<div class="cobol-block"><span class="kw">EXEC CICS</span>
+    <span class="kw">XCTL PROGRAM</span>(CDEMO-MENU-OPT-PGMNAME(<span class="resolved">3</span>))
+    <span class="cmt">&larr; resolves to 'COCRDLIC'</span>
+    <span class="kw">COMMAREA</span>(CARDDEMO-COMMAREA)
+<span class="kw">END-EXEC</span></div>
+COCRDLIC receives the shared <code>CARDDEMO-COMMAREA</code> (COCOM01Y.cpy) plus its own extension <code>WS-THIS-PROGCOMMAREA</code> for pagination state.
+
+<b>Key difference from COTRN02C:</b> COCRDLIC has <b>no CALL statements</b> &mdash; all transfers use XCTL. And it only <b>reads</b> data, never writes.`,
+    delay: 4000
+  },
+  {
+    title: 'Step 3: CARDDAT Browse',
+    subtitle: 'VSAM STARTBR/READNEXT/ENDBR &mdash; read-only paginated browse',
+    nodes: ['node-carddat'],
+    edges: ['edge-cocrdlic-carddat'],
+    edgeLabels: ['elabel-cocrdlic-carddat'],
+    nodeClass: 'active',
+    edgeClass: 'active',
+    file: 'app/cbl/COCRDLIC.cbl (9000-READ-FORWARD)',
+    badge: 'badge-readonly',
+    devinResponse: `<div class="devin-label">Devin reading COCRDLIC.cbl &mdash; browse logic</div>
+COCRDLIC browses the CARDDAT VSAM file to list credit cards with pagination:
+<div class="cobol-block"><span class="cmt">* 9000-READ-FORWARD:</span>
+<span class="kw">EXEC CICS STARTBR</span>
+    DATASET(<span class="resolved">LIT-CARD-FILE</span>)   <span class="cmt">&larr; 'CARDDAT'</span>
+    RIDFLD(WS-CARD-RID-CARDNUM)
+    GTEQ
+<span class="kw">END-EXEC</span>
+
+<span class="cmt">* Loop: READNEXT up to 7 rows</span>
+<span class="kw">EXEC CICS READNEXT</span>
+    DATASET(<span class="resolved">LIT-CARD-FILE</span>)
+    INTO(<span class="resolved">CARD-RECORD</span>)  <span class="cmt">&larr; CVACT02Y (150 bytes)</span>
+    RIDFLD(WS-CARD-RID-CARDNUM)
+<span class="kw">END-EXEC</span>
+
+<span class="cmt">* Peek-ahead + ENDBR to detect next page</span>
+<span class="kw">EXEC CICS ENDBR</span> DATASET(LIT-CARD-FILE)
+<span class="kw">END-EXEC</span></div>
+<b>Contrast with COTRN02C:</b> COCRDLIC is <b>read-only</b> &mdash; it only browses CARDDAT using STARTBR/READNEXT/READPREV/ENDBR. It never writes, rewrites, or deletes records. COTRN02C writes to TRANSACT. Different programs, different data access patterns.`,
+    delay: 4500
+  },
+  {
+    title: 'Step 4: Downstream Navigation',
+    subtitle: 'Dynamic XCTL to detail view (S) or update (U) via CCARD-NEXT-PROG',
+    nodes: ['node-cocrdslc', 'node-cocrdupc'],
+    edges: ['edge-cocrdlic-cocrdslc', 'edge-cocrdlic-cocrdupc'],
+    edgeLabels: ['elabel-cocrdlic-cocrdslc', 'elabel-cocrdlic-cocrdupc'],
+    nodeClass: 'active',
+    edgeClass: 'active',
+    file: 'app/cbl/COCRDLIC.cbl + app/cpy/CVCRD01Y.cpy',
+    badge: null,
+    devinResponse: `<div class="devin-label">Devin reading COCRDLIC.cbl &mdash; downstream transfers</div>
+When the user selects a card row, COCRDLIC transfers control via another dynamic XCTL:
+<div class="cobol-block"><span class="cmt">* User types 'S' next to a row:</span>
+<span class="kw">MOVE</span> LIT-CARDDTLPGM <span class="kw">TO</span> CCARD-NEXT-PROG
+<span class="cmt">&larr; LIT-CARDDTLPGM = 'COCRDSLC'</span>
+
+<span class="cmt">* User types 'U' next to a row:</span>
+<span class="kw">MOVE</span> LIT-CARDUPDPGM <span class="kw">TO</span> CCARD-NEXT-PROG
+<span class="cmt">&larr; LIT-CARDUPDPGM = 'COCRDUPC'</span>
+
+<span class="kw">EXEC CICS</span>
+    <span class="kw">XCTL PROGRAM</span>(<span class="resolved">CCARD-NEXT-PROG</span>)
+    COMMAREA(WS-COMMAREA)
+<span class="kw">END-EXEC</span></div>
+The variable <code>CCARD-NEXT-PROG</code> (from copybook CVCRD01Y.cpy) acts as another indirection point &mdash; the XCTL target depends on what the user typed ('S' or 'U'). This is <b>yet another layer of dynamic call resolution</b>.
+
+<b>Full chain:</b> Menu option &rarr; COCRDLIC &rarr; user selection &rarr; COCRDSLC or COCRDUPC. Every link resolved at runtime.`,
+    delay: 4000
+  }
+];
+
+// ============================================================
 //  STATE
 // ============================================================
 let isRunning = false;
@@ -966,95 +1150,67 @@ async function startReplay(opt) {
 
   await sleep(1500);
 
-  // Step 1: Menu Dispatch — dynamically show the selected option's resolution
-  const step1 = {
-    ...STATIC_TRACE[0],
-    devinResponse: `<div class="devin-label">Devin reading COMEN02Y.cpy</div>
+  if (chosen.num === 8) {
+    // ===== OPTION 8: Full 7-step trace (left tree) =====
+    for (let i = 0; i < STATIC_TRACE.length; i++) {
+      if (!isRunning) break;
+      highlightStep(STATIC_TRACE[i]);
+      addLogEntry(STATIC_TRACE[i]);
+      await sleep(STATIC_TRACE[i].delay);
+    }
+    if (isRunning) {
+      showStepIndicator('Trace Complete', 'All 7 dynamic call resolution steps traced');
+      addCompletionEntry();
+    }
+  } else if (chosen.num === 3) {
+    // ===== OPTION 3: Full 4-step COCRDLIC trace (right tree) =====
+    for (let i = 0; i < COCRDLIC_TRACE.length; i++) {
+      if (!isRunning) break;
+      highlightStep(COCRDLIC_TRACE[i]);
+      addLogEntry(COCRDLIC_TRACE[i]);
+      await sleep(COCRDLIC_TRACE[i].delay);
+    }
+    if (isRunning) {
+      showStepIndicator('Trace Complete', 'COCRDLIC flow traced — compare with Option 8');
+      addCocrdlicCompletionEntry();
+    }
+  } else {
+    // ===== OTHER OPTIONS: partial 2-step trace =====
+    // Step 1: Menu dispatch (shared)
+    const step1 = {
+      ...STATIC_TRACE[0],
+      devinResponse: `<div class="devin-label">Devin reading COMEN02Y.cpy</div>
 I found the menu data table at <code>app/cpy/COMEN02Y.cpy</code>. The structure uses a <code>REDEFINES</code> overlay to map option numbers to program names.
 
 For option ${chosen.num} (${chosen.name}):
-<div class="cobol-block"><span class="cmt">* COMEN02Y.cpy — option ${chosen.num}:</span>
+<div class="cobol-block"><span class="cmt">* COMEN02Y.cpy &mdash; option ${chosen.num}:</span>
 10 FILLER  PIC 9(02) VALUE <span class="resolved">${chosen.num}</span>.
 10 FILLER  PIC X(35) VALUE
     <span class="str">'${chosen.name}'</span>.
 10 FILLER  PIC X(08) VALUE <span class="resolved">'${chosen.pgm}'</span>.</div>
-The menu dispatch program <code>COMEN01C</code> reads the user's selection, indexes into this table via the <code>REDEFINES</code> overlay <code>CDEMO-MENU-OPT-PGMNAME(${chosen.num})</code>, and uses CICS XCTL to transfer control to <b>${chosen.pgm}</b>.${chosen.num !== 8 ? '\n\n<b style="color:#ffa94d;">Note:</b> This is a different program than option 8 (COTRN02C). The XCTL target changes entirely based on user input — this is what makes it a <b>dynamic call</b>.' : ''}`
-  };
-  highlightStep(step1);
-  addLogEntry(step1);
-  await sleep(step1.delay);
+The menu dispatch resolves option ${chosen.num} to <code>${chosen.pgm}</code>.
 
-  if (chosen.num === 8) {
-    // Full trace for option 8 (Transaction Add)
-    // Update COTRN02C node sublabel
-    for (let i = 1; i < STATIC_TRACE.length; i++) {
-      if (!isRunning) break;
-      const step = STATIC_TRACE[i];
-      highlightStep(step);
-      addLogEntry(step);
-      await sleep(step.delay);
-    }
-    if (isRunning) {
-      showStepIndicator('Trace Complete', 'All dynamic calls resolved');
-      addCompletionEntry();
-    }
-  } else {
-    // For non-option-8: show XCTL transfer to different program, then prompt
-    if (!isRunning) { isRunning = false; document.getElementById('play-btn').disabled = false; return; }
-
-    const step2alt = {
-      title: 'Step 2: XCTL Transfer',
-      subtitle: `Control transfers to ${chosen.pgm} via CICS XCTL + COMMAREA`,
-      nodes: ['node-cotrn02c'],
-      edges: ['edge-comen01c-cotrn02c'],
-      edgeLabels: ['elabel-comen01c-cotrn02c'],
-      nodeClass: 'active',
-      edgeClass: 'active',
-      file: `app/cbl/${chosen.pgm}.cbl`,
-      badge: null,
-      devinResponse: `<div class="devin-label">Devin resolving XCTL target</div>
-COMEN01C transfers control to <b>${chosen.pgm}</b> (${chosen.name}) via CICS XCTL with the COMMAREA:
-<div class="cobol-block"><span class="kw">EXEC CICS</span>
-    <span class="kw">XCTL PROGRAM</span>(CDEMO-MENU-OPT-PGMNAME(<span class="resolved">${chosen.num}</span>))
-    <span class="cmt">&larr; resolves to '${chosen.pgm}'</span>
-    <span class="kw">COMMAREA</span>(CARDDEMO-COMMAREA)
-<span class="kw">END-EXEC</span></div>
-<b style="color:#ffa94d;">Different path:</b> Option ${chosen.num} resolves to <code>${chosen.pgm}</code>, not <code>COTRN02C</code>. This proves the XCTL target is truly dynamic — the same instruction dispatches to <b>11 different programs</b> depending on runtime input.
-
-<div style="margin-top:8px;padding:8px;background:rgba(255,169,77,0.1);border:1px solid rgba(255,169,77,0.3);border-radius:4px;">
-<b style="color:#ffa94d;">Try Option 8</b> (Transaction Add) for the full deep trace including VSAM I/O, dynamic CALLs to CSUTLDTC/CEEDAYS, data mutation, and batch processing.
-</div>`
+<b style="color:#ffa94d;">Note:</b> This resolves to a different program than option 8 (<code>COTRN02C</code>) or option 3 (<code>COCRDLIC</code>). Try those options to see the full traced flows on the left and right trees.`
     };
-
-    // Update the COTRN02C node label temporarily to show the resolved program
-    const cotrn02cLabel = document.querySelector('#node-cotrn02c .node-label');
-    const cotrn02cSublabel = document.querySelector('#node-cotrn02c .node-sublabel');
-    const origLabel = cotrn02cLabel ? cotrn02cLabel.textContent : '';
-    const origSublabel = cotrn02cSublabel ? cotrn02cSublabel.textContent : '';
-    if (cotrn02cLabel) cotrn02cLabel.textContent = chosen.pgm;
-    if (cotrn02cSublabel) cotrn02cSublabel.textContent = chosen.name;
-
-    highlightStep(step2alt);
-    addLogEntry(step2alt);
-    await sleep(3000);
+    highlightStep(step1);
+    addLogEntry(step1);
+    await sleep(step1.delay);
 
     if (isRunning) {
-      showStepIndicator('Trace Paused', `Full deep trace available for Option 8 (Transaction Add)`);
+      showStepIndicator('Trace Paused', `Select Option 3 or 8 for full traced flows`);
       addLogEntry({
         title: 'END OF TRACE',
         file: '',
         devinResponse: `<div class="devin-label">Devin Summary</div>
-<b>Dynamic call resolution proved:</b> Option ${chosen.num} resolved XCTL to <code>${chosen.pgm}</code> (${chosen.name}), while option 8 would resolve to <code>COTRN02C</code> (Transaction Add).
+<b>Dynamic call resolution proved:</b> Option ${chosen.num} would resolve to <code>${chosen.pgm}</code> (${chosen.name}).
 
-The same <code>XCTL PROGRAM(variable)</code> instruction dispatches to a completely different program based on user input at runtime. This is invisible to grep — you must read the COMEN02Y data table to resolve it.
-
-<div style="margin-top:8px;"><b>Click Reset, then Play Trace again and select Option 8</b> for the full 7-step trace including VSAM I/O, CALL chains, data mutation, and batch processing.</div>`
+<div style="margin-top:8px;padding:8px;background:rgba(255,169,77,0.1);border:1px solid rgba(255,169,77,0.3);border-radius:4px;">
+<b>Try these options for full traced flows:</b><br>
+&bull; <b>Option 3</b> (Credit Card List) &rarr; right tree: read-only VSAM browse + dynamic XCTL navigation<br>
+&bull; <b>Option 8</b> (Transaction Add) &rarr; left tree: CALL chains, data mutation, batch processing
+</div>`
       });
     }
-
-    // Restore original labels for next run
-    if (cotrn02cLabel) cotrn02cLabel.textContent = origLabel;
-    if (cotrn02cSublabel) cotrn02cSublabel.textContent = origSublabel;
   }
   isRunning = false;
   document.getElementById('play-btn').disabled = false;
@@ -1119,14 +1275,64 @@ function addCompletionEntry() {
   const entry = document.createElement('div');
   entry.className = 'log-entry';
   entry.innerHTML = `
-    <div class="log-step" style="color:#4da6ff;">TRACE COMPLETE</div>
+    <div class="log-step" style="color:#4da6ff;">TRACE COMPLETE &mdash; Option 8 (Left Tree)</div>
     <div class="devin-response">
       <div class="devin-label">Devin Summary</div>
       All 7 dynamic call resolution steps traced successfully from actual COBOL source.<br><br>
       <b style="color:#00ff88;">Programs resolved:</b> COMEN01C &rarr; COTRN02C &rarr; CSUTLDTC &rarr; CEEDAYS &rarr; CBTRN02C<br>
       <b style="color:#ff6b6b;">Data mutations:</b> TRANSACT (online write) &rarr; ACCOUNT + TCATBAL (batch update)<br>
       <b style="color:#ffa94d;">Resolution mechanisms:</b> XCTL data table, CALL positional params, CICS FCT, OS loader<br><br>
-      <b>Key insight:</b> None of these program-to-program links are discoverable via grep or static text search. Each required semantic understanding of COBOL data structures, CICS runtime behavior, and positional parameter mapping across LINKAGE SECTION boundaries.
+      <b>Key insight:</b> None of these program-to-program links are discoverable via grep or static text search.<br><br>
+      <div style="padding:8px;background:rgba(78,205,196,0.1);border:1px solid rgba(78,205,196,0.3);border-radius:4px;">
+      <b style="color:#4ecdc4;">Now try Option 3</b> (Credit Card List) to see the right tree light up &mdash; a completely different flow with read-only VSAM browse and dynamic XCTL navigation. Same menu dispatch, different runtime path.
+      </div>
+    </div>
+  `;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+}
+
+function addCocrdlicCompletionEntry() {
+  const log = document.getElementById('event-log');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `
+    <div class="log-step" style="color:#4ecdc4;">TRACE COMPLETE &mdash; Option 3 (Right Tree)</div>
+    <div class="devin-response">
+      <div class="devin-label">Devin Summary</div>
+      All 4 COCRDLIC resolution steps traced from actual COBOL source.<br><br>
+      <b style="color:#00ff88;">Programs resolved:</b> COMEN01C &rarr; COCRDLIC &rarr; COCRDSLC / COCRDUPC<br>
+      <b style="color:#4ecdc4;">Data access:</b> CARDDAT VSAM (read-only browse &mdash; STARTBR/READNEXT/ENDBR)<br>
+      <b style="color:#ffa94d;">Resolution mechanisms:</b> XCTL data table, CCARD-NEXT-PROG variable indirection<br><br>
+      <b>Key contrast with Option 8:</b><br>
+      <table style="font-size:11px;margin:8px 0;border-collapse:collapse;width:100%;">
+        <tr style="border-bottom:1px solid #2a2a3e;">
+          <td style="padding:4px;"></td>
+          <td style="padding:4px;color:#00ff88;"><b>Option 8 (Left)</b></td>
+          <td style="padding:4px;color:#4ecdc4;"><b>Option 3 (Right)</b></td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a1a2e;">
+          <td style="padding:4px;color:#888;">Program</td>
+          <td style="padding:4px;">COTRN02C</td>
+          <td style="padding:4px;">COCRDLIC</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a1a2e;">
+          <td style="padding:4px;color:#888;">CALL stmts</td>
+          <td style="padding:4px;">Yes (CSUTLDTC &rarr; CEEDAYS)</td>
+          <td style="padding:4px;">None</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a1a2e;">
+          <td style="padding:4px;color:#888;">Data access</td>
+          <td style="padding:4px;"><span style="color:#ff6b6b;">WRITE</span> to TRANSACT</td>
+          <td style="padding:4px;"><span style="color:#4ecdc4;">READ ONLY</span> from CARDDAT</td>
+        </tr>
+        <tr>
+          <td style="padding:4px;color:#888;">Batch link</td>
+          <td style="padding:4px;">Yes (CBTRN02C)</td>
+          <td style="padding:4px;">None</td>
+        </tr>
+      </table>
+      Same <code>XCTL PROGRAM(variable)</code> instruction, completely different runtime behavior.
     </div>
   `;
   log.appendChild(entry);
@@ -1140,12 +1346,13 @@ function resetAll() {
   isRunning = false;
   document.getElementById('play-btn').disabled = false;
 
-  document.querySelectorAll('.node-rect').forEach(el => { el.className = 'node-rect'; });
-  document.querySelectorAll('.node-label').forEach(el => { el.className = 'node-label'; });
-  document.querySelectorAll('.node-sublabel').forEach(el => { el.className = 'node-sublabel'; });
-  document.querySelectorAll('.edge-line').forEach(el => { el.className = 'edge-line'; });
-  document.querySelectorAll('.edge-label').forEach(el => { el.className = 'edge-label'; });
+  document.querySelectorAll('.node-rect').forEach(el => { el.setAttribute('class', 'node-rect'); });
+  document.querySelectorAll('.node-label').forEach(el => { el.setAttribute('class', 'node-label'); });
+  document.querySelectorAll('.node-sublabel').forEach(el => { el.setAttribute('class', 'node-sublabel'); });
+  document.querySelectorAll('.edge-line').forEach(el => { el.setAttribute('class', 'edge-line'); });
+  document.querySelectorAll('.edge-label').forEach(el => { el.setAttribute('class', 'edge-label'); });
   document.querySelectorAll('.data-badge').forEach(el => { el.classList.remove('visible'); });
+  document.querySelectorAll('.readonly-badge').forEach(el => { el.classList.remove('visible'); });
   document.getElementById('step-indicator').classList.remove('visible');
   document.getElementById('event-log').innerHTML = `
     <div style="padding: 16px; color: #555; font-size: 11px; text-align: center;">
@@ -1153,11 +1360,6 @@ function resetAll() {
     </div>
   `;
   selectedOption = null;
-  // Restore COTRN02C labels if they were changed
-  const cotrn02cLabel = document.querySelector('#node-cotrn02c .node-label');
-  const cotrn02cSublabel = document.querySelector('#node-cotrn02c .node-sublabel');
-  if (cotrn02cLabel) cotrn02cLabel.textContent = 'COTRN02C';
-  if (cotrn02cSublabel) cotrn02cSublabel.textContent = 'Add Transaction';
   // Restore edge label
   const edgeLabel = document.getElementById('elabel-terminal-comen01c');
   if (edgeLabel) edgeLabel.textContent = 'option 8';
