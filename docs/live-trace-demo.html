@@ -203,18 +203,6 @@
     stroke-width: 2.5;
     filter: drop-shadow(0 0 8px rgba(0,255,136,0.4));
   }
-  .node-rect.mutation {
-    fill: #2e1a0a;
-    stroke: #ff6b6b;
-    stroke-width: 2.5;
-    filter: drop-shadow(0 0 8px rgba(255,107,107,0.4));
-  }
-  .node-rect.batch {
-    fill: #1a1a2e;
-    stroke: #ffa94d;
-    stroke-width: 2.5;
-    filter: drop-shadow(0 0 8px rgba(255,169,77,0.3));
-  }
   .node-label {
     fill: #555;
     font-family: 'SF Mono', monospace;
@@ -225,8 +213,6 @@
     pointer-events: none;
   }
   .node-label.active { fill: #00ff88; }
-  .node-label.mutation { fill: #ff6b6b; }
-  .node-label.batch { fill: #ffa94d; }
   .node-sublabel {
     fill: #444;
     font-family: 'SF Mono', monospace;
@@ -236,8 +222,6 @@
     pointer-events: none;
   }
   .node-sublabel.active { fill: #88ffbb; }
-  .node-sublabel.mutation { fill: #ffaaaa; }
-  .node-sublabel.batch { fill: #ffcc88; }
   .edge-line {
     stroke: #2a2a3e;
     stroke-width: 2;
@@ -251,17 +235,6 @@
     marker-end: url(#arrow-green);
     filter: drop-shadow(0 0 4px rgba(0,255,136,0.3));
   }
-  .edge-line.mutation {
-    stroke: #ff6b6b;
-    stroke-width: 2.5;
-    marker-end: url(#arrow-red);
-    filter: drop-shadow(0 0 4px rgba(255,107,107,0.3));
-  }
-  .edge-line.batch {
-    stroke: #ffa94d;
-    stroke-width: 2.5;
-    marker-end: url(#arrow-orange);
-  }
   .edge-label {
     fill: #333;
     font-family: 'SF Mono', monospace;
@@ -271,37 +244,6 @@
     pointer-events: none;
   }
   .edge-label.active { fill: #00ff88; }
-  .edge-label.mutation { fill: #ff6b6b; }
-  .edge-label.batch { fill: #ffa94d; }
-  .batch-line {
-    stroke: #ffa94d;
-    stroke-width: 1;
-    stroke-dasharray: 8 4;
-    opacity: 0.4;
-  }
-  .batch-label {
-    fill: #ffa94d;
-    font-family: 'SF Mono', monospace;
-    font-size: 10px;
-    text-anchor: middle;
-    opacity: 0.4;
-  }
-  .data-badge {
-    opacity: 0;
-    transition: opacity 0.8s ease;
-  }
-  .data-badge.visible { opacity: 1; }
-  .data-badge rect {
-    fill: #ff6b6b;
-    rx: 4;
-  }
-  .data-badge text {
-    fill: #fff;
-    font-family: 'SF Mono', monospace;
-    font-size: 9px;
-    font-weight: 700;
-    text-anchor: middle;
-  }
 
   /* Scrollbar */
   ::-webkit-scrollbar { width: 6px; }
@@ -579,12 +521,6 @@
         <marker id="arrow-green" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto">
           <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
         </marker>
-        <marker id="arrow-red" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto">
-          <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b6b"/>
-        </marker>
-        <marker id="arrow-orange" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto">
-          <polygon points="0 0, 10 3.5, 0 7" fill="#ffa94d"/>
-        </marker>
       </defs>
 
       <!-- ===== SHARED TOP SECTION ===== -->
@@ -611,7 +547,7 @@
       <text id="elabel-comen01c-comen02y" class="edge-label" x="640" y="127">reads table</text>
 
       <!-- ===== VERTICAL SEPARATOR ===== -->
-      <line class="separator-line" x1="630" y1="195" x2="630" y2="810" />
+      <line class="separator-line" x1="630" y1="195" x2="630" y2="560" />
 
       <!-- ===== LEFT TREE: Option 8 — Transaction Add ===== -->
       <text class="subtree-label" x="280" y="198">Option 8 — Transaction Add</text>
@@ -643,32 +579,6 @@
         <text class="node-label" x="485" y="468">CEEDAYS</text>
         <text class="node-sublabel" x="485" y="480">IBM LE Runtime</text>
       </g>
-      <g id="node-transact">
-        <rect class="node-rect" x="170" y="540" width="200" height="56" />
-        <text class="node-label" x="270" y="568">TRANSACT</text>
-        <text class="node-sublabel" x="270" y="582">Transaction VSAM File</text>
-      </g>
-      <g id="badge-mutation" class="data-badge">
-        <rect x="378" y="548" width="108" height="22" />
-        <text x="432" y="563">DATA MUTATED</text>
-      </g>
-      <line class="batch-line" x1="20" y1="628" x2="580" y2="628" />
-      <text class="batch-label" x="300" y="642">BATCH (Nightly Cycle)</text>
-      <g id="node-cbtrn02c">
-        <rect class="node-rect" x="190" y="670" width="180" height="48" />
-        <text class="node-label" x="280" y="698">CBTRN02C</text>
-        <text class="node-sublabel" x="280" y="710">Batch Post</text>
-      </g>
-      <g id="node-account">
-        <rect class="node-rect" x="50" y="760" width="170" height="48" />
-        <text class="node-label" x="135" y="788">ACCTFILE</text>
-        <text class="node-sublabel" x="135" y="800">Account Master</text>
-      </g>
-      <g id="node-tcatbal">
-        <rect class="node-rect" x="310" y="760" width="170" height="48" />
-        <text class="node-label" x="395" y="788">TCATBALF</text>
-        <text class="node-sublabel" x="395" y="800">Category Balance</text>
-      </g>
 
       <!-- Left tree edges -->
       <line id="edge-cotrn02c-ccxref" class="edge-line" x1="220" y1="258" x2="115" y2="338" />
@@ -679,14 +589,6 @@
       <text id="elabel-cotrn02c-csutldtc" class="edge-label" x="405" y="293">CALL (dynamic)</text>
       <line id="edge-csutldtc-ceedays" class="edge-line" x1="470" y1="388" x2="485" y2="438" />
       <text id="elabel-csutldtc-ceedays" class="edge-label" x="500" y="418">CALL (chained)</text>
-      <line id="edge-cotrn02c-transact" class="edge-line" x1="280" y1="258" x2="270" y2="538" />
-      <text id="elabel-cotrn02c-transact" class="edge-label" x="295" y="420">VSAM WRITE</text>
-      <line id="edge-transact-cbtrn02c" class="edge-line" x1="270" y1="596" x2="280" y2="668" />
-      <text id="elabel-transact-cbtrn02c" class="edge-label" x="295" y="648">batch READ</text>
-      <line id="edge-cbtrn02c-account" class="edge-line" x1="230" y1="718" x2="170" y2="758" />
-      <text id="elabel-cbtrn02c-account" class="edge-label" x="185" y="742">REWRITE</text>
-      <line id="edge-cbtrn02c-tcatbal" class="edge-line" x1="330" y1="718" x2="380" y2="758" />
-      <text id="elabel-cbtrn02c-tcatbal" class="edge-label" x="370" y="742">WRITE/REWRITE</text>
 
       <!-- ===== RIGHT TREE: Option 3 — Credit Card List ===== -->
       <text class="subtree-label" x="980" y="198">Option 3 — Credit Card List</text>
@@ -908,35 +810,6 @@ const TRACE_STEPS = [
     code: `<span class="kw">CALL</span> <span class="str">"CEEDAYS"</span> <span class="kw">USING</span>\n  WS-DATE-TO-TEST     <span class="resolved">(vstring)</span>\n  WS-DATE-FORMAT      <span class="resolved">(vstring)</span>\n  OUTPUT-LILLIAN      <span class="resolved">S9(9) BINARY</span>\n  FEEDBACK-CODE       <span class="resolved">8-byte struct</span>`,
     delay: 2000
   },
-  {
-    id: 'step6',
-    title: 'Step 6: DATA MUTATION',
-    subtitle: 'New transaction written to TRANSACT VSAM file',
-    nodes: ['node-transact'],
-    edges: ['edge-cotrn02c-transact'],
-    edgeLabels: ['elabel-cotrn02c-transact'],
-    nodeClass: 'mutation',
-    edgeClass: 'mutation',
-    badge: 'badge-mutation',
-    file: 'COTRN02C.cbl (lines 442-466)',
-    message: 'STARTBR→READPREV to get max ID, ADD 1, then WRITE new TRAN-RECORD. THIS IS THE DATA CHANGE.',
-    code: `<span class="kw">MOVE</span> HIGH-VALUES <span class="kw">TO</span> TRAN-ID\n<span class="kw">PERFORM</span> STARTBR-TRANSACT-FILE\n<span class="kw">PERFORM</span> READPREV-TRANSACT-FILE\n<span class="kw">ADD</span> 1 <span class="kw">TO</span> WS-TRAN-ID-N\n...\n<span class="kw">EXEC CICS WRITE</span>\n  DATASET(WS-TRANSACT-FILE)\n  FROM(<span class="resolved">TRAN-RECORD</span>)\n  RIDFLD(<span class="resolved">TRAN-ID</span>)\n<span class="kw">END-EXEC</span>`,
-    delay: 3000
-  },
-  {
-    id: 'step7',
-    title: 'Step 7: Batch Processing',
-    subtitle: 'CBTRN02C reads TRANSACT, updates ACCOUNT + TCATBAL',
-    nodes: ['node-cbtrn02c', 'node-account', 'node-tcatbal'],
-    edges: ['edge-transact-cbtrn02c', 'edge-cbtrn02c-account', 'edge-cbtrn02c-tcatbal'],
-    edgeLabels: ['elabel-transact-cbtrn02c', 'elabel-cbtrn02c-account', 'elabel-cbtrn02c-tcatbal'],
-    nodeClass: 'batch',
-    edgeClass: 'batch',
-    file: 'CBTRN02C.cbl',
-    message: 'Batch cycle reads same TRANSACT file, posts to ACCOUNT (balance update) and TCATBAL (category tracking).',
-    code: `<span class="kw">PERFORM</span> 2700-UPDATE-TCATBAL\n<span class="kw">PERFORM</span> 2800-UPDATE-ACCOUNT-REC\n\n<span class="kw">ADD</span> DALYTRAN-AMT <span class="kw">TO</span> ACCT-CURR-BAL\n<span class="kw">REWRITE</span> FD-ACCTFILE-REC\n  <span class="kw">FROM</span> <span class="resolved">ACCOUNT-RECORD</span>`,
-    delay: 2500
-  }
 ];
 
 // ============================================================
@@ -1228,10 +1101,6 @@ const PROGRAM_NODE_MAP = {
   'CXACAIX':  'node-cxacaix',
   'CSUTLDTC': 'node-csutldtc',
   'CEEDAYS':  'node-ceedays',
-  'TRANSACT': 'node-transact',
-  'CBTRN02C': 'node-cbtrn02c',
-  'ACCTFILE': 'node-account',
-  'TCATBALF': 'node-tcatbal',
   'COCRDLIC': 'node-cocrdlic',
   'CARDDAT':  'node-carddat',
   'COCRDSLC': 'node-cocrdslc',
@@ -1248,10 +1117,6 @@ const EDGE_ADJACENCY = {
   'node-cotrn02c|node-cxacaix':    { edge: 'edge-cotrn02c-cxacaix',   label: 'elabel-cotrn02c-cxacaix' },
   'node-cotrn02c|node-csutldtc':   { edge: 'edge-cotrn02c-csutldtc',  label: 'elabel-cotrn02c-csutldtc' },
   'node-csutldtc|node-ceedays':    { edge: 'edge-csutldtc-ceedays',   label: 'elabel-csutldtc-ceedays' },
-  'node-cotrn02c|node-transact':   { edge: 'edge-cotrn02c-transact',  label: 'elabel-cotrn02c-transact' },
-  'node-transact|node-cbtrn02c':   { edge: 'edge-transact-cbtrn02c',  label: 'elabel-transact-cbtrn02c' },
-  'node-cbtrn02c|node-account':    { edge: 'edge-cbtrn02c-account',   label: 'elabel-cbtrn02c-account' },
-  'node-cbtrn02c|node-tcatbal':    { edge: 'edge-cbtrn02c-tcatbal',   label: 'elabel-cbtrn02c-tcatbal' },
   'node-comen01c|node-cocrdlic':   { edge: 'edge-comen01c-cocrdlic',  label: 'elabel-comen01c-cocrdlic' },
   'node-cocrdlic|node-carddat':    { edge: 'edge-cocrdlic-carddat',   label: 'elabel-cocrdlic-carddat' },
   'node-cocrdlic|node-cocrdslc':   { edge: 'edge-cocrdlic-cocrdslc',  label: 'elabel-cocrdlic-cocrdslc' },
@@ -1260,7 +1125,6 @@ const EDGE_ADJACENCY = {
 
 // Badge hints: if a node is mentioned with a write/mutate context, show the badge
 const NODE_BADGES = {
-  'node-transact': 'badge-mutation',
   'node-carddat':  'badge-readonly'
 };
 
@@ -1456,11 +1320,10 @@ function addCompletionEntry() {
   entry.className = 'log-entry';
   entry.innerHTML = `
     <div class="log-step" style="color:#4da6ff;">TRACE COMPLETE — Option 8 (Left Tree)</div>
-    <div class="log-msg">All 7 dynamic call resolution steps traced successfully.<br>
+    <div class="log-msg">All 5 CICS call resolution steps traced successfully.<br>
     <br>
-    <b style="color:#00ff88;">Programs resolved:</b> COMEN01C &rarr; COTRN02C &rarr; CSUTLDTC &rarr; CEEDAYS &rarr; CBTRN02C<br>
-    <b style="color:#ff6b6b;">Data mutations:</b> TRANSACT (online write) &rarr; ACCOUNT + TCATBAL (batch update)<br>
-    <b style="color:#ffa94d;">Resolution mechanisms:</b> XCTL data table, CALL positional params, CICS FCT, OS loader<br>
+    <b style="color:#00ff88;">Programs resolved:</b> COMEN01C &rarr; COTRN02C &rarr; CCXREF / CXACAIX &rarr; CSUTLDTC &rarr; CEEDAYS<br>
+    <b style="color:#00ff88;">Resolution mechanisms:</b> XCTL data table, CALL positional params, CICS FCT, OS loader<br>
     <br>
     <b style="color:#4ecdc4;">Now try Option 3</b> (Credit Card List) to see the right tree light up — a completely different flow.
     </div>
@@ -1481,7 +1344,7 @@ function addCocrdlicCompletionEntry() {
     <b style="color:#4ecdc4;">Data access:</b> CARDDAT VSAM (read-only browse)<br>
     <b style="color:#ffa94d;">Resolution:</b> XCTL data table + CCARD-NEXT-PROG variable indirection<br>
     <br>
-    <b>Key contrast:</b> Option 8 has CALL chains + data WRITE + batch processing. Option 3 is read-only with no CALL statements. Same XCTL dispatch, completely different runtime behavior.
+    <b>Key contrast:</b> Option 8 has dynamic CALL chains (CSUTLDTC &rarr; CEEDAYS). Option 3 is read-only with no CALL statements. Same XCTL dispatch, completely different runtime behavior.
     </div>
   `;
   log.appendChild(entry);
@@ -1516,9 +1379,6 @@ function resetAll() {
   });
 
   // Reset badges
-  document.querySelectorAll('.data-badge').forEach(el => {
-    el.classList.remove('visible');
-  });
   document.querySelectorAll('.readonly-badge').forEach(el => {
     el.classList.remove('visible');
   });
