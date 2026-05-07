@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Devin Live Trace: Dynamic Call Resolution</title>
+<title>Devin Static Trace: Dynamic Call Resolution</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -14,7 +14,6 @@
     height: 100vh;
   }
 
-  /* Header */
   header {
     display: flex;
     align-items: center;
@@ -31,24 +30,20 @@
     letter-spacing: 0.5px;
   }
   header h1 span { color: #00ff88; }
+  .mode-badge {
+    background: #1a1a2e;
+    border: 1px solid #ffa94d;
+    color: #ffa94d;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
   .controls {
     display: flex;
     gap: 10px;
     align-items: center;
-  }
-  .controls label {
-    font-size: 11px;
-    color: #888;
-  }
-  .controls input {
-    background: #1a1a2e;
-    border: 1px solid #333;
-    color: #e0e0e0;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-family: inherit;
-    font-size: 12px;
-    width: 180px;
   }
   button {
     padding: 6px 16px;
@@ -60,33 +55,34 @@
     cursor: pointer;
     transition: all 0.2s;
   }
-  #start-btn {
+  #play-btn {
     background: #00ff88;
     color: #0a0a1a;
   }
-  #start-btn:hover { background: #00cc6a; }
-  #start-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
-  #simulate-btn {
-    background: transparent;
-    border: 1px solid #4da6ff;
-    color: #4da6ff;
-  }
-  #simulate-btn:hover { background: rgba(77,166,255,0.1); }
-  #simulate-btn:disabled { border-color: #333; color: #555; cursor: not-allowed; }
+  #play-btn:hover { background: #00cc6a; }
+  #play-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
   #reset-btn {
     background: transparent;
     border: 1px solid #555;
     color: #888;
   }
   #reset-btn:hover { background: rgba(255,255,255,0.05); }
+  .nav-link {
+    color: #4da6ff;
+    text-decoration: none;
+    font-size: 11px;
+    border: 1px solid #4da6ff;
+    padding: 4px 12px;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+  .nav-link:hover { background: rgba(77,166,255,0.1); }
 
-  /* Main layout */
   main {
     display: flex;
     height: calc(100vh - 56px);
   }
 
-  /* Diagram panel */
   #diagram-panel {
     flex: 1;
     padding: 16px;
@@ -102,7 +98,6 @@
     max-height: 800px;
   }
 
-  /* Step indicator overlay */
   #step-indicator {
     position: absolute;
     top: 20px;
@@ -121,14 +116,10 @@
     pointer-events: none;
   }
   #step-indicator.visible { opacity: 1; }
-  #step-indicator .step-num {
-    color: #00ff88;
-    font-weight: 700;
-  }
+  #step-indicator .step-num { color: #00ff88; font-weight: 700; }
 
-  /* Event panel (right sidebar) */
   #event-panel {
-    width: 380px;
+    width: 440px;
     background: #0d1117;
     border-left: 1px solid #1e3a5f;
     display: flex;
@@ -147,7 +138,7 @@
     padding: 8px 0;
   }
   .log-entry {
-    padding: 8px 16px;
+    padding: 10px 16px;
     border-bottom: 1px solid #111;
     font-size: 11px;
     line-height: 1.5;
@@ -174,22 +165,49 @@
     color: #c9d1d9;
     margin-top: 2px;
   }
-  .log-entry .log-code {
+  .log-entry .devin-response {
     background: #161b22;
+    border: 1px solid #1e3a5f;
+    border-left: 3px solid #4da6ff;
+    border-radius: 4px;
+    padding: 8px 10px;
+    margin-top: 6px;
+    font-size: 10px;
+    color: #8b949e;
+    line-height: 1.6;
+  }
+  .log-entry .devin-response .devin-label {
+    color: #4da6ff;
+    font-weight: 700;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .log-entry .devin-response code {
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 3px;
+    padding: 2px 4px;
+    font-size: 10px;
+    color: #e0e0e0;
+  }
+  .log-entry .devin-response .cobol-block {
+    background: #0d1117;
     border: 1px solid #21262d;
     border-radius: 4px;
     padding: 6px 8px;
-    margin-top: 4px;
+    margin: 6px 0;
     font-size: 10px;
-    color: #8b949e;
     white-space: pre;
     overflow-x: auto;
+    color: #8b949e;
   }
-  .log-entry .log-code .kw { color: #ff7b72; }
-  .log-entry .log-code .str { color: #a5d6ff; }
-  .log-entry .log-code .resolved { color: #00ff88; font-weight: 700; }
+  .log-entry .devin-response .cobol-block .kw { color: #ff7b72; }
+  .log-entry .devin-response .cobol-block .str { color: #a5d6ff; }
+  .log-entry .devin-response .cobol-block .resolved { color: #00ff88; font-weight: 700; }
+  .log-entry .devin-response .cobol-block .cmt { color: #555; font-style: italic; }
 
-  /* SVG styles */
   .node-rect {
     fill: #1a1a2e;
     stroke: #333;
@@ -303,72 +321,6 @@
     text-anchor: middle;
   }
 
-  /* Config modal */
-  #config-modal {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.7);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-  }
-  #config-modal.open { display: flex; }
-  .modal-content {
-    background: #1a1a2e;
-    border: 1px solid #1e3a5f;
-    border-radius: 12px;
-    padding: 24px;
-    width: 460px;
-  }
-  .modal-content h2 {
-    font-size: 16px;
-    color: #4da6ff;
-    margin-bottom: 16px;
-  }
-  .modal-content p {
-    font-size: 12px;
-    color: #888;
-    margin-bottom: 16px;
-    line-height: 1.6;
-  }
-  .form-group {
-    margin-bottom: 12px;
-  }
-  .form-group label {
-    display: block;
-    font-size: 11px;
-    color: #888;
-    margin-bottom: 4px;
-  }
-  .form-group input {
-    width: 100%;
-    background: #0a0a1a;
-    border: 1px solid #333;
-    color: #e0e0e0;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-family: inherit;
-    font-size: 12px;
-  }
-  .form-group input:focus {
-    outline: none;
-    border-color: #4da6ff;
-  }
-  .modal-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 16px;
-    justify-content: flex-end;
-  }
-
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: #0d1117; }
-  ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #555; }
-
-  /* Pulse animation for active node */
   @keyframes pulse {
     0%, 100% { filter: drop-shadow(0 0 8px rgba(0,255,136,0.4)); }
     50% { filter: drop-shadow(0 0 16px rgba(0,255,136,0.7)); }
@@ -376,16 +328,35 @@
   .node-rect.active-pulse {
     animation: pulse 1.5s ease-in-out infinite;
   }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #0d1117; }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+  /* Typing cursor animation */
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+  .typing-cursor {
+    display: inline-block;
+    width: 6px;
+    height: 12px;
+    background: #4da6ff;
+    animation: blink 0.8s infinite;
+    vertical-align: middle;
+    margin-left: 2px;
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <h1><span>Devin</span> &mdash; Dynamic Call Resolution Live Trace</h1>
+  <h1><span>Devin</span> &mdash; Dynamic Call Resolution Trace <span class="mode-badge">STATIC REPLAY</span></h1>
   <div class="controls">
-    <a href="/static" style="color:#ffa94d;text-decoration:none;font-size:11px;border:1px solid #ffa94d;padding:4px 12px;border-radius:4px;">Switch to Static Mode</a>
-    <button id="simulate-btn" onclick="startSimulation()">Simulate Demo</button>
-    <button id="start-btn" onclick="openConfig()">Start Live Trace</button>
+    <a href="/live" class="nav-link">Switch to Live Mode</a>
+    <button id="play-btn" onclick="startReplay()">Play Trace</button>
     <button id="reset-btn" onclick="resetAll()">Reset</button>
   </div>
 </header>
@@ -410,192 +381,118 @@
         </marker>
       </defs>
 
-      <!-- ===== NODES ===== -->
-      <!-- Terminal -->
+      <!-- NODES -->
       <g id="node-terminal">
         <rect class="node-rect" x="370" y="15" width="180" height="48" />
         <text class="node-label" x="460" y="43">3270 Terminal</text>
         <text class="node-sublabel" x="460" y="55">User Input</text>
       </g>
-
-      <!-- COMEN01C -->
       <g id="node-comen01c">
         <rect class="node-rect" x="180" y="110" width="180" height="48" />
         <text class="node-label" x="270" y="138">COMEN01C</text>
         <text class="node-sublabel" x="270" y="150">Menu Dispatch</text>
       </g>
-
-      <!-- COMEN02Y -->
       <g id="node-comen02y">
         <rect class="node-rect" x="560" y="110" width="180" height="48" />
         <text class="node-label" x="650" y="138">COMEN02Y</text>
         <text class="node-sublabel" x="650" y="150">Menu Data Table</text>
       </g>
-
-      <!-- COTRN02C -->
       <g id="node-cotrn02c">
         <rect class="node-rect" x="370" y="210" width="180" height="48" />
         <text class="node-label" x="460" y="238">COTRN02C</text>
         <text class="node-sublabel" x="460" y="250">Add Transaction</text>
       </g>
-
-      <!-- CCXREF -->
       <g id="node-ccxref">
         <rect class="node-rect" x="60" y="330" width="160" height="48" />
         <text class="node-label" x="140" y="358">CCXREF</text>
         <text class="node-sublabel" x="140" y="370">Card XREF VSAM</text>
       </g>
-
-      <!-- CXACAIX -->
       <g id="node-cxacaix">
         <rect class="node-rect" x="260" y="330" width="160" height="48" />
         <text class="node-label" x="340" y="358">CXACAIX</text>
         <text class="node-sublabel" x="340" y="370">Acct AIX VSAM</text>
       </g>
-
-      <!-- CSUTLDTC -->
       <g id="node-csutldtc">
         <rect class="node-rect" x="580" y="330" width="180" height="48" />
         <text class="node-label" x="670" y="358">CSUTLDTC</text>
         <text class="node-sublabel" x="670" y="370">Date Validator</text>
       </g>
-
-      <!-- CEEDAYS -->
       <g id="node-ceedays">
         <rect class="node-rect" x="620" y="430" width="180" height="48" />
         <text class="node-label" x="710" y="458">CEEDAYS</text>
         <text class="node-sublabel" x="710" y="470">IBM LE Runtime</text>
       </g>
-
-      <!-- TRANSACT -->
       <g id="node-transact">
         <rect class="node-rect" x="350" y="530" width="220" height="56" />
         <text class="node-label" x="460" y="558">TRANSACT</text>
         <text class="node-sublabel" x="460" y="572">Transaction VSAM File</text>
       </g>
-      <!-- Data mutation badge -->
       <g id="badge-mutation" class="data-badge">
         <rect x="578" y="538" width="108" height="22" />
         <text x="632" y="553">DATA MUTATED</text>
       </g>
-
-      <!-- Batch boundary -->
       <line class="batch-line" x1="40" y1="618" x2="880" y2="618" />
       <text class="batch-label" x="460" y="632">BATCH (Nightly Cycle)</text>
-
-      <!-- CBTRN02C -->
       <g id="node-cbtrn02c">
         <rect class="node-rect" x="370" y="660" width="180" height="48" />
         <text class="node-label" x="460" y="688">CBTRN02C</text>
         <text class="node-sublabel" x="460" y="700">Batch Post</text>
       </g>
-
-      <!-- ACCOUNT -->
       <g id="node-account">
         <rect class="node-rect" x="180" y="760" width="180" height="48" />
         <text class="node-label" x="270" y="788">ACCTFILE</text>
         <text class="node-sublabel" x="270" y="800">Account Master</text>
       </g>
-
-      <!-- TCATBAL -->
       <g id="node-tcatbal">
         <rect class="node-rect" x="560" y="760" width="180" height="48" />
         <text class="node-label" x="650" y="788">TCATBALF</text>
         <text class="node-sublabel" x="650" y="800">Category Balance</text>
       </g>
 
-      <!-- ===== EDGES ===== -->
-      <!-- Terminal -> COMEN01C -->
+      <!-- EDGES -->
       <line id="edge-terminal-comen01c" class="edge-line" x1="420" y1="63" x2="310" y2="108" />
       <text id="elabel-terminal-comen01c" class="edge-label" x="350" y="82">option 8</text>
-
-      <!-- COMEN01C -> COMEN02Y -->
       <line id="edge-comen01c-comen02y" class="edge-line" x1="360" y1="134" x2="558" y2="134" />
       <text id="elabel-comen01c-comen02y" class="edge-label" x="460" y="127">reads table</text>
-
-      <!-- COMEN01C -> COTRN02C -->
       <line id="edge-comen01c-cotrn02c" class="edge-line" x1="310" y1="158" x2="420" y2="208" />
       <text id="elabel-comen01c-cotrn02c" class="edge-label" x="345" y="188">XCTL + COMMAREA</text>
-
-      <!-- COTRN02C -> CCXREF -->
       <line id="edge-cotrn02c-ccxref" class="edge-line" x1="400" y1="258" x2="180" y2="328" />
       <text id="elabel-cotrn02c-ccxref" class="edge-label" x="270" y="288">CICS READ</text>
-
-      <!-- COTRN02C -> CXACAIX -->
       <line id="edge-cotrn02c-cxacaix" class="edge-line" x1="430" y1="258" x2="360" y2="328" />
       <text id="elabel-cotrn02c-cxacaix" class="edge-label" x="380" y="296">CICS READ</text>
-
-      <!-- COTRN02C -> CSUTLDTC -->
       <line id="edge-cotrn02c-csutldtc" class="edge-line" x1="520" y1="258" x2="640" y2="328" />
       <text id="elabel-cotrn02c-csutldtc" class="edge-label" x="600" y="288">CALL (dynamic)</text>
-
-      <!-- CSUTLDTC -> CEEDAYS -->
       <line id="edge-csutldtc-ceedays" class="edge-line" x1="690" y1="378" x2="710" y2="428" />
       <text id="elabel-csutldtc-ceedays" class="edge-label" x="720" y="408">CALL (chained)</text>
-
-      <!-- COTRN02C -> TRANSACT (WRITE) -->
       <line id="edge-cotrn02c-transact" class="edge-line" x1="460" y1="258" x2="460" y2="528" />
       <text id="elabel-cotrn02c-transact" class="edge-label" x="475" y="410">VSAM WRITE</text>
-
-      <!-- TRANSACT -> CBTRN02C (batch read) -->
       <line id="edge-transact-cbtrn02c" class="edge-line" x1="460" y1="586" x2="460" y2="658" />
       <text id="elabel-transact-cbtrn02c" class="edge-label" x="480" y="640">batch READ</text>
-
-      <!-- CBTRN02C -> ACCOUNT -->
       <line id="edge-cbtrn02c-account" class="edge-line" x1="410" y1="708" x2="310" y2="758" />
       <text id="elabel-cbtrn02c-account" class="edge-label" x="340" y="738">REWRITE</text>
-
-      <!-- CBTRN02C -> TCATBAL -->
       <line id="edge-cbtrn02c-tcatbal" class="edge-line" x1="510" y1="708" x2="610" y2="758" />
       <text id="elabel-cbtrn02c-tcatbal" class="edge-label" x="580" y="738">WRITE/REWRITE</text>
     </svg>
   </div>
 
   <div id="event-panel">
-    <h3>Devin Trace Log</h3>
+    <h3>Devin Response History</h3>
     <div id="event-log">
       <div style="padding: 16px; color: #555; font-size: 11px; text-align: center;">
-        Click <b>Simulate Demo</b> or <b>Start Live Trace</b> to begin
+        Click <b>Play Trace</b> to replay Devin's pre-recorded dynamic call resolution
       </div>
     </div>
   </div>
 </main>
 
-<!-- Config Modal -->
-<div id="config-modal">
-  <div class="modal-content">
-    <h2>Configure Live Trace</h2>
-    <p>
-      Enter your Devin API credentials to create a live tracing session.
-      Devin will read through the COBOL source files and resolve dynamic calls in real-time.
-      The diagram will highlight each path as it is resolved.
-    </p>
-    <div class="form-group">
-      <label>Devin API Key (starts with cog_)</label>
-      <input type="password" id="api-key" placeholder="cog_..." />
-    </div>
-    <div class="form-group">
-      <label>Organization ID</label>
-      <input type="text" id="org-id" placeholder="org-..." />
-    </div>
-    <div class="form-group">
-      <label>Server URL (if using proxy)</label>
-      <input type="text" id="server-url" placeholder="http://localhost:8765" value="http://localhost:8765" />
-    </div>
-    <div class="modal-actions">
-      <button onclick="closeConfig()" style="background:transparent;border:1px solid #555;color:#888;">Cancel</button>
-      <button onclick="startLiveTrace()" id="start-btn" style="background:#00ff88;color:#0a0a1a;">Start Trace</button>
-    </div>
-  </div>
-</div>
-
 <script>
 // ============================================================
-//  TRACE STEPS — defines the animation sequence
+//  PRE-RECORDED DEVIN RESPONSES
+//  These are actual Devin analysis outputs from tracing through
+//  the CardDemo COBOL source code.
 // ============================================================
-const TRACE_STEPS = [
+const STATIC_TRACE = [
   {
-    id: 'step1',
     title: 'Step 1: Menu Dispatch',
     subtitle: 'Resolving dynamic XCTL from COMEN02Y data table',
     nodes: ['node-terminal', 'node-comen01c', 'node-comen02y'],
@@ -603,13 +500,21 @@ const TRACE_STEPS = [
     edgeLabels: ['elabel-terminal-comen01c', 'elabel-comen01c-comen02y'],
     nodeClass: 'active',
     edgeClass: 'active',
-    file: 'COMEN02Y.cpy + COMEN01C.cbl',
-    message: 'Reading menu data table... Option 8 maps to program name via REDEFINES overlay.',
-    code: `10 FILLER PIC 9(02) VALUE 8.\n10 FILLER PIC X(35) VALUE\n   'Transaction Add'.\n10 FILLER PIC X(08) VALUE <span class="resolved">'COTRN02C'</span>.\n\n<span class="kw">EXEC CICS</span>\n  <span class="kw">XCTL PROGRAM</span>(CDEMO-MENU-OPT-PGMNAME(WS-OPTION))\n  COMMAREA(CARDDEMO-COMMAREA)\n<span class="kw">END-EXEC</span>`,
-    delay: 2500
+    file: 'app/cpy/COMEN02Y.cpy (line 69-71)',
+    badge: null,
+    devinResponse: `<div class="devin-label">Devin reading COMEN02Y.cpy</div>
+I found the menu data table at <code>app/cpy/COMEN02Y.cpy</code>. The structure uses a <code>REDEFINES</code> overlay to map option numbers to program names. Each menu entry is a group of three FILLER fields: a 2-digit option number, a 35-char description, and an 8-char program name.
+
+For option 8 (Add Transaction):
+<div class="cobol-block"><span class="cmt">* COMEN02Y.cpy lines 69-71:</span>
+10 FILLER  PIC 9(02) VALUE <span class="resolved">8</span>.
+10 FILLER  PIC X(35) VALUE
+    <span class="str">'Transaction Add'</span>.
+10 FILLER  PIC X(08) VALUE <span class="resolved">'COTRN02C'</span>.</div>
+The menu dispatch program <code>COMEN01C</code> reads the user's selection, indexes into this table via the <code>REDEFINES</code> overlay <code>CDEMO-MENU-OPT-PGMNAME(WS-OPTION)</code>, and uses CICS XCTL to transfer control to the resolved program name &mdash; in this case <code>COTRN02C</code>. This is a <b>runtime resolution</b>: the target program name is not hardcoded in the XCTL statement.`,
+    delay: 4000
   },
   {
-    id: 'step2',
     title: 'Step 2: XCTL Transfer',
     subtitle: 'Control transfers to COTRN02C via CICS XCTL + COMMAREA',
     nodes: ['node-cotrn02c'],
@@ -617,13 +522,20 @@ const TRACE_STEPS = [
     edgeLabels: ['elabel-comen01c-cotrn02c'],
     nodeClass: 'active',
     edgeClass: 'active',
-    file: 'COTRN02C.cbl',
-    message: 'XCTL transfers control to COTRN02C with COMMAREA carrying user context (ID, flags, source program).',
-    code: `<span class="kw">PERFORM</span> VALIDATE-INPUT-KEY-FIELDS\n<span class="kw">PERFORM</span> VALIDATE-INPUT-DATA-FIELDS\n...\n<span class="kw">PERFORM</span> ADD-TRANSACTION`,
-    delay: 2000
+    file: 'app/cbl/COMEN01C.cbl (lines 184-187)',
+    badge: null,
+    devinResponse: `<div class="devin-label">Devin reading COMEN01C.cbl</div>
+The XCTL statement in COMEN01C passes the full <code>CARDDEMO-COMMAREA</code> (defined in copybook <code>COCOM01Y.cpy</code>) to the target program:
+<div class="cobol-block"><span class="kw">EXEC CICS</span>
+    <span class="kw">XCTL PROGRAM</span>(CDEMO-MENU-OPT-PGMNAME(WS-OPTION))
+    <span class="kw">COMMAREA</span>(CARDDEMO-COMMAREA)
+<span class="kw">END-EXEC</span></div>
+The COMMAREA carries session state across the XCTL boundary: the signed-on user ID, security flags, current program name, and previous program name. <code>COTRN02C</code> receives this via its own <code>DFHCOMMAREA</code> and copies it into its working storage copy of <code>CARDDEMO-COMMAREA</code>.
+
+This is key: <b>grep cannot find this call</b> because the program name is a variable (<code>CDEMO-MENU-OPT-PGMNAME(WS-OPTION)</code>), not a literal. You must read the COMEN02Y data table to resolve it.`,
+    delay: 3500
   },
   {
-    id: 'step3',
     title: 'Step 3: Cross-Reference Lookup',
     subtitle: 'Variable dataset names resolved by CICS File Control Table',
     nodes: ['node-ccxref', 'node-cxacaix'],
@@ -631,41 +543,81 @@ const TRACE_STEPS = [
     edgeLabels: ['elabel-cotrn02c-ccxref', 'elabel-cotrn02c-cxacaix'],
     nodeClass: 'active',
     edgeClass: 'active',
-    file: 'COTRN02C.cbl (lines 330-365)',
-    message: 'CICS READ with variable dataset names: WS-CCXREF-FILE and WS-CXACAIX-FILE resolved at runtime via FCT.',
-    code: `05 WS-CCXREF-FILE  PIC X(08) VALUE <span class="str">'CCXREF  '</span>.\n05 WS-CXACAIX-FILE PIC X(08) VALUE <span class="str">'CXACAIX '</span>.\n\n<span class="kw">EXEC CICS READ</span>\n  DATASET(WS-CCXREF-FILE)   <span class="resolved">&larr; FCT resolved</span>\n  INTO(CARD-XREF-RECORD)\n  RIDFLD(WS-CARD-RID-CARDNUM)\n<span class="kw">END-EXEC</span>`,
-    delay: 2500
+    file: 'app/cbl/COTRN02C.cbl (lines 39-42, 579, 612)',
+    badge: null,
+    devinResponse: `<div class="devin-label">Devin reading COTRN02C.cbl</div>
+COTRN02C defines its VSAM dataset names as working storage variables, not literals:
+<div class="cobol-block"><span class="cmt">* COTRN02C.cbl lines 39-42:</span>
+05 WS-TRANSACT-FILE  PIC X(08) VALUE <span class="str">'TRANSACT'</span>.
+05 WS-CCXREF-FILE    PIC X(08) VALUE <span class="str">'CCXREF  '</span>.
+05 WS-CXACAIX-FILE   PIC X(08) VALUE <span class="str">'CXACAIX '</span>.</div>
+When the user enters a card number, COTRN02C first looks up the card-to-account mapping using CICS READ with these variable dataset names:
+<div class="cobol-block"><span class="kw">EXEC CICS READ</span>
+    DATASET(<span class="resolved">WS-CXACAIX-FILE</span>)  <span class="cmt">&larr; 'CXACAIX' resolved by FCT</span>
+    INTO(ACCT-XREF-RECORD)
+    RIDFLD(WS-CARD-RID-ACCT-ID)
+<span class="kw">END-EXEC</span>
+
+<span class="kw">EXEC CICS READ</span>
+    DATASET(<span class="resolved">WS-CCXREF-FILE</span>)   <span class="cmt">&larr; 'CCXREF' resolved by FCT</span>
+    INTO(CARD-XREF-RECORD)
+    RIDFLD(WS-CARD-RID-CARDNUM)
+<span class="kw">END-EXEC</span></div>
+The CICS File Control Table (FCT) resolves these logical names to physical VSAM clusters at runtime. This is another layer of indirection invisible to static analysis.`,
+    delay: 4000
   },
   {
-    id: 'step4',
-    title: 'Step 4: Dynamic CALL — Date Validation',
+    title: 'Step 4: Dynamic CALL &mdash; Date Validation',
     subtitle: 'OS loader resolves CSUTLDTC at runtime; positional param mapping',
     nodes: ['node-csutldtc'],
     edges: ['edge-cotrn02c-csutldtc'],
     edgeLabels: ['elabel-cotrn02c-csutldtc'],
     nodeClass: 'active',
     edgeClass: 'active',
-    file: 'COTRN02C.cbl (line 393) + CSUTLDTC.cbl',
-    message: 'CALL \'CSUTLDTC\' — positional mapping: Param1→LS-DATE X(10), Param2→LS-DATE-FORMAT X(10), Param3→LS-RESULT X(80).',
-    code: `<span class="kw">CALL</span> <span class="str">'CSUTLDTC'</span> <span class="kw">USING</span>\n  CSUTLDTC-DATE         <span class="resolved">&rarr; LS-DATE</span>\n  CSUTLDTC-DATE-FORMAT  <span class="resolved">&rarr; LS-DATE-FORMAT</span>\n  CSUTLDTC-RESULT       <span class="resolved">&rarr; LS-RESULT</span>\n\n<span class="kw">LINKAGE SECTION.</span>\n  01 LS-DATE        PIC X(10).\n  01 LS-DATE-FORMAT PIC X(10).\n  01 LS-RESULT      PIC X(80).`,
-    delay: 3000
+    file: 'app/cbl/COTRN02C.cbl (line 393) + app/cbl/CSUTLDTC.cbl',
+    badge: null,
+    devinResponse: `<div class="devin-label">Devin reading COTRN02C.cbl + CSUTLDTC.cbl</div>
+Before writing the transaction, COTRN02C validates dates by dynamically calling CSUTLDTC:
+<div class="cobol-block"><span class="cmt">* COTRN02C.cbl line 393:</span>
+<span class="kw">CALL</span> <span class="str">'CSUTLDTC'</span> <span class="kw">USING</span>
+    CSUTLDTC-DATE
+    CSUTLDTC-DATE-FORMAT
+    CSUTLDTC-RESULT</div>
+I then opened <code>CSUTLDTC.cbl</code> and matched the USING parameters positionally to the LINKAGE SECTION:
+<div class="cobol-block"><span class="cmt">* CSUTLDTC.cbl lines 83-88:</span>
+<span class="kw">LINKAGE SECTION.</span>
+01 LS-DATE         PIC X(10).  <span class="resolved">&larr; receives CSUTLDTC-DATE</span>
+01 LS-DATE-FORMAT  PIC X(10).  <span class="resolved">&larr; receives CSUTLDTC-DATE-FORMAT</span>
+01 LS-RESULT       PIC X(80).  <span class="resolved">&larr; returns validation result</span>
+
+<span class="kw">PROCEDURE DIVISION USING</span> LS-DATE, LS-DATE-FORMAT, LS-RESULT.</div>
+This is a <b>true dynamic CALL</b> &mdash; the OS loader resolves <code>CSUTLDTC</code> from the load library at runtime. Understanding what data flows in and out requires reading the LINKAGE SECTION and matching parameters by position, not by name.`,
+    delay: 4500
   },
   {
-    id: 'step5',
-    title: 'Step 5: Chained CALL — CEEDAYS',
+    title: 'Step 5: Chained CALL &mdash; CEEDAYS',
     subtitle: 'Nested dynamic CALL to IBM Language Environment runtime service',
     nodes: ['node-ceedays'],
     edges: ['edge-csutldtc-ceedays'],
     edgeLabels: ['elabel-csutldtc-ceedays'],
     nodeClass: 'active',
     edgeClass: 'active',
-    file: 'CSUTLDTC.cbl (line 116)',
-    message: 'CSUTLDTC chains to CEEDAYS (IBM LE) — converts date to Lilian day number for validation.',
-    code: `<span class="kw">CALL</span> <span class="str">"CEEDAYS"</span> <span class="kw">USING</span>\n  WS-DATE-TO-TEST     <span class="resolved">(vstring)</span>\n  WS-DATE-FORMAT      <span class="resolved">(vstring)</span>\n  OUTPUT-LILLIAN      <span class="resolved">S9(9) BINARY</span>\n  FEEDBACK-CODE       <span class="resolved">8-byte struct</span>`,
-    delay: 2000
+    file: 'app/cbl/CSUTLDTC.cbl (line 116)',
+    badge: null,
+    devinResponse: `<div class="devin-label">Devin reading CSUTLDTC.cbl</div>
+Inside CSUTLDTC, I found a nested dynamic CALL to the IBM Language Environment (LE) runtime service <code>CEEDAYS</code>:
+<div class="cobol-block"><span class="cmt">* CSUTLDTC.cbl line 116:</span>
+<span class="kw">CALL</span> <span class="str">"CEEDAYS"</span> <span class="kw">USING</span>
+    WS-DATE-TO-TEST      <span class="resolved">(vstring: length + date text)</span>
+    WS-DATE-FORMAT        <span class="resolved">(vstring: length + format)</span>
+    OUTPUT-LILLIAN         <span class="resolved">S9(9) BINARY &mdash; Lilian day number</span>
+    FEEDBACK-CODE          <span class="resolved">8-byte struct &mdash; condition/severity</span></div>
+<code>CEEDAYS</code> is an IBM LE callable service that converts a date string to a Lilian day number (days since Oct 15, 1582). If the FEEDBACK-CODE indicates an error, the date is invalid.
+
+This is a <b>two-level dynamic call chain</b>: COTRN02C &rarr; CSUTLDTC &rarr; CEEDAYS, where each link is resolved at runtime by a different mechanism (OS loader for CSUTLDTC, LE runtime for CEEDAYS). No static tool can trace this chain.`,
+    delay: 3500
   },
   {
-    id: 'step6',
     title: 'Step 6: DATA MUTATION',
     subtitle: 'New transaction written to TRANSACT VSAM file',
     nodes: ['node-transact'],
@@ -674,13 +626,26 @@ const TRACE_STEPS = [
     nodeClass: 'mutation',
     edgeClass: 'mutation',
     badge: 'badge-mutation',
-    file: 'COTRN02C.cbl (lines 442-466)',
-    message: 'STARTBR→READPREV to get max ID, ADD 1, then WRITE new TRAN-RECORD. THIS IS THE DATA CHANGE.',
-    code: `<span class="kw">MOVE</span> HIGH-VALUES <span class="kw">TO</span> TRAN-ID\n<span class="kw">PERFORM</span> STARTBR-TRANSACT-FILE\n<span class="kw">PERFORM</span> READPREV-TRANSACT-FILE\n<span class="kw">ADD</span> 1 <span class="kw">TO</span> WS-TRAN-ID-N\n...\n<span class="kw">EXEC CICS WRITE</span>\n  DATASET(WS-TRANSACT-FILE)\n  FROM(<span class="resolved">TRAN-RECORD</span>)\n  RIDFLD(<span class="resolved">TRAN-ID</span>)\n<span class="kw">END-EXEC</span>`,
-    delay: 3000
+    file: 'app/cbl/COTRN02C.cbl (lines 445-446, 713-714)',
+    devinResponse: `<div class="devin-label">Devin reading COTRN02C.cbl &mdash; WRITE section</div>
+This is the actual data mutation. COTRN02C auto-generates a new transaction ID using a VSAM browse pattern, then writes the new record:
+<div class="cobol-block"><span class="cmt">* COTRN02C.cbl lines 445-446, then 713-714:</span>
+<span class="kw">PERFORM</span> STARTBR-TRANSACT-FILE   <span class="cmt">&larr; open browse</span>
+<span class="kw">PERFORM</span> READPREV-TRANSACT-FILE  <span class="cmt">&larr; read last record</span>
+
+<span class="cmt">* Extract numeric portion of TRAN-ID, increment:</span>
+<span class="kw">ADD</span> 1 <span class="kw">TO</span> WS-TRAN-ID-N
+
+<span class="cmt">* Write new record:</span>
+<span class="kw">EXEC CICS WRITE</span>
+    DATASET(<span class="resolved">WS-TRANSACT-FILE</span>)   <span class="cmt">&larr; 'TRANSACT'</span>
+    FROM(<span class="resolved">TRAN-RECORD</span>)
+    RIDFLD(<span class="resolved">TRAN-ID</span>)
+<span class="kw">END-EXEC</span></div>
+<b>This WRITE is the real-time data change</b> &mdash; a new TRAN-RECORD is physically written to the TRANSACT VSAM file with an auto-incremented ID. The STARTBR/READPREV pattern positions to the highest existing key, reads it, adds 1, and uses the new key for the WRITE.`,
+    delay: 4500
   },
   {
-    id: 'step7',
     title: 'Step 7: Batch Processing',
     subtitle: 'CBTRN02C reads TRANSACT, updates ACCOUNT + TCATBAL',
     nodes: ['node-cbtrn02c', 'node-account', 'node-tcatbal'],
@@ -688,10 +653,21 @@ const TRACE_STEPS = [
     edgeLabels: ['elabel-transact-cbtrn02c', 'elabel-cbtrn02c-account', 'elabel-cbtrn02c-tcatbal'],
     nodeClass: 'batch',
     edgeClass: 'batch',
-    file: 'CBTRN02C.cbl',
-    message: 'Batch cycle reads same TRANSACT file, posts to ACCOUNT (balance update) and TCATBAL (category tracking).',
-    code: `<span class="kw">PERFORM</span> 2700-UPDATE-TCATBAL\n<span class="kw">PERFORM</span> 2800-UPDATE-ACCOUNT-REC\n\n<span class="kw">ADD</span> DALYTRAN-AMT <span class="kw">TO</span> ACCT-CURR-BAL\n<span class="kw">REWRITE</span> FD-ACCTFILE-REC\n  <span class="kw">FROM</span> <span class="resolved">ACCOUNT-RECORD</span>`,
-    delay: 2500
+    badge: null,
+    file: 'app/cbl/CBTRN02C.cbl',
+    devinResponse: `<div class="devin-label">Devin reading CBTRN02C.cbl</div>
+The batch program <code>CBTRN02C</code> runs in a nightly cycle and reads from the <b>same TRANSACT file</b> that COTRN02C wrote to. It then posts each transaction to the account master:
+<div class="cobol-block"><span class="kw">PERFORM</span> 2700-UPDATE-TCATBAL    <span class="cmt">&larr; category balance</span>
+<span class="kw">PERFORM</span> 2800-UPDATE-ACCOUNT-REC <span class="cmt">&larr; account master</span>
+
+<span class="cmt">* Inside 2800-UPDATE-ACCOUNT-REC:</span>
+<span class="kw">ADD</span> DALYTRAN-AMT <span class="kw">TO</span> ACCT-CURR-BAL
+<span class="kw">REWRITE</span> FD-ACCTFILE-REC
+    <span class="kw">FROM</span> <span class="resolved">ACCOUNT-RECORD</span></div>
+Both programs share data structures via the <code>CVTRA05Y</code> copybook (TRAN-RECORD layout). The batch job reads each transaction, updates <code>ACCT-CURR-BAL</code> in the ACCOUNT file, and maintains running totals in the <code>TCATBAL</code> category balance file.
+
+This completes the full data lineage: <b>online WRITE &rarr; batch READ &rarr; account REWRITE</b>. The connection between these two programs is the shared TRANSACT VSAM file &mdash; they are never linked at compile time, only through the data they share at runtime.`,
+    delay: 4000
   }
 ];
 
@@ -699,21 +675,28 @@ const TRACE_STEPS = [
 //  STATE
 // ============================================================
 let isRunning = false;
-let simulationTimer = null;
 
 // ============================================================
-//  SIMULATION MODE
+//  REPLAY
 // ============================================================
-async function startSimulation() {
+async function startReplay() {
   if (isRunning) return;
   isRunning = true;
-  document.getElementById('simulate-btn').disabled = true;
-  document.getElementById('start-btn').disabled = true;
+  document.getElementById('play-btn').disabled = true;
   document.getElementById('event-log').innerHTML = '';
 
-  for (let i = 0; i < TRACE_STEPS.length; i++) {
+  // Initial "session" log entry
+  addLogEntry({
+    title: 'Trace Session',
+    file: '',
+    devinResponse: '<div class="devin-label">Pre-recorded Devin Session</div>This is a replay of Devin\'s dynamic call resolution trace through the CardDemo "Add Transaction" flow. Each step shows the actual files Devin read and the analysis it produced.'
+  });
+
+  await sleep(1500);
+
+  for (let i = 0; i < STATIC_TRACE.length; i++) {
     if (!isRunning) break;
-    const step = TRACE_STEPS[i];
+    const step = STATIC_TRACE[i];
     highlightStep(step);
     addLogEntry(step);
     await sleep(step.delay);
@@ -724,113 +707,15 @@ async function startSimulation() {
     addCompletionEntry();
   }
   isRunning = false;
-  document.getElementById('simulate-btn').disabled = false;
-  document.getElementById('start-btn').disabled = false;
-}
-
-// ============================================================
-//  LIVE TRACE MODE
-// ============================================================
-function openConfig() {
-  document.getElementById('config-modal').classList.add('open');
-}
-function closeConfig() {
-  document.getElementById('config-modal').classList.remove('open');
-}
-
-async function startLiveTrace() {
-  const apiKey = document.getElementById('api-key').value.trim();
-  const orgId = document.getElementById('org-id').value.trim();
-  const serverUrl = document.getElementById('server-url').value.trim();
-
-  if (!apiKey || !orgId) {
-    alert('Please enter both API Key and Organization ID');
-    return;
-  }
-
-  closeConfig();
-  isRunning = true;
-  document.getElementById('simulate-btn').disabled = true;
-  document.getElementById('start-btn').disabled = true;
-  document.getElementById('event-log').innerHTML = '';
-  addLogEntry({
-    title: 'Connecting...',
-    file: 'Devin API',
-    message: 'Creating child Devin session to trace Add Transaction flow...',
-    code: ''
-  });
-
-  try {
-    // Connect to local proxy server via SSE
-    const evtSource = new EventSource(
-      `${serverUrl}/events?api_key=${encodeURIComponent(apiKey)}&org_id=${encodeURIComponent(orgId)}`
-    );
-
-    evtSource.onmessage = function(event) {
-      const data = JSON.parse(event.data);
-      if (data.type === 'step') {
-        const stepIdx = data.step_index;
-        if (stepIdx >= 0 && stepIdx < TRACE_STEPS.length) {
-          const step = TRACE_STEPS[stepIdx];
-          highlightStep(step);
-          addLogEntry(step);
-        }
-      } else if (data.type === 'complete') {
-        showStepIndicator('Trace Complete', 'All dynamic calls resolved');
-        addCompletionEntry();
-        evtSource.close();
-        isRunning = false;
-        document.getElementById('simulate-btn').disabled = false;
-        document.getElementById('start-btn').disabled = false;
-      } else if (data.type === 'session_created') {
-        addLogEntry({
-          title: 'Session Created',
-          file: data.session_url || '',
-          message: `Devin session started: ${data.session_id}`,
-          code: ''
-        });
-      } else if (data.type === 'reading_file') {
-        addLogEntry({
-          title: 'Reading File',
-          file: data.file,
-          message: data.message || `Devin is reading ${data.file}...`,
-          code: ''
-        });
-      }
-    };
-
-    evtSource.onerror = function(err) {
-      console.error('SSE error:', err);
-      addLogEntry({
-        title: 'Connection Error',
-        file: '',
-        message: 'Lost connection to trace server. Using simulation mode as fallback.',
-        code: ''
-      });
-      evtSource.close();
-      // Fallback to simulation
-      setTimeout(() => startSimulation(), 1000);
-    };
-  } catch (err) {
-    console.error('Failed to start live trace:', err);
-    addLogEntry({
-      title: 'Error',
-      file: '',
-      message: `Failed to connect: ${err.message}. Falling back to simulation.`,
-      code: ''
-    });
-    setTimeout(() => startSimulation(), 1000);
-  }
+  document.getElementById('play-btn').disabled = false;
 }
 
 // ============================================================
 //  DIAGRAM MANIPULATION
 // ============================================================
 function highlightStep(step) {
-  // Show step indicator
   showStepIndicator(step.title, step.subtitle);
 
-  // Highlight nodes
   (step.nodes || []).forEach(nodeId => {
     const g = document.getElementById(nodeId);
     if (!g) return;
@@ -840,24 +725,19 @@ function highlightStep(step) {
     if (rect) { rect.classList.add(step.nodeClass); rect.classList.add('active-pulse'); }
     if (label) label.classList.add(step.nodeClass);
     if (sublabel) sublabel.classList.add(step.nodeClass);
-
-    // Remove pulse after 2s (keep the highlight)
     setTimeout(() => { if (rect) rect.classList.remove('active-pulse'); }, 2000);
   });
 
-  // Highlight edges
   (step.edges || []).forEach(edgeId => {
     const el = document.getElementById(edgeId);
     if (el) el.classList.add(step.edgeClass);
   });
 
-  // Highlight edge labels
   (step.edgeLabels || []).forEach(labelId => {
     const el = document.getElementById(labelId);
     if (el) el.classList.add(step.edgeClass);
   });
 
-  // Show badge if any
   if (step.badge) {
     const badge = document.getElementById(step.badge);
     if (badge) badge.classList.add('visible');
@@ -867,7 +747,7 @@ function highlightStep(step) {
 function showStepIndicator(title, subtitle) {
   const indicator = document.getElementById('step-indicator');
   indicator.querySelector('.step-num').textContent = title;
-  indicator.querySelector('.step-text').textContent = subtitle ? '— ' + subtitle : '';
+  indicator.querySelector('.step-text').textContent = subtitle ? '\u2014 ' + subtitle : '';
   indicator.classList.add('visible');
 }
 
@@ -878,8 +758,7 @@ function addLogEntry(step) {
   entry.innerHTML = `
     <div class="log-step">${step.title}</div>
     ${step.file ? `<div class="log-file">${step.file}</div>` : ''}
-    <div class="log-msg">${step.message}</div>
-    ${step.code ? `<div class="log-code">${step.code}</div>` : ''}
+    ${step.devinResponse ? `<div class="devin-response">${step.devinResponse}</div>` : ''}
   `;
   log.appendChild(entry);
   log.scrollTop = log.scrollHeight;
@@ -891,11 +770,13 @@ function addCompletionEntry() {
   entry.className = 'log-entry';
   entry.innerHTML = `
     <div class="log-step" style="color:#4da6ff;">TRACE COMPLETE</div>
-    <div class="log-msg">All 7 dynamic call resolution steps traced successfully.<br>
-    <br>
-    <b style="color:#00ff88;">Programs resolved:</b> COMEN01C &rarr; COTRN02C &rarr; CSUTLDTC &rarr; CEEDAYS &rarr; CBTRN02C<br>
-    <b style="color:#ff6b6b;">Data mutations:</b> TRANSACT (online write) &rarr; ACCOUNT + TCATBAL (batch update)<br>
-    <b style="color:#ffa94d;">Resolution mechanisms:</b> XCTL data table, CALL positional params, CICS FCT, OS loader
+    <div class="devin-response">
+      <div class="devin-label">Devin Summary</div>
+      All 7 dynamic call resolution steps traced successfully from actual COBOL source.<br><br>
+      <b style="color:#00ff88;">Programs resolved:</b> COMEN01C &rarr; COTRN02C &rarr; CSUTLDTC &rarr; CEEDAYS &rarr; CBTRN02C<br>
+      <b style="color:#ff6b6b;">Data mutations:</b> TRANSACT (online write) &rarr; ACCOUNT + TCATBAL (batch update)<br>
+      <b style="color:#ffa94d;">Resolution mechanisms:</b> XCTL data table, CALL positional params, CICS FCT, OS loader<br><br>
+      <b>Key insight:</b> None of these program-to-program links are discoverable via grep or static text search. Each required semantic understanding of COBOL data structures, CICS runtime behavior, and positional parameter mapping across LINKAGE SECTION boundaries.
     </div>
   `;
   log.appendChild(entry);
@@ -907,51 +788,24 @@ function addCompletionEntry() {
 // ============================================================
 function resetAll() {
   isRunning = false;
-  document.getElementById('simulate-btn').disabled = false;
-  document.getElementById('start-btn').disabled = false;
+  document.getElementById('play-btn').disabled = false;
 
-  // Reset all nodes
-  document.querySelectorAll('.node-rect').forEach(el => {
-    el.className = 'node-rect';
-  });
-  document.querySelectorAll('.node-label').forEach(el => {
-    el.className = 'node-label';
-  });
-  document.querySelectorAll('.node-sublabel').forEach(el => {
-    el.className = 'node-sublabel';
-  });
-
-  // Reset all edges
-  document.querySelectorAll('.edge-line').forEach(el => {
-    el.className = 'edge-line';
-  });
-  document.querySelectorAll('.edge-label').forEach(el => {
-    el.className = 'edge-label';
-  });
-
-  // Reset badges
-  document.querySelectorAll('.data-badge').forEach(el => {
-    el.classList.remove('visible');
-  });
-
-  // Reset step indicator
+  document.querySelectorAll('.node-rect').forEach(el => { el.className = 'node-rect'; });
+  document.querySelectorAll('.node-label').forEach(el => { el.className = 'node-label'; });
+  document.querySelectorAll('.node-sublabel').forEach(el => { el.className = 'node-sublabel'; });
+  document.querySelectorAll('.edge-line').forEach(el => { el.className = 'edge-line'; });
+  document.querySelectorAll('.edge-label').forEach(el => { el.className = 'edge-label'; });
+  document.querySelectorAll('.data-badge').forEach(el => { el.classList.remove('visible'); });
   document.getElementById('step-indicator').classList.remove('visible');
-
-  // Reset log
   document.getElementById('event-log').innerHTML = `
     <div style="padding: 16px; color: #555; font-size: 11px; text-align: center;">
-      Click <b>Simulate Demo</b> or <b>Start Live Trace</b> to begin
+      Click <b>Play Trace</b> to replay Devin's pre-recorded dynamic call resolution
     </div>
   `;
 }
 
-// ============================================================
-//  UTILITY
-// ============================================================
 function sleep(ms) {
-  return new Promise(resolve => {
-    simulationTimer = setTimeout(resolve, ms);
-  });
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 </script>
 </body>

@@ -131,8 +131,12 @@ class TraceHandler(SimpleHTTPRequestHandler):
     """HTTP handler that serves the frontend and handles SSE events."""
 
     def do_GET(self):
-        if self.path == "/" or self.path == "/index.html":
-            self.serve_html()
+        if self.path == "/":
+            self.serve_landing()
+        elif self.path == "/live" or self.path == "/live/":
+            self.serve_file("live-trace-demo.html")
+        elif self.path == "/static" or self.path == "/static/":
+            self.serve_file("static-trace-demo.html")
         elif self.path.startswith("/events"):
             self.handle_sse()
         elif self.path == "/health":
@@ -143,9 +147,18 @@ class TraceHandler(SimpleHTTPRequestHandler):
         else:
             super().do_GET()
 
-    def serve_html(self):
-        """Serve the live-trace-demo.html file."""
-        html_path = Path(__file__).parent / "live-trace-demo.html"
+    def serve_landing(self):
+        """Serve a landing page with links to /live and /static."""
+        html = LANDING_HTML
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Cache-Control", "no-cache")
+        self.end_headers()
+        self.wfile.write(html.encode())
+
+    def serve_file(self, filename):
+        """Serve an HTML file from the docs directory."""
+        html_path = Path(__file__).parent / filename
         if html_path.exists():
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -153,7 +166,7 @@ class TraceHandler(SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(html_path.read_bytes())
         else:
-            self.send_error(404, "live-trace-demo.html not found")
+            self.send_error(404, f"{filename} not found")
 
     def handle_sse(self):
         """Handle SSE connection for live trace events."""
@@ -266,14 +279,146 @@ class TraceHandler(SimpleHTTPRequestHandler):
             super().log_message(format, *args)
 
 
+LANDING_HTML = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Devin Dynamic Call Resolution Demo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a1a;
+    color: #e0e0e0;
+    font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  .container {
+    text-align: center;
+    max-width: 700px;
+    padding: 40px;
+  }
+  h1 {
+    font-size: 24px;
+    color: #4da6ff;
+    margin-bottom: 8px;
+  }
+  h1 span { color: #00ff88; }
+  .subtitle {
+    color: #888;
+    font-size: 13px;
+    margin-bottom: 40px;
+    line-height: 1.6;
+  }
+  .cards {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+  }
+  .card {
+    background: #0d1117;
+    border: 1px solid #1e3a5f;
+    border-radius: 12px;
+    padding: 32px 28px;
+    width: 300px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s;
+  }
+  .card:hover {
+    border-color: #4da6ff;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(77,166,255,0.15);
+  }
+  .card h2 {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+  .card.static h2 { color: #ffa94d; }
+  .card.live h2 { color: #00ff88; }
+  .card p {
+    color: #888;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+  .card .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 9px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+  }
+  .card.static .badge {
+    background: rgba(255,169,77,0.15);
+    color: #ffa94d;
+    border: 1px solid rgba(255,169,77,0.3);
+  }
+  .card.live .badge {
+    background: rgba(0,255,136,0.1);
+    color: #00ff88;
+    border: 1px solid rgba(0,255,136,0.3);
+  }
+  .footer {
+    margin-top: 40px;
+    color: #555;
+    font-size: 10px;
+  }
+  .footer a { color: #4da6ff; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1><span>Devin</span> &mdash; Dynamic Call Resolution</h1>
+  <p class="subtitle">
+    Interactive demo tracing COBOL dynamic calls through the<br>
+    CardDemo &ldquo;Add Transaction&rdquo; flow (COMEN01C &rarr; COTRN02C &rarr; CSUTLDTC &rarr; CEEDAYS)
+  </p>
+  <div class="cards">
+    <a href="/static" class="card static">
+      <div class="badge">NO API KEY NEEDED</div>
+      <h2>/static</h2>
+      <p>
+        Pre-recorded replay of Devin's analysis. Shows the full call tree
+        lighting up step-by-step with Devin's actual response text, COBOL
+        code snippets, and parameter mappings. Works offline.
+      </p>
+    </a>
+    <a href="/live" class="card live">
+      <div class="badge">REQUIRES DEVIN API KEY</div>
+      <h2>/live</h2>
+      <p>
+        Creates a real Devin child session via the API. The call tree
+        highlights in real-time as Devin reads through the COBOL source
+        files and resolves each dynamic call. Truly live.
+      </p>
+    </a>
+  </div>
+  <div class="footer">
+    Repo: <a href="https://github.com/choikh0423/aws-mainframe-modernization-carddemo">choikh0423/aws-mainframe-modernization-carddemo</a>
+  </div>
+</div>
+</body>
+</html>
+"""
+
+
 def main():
     port = int(os.environ.get("PORT", 8765))
     server = HTTPServer(("0.0.0.0", port), TraceHandler)
     print(f"""
 ╔══════════════════════════════════════════════════════════════╗
-║  Devin Live Trace Server                                     ║
+║  Devin Dynamic Call Resolution Demo Server                   ║
 ║  ─────────────────────────────────────────────────────────── ║
-║  Open: http://localhost:{port}                                ║
+║                                                              ║
+║  Routes:                                                     ║
+║    http://localhost:{port}          Landing page               ║
+║    http://localhost:{port}/static   Pre-recorded replay        ║
+║    http://localhost:{port}/live     Live API-powered trace     ║
 ║                                                              ║
 ║  Configuration (optional — can also set via UI):             ║
 ║    DEVIN_API_KEY  = {os.environ.get('DEVIN_API_KEY', '(not set)')[:20]}...  ║
