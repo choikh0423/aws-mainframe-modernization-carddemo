@@ -1154,31 +1154,57 @@ async function startLiveTrace() {
   document.getElementById('simulate-btn').disabled = true;
   document.getElementById('start-btn').disabled = true;
   document.getElementById('event-log').innerHTML = '';
+  const optNum = selectedOption ? selectedOption.num : '8';
+  const optName = selectedOption ? selectedOption.name : 'Add Transaction';
   addLogEntry({
     title: 'Connecting...',
     file: 'Devin API',
-    message: 'Creating child Devin session to trace Add Transaction flow...',
+    message: `Asking Devin: "What does option ${optNum} (${optName}) do?"`,
     code: ''
   });
 
   try {
     // Connect to local proxy server via SSE
     const evtSource = new EventSource(
-      `${serverUrl}/events?api_key=${encodeURIComponent(apiKey)}&org_id=${encodeURIComponent(orgId)}`
+      `${serverUrl}/events?api_key=${encodeURIComponent(apiKey)}&org_id=${encodeURIComponent(orgId)}&option=${encodeURIComponent(optNum)}&option_name=${encodeURIComponent(optName)}`
     );
 
     evtSource.onmessage = function(event) {
       const data = JSON.parse(event.data);
       if (data.type === 'step') {
         const stepIdx = data.step_index;
+        // Highlight the diagram node using pre-defined TRACE_STEPS mapping
         if (stepIdx >= 0 && stepIdx < TRACE_STEPS.length) {
-          const step = TRACE_STEPS[stepIdx];
-          highlightStep(step);
-          addLogEntry(step);
+          highlightStep(TRACE_STEPS[stepIdx]);
+        }
+        // Log the live finding from Devin (richer than pre-recorded text)
+        if (stepIdx === -1) {
+          // Completion step from playbook
+          showStepIndicator('Trace Complete', 'All dynamic calls resolved');
+          addLogEntry({
+            title: 'TRACE COMPLETE',
+            file: '',
+            message: data.finding || 'All dynamic call resolution steps traced.',
+            code: ''
+          });
+        } else {
+          addLogEntry({
+            title: data.title || (TRACE_STEPS[stepIdx] && TRACE_STEPS[stepIdx].title) || `Step ${stepIdx}`,
+            file: data.file || '',
+            message: data.finding || '',
+            code: data.code_snippet || ''
+          });
         }
       } else if (data.type === 'complete') {
-        showStepIndicator('Trace Complete', 'All dynamic calls resolved');
-        addCompletionEntry();
+        showStepIndicator('Trace Complete', `${data.steps_resolved || 0} steps resolved`);
+        if (data.session_url) {
+          addLogEntry({
+            title: 'Session Complete',
+            file: data.session_url,
+            message: `Trace finished. ${data.steps_resolved || 0} dynamic call resolution steps traced.`,
+            code: ''
+          });
+        }
         evtSource.close();
         isRunning = false;
         document.getElementById('simulate-btn').disabled = false;
@@ -1190,11 +1216,18 @@ async function startLiveTrace() {
           message: `Devin session started: ${data.session_id}`,
           code: ''
         });
-      } else if (data.type === 'reading_file') {
+      } else if (data.type === 'status') {
         addLogEntry({
-          title: 'Reading File',
-          file: data.file,
-          message: data.message || `Devin is reading ${data.file}...`,
+          title: 'Status',
+          file: '',
+          message: data.message || '',
+          code: ''
+        });
+      } else if (data.type === 'error') {
+        addLogEntry({
+          title: 'Error',
+          file: '',
+          message: data.message || 'An error occurred during tracing.',
           code: ''
         });
       }
