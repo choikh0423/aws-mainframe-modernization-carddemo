@@ -303,65 +303,6 @@
     text-anchor: middle;
   }
 
-  /* Config modal */
-  #config-modal {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.7);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-  }
-  #config-modal.open { display: flex; }
-  .modal-content {
-    background: #1a1a2e;
-    border: 1px solid #1e3a5f;
-    border-radius: 12px;
-    padding: 24px;
-    width: 460px;
-  }
-  .modal-content h2 {
-    font-size: 16px;
-    color: #4da6ff;
-    margin-bottom: 16px;
-  }
-  .modal-content p {
-    font-size: 12px;
-    color: #888;
-    margin-bottom: 16px;
-    line-height: 1.6;
-  }
-  .form-group {
-    margin-bottom: 12px;
-  }
-  .form-group label {
-    display: block;
-    font-size: 11px;
-    color: #888;
-    margin-bottom: 4px;
-  }
-  .form-group input {
-    width: 100%;
-    background: #0a0a1a;
-    border: 1px solid #333;
-    color: #e0e0e0;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-family: inherit;
-    font-size: 12px;
-  }
-  .form-group input:focus {
-    outline: none;
-    border-color: #4da6ff;
-  }
-  .modal-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 16px;
-    justify-content: flex-end;
-  }
-
   /* Scrollbar */
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: #0d1117; }
@@ -756,33 +697,6 @@
   </div>
 </main>
 
-<!-- Config Modal -->
-<div id="config-modal">
-  <div class="modal-content">
-    <h2>Configure Live Trace</h2>
-    <p>
-      Enter your Devin API credentials to create a live tracing session.
-      Devin will read through the COBOL source files and resolve dynamic calls in real-time.
-      The diagram will highlight each path as it is resolved.
-    </p>
-    <div class="form-group">
-      <label>Devin API Key (starts with cog_)</label>
-      <input type="password" id="api-key" placeholder="cog_..." />
-    </div>
-    <div class="form-group">
-      <label>Organization ID</label>
-      <input type="text" id="org-id" placeholder="org-..." />
-    </div>
-    <div class="form-group">
-      <label>Server URL (if using proxy)</label>
-      <input type="text" id="server-url" placeholder="http://localhost:8765" value="http://localhost:8765" />
-    </div>
-    <div class="modal-actions">
-      <button onclick="closeConfig()" style="background:transparent;border:1px solid #555;color:#888;">Cancel</button>
-      <button onclick="startLiveTrace()" id="start-btn" style="background:#00ff88;color:#0a0a1a;">Start Trace</button>
-    </div>
-  </div>
-</div>
 
 <script>
 // ============================================================
@@ -1133,23 +1047,12 @@ function enableButtons() {
 // ============================================================
 function openConfig(opt) {
   selectedOption = opt || selectedOption || MENU_OPTIONS[7];
-  document.getElementById('config-modal').classList.add('open');
-}
-function closeConfig() {
-  document.getElementById('config-modal').classList.remove('open');
+  startLiveTrace();
 }
 
 async function startLiveTrace() {
-  const apiKey = document.getElementById('api-key').value.trim();
-  const orgId = document.getElementById('org-id').value.trim();
-  const serverUrl = document.getElementById('server-url').value.trim();
+  const serverUrl = window.location.origin;
 
-  if (!apiKey || !orgId) {
-    alert('Please enter both API Key and Organization ID');
-    return;
-  }
-
-  closeConfig();
   isRunning = true;
   document.getElementById('simulate-btn').disabled = true;
   document.getElementById('start-btn').disabled = true;
@@ -1166,7 +1069,7 @@ async function startLiveTrace() {
   try {
     // Connect to local proxy server via SSE
     const evtSource = new EventSource(
-      `${serverUrl}/events?api_key=${encodeURIComponent(apiKey)}&org_id=${encodeURIComponent(orgId)}&option=${encodeURIComponent(optNum)}&option_name=${encodeURIComponent(optName)}`
+      `${serverUrl}/events?option=${encodeURIComponent(optNum)}&option_name=${encodeURIComponent(optName)}`
     );
 
     evtSource.onmessage = function(event) {

@@ -188,13 +188,13 @@ class TraceHandler(SimpleHTTPRequestHandler):
         parsed = urlparse(self.path)
         params = parse_qs(parsed.query)
 
-        api_key = params.get("api_key", [os.environ.get("DEVIN_API_KEY", "")])[0]
-        org_id = params.get("org_id", [os.environ.get("DEVIN_ORG_ID", "")])[0]
+        api_key = os.environ.get("DEVIN_API_KEY", "")
+        org_id = os.environ.get("DEVIN_ORG_ID", "")
         option_num = params.get("option", ["8"])[0]
         option_name = params.get("option_name", ["Add Transaction"])[0]
 
         if not api_key or not org_id:
-            self.send_error(400, "Missing api_key or org_id")
+            self.send_error(500, "Server missing DEVIN_API_KEY or DEVIN_ORG_ID environment variables")
             return
 
         # Build the user question based on the selected menu option
@@ -439,7 +439,7 @@ LANDING_HTML = """
       </p>
     </a>
     <a href="/live" class="card live">
-      <div class="badge">REQUIRES DEVIN API KEY</div>
+      <div class="badge">REQUIRES SERVER ENV VARS</div>
       <h2>/live</h2>
       <p>
         Ask Devin &ldquo;what does this flow do?&rdquo; and watch the call
@@ -476,7 +476,7 @@ def main():
 |  Playbook: Live COBOL Flow Trace                             |
 |    {PLAYBOOK_ID}                                             |
 |                                                              |
-|  Configuration (optional - can also set via UI):             |
+|  Configuration (required env vars):                          |
 |    DEVIN_API_KEY  = {os.environ.get('DEVIN_API_KEY', '(not set)')[:20]}...  |
 |    DEVIN_ORG_ID   = {os.environ.get('DEVIN_ORG_ID', '(not set)')[:20]}...  |
 |                                                              |
