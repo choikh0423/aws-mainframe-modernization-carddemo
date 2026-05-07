@@ -489,6 +489,40 @@
     font-family: 'JetBrains Mono', monospace;
     text-anchor: middle;
   }
+
+  /* No-diagram popup */
+  #no-diagram-popup {
+    display: none;
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: #1a1a2e;
+    border: 2px solid #ffa94d;
+    border-radius: 12px;
+    padding: 24px 32px;
+    z-index: 300;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(255,169,77,0.2);
+    max-width: 420px;
+  }
+  #no-diagram-popup.visible { display: block; }
+  #no-diagram-popup h3 {
+    color: #ffa94d;
+    font-size: 15px;
+    margin-bottom: 10px;
+  }
+  #no-diagram-popup p {
+    color: #c9d1d9;
+    font-size: 12px;
+    line-height: 1.6;
+    margin-bottom: 14px;
+  }
+  #no-diagram-popup button {
+    background: #ffa94d;
+    color: #0a0a1a;
+    padding: 6px 20px;
+    font-weight: 700;
+  }
 </style>
 </head>
 <body>
@@ -524,6 +558,13 @@
       <div id="terminal-status" class="terminal-status">Enter option number (1-11) or click a menu item</div>
     </div>
   </div>
+</div>
+
+<!-- No-diagram popup -->
+<div id="no-diagram-popup">
+  <h3 id="ndp-title">Option Not in Diagram</h3>
+  <p id="ndp-body">This option's call flow is not included in the current diagram. Devin is still tracing it — check the log panel for results.</p>
+  <button onclick="document.getElementById('no-diagram-popup').classList.remove('visible')">OK</button>
 </div>
 
 <main>
@@ -1072,17 +1113,33 @@ async function startLiveTrace() {
       `${serverUrl}/events?option=${encodeURIComponent(optNum)}&option_name=${encodeURIComponent(optName)}`
     );
 
+    // Pick the correct pre-defined step array for the selected option
+    const liveSteps = getLiveStepsForOption(optNum);
+    const hasDiagram = liveSteps.length > 0;
+    if (!hasDiagram) {
+      showNoDiagramPopup(optNum, optName);
+    }
+
     evtSource.onmessage = function(event) {
       const data = JSON.parse(event.data);
       if (data.type === 'step') {
         const stepIdx = data.step_index;
-        // Highlight the diagram node using pre-defined TRACE_STEPS mapping
-        if (stepIdx >= 0 && stepIdx < TRACE_STEPS.length) {
-          highlightStep(TRACE_STEPS[stepIdx]);
+
+        // Try pre-defined step array first, then fall back to text matching
+        let matched = false;
+        if (hasDiagram && stepIdx >= 0 && stepIdx < liveSteps.length) {
+          highlightStep(liveSteps[stepIdx]);
+          matched = true;
+        } else if (hasDiagram) {
+          // Fast parse: scan title/file/finding for known program names
+          const matchedStep = matchStepByProgramName(data, liveSteps);
+          if (matchedStep) {
+            highlightStep(matchedStep);
+            matched = true;
+          }
         }
-        // Log the live finding from Devin (richer than pre-recorded text)
+
         if (stepIdx === -1) {
-          // Completion step from playbook
           showStepIndicator('Trace Complete', 'All dynamic calls resolved');
           addLogEntry({
             title: 'TRACE COMPLETE',
@@ -1092,7 +1149,7 @@ async function startLiveTrace() {
           });
         } else {
           addLogEntry({
-            title: data.title || (TRACE_STEPS[stepIdx] && TRACE_STEPS[stepIdx].title) || `Step ${stepIdx}`,
+            title: data.title || (liveSteps[stepIdx] && liveSteps[stepIdx].title) || `Step ${stepIdx}`,
             file: data.file || '',
             message: data.finding || '',
             code: data.code_snippet || ''
@@ -1158,6 +1215,73 @@ async function startLiveTrace() {
     });
     setTimeout(() => startSimulation(), 1000);
   }
+}
+
+// ============================================================
+//  OPTION → STEP ARRAY MAPPING & FAST PROGRAM-NAME MATCH
+// ============================================================
+const OPTION_STEPS = {
+  3: COCRDLIC_STEPS,
+  8: TRACE_STEPS
+};
+
+function getLiveStepsForOption(optNum) {
+  return OPTION_STEPS[parseInt(optNum)] || [];
+}
+
+// Map known COBOL program names → diagram node IDs
+const PROGRAM_NODE_MAP = {
+  'COMEN01C': 'node-comen01c',
+  'COMEN02Y': 'node-comen02y',
+  'COTRN02C': 'node-cotrn02c',
+  'CCXREF':   'node-ccxref',
+  'CXACAIX':  'node-cxacaix',
+  'CSUTLDTC': 'node-csutldtc',
+  'CEEDAYS':  'node-ceedays',
+  'TRANSACT': 'node-transact',
+  'CBTRN02C': 'node-cbtrn02c',
+  'ACCTFILE': 'node-account',
+  'TCATBALF': 'node-tcatbal',
+  'COCRDLIC': 'node-cocrdlic',
+  'CARDDAT':  'node-carddat',
+  'COCRDSLC': 'node-cocrdslc',
+  'COCRDUPC': 'node-cocrdupc'
+};
+
+function matchStepByProgramName(data, steps) {
+  // Combine all text fields from the SSE event for scanning
+  const text = [data.title, data.file, data.finding, data.code_snippet]
+    .filter(Boolean).join(' ').toUpperCase();
+
+  // Find which pre-defined step mentions the same programs
+  let bestStep = null;
+  let bestScore = 0;
+  for (const step of steps) {
+    let score = 0;
+    for (const nodeId of (step.nodes || [])) {
+      // Check if any program name that maps to this node appears in the text
+      for (const [pgm, nid] of Object.entries(PROGRAM_NODE_MAP)) {
+        if (nid === nodeId && text.includes(pgm)) {
+          score++;
+        }
+      }
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestStep = step;
+    }
+  }
+  return bestStep;
+}
+
+function showNoDiagramPopup(optNum, optName) {
+  const popup = document.getElementById('no-diagram-popup');
+  document.getElementById('ndp-title').textContent = `Option ${optNum} — ${optName}`;
+  document.getElementById('ndp-body').textContent =
+    `This option's call flow is not included in the current diagram. ` +
+    `Devin is still tracing it live — check the log panel on the right for results. ` +
+    `Options 3 and 8 have full diagram support.`;
+  popup.classList.add('visible');
 }
 
 // ============================================================
@@ -1297,6 +1421,9 @@ function resetAll() {
 
   // Reset step indicator
   document.getElementById('step-indicator').classList.remove('visible');
+
+  // Dismiss no-diagram popup
+  document.getElementById('no-diagram-popup').classList.remove('visible');
 
   // Reset log
   document.getElementById('event-log').innerHTML = `
