@@ -855,7 +855,7 @@ const COCRDLIC_STEPS = [
     edgeClass: 'active',
     badge: 'badge-readonly',
     file: 'COCRDLIC.cbl (9000-READ-FORWARD)',
-    message: 'COCRDLIC browses CARDDAT VSAM with STARTBR/READNEXT/ENDBR — READ ONLY. Contrast: COTRN02C WRITES to TRANSACT.',
+    message: 'COCRDLIC browses CARDDAT VSAM with STARTBR/READNEXT/ENDBR — READ ONLY. No CALL statements, only XCTL transfers.',
     code: `<span class="kw">EXEC CICS STARTBR</span>\n  DATASET(<span class="resolved">LIT-CARD-FILE</span>)  <span class="cmt">&larr; 'CARDDAT'</span>\n  RIDFLD(WS-CARD-RID-CARDNUM)\n  GTEQ\n<span class="kw">END-EXEC</span>\n\n<span class="kw">EXEC CICS READNEXT</span>\n  DATASET(<span class="resolved">LIT-CARD-FILE</span>)\n  INTO(<span class="resolved">CARD-RECORD</span>)\n<span class="kw">END-EXEC</span>\n\n<span class="kw">EXEC CICS ENDBR</span> DATASET(LIT-CARD-FILE)\n<span class="kw">END-EXEC</span>`,
     delay: 2500
   },
