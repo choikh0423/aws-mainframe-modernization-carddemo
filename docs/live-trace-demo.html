@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CardDemo Live Demo — SQLite-Backed Transaction Flow</title>
+<title>CardDemo Live Trace — Devin-Driven COBOL Flow</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -784,14 +784,14 @@
 <body>
 
 <header>
-  <h1><span>CardDemo</span> — Live SQLite-Backed Demo</h1>
+  <h1><span>CardDemo</span> — Live Devin Trace</h1>
   <div class="controls">
     <span id="phase-label" class="phase-indicator"></span>
-    <button id="run-btn" onclick="startDemo()">Simulate Demo</button>
+    <a id="session-link" href="#" target="_blank" style="display:none;font-size:11px;color:#4da6ff;text-decoration:underline;margin-right:6px">Devin Session</a>
+    <button id="run-btn" onclick="startLiveTrace()">Start Live Trace</button>
     <button id="reset-btn" onclick="resetAll()">Reset DB</button>
     <span class="kbd-hint"><kbd>Ctrl</kbd>+<kbd>I</kbd> toggle terminal</span>
-    <span class="kbd-hint"><kbd>Space</kbd> pause / resume</span>
-    <span id="pause-indicator" class="pause-indicator">⏸ PAUSED</span>
+    <span id="pause-indicator" class="pause-indicator" style="display:none"></span>
   </div>
 </header>
 
@@ -1169,11 +1169,11 @@
   <div id="trace-panel">
     <h3>
       <span>Execution Trace</span>
-      <span id="trace-source" style="font-size:10px;color:#666;font-weight:400">SQLite-backed — real DB queries drive routing decisions</span>
+      <span id="trace-source" style="font-size:10px;color:#666;font-weight:400">Devin traces COBOL source live — DB queries drive routing</span>
     </h3>
     <div id="trace-log">
       <div style="padding: 10px; color: #555; font-size: 11px; text-align: center;">
-        Click <b>Simulate Demo</b> to open the CICS terminal — choose <b>Option 3</b> (Credit Card List) or <b>Option 8</b> (Transaction Add + batch data flow)
+        Click <b>Start Live Trace</b> to launch a Devin session that traces COBOL source code in real-time
       </div>
     </div>
   </div>
@@ -1541,12 +1541,12 @@ async function confirmTransaction(amount, txnNum) {
   const status = document.getElementById('terminal-status');
   status.className = 'terminal-status resolving';
   status.style.color = '';
-  status.innerHTML = 'Processing... POST /api/db/transaction';
+  status.innerHTML = 'Processing... POST /api/input';
 
   addTrace('step', `User enters: Card# <span class="highlight">9680294154603697</span>, Amount: <span class="highlight">$${amount.toFixed(2)}</span>, Merchant: ${merchant}`);
 
   try {
-    const result = await apiPost('/api/db/transaction', { amount, merchant });
+    const result = await apiPost('/api/input', { amount, merchant, session_id: _activeSessionId });
     logQueries(result.queries_executed);
     switchTab('sql');
     await refreshDbState();
@@ -1555,6 +1555,7 @@ async function confirmTransaction(amount, txnNum) {
     status.innerHTML = '<span class="resolved-pgm">TRANSACTION RECORDED — PENDING BATCH</span>';
     addSqlEntry('insert', `INSERT INTO transactions (tran_type, amount, card_num, merchant, status) VALUES ('PR', ${amount.toFixed(2)}, '9680...3697', '${merchant}', 'Pending')`, `tran_id=${result.tran_id}`);
 
+    _inputTxnNum++;
     setTimeout(() => {
       document.getElementById('terminal-overlay').classList.remove('open');
       if (_termResolve) {
@@ -1577,468 +1578,294 @@ function waitForTerminalClose() {
 }
 
 // ============================================================
-//  DEMO RUNNER
+//  LIVE TRACE: SSE-DRIVEN DEVIN SESSION
 // ============================================================
-async function runOnlinePhase(phaseNum, txnNum) {
-  const phaseLabel = phaseNum === 1 ? 'Phase 1 of 3' : 'Phase 3 of 3';
-  const stepPrefix = phaseNum === 1 ? '1' : '3';
 
-  // Step 1: Light up COMEN01C + COMEN02Y first
-  setPhase(`${phaseLabel} — CICS Online: Transaction Entry`);
-  if (phaseNum === 1) {
-    addTrace('phase', '═══ PHASE 1: CICS Online Transaction Entry ═══');
-  } else {
-    addTrace('phase', '═══ PHASE 3: New Transaction — Enter Amount ═══');
-  }
-  showStep(`Phase ${stepPrefix}.1`, 'COMEN01C reads COMEN02Y.cpy menu data table');
-  activateNode('n-terminal');
-  activateEdge('e-term-menu', 'el-term-menu');
-  activateNode('n-menu');
-  await sleep(1200);
-  activateEdge('e-menu-comen02y', 'el-menu-comen02y');
-  activateNode('n-comen02y');
-  addTrace('step', '<span class="code">COMEN01C reads COMEN02Y.cpy data table</span>');
-  await sleep(1500);
+let _activeSessionId = null;
+let _evtSource = null;
+let _inputTxnNum = 1;
 
-  // Step 2: Show terminal menu
-  showTerminalMenu();
-  addTrace('step', '3270 Terminal displays CARDDEMO Main Menu');
-  await waitForMenuSelect();
-  addTrace('step', 'User selected <span class="highlight">Option 8 — Transaction Add</span> from menu');
-  addTrace('step', '<span class="code">COMEN01C → XCTL to COTRN02C</span>');
-  await sleep(800);
+// Program name → node ID mapping for fallback dynamic matching
+const PROGRAM_NODE_MAP = {
+  'COMEN01C': 'n-menu', 'COMEN02Y': 'n-comen02y',
+  'COTRN02C': 'n-cotrn02c',
+  'CCXREF': 'n-xref-online', 'CXACAIX': 'n-cxacaix',
+  'CSUTLDTC': 'n-csutldtc', 'CEEDAYS': 'n-ceedays',
+  'TRANSACT': 'n-transact-write',
+  'CBTRN02C': 'n-cbtrn02c', 'DALYTRAN': 'n-dalytran',
+  'ACCOUNT': 'n-acct-read', 'ACCTDAT': 'n-acct-read',
+  'COCRDLIC': 'n-cocrdlic', 'CARDDAT': 'n-carddat',
+  'COCRDSLC': 'n-cocrdslc', 'COCRDUPC': 'n-cocrdupc',
+  'DALYREJS': 'n-dalyrejs', 'TCATBAL': 'n-tcatbal',
+};
 
-  // Step 3: Menu closed — light up nodes in sequence
-  showStep(`Phase ${stepPrefix}.2`, 'XCTL dispatch → COTRN02C (Transaction Add)');
-  activateEdge('e-menu-cotrn', 'el-menu-cotrn');
-  activateNode('n-cotrn02c');
-  await sleep(1500);
+// Step index → diagram highlighting instructions
+const STEP_HIGHLIGHTS = {
+  // Phase 1: CICS Online Entry
+  0: {
+    label: 'Phase 1.1 — Menu Dispatch',
+    phase: 'Phase 1 of 3 — CICS Online Entry',
+    nodes: [['n-terminal'], ['n-menu'], ['n-comen02y']],
+    edges: [['e-term-menu', 'el-term-menu'], ['e-menu-comen02y', 'el-menu-comen02y']],
+  },
+  1: {
+    label: 'Phase 1.2 — XCTL to COTRN02C',
+    nodes: [['n-cotrn02c']],
+    edges: [['e-menu-cotrn', 'el-menu-cotrn']],
+  },
+  2: {
+    label: 'Phase 1.3 — CCXREF + Date Validation',
+    nodes: [['n-xref-online'], ['n-cxacaix'], ['n-csutldtc'], ['n-ceedays']],
+    edges: [['e-cotrn-xref', 'el-cotrn-xref'], ['e-cotrn-cxacaix', 'el-cotrn-cxacaix'], ['e-cotrn-csutldtc', 'el-cotrn-csutldtc'], ['e-csutldtc-ceedays', 'el-csutldtc-ceedays']],
+  },
+  3: {
+    label: 'Phase 1.4 — User Input Required',
+    decisions: [['d-confirm', null, 'active']],
+    edges: [['e-cotrn-confirm', 'el-cotrn-confirm']],
+  },
+  4: {
+    label: 'Phase 1.5 — WRITE to TRANSACT',
+    nodes: [['n-transact-write']],
+    edges: [['e-confirm-transact', 'el-confirm-transact']],
+  },
+  // Phase 2: Batch Processing
+  5: {
+    label: 'Phase 2.1 — Batch CBTRN02C',
+    phase: 'Phase 2 of 3 — Batch Processing',
+    nodes: [['n-cbtrn02c', 'batch']],
+    edges: [['e-trigger', 'el-trigger', 'batch']],
+  },
+  6: {
+    label: 'Phase 2.2 — DALYTRAN + XREF + Account',
+    nodes: [['n-dalytran', 'batch'], ['n-xref-batch', 'batch'], ['n-acct-read', 'batch']],
+    edges: [['e-cbtrn-daly', 'el-cbtrn-daly', 'batch'], ['e-cbtrn-xref', 'el-cbtrn-xref', 'batch'], ['e-cbtrn-acct', 'el-cbtrn-acct', 'batch']],
+  },
+  7: {
+    label: 'Phase 2.3 — Overlimit Check',
+    edges: [['e-acct-decision', 'el-acct-decision', 'batch']],
+  },
+  // Phase 3: Second Transaction + Batch
+  8: {
+    label: 'Phase 3.1 — Second Transaction Entry',
+    phase: 'Phase 3 of 3 — New Transaction',
+    clearFirst: true,
+  },
+  9: {
+    label: 'Phase 3.2 — WRITE Second Transaction',
+    nodes: [['n-terminal'], ['n-menu'], ['n-cotrn02c'], ['n-transact-write']],
+    edges: [['e-term-menu', 'el-term-menu'], ['e-menu-cotrn', 'el-menu-cotrn'], ['e-confirm-transact', 'el-confirm-transact']],
+  },
+  10: {
+    label: 'Phase 3.3 — Second Overlimit Check',
+    nodes: [['n-cbtrn02c', 'batch'], ['n-dalytran', 'batch'], ['n-xref-batch', 'batch'], ['n-acct-read', 'batch']],
+    edges: [['e-trigger', 'el-trigger', 'batch'], ['e-cbtrn-daly', 'el-cbtrn-daly', 'batch'], ['e-cbtrn-xref', 'el-cbtrn-xref', 'batch'], ['e-cbtrn-acct', 'el-cbtrn-acct', 'batch'], ['e-acct-decision', 'el-acct-decision', 'batch']],
+  },
+};
 
-  // Step 4: XREF + date validation nodes
-  showStep(`Phase ${stepPrefix}.3`, 'CCXREF lookup + date validation');
-  activateNode('n-xref-online');
-  activateEdge('e-cotrn-xref', 'el-cotrn-xref');
-  await sleep(1000);
-  activateNode('n-cxacaix');
-  activateEdge('e-cotrn-cxacaix', 'el-cotrn-cxacaix');
-  await sleep(1000);
-  activateNode('n-csutldtc');
-  activateEdge('e-cotrn-csutldtc', 'el-cotrn-csutldtc');
-  await sleep(800);
-  activateNode('n-ceedays');
-  activateEdge('e-csutldtc-ceedays', 'el-csutldtc-ceedays');
-  addTrace('data', 'READ CCXREF: Card 9680294154603697 → <span class="highlight">Acct 00001, Cust 00001</span>');
-  addTrace('step', '<span class="code">EXEC CICS READ DATASET(CCXREF) RIDFLD(XREF-CARD-NUM)  |  CALL CSUTLDTC → CEEDAYS</span>');
-  highlightXref();
-  await sleep(1500);
-
-  // Step 5: Y/N confirm diamond lights up
-  showStep(`Phase ${stepPrefix}.4`, 'User confirmation required — Y/N');
-  activateEdge('e-cotrn-confirm', 'el-cotrn-confirm');
-  activateDecision('d-confirm', null, 'active');
-  await sleep(1000);
-
-  // Step 6: Terminal reopens for transaction entry
-  showTransactionScreen(0, txnNum);
-  await waitForTerminalClose();
-  await sleep(800);
-
-  // Step 7: TRANSACT write — nodes light up after terminal closes
-  showStep(`Phase ${stepPrefix}.5`, 'WRITE to TRANSACT file');
-  activateEdge('e-confirm-transact', 'el-confirm-transact');
-  activateNode('n-transact-write');
-  const amt = txnNum === 1 ? phase1Amount : phase3Amount;
-  showBadge('vb-txn-amt', `$${amt.toFixed(2)}`);
-  addTrace('step', '<span class="code">EXEC CICS WRITE DATASET(WS-TRANSACT-FILE) FROM(TRAN-RECORD)</span>');
-  await refreshDbState();
-  addTrace('accept', '→ Transaction written to SQLite. Status: <span class="highlight">PENDING</span> (awaiting batch posting)');
-  tranIdCounter++;
-  await sleep(2000);
-}
-
-// After-menu variant: skips COMEN01C+COMEN02Y+menu steps (already done in startDemo)
-async function runOnlinePhaseAfterMenu(phaseNum, txnNum) {
-  const stepPrefix = phaseNum === 1 ? '1' : '3';
-
-  setPhase(`Phase ${phaseNum} of 3 — CICS Online: Transaction Entry`);
-  addTrace('step', '<span class="code">COMEN01C → XCTL to COTRN02C</span>');
-
-  // Step 3: Menu closed — light up nodes in sequence
-  showStep(`Phase ${stepPrefix}.2`, 'XCTL dispatch → COTRN02C (Transaction Add)');
-  activateEdge('e-menu-cotrn', 'el-menu-cotrn');
-  activateNode('n-cotrn02c');
-  await sleep(1500);
-
-  // Step 4: XREF + date validation nodes
-  showStep(`Phase ${stepPrefix}.3`, 'CCXREF lookup + date validation');
-  activateNode('n-xref-online');
-  activateEdge('e-cotrn-xref', 'el-cotrn-xref');
-  await sleep(1000);
-  activateNode('n-cxacaix');
-  activateEdge('e-cotrn-cxacaix', 'el-cotrn-cxacaix');
-  await sleep(1000);
-  activateNode('n-csutldtc');
-  activateEdge('e-cotrn-csutldtc', 'el-cotrn-csutldtc');
-  await sleep(800);
-  activateNode('n-ceedays');
-  activateEdge('e-csutldtc-ceedays', 'el-csutldtc-ceedays');
-  addTrace('data', 'READ CCXREF: Card 9680294154603697 → <span class="highlight">Acct 00001, Cust 00001</span>');
-  addTrace('step', '<span class="code">EXEC CICS READ DATASET(CCXREF) RIDFLD(XREF-CARD-NUM)  |  CALL CSUTLDTC → CEEDAYS</span>');
-  highlightXref();
-  await sleep(1500);
-
-  // Step 5: Y/N confirm diamond lights up
-  showStep(`Phase ${stepPrefix}.4`, 'User confirmation required — Y/N');
-  activateEdge('e-cotrn-confirm', 'el-cotrn-confirm');
-  activateDecision('d-confirm', null, 'active');
-  await sleep(1000);
-
-  // Step 6: Terminal reopens for transaction entry
-  showTransactionScreen(0, txnNum);
-  await waitForTerminalClose();
-  await sleep(800);
-
-  // Step 7: TRANSACT write — nodes light up after terminal closes
-  showStep(`Phase ${stepPrefix}.5`, 'WRITE to TRANSACT file (SQLite)');
-  activateEdge('e-confirm-transact', 'el-confirm-transact');
-  activateNode('n-transact-write');
-  const amt = txnNum === 1 ? phase1Amount : phase3Amount;
-  showBadge('vb-txn-amt', `$${amt.toFixed(2)}`);
-  addTrace('step', '<span class="code">EXEC CICS WRITE DATASET(WS-TRANSACT-FILE) FROM(TRAN-RECORD)</span>');
-  await refreshDbState();
-  addTrace('accept', '→ Transaction written to SQLite. Status: <span class="highlight">PENDING</span> (awaiting batch posting)');
-  tranIdCounter++;
-  await sleep(2000);
-}
-
-// ============================================================
-//  OPTION 3: COCRDLIC Trace (Credit Card List — Right Tree)
-// ============================================================
-async function runOption3Trace() {
-  setPhase('Option 3 — COCRDLIC: Credit Card List');
-  addTrace('phase', '═══ Option 3: COCRDLIC — Credit Card List (Read-Only Browse) ═══');
-
-  // Step 1: XCTL to COCRDLIC
-  showStep('Step 1', 'XCTL dispatch → COCRDLIC (Credit Card List)');
-  addTrace('step', '<span class="code">COMEN01C → XCTL to COCRDLIC</span>');
-  addTrace('step', `<div class="devin-response"><div class="devin-label">Devin reading COMEN02Y.cpy</div>I found the menu data table at <code>app/cpy/COMEN02Y.cpy</code>. The structure uses a <code>REDEFINES</code> overlay to map option numbers to program names.<div class="cobol-block"><span class="cmt">* COMEN02Y.cpy — option 3:</span>
-10 FILLER  PIC 9(02) VALUE <span class="resolved">3</span>.
-10 FILLER  PIC X(35) VALUE
-    <span class="str">'Credit Card List'</span>.
-10 FILLER  PIC X(08) VALUE <span class="resolved">'COCRDLIC'</span>.</div>The menu dispatch resolves option 3 to <code>COCRDLIC</code> — a <b>completely different program</b> than option 8's <code>COTRN02C</code>. Same XCTL instruction, different runtime target.</div>`);
-  activateEdge('e-menu-cocrdlic', 'el-menu-cocrdlic');
-  activateNode('n-cocrdlic');
-  await sleep(3000);
-
-  // Step 2: XCTL detail — COCRDLIC receives COMMAREA
-  showStep('Step 2', 'COCRDLIC — pseudo-conversational CICS program');
-  addTrace('step', `<div class="devin-response"><div class="devin-label">Devin reading COCRDLIC.cbl</div>COCRDLIC is a <b>pseudo-conversational CICS program</b> that lists credit cards with pagination. It follows the standard SEND-then-RETURN pattern:<div class="cobol-block"><span class="kw">EXEC CICS</span>
-    <span class="kw">XCTL PROGRAM</span>(CDEMO-MENU-OPT-PGMNAME(<span class="resolved">3</span>))
-    <span class="cmt">← resolves to 'COCRDLIC'</span>
-    <span class="kw">COMMAREA</span>(CARDDEMO-COMMAREA)
-<span class="kw">END-EXEC</span></div>COCRDLIC receives the shared <code>CARDDEMO-COMMAREA</code> (COCOM01Y.cpy) plus its own extension <code>WS-THIS-PROGCOMMAREA</code> for pagination state.<br><br><b>Key difference from COTRN02C:</b> COCRDLIC has <b>no CALL statements</b> — all transfers use XCTL. And it only <b>reads</b> data, never writes.</div>`);
-  await sleep(3000);
-
-  // Step 3: CARDDAT Browse (read-only VSAM)
-  showStep('Step 3', 'CARDDAT VSAM Browse — read-only paginated');
-  activateEdge('e-cocrdlic-carddat', 'el-cocrdlic-carddat');
-  activateNode('n-carddat');
-  const badge = document.getElementById('badge-readonly');
-  if (badge) badge.classList.add('visible');
-  addTrace('step', `<div class="devin-response"><div class="devin-label">Devin reading COCRDLIC.cbl — browse logic</div>COCRDLIC browses the CARDDAT VSAM file to list credit cards with pagination:<div class="cobol-block"><span class="cmt">* 9000-READ-FORWARD:</span>
-<span class="kw">EXEC CICS STARTBR</span>
-    DATASET(<span class="resolved">LIT-CARD-FILE</span>)   <span class="cmt">← 'CARDDAT'</span>
-    RIDFLD(WS-CARD-RID-CARDNUM)
-    GTEQ
-<span class="kw">END-EXEC</span>
-
-<span class="cmt">* Loop: READNEXT up to 7 rows</span>
-<span class="kw">EXEC CICS READNEXT</span>
-    DATASET(<span class="resolved">LIT-CARD-FILE</span>)
-    INTO(<span class="resolved">CARD-RECORD</span>)  <span class="cmt">← CVACT02Y (150 bytes)</span>
-    RIDFLD(WS-CARD-RID-CARDNUM)
-<span class="kw">END-EXEC</span>
-
-<span class="cmt">* Peek-ahead + ENDBR to detect next page</span>
-<span class="kw">EXEC CICS ENDBR</span> DATASET(LIT-CARD-FILE)
-<span class="kw">END-EXEC</span></div><b>Contrast with COTRN02C:</b> COCRDLIC is <b>read-only</b> — it only browses CARDDAT using STARTBR/READNEXT/READPREV/ENDBR. It never writes, rewrites, or deletes records. COTRN02C writes to TRANSACT. Different programs, different data access patterns.</div>`);
-  await sleep(3500);
-
-  // Step 4: Downstream Navigation — COCRDSLC / COCRDUPC
-  showStep('Step 4', 'Dynamic XCTL to detail view (S) or update (U)');
-  activateEdge('e-cocrdlic-cocrdslc', 'el-cocrdlic-cocrdslc');
-  activateNode('n-cocrdslc');
-  await sleep(800);
-  activateEdge('e-cocrdlic-cocrdupc', 'el-cocrdlic-cocrdupc');
-  activateNode('n-cocrdupc');
-  addTrace('step', `<div class="devin-response"><div class="devin-label">Devin reading COCRDLIC.cbl — downstream transfers</div>When the user selects a card row, COCRDLIC transfers control via another dynamic XCTL:<div class="cobol-block"><span class="cmt">* User types 'S' next to a row:</span>
-<span class="kw">MOVE</span> LIT-CARDDTLPGM <span class="kw">TO</span> CCARD-NEXT-PROG
-<span class="cmt">    → 'COCRDSLC' (Card Detail View)</span>
-
-<span class="cmt">* User types 'U' next to a row:</span>
-<span class="kw">MOVE</span> LIT-CARDUPDPGM <span class="kw">TO</span> CCARD-NEXT-PROG
-<span class="cmt">    → 'COCRDUPC' (Card Update)</span>
-
-<span class="cmt">* Dynamic transfer — resolved at runtime:</span>
-<span class="kw">EXEC CICS XCTL</span>
-    PROGRAM(<span class="resolved">CCARD-NEXT-PROG</span>)
-<span class="kw">END-EXEC</span></div><b>Full chain:</b> Menu option → COCRDLIC → user selection → COCRDSLC or COCRDUPC. Every link resolved at runtime.</div>`);
-  await sleep(3000);
-
-  // Completion
-  showStep('Trace Complete', 'COCRDLIC flow traced — compare with Option 8');
-  setPhase('Option 3 — Complete');
-  addTrace('phase', '═══ TRACE COMPLETE — Option 3 (Right Tree) ═══');
-  addTrace('step', `<div class="devin-response"><div class="devin-label">Devin Summary</div>All 4 COCRDLIC resolution steps traced from actual COBOL source.<br><br><b style="color:#00ff88;">Programs resolved:</b> COMEN01C → COCRDLIC → COCRDSLC / COCRDUPC<br><b style="color:#4ecdc4;">Data access:</b> CARDDAT VSAM (read-only browse — STARTBR/READNEXT/ENDBR)<br><b style="color:#ffa94d;">Resolution mechanisms:</b> XCTL data table, CCARD-NEXT-PROG variable indirection<br><br><b>Key contrast with Option 8:</b><br><table style="font-size:11px;margin:8px 0;border-collapse:collapse;width:100%;"><tr style="border-bottom:1px solid #2a2a3e;"><td style="padding:4px;"></td><td style="padding:4px;color:#00ff88;"><b>Option 8 (Left)</b></td><td style="padding:4px;color:#4ecdc4;"><b>Option 3 (Right)</b></td></tr><tr style="border-bottom:1px solid #1a1a2e;"><td style="padding:4px;color:#888;">Program</td><td style="padding:4px;">COTRN02C</td><td style="padding:4px;">COCRDLIC</td></tr><tr style="border-bottom:1px solid #1a1a2e;"><td style="padding:4px;color:#888;">CALL stmts</td><td style="padding:4px;">Yes (CSUTLDTC → CEEDAYS)</td><td style="padding:4px;">None</td></tr><tr style="border-bottom:1px solid #1a1a2e;"><td style="padding:4px;color:#888;">Data access</td><td style="padding:4px;"><span style="color:#ff6b6b;">WRITE</span> to TRANSACT</td><td style="padding:4px;"><span style="color:#4ecdc4;">READ ONLY</span> from CARDDAT</td></tr><tr><td style="padding:4px;color:#888;">Batch link</td><td style="padding:4px;">Yes (CBTRN02C)</td><td style="padding:4px;">None</td></tr></table>Same <code>XCTL PROGRAM(variable)</code> instruction, completely different runtime behavior.<br><br><div style="padding:8px;background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.2);border-radius:4px;"><b style="color:#00ff88;">Click Reset</b> and try <b>Option 8</b> (Transaction Add) to see the full 3-phase data flow demo with batch processing, overlimit detection, and VSAM file updates.</div></div>`);
-}
-
-async function startDemo() {
+function startLiveTrace() {
   if (isRunning) return;
   isRunning = true;
-  _selectedOption = null;
+  _inputTxnNum = 1;
+  _activeSessionId = null;
   document.getElementById('run-btn').disabled = true;
   document.getElementById('trace-log').innerHTML = '';
+  document.getElementById('sql-log').innerHTML = '';
+  const sessionLink = document.getElementById('session-link');
+  if (sessionLink) sessionLink.style.display = 'none';
 
-  // Step 1: Light up COMEN01C + COMEN02Y first
-  setPhase('Menu Dispatch — COMEN01C reads COMEN02Y');
-  showStep('Menu Dispatch', 'COMEN01C reads COMEN02Y.cpy menu data table');
-  activateNode('n-terminal');
-  activateEdge('e-term-menu', 'el-term-menu');
-  activateNode('n-menu');
-  await sleep(1200);
-  activateEdge('e-menu-comen02y', 'el-menu-comen02y');
-  activateNode('n-comen02y');
-  addTrace('step', '<span class="code">COMEN01C reads COMEN02Y.cpy data table</span>');
-  await sleep(1500);
-
-  // Step 2: Show terminal menu — wait for selection
+  // Show terminal menu — user selects option
+  setPhase('Menu Dispatch — Select Option');
   showTerminalMenu();
-  addTrace('step', '3270 Terminal displays CARDDEMO Main Menu — select Option 3 or 8');
-  await waitForMenuSelect();
+  addTrace('step', '3270 Terminal: CARDDEMO Main Menu');
 
-  const opt = _selectedOption;
-  addTrace('step', `User selected <span class="highlight">Option ${opt}</span> from menu`);
-  await sleep(800);
+  waitForMenuSelect().then(() => {
+    const opt = _selectedOption;
+    const optInfo = MENU_OPTIONS.find(o => o.num === opt);
+    addTrace('step', `Selected <span class="highlight">Option ${opt} — ${optInfo.name}</span>`);
+    addTrace('step', 'Connecting to Devin trace server...');
 
-  if (opt === 3) {
-    await runOption3Trace();
-  } else {
-    // Option 8: Full 3-phase data flow
-    addTrace('phase', '═══ PHASE 1: CICS Online Transaction Entry ═══');
-    await runOnlinePhaseAfterMenu(1, 1);
-    await runPhase2();
-    clearDiagramState();
-    await sleep(800);
-    await runOnlinePhase(3, 2);
-    await runPhase3Batch();
-    showStep('Demo Complete', 'All 3 phases traced — data alteration drove route change');
-    setPhase('Complete');
-  }
+    const url = `/events?option=${opt}&option_name=${encodeURIComponent(optInfo.name)}`;
+    _evtSource = new EventSource(url);
 
-  isRunning = false;
-  document.getElementById('run-btn').disabled = false;
+    _evtSource.onmessage = function(event) {
+      try {
+        const data = JSON.parse(event.data);
+        handleSSEEvent(data);
+      } catch (e) {
+        console.error('SSE parse error:', e);
+      }
+    };
+
+    _evtSource.onerror = function(err) {
+      console.error('SSE error:', err);
+      addTrace('reject', 'Connection to trace server lost');
+      if (_evtSource) { _evtSource.close(); _evtSource = null; }
+      isRunning = false;
+      document.getElementById('run-btn').disabled = false;
+    };
+  });
 }
 
-// ============================================================
-//  PHASE 2: Batch Processing — $500 ACCEPTED
-// ============================================================
-async function runPhase2() {
-  const amt = phase1Amount;
-  const prevBal = acctBal;
-  const prevCr = acctCycCr;
-  setPhase(`Phase 2 of 3 — Batch: Process $${amt.toFixed(0)} (Trigger + Validate + Post)`);
-  addTrace('phase', `═══ PHASE 2: Batch Processing — CBTRN02C ($${amt.toFixed(2)}) ═══`);
+function handleSSEEvent(data) {
+  const type = data.type;
 
-  showStep('Phase 2.1', 'CICS START triggers batch CBTRN02C');
-  activateEdge('e-trigger', 'el-trigger', 'batch');
-  activateNode('n-cbtrn02c', 'batch');
-  addTrace('step', 'CICS START → CBTRN02C batch engine initiated');
-  addTrace('step', '<span class="code">EXEC CICS START TRANSID(\'CBTR\') → CBTRN02C.cbl 1000-DALYTRAN-GET-NEXT</span>');
-  await sleep(2500);
+  if (type === 'status') {
+    addTrace('step', data.message || '');
+    return;
+  }
+  if (type === 'session_created') {
+    _activeSessionId = data.session_id;
+    const link = document.getElementById('session-link');
+    if (link && data.session_url) {
+      link.href = data.session_url;
+      link.style.display = 'inline';
+    }
+    addTrace('data', `Devin session: <a href="${data.session_url || '#'}" target="_blank" style="color:#4da6ff">${data.session_id || 'started'}</a>`);
+    return;
+  }
+  if (type === 'step') { handleTraceStep(data); return; }
+  if (type === 'input_required') { handleInputRequired(data); return; }
+  if (type === 'db_result') { handleDBResult(data); return; }
+  if (type === 'complete') { handleComplete(data); return; }
+  if (type === 'error') {
+    addTrace('reject', 'Error: ' + (data.message || 'Unknown'));
+    return;
+  }
+}
 
-  showStep('Phase 2.2', 'Read daily transaction from DALYTRAN file');
-  activateNode('n-dalytran', 'batch');
-  activateEdge('e-cbtrn-daly', 'el-cbtrn-daly', 'batch');
-  addTrace('data', `READ DALYTRAN: Tran#1, Card 9680294154603697, Amount $${amt.toFixed(2)}`);
-  addTrace('step', '<span class="code">READ DALYTRAN-FILE INTO DALYTRAN-RECORD  (CBTRN02C.cbl:346)</span>');
-  await sleep(2200);
+function handleTraceStep(data) {
+  const idx = data.step_index;
+  if (idx === -1) { handleComplete(data); return; }
 
-  showStep('Phase 2.3', 'XREF lookup in batch: Card → Account');
-  activateNode('n-xref-batch', 'batch');
-  activateEdge('e-cbtrn-xref', 'el-cbtrn-xref', 'batch');
-  addTrace('data', '1500-A-LOOKUP-XREF: Card 9680294154603697 → Acct 00001');
-  addTrace('step', '<span class="code">MOVE DALYTRAN-CARD-NUM TO FD-XREF-CARD-NUM / READ XREF-FILE  (CBTRN02C.cbl:383)</span>');
-  await sleep(2200);
+  const hl = STEP_HIGHLIGHTS[idx];
+  if (hl) {
+    if (hl.phase) setPhase(hl.phase);
+    if (hl.clearFirst) clearDiagramState();
+    showStep(hl.label || `Step ${idx}`, data.title || '');
+    if (hl.nodes) hl.nodes.forEach(([n, s]) => activateNode(n, s));
+    if (hl.edges) hl.edges.forEach(([e, l, s]) => activateEdge(e, l, s));
+    if (hl.decisions) hl.decisions.forEach(([p, l, c]) => activateDecision(p, l, c));
+  } else {
+    showStep(`Step ${idx}`, data.title || '');
+  }
 
-  showStep('Phase 2.4', 'Read Account Master + overlimit check');
-  activateNode('n-acct-read', 'batch');
-  activateEdge('e-cbtrn-acct', 'el-cbtrn-acct', 'batch');
-  showBadge('vb-acct', null, [`Bal: $${acctBal.toFixed(0)} / Lim: $${creditLimit.toFixed(0)}`, `CycCr: $${acctCycCr.toFixed(0)} / CycDb: $${acctCycDb.toFixed(0)}`]);
-  addTrace('data', `1500-B-LOOKUP-ACCT: READ ACCOUNT-FILE → Bal=$${prevBal.toFixed(2)}, Limit=$${creditLimit.toFixed(2)}`);
-  addTrace('step', '<span class="code">READ ACCOUNT-FILE INTO ACCOUNT-RECORD  (CBTRN02C.cbl:395)</span>');
-  await sleep(2800);
+  // Fallback: highlight any mentioned program names
+  highlightMentionedPrograms(data);
 
-  // Call the real batch API
-  showStep('Phase 2.5', 'POST /api/db/batch — Overlimit validation via SQLite');
-  activateEdge('e-acct-decision', 'el-acct-decision', 'batch');
-  addTrace('step', '<span class="code">POST /api/db/batch → server runs overlimit check against SQLite</span>');
+  // Build trace entry
+  const finding = data.finding || '';
+  const code = data.code_snippet || '';
+  let html = '';
+  if (data.title) html += `<span class="code">${data.title}</span>`;
+  if (finding || code) {
+    html += '<div class="devin-response"><div class="devin-label">Devin Analysis</div>' + finding;
+    if (code) html += '<div class="cobol-block">' + escCode(code) + '</div>';
+    html += '</div>';
+  }
+  if (html) addTrace('step', html);
 
-  const batchResult = await apiPost('/api/db/batch');
-  logQueries(batchResult.queries_executed);
+  // Refresh DB for data access / mutation steps
+  if ([2, 4, 6, 9].includes(idx)) {
+    refreshDbState();
+    if (idx === 2) highlightXref();
+  }
+}
+
+function handleInputRequired(data) {
+  _activeSessionId = data.session_id || _activeSessionId;
+  const idx = data.step_index;
+  const hl = STEP_HIGHLIGHTS[idx];
+  if (hl) {
+    if (hl.phase) setPhase(hl.phase);
+    if (hl.clearFirst) clearDiagramState();
+    showStep(hl.label || 'Input Required', data.title || '');
+    if (hl.decisions) hl.decisions.forEach(([p, l, c]) => activateDecision(p, l, c));
+    if (hl.edges) hl.edges.forEach(([e, l, s]) => activateEdge(e, l, s));
+  }
+  addTrace('step', `<span class="highlight">AWAITING INPUT</span>: ${data.prompt || 'Enter transaction details in the 3270 terminal'}`);
+  showTransactionScreen(0, _inputTxnNum);
+}
+
+async function handleDBResult(data) {
+  const batchResult = data.batch_result || {};
+  const queries = data.queries_executed || batchResult.queries_executed || [];
+  const results = batchResult.results || [];
+  const r = results[0] || {};
+  const decision = r.decision || 'UNKNOWN';
+  const tempBal = r.temp_bal || 0;
+  const idx = data.step_index;
+
+  const hl = STEP_HIGHLIGHTS[idx];
+  if (hl) {
+    showStep(hl.label || 'Overlimit Result', data.title || '');
+    if (hl.nodes) hl.nodes.forEach(([n, s]) => activateNode(n, s));
+    if (hl.edges) hl.edges.forEach(([e, l, s]) => activateEdge(e, l, s));
+  }
+
+  logQueries(queries);
   switchTab('sql');
-
-  const r = batchResult.results && batchResult.results[0];
-  const tempBal = r ? r.temp_bal : (acctCycCr - acctCycDb + amt);
-  const decision = r ? r.decision : 'ACCEPTED';
-
-  showBadge('vb-calc', `$${acctCycCr} - $${acctCycDb} + $${amt.toFixed(0)} = $${tempBal}`);
-  addTrace('step', '<span class="code">COMPUTE WS-TEMP-BAL = ACCT-CURR-CYC-CREDIT - ACCT-CURR-CYC-DEBIT + DALYTRAN-AMT</span>');
-  addTrace('data', `WS-TEMP-BAL = $${acctCycCr.toFixed(2)} - $${acctCycDb.toFixed(2)} + $${amt.toFixed(2)} = <span class="highlight">$${tempBal.toFixed ? tempBal.toFixed(2) : tempBal}</span>`);
-  addTrace('step', `<span class="code">IF ACCT-CREDIT-LIMIT ($${creditLimit.toFixed(2)}) >= WS-TEMP-BAL ($${tempBal.toFixed ? tempBal.toFixed(2) : tempBal})  (CBTRN02C.cbl:407)</span>`);
   addSqlEntry('decision', `-- OVERLIMIT CHECK: credit_limit(${creditLimit}) >= temp_bal(${tempBal}) ?`, decision);
-  await sleep(2200);
 
-  // Refresh DB state after batch
   await refreshDbState();
   switchTab('vsam');
 
   if (decision === 'ACCEPTED') {
     activateDecision('d-overlimit', 'dl-overlimit', 'active');
     activateDecision(null, 'dl-overlimit2', 'active');
-    addTrace('accept', `→ $${creditLimit.toFixed(2)} >= $${tempBal.toFixed ? tempBal.toFixed(2) : tempBal} → <span class="highlight">CONDITION MET — ACCEPTED</span>`);
-    await sleep(2200);
-
-    showStep('Phase 2.6', 'ACCEPT: Update Account Master + write TRANSACT');
     activateEdge('e-decision-accept', 'el-decision-accept');
     activateNode('n-accept');
+    activateEdge('e-accept-transact', 'el-accept-transact');
+    activateEdge('e-accept-tcatbal', 'el-accept-tcatbal');
+    activateNode('n-transact-posted');
+    activateNode('n-tcatbal');
+    showBadge('vb-result', `REWRITE bal → $${acctBal.toFixed(0)}`);
     const balTd = document.getElementById('td-bal');
     const cycCrTd = document.getElementById('td-cyc-cr');
     balTd.classList.add('changed', 'flash-green');
     cycCrTd.classList.add('changed', 'flash-green');
     setTimeout(() => { balTd.classList.remove('flash-green'); cycCrTd.classList.remove('flash-green'); }, 1200);
-    showBadge('vb-result', `REWRITE bal → $${acctBal.toFixed(0)}`);
-    addTrace('step', '<span class="code">ADD DALYTRAN-AMT TO ACCT-CURR-BAL  (CBTRN02C.cbl:547)</span>');
-    addTrace('step', '<span class="code">ADD DALYTRAN-AMT TO ACCT-CURR-CYC-CREDIT  (CBTRN02C.cbl:549)</span>');
-    addTrace('data', `REWRITE ACCOUNT: Bal $${prevBal.toFixed(0)}→<span class="highlight">$${acctBal.toFixed(0)}</span>, CycCredit $${prevCr.toFixed(0)}→<span class="highlight">$${acctCycCr.toFixed(0)}</span>`);
-    addTrace('step', '<span class="code">REWRITE FD-ACCTFILE-REC FROM ACCOUNT-RECORD  (CBTRN02C.cbl:554)</span>');
-    await sleep(2200);
-
-    activateEdge('e-accept-transact', 'el-accept-transact');
-    activateEdge('e-accept-tcatbal', 'el-accept-tcatbal');
-    activateNode('n-transact-posted');
-    activateNode('n-tcatbal');
-    addTrace('accept', '→ WRITE TRANSACT (posted) + UPDATE TCATBAL');
-    addTrace('accept', '→ Transaction #1: <span class="highlight">ACCEPTED & POSTED</span>');
-    await sleep(3500);
+    addTrace('accept', `→ credit_limit($${creditLimit.toFixed(2)}) >= temp_bal($${typeof tempBal === 'number' ? tempBal.toFixed(2) : tempBal}) → <span class="highlight">ACCEPTED</span>`);
   } else {
-    // Unexpected reject in phase 2
     activateDecision('d-overlimit', 'dl-overlimit', 'reject-active');
     activateDecision(null, 'dl-overlimit2', 'reject-active');
-    addTrace('reject', `→ $${creditLimit.toFixed(2)} < $${tempBal} → <span class="warn">CONDITION FAILED — REJECTED</span>`);
-    activateEdge('e-decision-reject', 'el-decision-reject', 'reject');
-    activateNode('n-reject', 'reject');
-    activateEdge('e-reject-rejs', 'el-reject-rejs', 'reject');
-    activateNode('n-dalyrejs', 'reject');
-    showBadge('vb-reject-reason', `Code 102: OVERLIMIT`);
-    addTrace('reject', `→ WRITE DALYREJS: Reason=102 "OVERLIMIT TRANSACTION"`);
-    await sleep(3500);
-  }
-}
-
-// ============================================================
-//  PHASE 3 BATCH: $1000 REJECTED
-// ============================================================
-async function runPhase3Batch() {
-  const amt = phase3Amount;
-  setPhase(`Phase 3 of 3 — Batch: $${amt.toFixed(0)} → DB decides routing`);
-
-  showStep('Phase 3.3', 'Batch CBTRN02C processes transaction #2');
-  activateEdge('e-trigger', 'el-trigger', 'batch');
-  activateNode('n-cbtrn02c', 'batch');
-  activateNode('n-dalytran', 'batch');
-  activateEdge('e-cbtrn-daly', 'el-cbtrn-daly', 'batch');
-  activateNode('n-xref-batch', 'batch');
-  activateEdge('e-cbtrn-xref', 'el-cbtrn-xref', 'batch');
-  addTrace('step', `CBTRN02C reads DALYTRAN → Tran#2, $${amt.toFixed(2)}`);
-  addTrace('data', 'XREF lookup → Acct 00001');
-  await sleep(2200);
-
-  showStep('Phase 3.4', 'Account read — balance CHANGED by previous batch!');
-  activateNode('n-acct-read', 'batch');
-  activateEdge('e-cbtrn-acct', 'el-cbtrn-acct', 'batch');
-  showBadge('vb-acct', null, [`Bal: $${acctBal.toFixed(0)} / Lim: $${creditLimit.toFixed(0)}`, `CycCr: $${acctCycCr.toFixed(0)} / CycDb: $${acctCycDb.toFixed(0)}`]);
-  addTrace('data', `READ ACCOUNT: Bal=<span class="warn">$${acctBal.toFixed(2)}</span>, CycCredit=<span class="warn">$${acctCycCr.toFixed(2)}</span>`);
-  addTrace('step', '↑ <span class="warn">These values were altered by the previous batch — this changes the routing decision</span>');
-  await sleep(3200);
-
-  // Call real batch API
-  showStep('Phase 3.5', 'POST /api/db/batch — Overlimit validation via SQLite');
-  activateEdge('e-acct-decision', 'el-acct-decision', 'batch');
-  addTrace('step', '<span class="code">POST /api/db/batch → server runs overlimit check against SQLite</span>');
-
-  const batchResult = await apiPost('/api/db/batch');
-  logQueries(batchResult.queries_executed);
-  switchTab('sql');
-
-  const r = batchResult.results && batchResult.results[0];
-  const tempBal = r ? r.temp_bal : (acctCycCr - acctCycDb + amt);
-  const decision = r ? r.decision : 'REJECTED';
-
-  showBadge('vb-calc', `$${acctCycCr.toFixed(0)} - $${acctCycDb.toFixed(0)} + $${amt.toFixed(0)} = $${tempBal}`, decision === 'REJECTED' ? 'reject' : undefined);
-  addTrace('step', `<span class="code">COMPUTE WS-TEMP-BAL = $${acctCycCr.toFixed(2)} - $${acctCycDb.toFixed(2)} + $${amt.toFixed(2)} = <span class="warn">$${tempBal}</span></span>`);
-  addTrace('step', `<span class="code">IF ACCT-CREDIT-LIMIT ($${creditLimit.toFixed(2)}) >= WS-TEMP-BAL ($${tempBal})</span>`);
-  addSqlEntry('decision', `-- OVERLIMIT CHECK: credit_limit(${creditLimit}) >= temp_bal(${tempBal}) ?`, decision);
-  await sleep(2500);
-
-  // Refresh DB state after batch
-  await refreshDbState();
-  switchTab('vsam');
-
-  if (decision === 'REJECTED') {
-    activateDecision('d-overlimit', 'dl-overlimit', 'reject-active');
-    activateDecision(null, 'dl-overlimit2', 'reject-active');
-    addTrace('reject', `→ $${creditLimit.toFixed(2)} < $${tempBal} → <span class="warn">CONDITION FAILED — REJECTED</span>`);
-    addTrace('step', '<span class="code">MOVE 102 TO WS-VALIDATION-FAIL-REASON  (CBTRN02C.cbl:409)</span>');
-    await sleep(2200);
-
-    showStep('Phase 3.6', 'REJECT: Write to DALYREJS with reason code 102');
     activateEdge('e-decision-reject', 'el-decision-reject', 'reject');
     activateNode('n-reject', 'reject');
     activateEdge('e-reject-rejs', 'el-reject-rejs', 'reject');
     activateNode('n-dalyrejs', 'reject');
     showBadge('vb-reject-reason', 'Code 102: OVERLIMIT');
-    addTrace('reject', `→ WRITE DALYREJS: Reason=102 "OVERLIMIT TRANSACTION"`);
-    addTrace('step', '<span class="code">WRITE FD-REJS-RECORD FROM REJECT-RECORD  (CBTRN02C.cbl:451)</span>');
-    addTrace('reject', `→ Account balance <span class="highlight">unchanged at $${acctBal.toFixed(2)}</span> — transaction not posted`);
-    await sleep(2800);
-  } else {
-    // Accepted in phase 3 (could happen if user entered small amount)
-    activateDecision('d-overlimit', 'dl-overlimit', 'active');
-    activateDecision(null, 'dl-overlimit2', 'active');
-    addTrace('accept', `→ $${creditLimit.toFixed(2)} >= $${tempBal} → <span class="highlight">CONDITION MET — ACCEPTED</span>`);
-    await sleep(2200);
-    showStep('Phase 3.6', 'ACCEPT: Update Account Master + write TRANSACT');
-    activateEdge('e-decision-accept', 'el-decision-accept');
-    activateNode('n-accept');
-    const balTd = document.getElementById('td-bal');
-    const cycCrTd = document.getElementById('td-cyc-cr');
-    balTd.classList.add('changed', 'flash-green');
-    cycCrTd.classList.add('changed', 'flash-green');
-    setTimeout(() => { balTd.classList.remove('flash-green'); cycCrTd.classList.remove('flash-green'); }, 1200);
-    showBadge('vb-result', `REWRITE bal → $${acctBal.toFixed(0)}`);
-    activateEdge('e-accept-transact', 'el-accept-transact');
-    activateEdge('e-accept-tcatbal', 'el-accept-tcatbal');
-    activateNode('n-transact-posted');
-    activateNode('n-tcatbal');
-    addTrace('accept', '→ Transaction: <span class="highlight">ACCEPTED & POSTED</span>');
-    await sleep(3500);
+    addTrace('reject', `→ credit_limit($${creditLimit.toFixed(2)}) < temp_bal($${typeof tempBal === 'number' ? tempBal.toFixed(2) : tempBal}) → <span class="warn">REJECTED</span>`);
   }
 
-  addTrace('phase', '═══ SUMMARY ═══');
-  addTrace('step', `Batch processed — DB state drove the routing decision`);
-  addTrace(decision === 'ACCEPTED' ? 'accept' : 'reject', `Transaction: ${decision} — route → ${decision === 'ACCEPTED' ? '2000-POST-TRANSACTION' : '2500-WRITE-REJECT-REC'}`);
-  addTrace('data', '<span class="highlight">The persisted DB state directly determined the program\'s routing</span>');
+  if (data.finding) {
+    addTrace('step', '<div class="devin-response"><div class="devin-label">Devin Analysis</div>' + data.finding + '</div>');
+  }
 }
+
+function handleComplete(data) {
+  showStep('Trace Complete', data.title || `${data.steps_resolved || ''} steps resolved`);
+  setPhase('Complete');
+  addTrace('phase', '═══ TRACE COMPLETE ═══');
+  if (data.finding) addTrace('step', '<div class="devin-response"><div class="devin-label">Devin Summary</div>' + data.finding + '</div>');
+  if (data.session_url) {
+    addTrace('data', `<a href="${data.session_url}" target="_blank" style="color:#4da6ff">View full Devin session</a>`);
+  }
+  if (_evtSource) { _evtSource.close(); _evtSource = null; }
+  isRunning = false;
+  document.getElementById('run-btn').disabled = false;
+}
+
+function highlightMentionedPrograms(data) {
+  const text = [data.title, data.file, data.finding, data.code_snippet].filter(Boolean).join(' ').toUpperCase();
+  for (const [pgm, nodeId] of Object.entries(PROGRAM_NODE_MAP)) {
+    if (text.includes(pgm)) activateNode(nodeId);
+  }
+}
+
+function escCode(s) {
+  if (!s) return '';
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 
 // ============================================================
 //  DIAGRAM HELPERS
@@ -2221,6 +2048,13 @@ function addTrace(type, html) {
 //  RESET
 // ============================================================
 async function resetAll() {
+  // Close SSE connection if active
+  if (_evtSource) { _evtSource.close(); _evtSource = null; }
+  _activeSessionId = null;
+  _inputTxnNum = 1;
+  const sessionLink = document.getElementById('session-link');
+  if (sessionLink) sessionLink.style.display = 'none';
+
   isRunning = false;
   document.getElementById('run-btn').disabled = false;
   setPhase('');
@@ -2252,7 +2086,7 @@ async function resetAll() {
   document.getElementById('transact-tbody').innerHTML = '<tr style="color:#555"><td colspan="5" style="text-align:center">— empty —</td></tr>';
   document.getElementById('rejs-tbody').innerHTML = '<tr style="color:#555"><td colspan="4" style="text-align:center">— empty —</td></tr>';
   clearDiagramState();
-  document.getElementById('trace-log').innerHTML = '<div style="padding: 10px; color: #555; font-size: 11px; text-align: center;">Click <b>Simulate Demo</b> to open the CICS terminal — choose <b>Option 3</b> (Credit Card List) or <b>Option 8</b> (Transaction Add + batch data flow)</div>';
+  document.getElementById('trace-log').innerHTML = '<div style="padding: 10px; color: #555; font-size: 11px; text-align: center;">Click <b>Start Live Trace</b> to launch a Devin session that traces COBOL source code in real-time</div>';
   document.getElementById('sql-log').innerHTML = '<div style="padding: 10px; color: #555; font-size: 11px; text-align: center;">SQL queries will appear here as the demo runs</div>';
   switchTab('vsam');
 }

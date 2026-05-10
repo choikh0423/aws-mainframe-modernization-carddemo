@@ -52,7 +52,7 @@ STRUCTURED_OUTPUT_SCHEMA = {
                 "properties": {
                     "step_index": {
                         "type": "integer",
-                        "description": "0-6 for trace steps, -1 for completion"
+                        "description": "0-10 for trace steps (Phase 1: 0-4, Phase 2: 5-7, Phase 3: 8-10), -1 for completion"
                     },
                     "title": {
                         "type": "string",
