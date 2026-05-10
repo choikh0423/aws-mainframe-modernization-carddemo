@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IMS Authorization Batch Module (C1–C5) | Batch Process Analysis | UniCredit CardDemo</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   UniCredit CardDemo — Shared Theme (inlined for standalone viewing)
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --uc-red:        #E4002B;
+  --uc-red-dark:   #B8001F;
+  --uc-red-light:  #FF3354;
+  --uc-navy:       #1D2B4E;
+  --uc-navy-light: #2A3D6B;
+  --uc-gold:       #C5A44E;
+  --uc-gold-light: #E2C97A;
+  --uc-white:      #FFFFFF;
+  --uc-gray-50:    #F8F9FA;
+  --uc-gray-100:   #F0F1F3;
+  --uc-gray-200:   #E2E4E8;
+  --uc-gray-400:   #9EA3AE;
+  --uc-gray-600:   #6B7280;
+  --uc-gray-800:   #374151;
+  --uc-text:       #1F2937;
+  --uc-shadow:     0 4px 24px rgba(29,43,78,.08);
+  --uc-shadow-lg:  0 12px 48px rgba(29,43,78,.12);
+  --uc-radius:     12px;
+  --uc-radius-sm:  8px;
+  --uc-transition: .25s cubic-bezier(.4,0,.2,1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--uc-text);
+  background: var(--uc-gray-50);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+.hero {
+  background: linear-gradient(135deg, var(--uc-navy) 0%, var(--uc-navy-light) 50%, var(--uc-red-dark) 100%);
+  color: var(--uc-white);
+  padding: 3rem 2rem 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -60%; right: -20%;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(228,0,43,.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute; bottom: -30%; left: -10%;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(197,164,78,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-inner { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+.hero-brand { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.hero-logo { height: 48px; flex-shrink: 0; }
+.hero-logo img { height: 100%; width: auto; display: block; }
+.hero-brand-text { font-size: .95rem; opacity: .85; letter-spacing: .04em; text-transform: uppercase; }
+.hero h1 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; letter-spacing: -.02em; line-height: 1.15; margin-bottom: .75rem; }
+.hero h1 span { color: var(--uc-gold-light); }
+.hero-subtitle { font-size: 1.15rem; opacity: .88; max-width: 720px; }
+.hero-meta { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,.15); }
+.hero-meta dt { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin-bottom: .15rem; }
+.hero-meta dd { font-size: .95rem; font-weight: 600; }
+.breadcrumb { max-width: 1200px; margin: 1.25rem auto .5rem; padding: 0 2rem; font-size: .8rem; color: var(--uc-gray-400); }
+.breadcrumb a { color: var(--uc-red); text-decoration: none; font-weight: 600; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb .sep { margin: 0 .4rem; opacity: .5; }
+.page-wrap-single { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+.section { background: var(--uc-white); border-radius: var(--uc-radius); box-shadow: var(--uc-shadow); margin-bottom: 2rem; overflow: hidden; }
+.section-header { display: flex; align-items: center; gap: .75rem; padding: 1.25rem 1.5rem; background: linear-gradient(90deg, var(--uc-navy) 0%, var(--uc-navy-light) 100%); color: var(--uc-white); cursor: pointer; user-select: none; }
+.section-header:hover { filter: brightness(1.1); }
+.section-num { background: var(--uc-red); color: var(--uc-white); font-size: .72rem; font-weight: 700; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.section-header h2 { font-size: 1.1rem; font-weight: 700; letter-spacing: -.01em; flex: 1; }
+.section-toggle { width: 24px; height: 24px; transition: transform var(--uc-transition); opacity: .7; }
+.section.collapsed .section-toggle { transform: rotate(-90deg); }
+.section-body { padding: 1.5rem; }
+.section.collapsed .section-body { display: none; }
+.subsection { margin-bottom: 1.75rem; }
+.subsection:last-child { margin-bottom: 0; }
+.subsection h3 { font-size: .95rem; font-weight: 700; color: var(--uc-navy); margin-bottom: .75rem; padding-bottom: .4rem; border-bottom: 2px solid var(--uc-gray-200); display: flex; align-items: center; gap: .5rem; }
+.subsection h3 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--uc-red); flex-shrink: 0; }
+.subsection h4 { font-size: .88rem; font-weight: 600; color: var(--uc-gray-800); margin: 1rem 0 .5rem; }
+.subsection p, .subsection li { font-size: .88rem; color: var(--uc-gray-800); line-height: 1.7; }
+.subsection ul, .subsection ol { padding-left: 1.4rem; margin-top: .35rem; }
+.subsection li { margin-bottom: .25rem; }
+.table-wrap { overflow-x: auto; margin: .75rem 0; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .82rem; }
+thead th { background: var(--uc-navy); color: var(--uc-white); text-align: left; padding: .6rem .75rem; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
+thead th:first-child { border-radius: var(--uc-radius-sm) 0 0 0; }
+thead th:last-child  { border-radius: 0 var(--uc-radius-sm) 0 0; }
+tbody td { padding: .55rem .75rem; border-bottom: 1px solid var(--uc-gray-200); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:nth-child(even) { background: var(--uc-gray-50); }
+tbody tr:hover { background: rgba(228,0,43,.04); }
+pre { background: var(--uc-navy); color: #E2E8F0; border-radius: var(--uc-radius-sm); padding: 1rem 1.25rem; font-size: .78rem; font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; overflow-x: auto; line-height: 1.65; margin: .75rem 0; }
+code { font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; font-size: .82em; background: var(--uc-gray-100); padding: .1em .35em; border-radius: 4px; color: var(--uc-red-dark); }
+pre code { background: none; padding: 0; color: inherit; }
+.callout { border-left: 4px solid var(--uc-gold); background: rgba(197,164,78,.08); padding: .85rem 1rem; border-radius: 0 var(--uc-radius-sm) var(--uc-radius-sm) 0; margin: .75rem 0; font-size: .85rem; }
+.callout-red { border-left-color: var(--uc-red); background: rgba(228,0,43,.05); }
+.callout strong { color: var(--uc-navy); }
+.diagram-box { background: var(--uc-gray-100); border: 2px dashed var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1.5rem; text-align: center; margin: .75rem 0; }
+.diagram-box pre { text-align: left; background: var(--uc-navy); display: inline-block; max-width: 100%; }
+.badge { display: inline-block; font-size: .68rem; font-weight: 700; padding: .15em .55em; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; line-height: 1.6; }
+.badge-red    { background: var(--uc-red);   color: #fff; }
+.badge-navy   { background: var(--uc-navy);  color: #fff; }
+.badge-gold   { background: var(--uc-gold);  color: var(--uc-navy); }
+.badge-gray   { background: var(--uc-gray-200); color: var(--uc-gray-800); }
+.kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin: 1rem 0; }
+.kpi-card { background: var(--uc-gray-50); border: 1px solid var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1rem; text-align: center; transition: var(--uc-transition); }
+.kpi-card:hover { border-color: var(--uc-red); box-shadow: var(--uc-shadow); transform: translateY(-2px); }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--uc-red); line-height: 1.2; }
+.kpi-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--uc-gray-600); margin-top: .25rem; }
+.footer { background: var(--uc-navy); color: rgba(255,255,255,.6); text-align: center; padding: 2rem; font-size: .78rem; }
+.footer strong { color: var(--uc-gold-light); }
+@media print {
+  .section.collapsed .section-body { display: block; }
+  .hero { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════  HERO  ════════════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. &mdash; Milano</div>
+    </div>
+    <h1>IMS Authorization Batch Module &ndash; <span>Batch Process Analysis</span></h1>
+    <p class="hero-subtitle">
+      Jobs <code>CBPAUP0J</code> (C1) &middot; <code>DBPAUTP0</code> (C2) &middot; <code>UNLDPADB</code> (C3) &middot; <code>LOADPADB</code> (C4) &middot; <code>UNLDGSAM</code> (C5) &mdash; IMS database maintenance cycle for Payment Authorization data: purge expired authorizations, unload/reorganize/reload the HIDAM database, and GSAM export
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Module</dt><dd>C1&ndash;C5</dd></div>
+      <div><dt>Jobs</dt><dd>5</dd></div>
+      <div><dt>Programs</dt><dd>CBPAUP0C, PAUDBUNL, PAUDBLOD, DBUNLDGS + DFSURGU0</dd></div>
+      <div><dt>Frequency</dt><dd>Periodic / On-demand</dd></div>
+      <div><dt>Total LOC</dt><dd>1,438</dd></div>
+      <div><dt>IMS Database</dt><dd>PAUTHDB (HIDAM/VSAM)</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ════════════════════  BREADCRUMB  ════════════════════ -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">&rsaquo;</span>
+  <a href="index.html">Batch Flows</a>
+  <span class="sep">&rsaquo;</span>
+  IMS Authorization Batch Module (C1&ndash;C5)
+</div>
+
+<!-- ════════════════════  BODY  ════════════════════ -->
+<div class="page-wrap-single">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     IDENTIFICATION
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s0">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">ID</span>
+    <h2>Identification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <tbody>
+          <tr><td><strong>Module Name</strong></td><td>IMS Authorization Batch Module (C1&ndash;C5)</td></tr>
+          <tr><td><strong>Job Stream / Schedule</strong></td><td>Periodic / On-demand IMS database maintenance cycle</td></tr>
+          <tr><td><strong>Business Domain</strong></td><td>Payment Authorization &mdash; IMS Database Administration</td></tr>
+          <tr><td><strong>Owning Team</strong></td><td>CardDemo IMS/DB Operations</td></tr>
+          <tr><td><strong>Frequency</strong></td><td>Periodic (weekly/monthly) or on-demand</td></tr>
+          <tr><td><strong>Batch Window</strong></td><td>Offline window &mdash; IMS database must be quiesced for C2 (reorg)</td></tr>
+          <tr><td><strong>Criticality</strong></td><td><span class="badge badge-red">Critical</span></td></tr>
+          <tr><td><strong>Elapsed Time SLA</strong></td><td>Must complete before IMS online regions are restarted</td></tr>
+          <tr><td><strong>Primary Programs</strong></td><td><code>CBPAUP0C</code> (386 LOC), <code>PAUDBUNL</code> (317 LOC), <code>PAUDBLOD</code> (369 LOC), <code>DBUNLDGS</code> (366 LOC)</td></tr>
+          <tr><td><strong>Source Location</strong></td><td><code>app/app-authorization-ims-db2-mq/cbl/</code> &middot; JCL: <code>app/app-authorization-ims-db2-mq/jcl/</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 1 — Business Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">1</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 1.1 -->
+    <div class="subsection" id="s1-1">
+      <h3><span class="dot"></span> 1.1 Business Context</h3>
+      <ul>
+        <li><strong>What:</strong> A five-job IMS batch module that maintains the Payment Authorization Database (PAUTHDB). The cycle purges expired authorization records, unloads the database to flat files, performs HD reorganization via the IMS utility DFSURGU0, reloads the database from flat files, and provides an alternative GSAM-based unload path for downstream consumption.</li>
+        <li><strong>Who:</strong> Consumed by IMS DBA operations, authorization processing online transactions (CICS/IMS), and downstream analytics or migration pipelines that need flat-file extracts of authorization data.</li>
+        <li><strong>When:</strong> Run periodically (weekly or monthly) during an IMS offline maintenance window, or on-demand when the authorization database requires reorganization due to space reclamation or performance degradation.</li>
+        <li><strong>Why:</strong> IMS HIDAM databases accumulate delete-flagged segments and free-space fragmentation over time. Periodic purge-and-reorganize cycles are essential to maintain query performance, reclaim DASD space, and ensure data integrity of the authorization subsystem.</li>
+        <li><strong>Outcome:</strong> Expired authorization detail and summary segments are purged; the HIDAM database is reorganized with optimal pointer chains; flat-file backups of root and child segments are available for disaster recovery; GSAM exports are available for non-IMS consumers.</li>
+      </ul>
+    </div>
+
+    <!-- 1.2 -->
+    <div class="subsection" id="s1-2">
+      <h3><span class="dot"></span> 1.2 Business Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │         IMS AUTHORIZATION BATCH MODULE — MAINTENANCE CYCLE          │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  IMS Online Region (Quiesce)
+       │
+       ▼
+  ┌──────────────────────────────┐
+  │ C1: CBPAUP0J                 │
+  │ PGM=CBPAUP0C (IMS BMP)       │
+  │ Purge expired authorizations │
+  │ from PAUTHDB                 │
+  └──────────────┬───────────────┘
+                 │
+                 ▼
+  ┌──────────────────────────────┐
+  │ C2: DBPAUTP0                 │
+  │ PGM=DFSURGU0 (IMS Utility)  │
+  │ HD Reorganization Unload     │
+  │ PAUTHDB → DFSURGU1 flat file │
+  └──────────────┬───────────────┘
+                 │
+        ┌────────┴────────┐
+        ▼                 ▼
+  ┌──────────────┐  ┌──────────────────────────┐
+  │ C3: UNLDPADB │  │ C5: UNLDGSAM             │
+  │ PGM=PAUDBUNL │  │ PGM=DBUNLDGS             │
+  │ DLI Unload   │  │ DLI → GSAM Unload        │
+  │ Root → flat  │  │ Root → GSAM flat (100B)   │
+  │ Child → flat │  │ Child → GSAM flat (200B)  │
+  └──────┬───────┘  └──────────────────────────┘
+         │
+         ▼
+  ┌──────────────────────────────┐
+  │ C4: LOADPADB                 │
+  │ PGM=PAUDBLOD (IMS BMP)       │
+  │ Reload PAUTHDB from root +   │
+  │ child flat files              │
+  └──────────────┬───────────────┘
+                 │
+                 ▼
+  IMS Online Region (Restart)
+</pre>
+      </div>
+    </div>
+
+    <!-- 1.3 -->
+    <div class="subsection" id="s1-3">
+      <h3><span class="dot"></span> 1.3 Business Rules Applied in This Process</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Rule ID</th><th>Description</th><th>Applied At</th><th>Exception Handling</th></tr></thead>
+          <tbody>
+            <tr><td>BR-001</td><td>An authorization detail segment is expired if <code>(CURRENT-YYDDD - (99999 - PA-AUTH-DATE-9C)) &ge; WS-EXPIRY-DAYS</code></td><td>C1: 4000-CHECK-IF-EXPIRED</td><td>Non-expired records are skipped (NOT-QUALIFIED-FOR-DELETE)</td></tr>
+            <tr><td>BR-002</td><td>If an approved authorization is deleted, decrement <code>PA-APPROVED-AUTH-CNT</code> and subtract <code>PA-APPROVED-AMT</code> from <code>PA-APPROVED-AUTH-AMT</code></td><td>C1: 4000-CHECK-IF-EXPIRED</td><td>N/A &mdash; running totals maintained on summary segment</td></tr>
+            <tr><td>BR-003</td><td>If a declined authorization is deleted, decrement <code>PA-DECLINED-AUTH-CNT</code> and subtract <code>PA-TRANSACTION-AMT</code> from <code>PA-DECLINED-AUTH-AMT</code></td><td>C1: 4000-CHECK-IF-EXPIRED</td><td>N/A &mdash; running totals maintained on summary segment</td></tr>
+            <tr><td>BR-004</td><td>If both approved and declined auth counts drop to zero, delete the summary (root) segment entirely</td><td>C1: MAIN-PARA (condition on PA-APPROVED-AUTH-CNT)</td><td>Summary segment removed from IMS database</td></tr>
+            <tr><td>BR-005</td><td>Default expiry period is 5 days if SYSIN parameter is non-numeric</td><td>C1: 1000-INITIALIZE</td><td>Defaults applied; processing continues</td></tr>
+            <tr><td>BR-006</td><td>Checkpoint frequency defaults to 5 if SYSIN parameter is spaces, zero, or low-values</td><td>C1: 1000-INITIALIZE</td><td>Defaults applied; processing continues</td></tr>
+            <tr><td>BR-007</td><td>Only numeric PA-ACCT-ID values are written to unload output files</td><td>C3: 2000-FIND-NEXT-AUTH-SUMMARY, C5: 2000-FIND-NEXT-AUTH-SUMMARY</td><td>Non-numeric account IDs silently skipped</td></tr>
+            <tr><td>BR-008</td><td>Duplicate root segment inserts (status &lsquo;II&rsquo;) are tolerated during reload</td><td>C4: 2100-INSERT-ROOT-SEG, 3200-INSERT-IMS-CALL</td><td>Displays informational message; continues processing</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 1.4 -->
+    <div class="subsection" id="s1-4">
+      <h3><span class="dot"></span> 1.4 Business Inputs and Outputs</h3>
+      <h4>Inputs</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Input</th><th>Source System</th><th>Business Description</th><th>Timing</th></tr></thead>
+          <tbody>
+            <tr><td>PAUTHDB IMS Database (<code>OEM.IMS.IMSP.PAUTHDB</code>)</td><td>IMS Authorization subsystem</td><td>HIDAM database containing pending authorization summary (root) and detail (child) segments</td><td>Must be quiesced before processing</td></tr>
+            <tr><td>SYSIN Parameters (C1)</td><td>JCL inline data</td><td>Expiry days, checkpoint frequency, checkpoint display frequency, debug flag</td><td>Provided at job submission</td></tr>
+            <tr><td>Root Segment Flat File (C4)</td><td>C3 output</td><td>Sequential file of PAUTSUM0 root segments (LRECL=100)</td><td>Available after C3 completes</td></tr>
+            <tr><td>Child Segment Flat File (C4)</td><td>C3 output</td><td>Sequential file of PAUTDTL1 child segments with root key prefix (LRECL=206)</td><td>Available after C3 completes</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h4>Outputs</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Output</th><th>Destination</th><th>Business Description</th><th>Timing</th></tr></thead>
+          <tbody>
+            <tr><td>Purged PAUTHDB (C1)</td><td>IMS Online</td><td>Database with expired authorization records removed</td><td>After C1 completes</td></tr>
+            <tr><td>HD Reorg Unload (<code>AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0</code>)</td><td>C2 output for reload</td><td>VB flat file (LRECL=27990) from DFSURGU0 unload</td><td>After C2 completes</td></tr>
+            <tr><td>Root Segment File (<code>AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO</code>)</td><td>C4 input / Archive</td><td>FB flat file (LRECL=100) of all PAUTSUM0 segments</td><td>After C3 completes</td></tr>
+            <tr><td>Child Segment File (<code>AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO</code>)</td><td>C4 input / Archive</td><td>FB flat file (LRECL=206) of all PAUTDTL1 segments with root key</td><td>After C3 completes</td></tr>
+            <tr><td>GSAM Root File (<code>AWS.M2.CARDDEMO.PAUTDB.ROOT.GSAM</code>)</td><td>Downstream / Migration</td><td>GSAM sequential file of root segments (RECFM=F, LRECL=100)</td><td>After C5 completes</td></tr>
+            <tr><td>GSAM Child File (<code>AWS.M2.CARDDEMO.PAUTDB.CHILD.GSAM</code>)</td><td>Downstream / Migration</td><td>GSAM sequential file of child segments (RECFM=F, LRECL=200)</td><td>After C5 completes</td></tr>
+            <tr><td>Reloaded PAUTHDB (C4)</td><td>IMS Online</td><td>Reorganized database loaded from flat-file backup</td><td>After C4 completes</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 2 — Technical Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">2</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 2.1 -->
+    <div class="subsection" id="s2-1">
+      <h3><span class="dot"></span> 2.1 Technical Flow Diagram &ndash; Overview</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ C1: JOB CBPAUP0J — Purge Expired Authorizations                    │
+  │ STEP01: PGM=DFSRRC00, PARM='BMP,CBPAUP0C,PSBPAUTB'                │
+  │   PAUTHDB (HIDAM) ──(GN/GNP/DLET)──▶ Purged PAUTHDB               │
+  │   SYSIN parms: expiry-days, chkp-freq, chkp-dis-freq, debug        │
+  └─────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ C2: JOB DBPAUTP0 — HD Reorganization Unload                         │
+  │ STEPDEL: PGM=IEFBR14  (Delete prior output dataset)                │
+  │ UNLOAD:  PGM=DFSRRC00, PARM=(ULU,DFSURGU0,DBPAUTP0)               │
+  │   PAUTHDB + PAUTHDBX ──▶ DFSURGU1 flat file (VB LRECL=27990)       │
+  │   RECON1/2/3 datasets for DBRC                                     │
+  └─────────────────────────────────────────────────────────────────────┘
+                                    │
+                          ┌─────────┴─────────┐
+                          ▼                   ▼
+  ┌──────────────────────────────┐  ┌──────────────────────────────────┐
+  │ C3: JOB UNLDPADB — DLI Unload│  │ C5: JOB UNLDGSAM — GSAM Unload  │
+  │ STEP0: IEFBR14 (del prior)   │  │ STEP01: DFSRRC00                │
+  │ STEP01: DFSRRC00             │  │   PARM='DLI,DBUNLDGS,DLIGSAMP'  │
+  │   PARM='DLI,PAUDBUNL,        │  │   PAUTHDB ──(GN/GNP)──▶         │
+  │         PAUTBUNL'             │  │     PASFILOP (root GSAM 100B)   │
+  │   PAUTHDB ──(GN/GNP)──▶      │  │     PADFILOP (child GSAM 200B)  │
+  │     OUTFIL1 (root FB 100)    │  └──────────────────────────────────┘
+  │     OUTFIL2 (child FB 206)   │
+  └──────────────┬───────────────┘
+                 │
+                 ▼
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ C4: JOB LOADPADB — Reload from Flat Files                          │
+  │ STEP01: PGM=DFSRRC00, PARM='BMP,PAUDBLOD,PSBPAUTB'                │
+  │   INFILE1 (root) + INFILE2 (child) ──(ISRT/GU)──▶ PAUTHDB         │
+  └─────────────────────────────────────────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.2 -->
+    <div class="subsection" id="s2-2">
+      <h3><span class="dot"></span> 2.2 Technical Flow Diagram &ndash; Detailed (Step-by-Step)</h3>
+      <div class="diagram-box">
+<pre>
+  ═══════════════════════════════════════════════════════════════════
+  C1: CBPAUP0J — Purge Expired Authorizations (IMS BMP)
+  ═══════════════════════════════════════════════════════════════════
+  STEP01 - EXEC PGM=DFSRRC00, PARM='BMP,CBPAUP0C,PSBPAUTB'
+    PSB: PSBPAUTB (PROCOPT=AP, DB PCB for DBPAUTP0)
+    PROCESSING:
+      1. 1000-INITIALIZE: Accept DATE/DAY, read SYSIN parms
+         - Parse expiry-days (default 5), chkp-freq (default 5),
+           chkp-dis-freq (default 10), debug flag
+      2. Loop: 2000-FIND-NEXT-AUTH-SUMMARY (EXEC DLI GN PAUTSUM0)
+         Until END-OF-AUTHDB (DIBSTAT='GB')
+         a. For each root segment found:
+            - 3000-FIND-NEXT-AUTH-DTL (EXEC DLI GNP PAUTDTL1)
+              Until NO-MORE-AUTHS (DIBSTAT='GE' or 'GB')
+            - 4000-CHECK-IF-EXPIRED:
+              COMPUTE WS-AUTH-DATE = 99999 - PA-AUTH-DATE-9C
+              COMPUTE WS-DAY-DIFF = CURRENT-YYDDD - WS-AUTH-DATE
+              IF WS-DAY-DIFF &ge; WS-EXPIRY-DAYS → QUALIFIED-FOR-DELETE
+                 Adjust approved/declined counters &amp; amounts
+            - 5000-DELETE-AUTH-DTL (EXEC DLI DLET PAUTDTL1) if qualified
+         b. If PA-APPROVED-AUTH-CNT &le; 0 AND PA-DECLINED-AUTH-CNT &le; 0:
+            6000-DELETE-AUTH-SUMMARY (EXEC DLI DLET PAUTSUM0)
+         c. Every P-CHKP-FREQ summaries:
+            9000-TAKE-CHECKPOINT (EXEC DLI CHKP)
+      3. Final checkpoint, display counts, GOBACK
+    RC: 0=Success, 16=ABEND (IMS call failure)
+
+  ═══════════════════════════════════════════════════════════════════
+  C2: DBPAUTP0 — HD Reorganization Unload (DFSURGU0)
+  ═══════════════════════════════════════════════════════════════════
+  STEPDEL - EXEC PGM=IEFBR14
+    - Delete prior output: AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0
+      DISP=(MOD,DELETE)
+  UNLOAD - EXEC PGM=DFSRRC00, PARM=(ULU,DFSURGU0,DBPAUTP0)
+    INPUTS:
+      - DDPAUTP0: OEM.IMS.IMSP.PAUTHDB (primary DB dataset)
+      - DDPAUTX0: OEM.IMS.IMSP.PAUTHDBX (index dataset)
+      - RECON1/2/3: DBRC RECON datasets
+      - DFSVSAMP: IMS buffer pool parameters
+    OUTPUT:
+      - DFSURGU1: AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0
+        VB, LRECL=27990, BLKSIZE=0, SPACE=(32274,(600,100))
+    PROCESSING:
+      IMS HD Reorganization Unload utility — reads HIDAM database
+      sequentially and writes all segments to a single flat file
+      suitable for HD Reorganization Reload
+    RC: 0=Success, 4=Warning, 8+=Failure
+
+  ═══════════════════════════════════════════════════════════════════
+  C3: UNLDPADB — DLI-mode Unload to Root + Child Flat Files
+  ═══════════════════════════════════════════════════════════════════
+  STEP0 - EXEC PGM=IEFBR14
+    - Delete prior output files:
+      AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO  DISP=(OLD,DELETE,DELETE)
+      AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO DISP=(OLD,DELETE,DELETE)
+  STEP01 - EXEC PGM=DFSRRC00, PARM='DLI,PAUDBUNL,PAUTBUNL'
+    PSB: PAUTBUNL (PROCOPT=GOTP for DBPAUTP0)
+    INPUTS:
+      - DDPAUTP0: OEM.IMS.IMSP.PAUTHDB
+      - DDPAUTX0: OEM.IMS.IMSP.PAUTHDBX
+    OUTPUTS:
+      - OUTFIL1: root segments (FB LRECL=100)
+      - OUTFIL2: child segments with root key (FB LRECL=206)
+    PROCESSING:
+      1. 1000-INITIALIZE: Open OPFILE1 &amp; OPFILE2
+      2. Loop: 2000-FIND-NEXT-AUTH-SUMMARY
+         CALL 'CBLTDLI' GN PAUTSUM0
+         - Write root segment to OPFILE1
+         - Store PA-ACCT-ID as ROOT-SEG-KEY
+         - 3000-FIND-NEXT-AUTH-DTL (CALL 'CBLTDLI' GNP PAUTDTL1)
+           Write child segments to OPFILE2
+         Until WS-END-OF-ROOT-SEG = 'Y'
+      3. 4000-FILE-CLOSE: Close both output files
+    RC: 0=Success, 16=ABEND (IMS or file I/O failure)
+
+  ═══════════════════════════════════════════════════════════════════
+  C4: LOADPADB — Reload PAUTHDB from Root + Child Flat Files
+  ═══════════════════════════════════════════════════════════════════
+  STEP01 - EXEC PGM=DFSRRC00, PARM='BMP,PAUDBLOD,PSBPAUTB'
+    PSB: PSBPAUTB (PROCOPT=AP for DBPAUTP0)
+    INPUTS:
+      - INFILE1: root segments (AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO)
+      - INFILE2: child segments (AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO)
+    PROCESSING:
+      1. 1000-INITIALIZE: Open INFILE1 &amp; INFILE2
+      2. Loop: 2000-READ-ROOT-SEG-FILE → READ INFILE1
+         - 2100-INSERT-ROOT-SEG: CALL 'CBLTDLI' ISRT PAUTSUM0
+           (tolerates 'II' = duplicate)
+         Until END-ROOT-SEG-FILE = 'Y'
+      3. Loop: 3000-READ-CHILD-SEG-FILE → READ INFILE2
+         - Extract ROOT-SEG-KEY from child record
+         - CALL 'CBLTDLI' GU PAUTSUM0 with qualified SSA
+           (position to parent root segment)
+         - 3200-INSERT-IMS-CALL: CALL 'CBLTDLI' ISRT PAUTDTL1
+           (tolerates 'II' = duplicate)
+         Until END-CHILD-SEG-FILE = 'Y'
+      4. 4000-FILE-CLOSE: Close both input files
+    RC: 0=Success, 16=ABEND (IMS or file I/O failure)
+
+  ═══════════════════════════════════════════════════════════════════
+  C5: UNLDGSAM — GSAM-based Unload
+  ═══════════════════════════════════════════════════════════════════
+  STEP01 - EXEC PGM=DFSRRC00, PARM='DLI,DBUNLDGS,DLIGSAMP'
+    PSB: DLIGSAMP (DBPAUTP0 PROCOPT=GOTP + GSAM PCBs for
+         PASFLDBD and PADFLDBD)
+    INPUTS:
+      - DDPAUTP0: OEM.IMS.IMSP.PAUTHDB
+      - DDPAUTX0: OEM.IMS.IMSP.PAUTHDBX
+    OUTPUTS:
+      - PASFILOP: root GSAM (RECFM=F, LRECL=100)
+      - PADFILOP: child GSAM (RECFM=F, LRECL=200)
+    PROCESSING:
+      1. 1000-INITIALIZE: Display start messages
+      2. Loop: 2000-FIND-NEXT-AUTH-SUMMARY
+         CALL 'CBLTDLI' GN PAUTSUM0
+         - 3100-INSERT-PARENT-SEG-GSAM: ISRT via PASFLPCB
+         - 3000-FIND-NEXT-AUTH-DTL (GNP PAUTDTL1)
+           3200-INSERT-CHILD-SEG-GSAM: ISRT via PADFLPCB
+         Until WS-END-OF-ROOT-SEG = 'Y'
+      3. 4000-FILE-CLOSE: Display closing message
+    RC: 0=Success, 16=ABEND (IMS/GSAM failure)
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.3 -->
+    <div class="subsection" id="s2-3">
+      <h3><span class="dot"></span> 2.3 Step Dependency and Condition Code Logic</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Job</th><th>Step</th><th>Program</th><th>Executes If</th><th>Condition Code Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>C1: CBPAUP0J</td><td>STEP01</td><td>DFSRRC00 &rarr; CBPAUP0C</td><td>Always</td><td>0 = Purge completed<br>16 = ABEND (IMS DLI call failure)</td></tr>
+            <tr><td>C2: DBPAUTP0</td><td>STEPDEL</td><td>IEFBR14</td><td>Always</td><td>0 = Prior output deleted</td></tr>
+            <tr><td>C2: DBPAUTP0</td><td>UNLOAD</td><td>DFSRRC00 &rarr; DFSURGU0</td><td>Always</td><td>0 = Unload successful<br>4 = Warnings<br>8+ = Failure</td></tr>
+            <tr><td>C3: UNLDPADB</td><td>STEP0</td><td>IEFBR14</td><td>Always</td><td>0 = Prior output files deleted</td></tr>
+            <tr><td>C3: UNLDPADB</td><td>STEP01</td><td>DFSRRC00 &rarr; PAUDBUNL</td><td>Always</td><td>0 = Unload successful<br>16 = ABEND</td></tr>
+            <tr><td>C4: LOADPADB</td><td>STEP01</td><td>DFSRRC00 &rarr; PAUDBLOD</td><td>Always</td><td>0 = Load successful<br>16 = ABEND</td></tr>
+            <tr><td>C5: UNLDGSAM</td><td>STEP01</td><td>DFSRRC00 &rarr; DBUNLDGS</td><td>Always</td><td>0 = GSAM unload successful<br>16 = ABEND</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 3 — JCL Job Stream Specification
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">3</span>
+    <h2>JCL Job Stream Specification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 3.1 -->
+    <div class="subsection" id="s3-1">
+      <h3><span class="dot"></span> 3.1 JCL Overview</h3>
+
+      <h4>C1: CBPAUP0J &mdash; Purge Expired Authorizations</h4>
+<pre><code>//CBPAUP0J JOB 'CARDDEMO',CLASS=A,MSGCLASS=H,MSGLEVEL=(1,1),
+//             REGION=0M,NOTIFY=&amp;SYSUID
+//STEP01  EXEC PGM=DFSRRC00,
+//             PARM='BMP,CBPAUP0C,PSBPAUTB'
+//STEPLIB    DD DISP=SHR,DSN=IMS.SDFSRESL
+//           DD DISP=SHR,DSN=XXXXXXXX.PROD.LOADLIB
+//DFSRESLB   DD DISP=SHR,DSN=IMS.SDFSRESL
+//PROCLIB    DD DISP=SHR,DSN=IMS.PROCLIB
+//IMS        DD DISP=SHR,DSN=IMS.PSBLIB
+//           DD DISP=SHR,DSN=IMS.DBDLIB
+//SYSIN    DD *
+00,00001,00001,Y
+//*</code></pre>
+
+      <h4>C2: DBPAUTP0 &mdash; HD Reorganization Unload</h4>
+<pre><code>//DBPAUTP0 JOB 'DBPAUTP0 DB UNLOAD',CLASS=A,MSGCLASS=X,
+// REGION=0K,TIME=30,NOTIFY=&amp;SYSUID
+//STEPDEL  EXEC PGM=IEFBR14
+//SYSUT1   DD DSN=AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0,
+//         DISP=(MOD,DELETE),UNIT=SYSDA,SPACE=(TRK,0)
+//UNLOAD   EXEC PGM=DFSRRC00,REGION=4M,
+//         PARM=(ULU,DFSURGU0,DBPAUTP0)
+//DFSURGU1 DD DSN=AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0,
+//            DISP=(,CATLG,DELETE),UNIT=SYSDA,
+//            SPACE=(32274,(600,100),RLSE),
+//            DCB=(LRECL=27990,RECFM=VB,BLKSIZE=0)
+//DDPAUTP0 DD DISP=SHR,DSN=OEM.IMS.IMSP.PAUTHDB
+//DDPAUTX0 DD DISP=SHR,DSN=OEM.IMS.IMSP.PAUTHDBX</code></pre>
+
+      <h4>C3: UNLDPADB &mdash; DLI Unload to Root + Child Files</h4>
+<pre><code>//UNLDPADB JOB 'M2APP',CLASS=A,MSGCLASS=H,MSGLEVEL=(1,1),
+//             REGION=0M,NOTIFY=&amp;SYSUID,TIME=1440
+//STEP0  EXEC PGM=IEFBR14
+//DD1      DD DSN=AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO,
+//            DISP=(OLD,DELETE,DELETE)
+//DD2      DD DSN=AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO,
+//            DISP=(OLD,DELETE,DELETE)
+//STEP01  EXEC PGM=DFSRRC00,
+//             PARM='DLI,PAUDBUNL,PAUTBUNL,,,,,,,,,,,N'
+//OUTFIL1    DD DSN=AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO,
+//           DISP=(NEW,CATLG,DELETE),
+//            DCB=(LRECL=100,BLKSIZE=0,RECFM=FB),
+//            UNIT=3390,SPACE=(400,(20,20),RLSE)
+//OUTFIL2    DD DSN=AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO,
+//            DISP=(NEW,CATLG,DELETE),
+//            DCB=(LRECL=206,BLKSIZE=0,RECFM=FB),
+//            UNIT=3390,SPACE=(400,(20,20),RLSE)</code></pre>
+
+      <h4>C4: LOADPADB &mdash; Reload from Flat Files</h4>
+<pre><code>//LOADPADB JOB 'M2APP',CLASS=A,MSGCLASS=H,MSGLEVEL=(1,1),
+//             REGION=0M,NOTIFY=&amp;SYSUID,TIME=1440
+//STEP01  EXEC PGM=DFSRRC00,
+//             PARM='BMP,PAUDBLOD,PSBPAUTB'
+//INFILE1    DD DSN=AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO,DISP=SHR
+//INFILE2    DD DSN=AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO,DISP=SHR</code></pre>
+
+      <h4>C5: UNLDGSAM &mdash; GSAM Unload</h4>
+<pre><code>//UNLDGSAM JOB 'M2APP',CLASS=A,MSGCLASS=H,MSGLEVEL=(1,1),
+//             REGION=0M,NOTIFY=&amp;SYSUID,TIME=1440
+//STEP01  EXEC PGM=DFSRRC00,
+//             PARM='DLI,DBUNLDGS,DLIGSAMP,,,,,,,,,,,N'
+//PASFILOP   DD DSN=AWS.M2.CARDDEMO.PAUTDB.ROOT.GSAM,
+//           DISP=(OLD,KEEP,KEEP)
+//PADFILOP   DD DSN=AWS.M2.CARDDEMO.PAUTDB.CHILD.GSAM,
+//            DISP=(OLD,KEEP,KEEP)
+//DDPAUTP0   DD DSN=OEM.IMS.IMSP.PAUTHDB,DISP=SHR
+//DDPAUTX0   DD DSN=OEM.IMS.IMSP.PAUTHDBX,DISP=SHR</code></pre>
+    </div>
+
+    <!-- 3.2 -->
+    <div class="subsection" id="s3-2">
+      <h3><span class="dot"></span> 3.2 DD Statement Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Job</th><th>Step</th><th>DD Name</th><th>Disposition</th><th>Dataset Name</th><th>Type</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>C1</td><td>STEP01</td><td>STEPLIB</td><td>SHR</td><td>IMS.SDFSRESL + PROD.LOADLIB</td><td>PDS</td><td>IMS reslib + application load library</td></tr>
+            <tr><td>C1</td><td>STEP01</td><td>DFSRESLB</td><td>SHR</td><td>IMS.SDFSRESL</td><td>PDS</td><td>IMS resident library</td></tr>
+            <tr><td>C1</td><td>STEP01</td><td>PROCLIB</td><td>SHR</td><td>IMS.PROCLIB</td><td>PDS</td><td>IMS procedure library</td></tr>
+            <tr><td>C1</td><td>STEP01</td><td>IMS</td><td>SHR</td><td>IMS.PSBLIB + IMS.DBDLIB</td><td>PDS</td><td>PSB and DBD libraries</td></tr>
+            <tr><td>C1</td><td>STEP01</td><td>SYSIN</td><td>Inline</td><td>&mdash;</td><td>Inline</td><td>Parameters: expiry-days, checkpoint freq, debug flag</td></tr>
+            <tr><td>C2</td><td>STEPDEL</td><td>SYSUT1</td><td>(MOD,DELETE)</td><td>AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0</td><td>Sequential</td><td>Delete prior unload output</td></tr>
+            <tr><td>C2</td><td>UNLOAD</td><td>DFSURGU1</td><td>(NEW,CATLG,DELETE)</td><td>AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0</td><td>VB Sequential</td><td>HD Reorg unload output (LRECL=27990)</td></tr>
+            <tr><td>C2</td><td>UNLOAD</td><td>DDPAUTP0</td><td>SHR</td><td>OEM.IMS.IMSP.PAUTHDB</td><td>VSAM (HIDAM)</td><td>Primary database dataset</td></tr>
+            <tr><td>C2</td><td>UNLOAD</td><td>DDPAUTX0</td><td>SHR</td><td>OEM.IMS.IMSP.PAUTHDBX</td><td>VSAM (Index)</td><td>Secondary index dataset</td></tr>
+            <tr><td>C2</td><td>UNLOAD</td><td>RECON1/2/3</td><td>SHR</td><td>OEM.IMS.IMSP.RECONn</td><td>VSAM</td><td>DBRC Recovery Control datasets</td></tr>
+            <tr><td>C2</td><td>UNLOAD</td><td>DFSVSAMP</td><td>SHR</td><td>OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB)</td><td>PDS Member</td><td>IMS buffer pool parameters</td></tr>
+            <tr><td>C3</td><td>STEP0</td><td>DD1</td><td>(OLD,DELETE,DELETE)</td><td>AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO</td><td>Sequential</td><td>Delete prior root unload file</td></tr>
+            <tr><td>C3</td><td>STEP0</td><td>DD2</td><td>(OLD,DELETE,DELETE)</td><td>AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO</td><td>Sequential</td><td>Delete prior child unload file</td></tr>
+            <tr><td>C3</td><td>STEP01</td><td>OUTFIL1</td><td>(NEW,CATLG,DELETE)</td><td>AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO</td><td>FB Sequential</td><td>Output root segments (LRECL=100)</td></tr>
+            <tr><td>C3</td><td>STEP01</td><td>OUTFIL2</td><td>(NEW,CATLG,DELETE)</td><td>AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO</td><td>FB Sequential</td><td>Output child segments (LRECL=206)</td></tr>
+            <tr><td>C3</td><td>STEP01</td><td>DDPAUTP0</td><td>SHR</td><td>OEM.IMS.IMSP.PAUTHDB</td><td>VSAM (HIDAM)</td><td>Primary database dataset</td></tr>
+            <tr><td>C3</td><td>STEP01</td><td>DDPAUTX0</td><td>SHR</td><td>OEM.IMS.IMSP.PAUTHDBX</td><td>VSAM (Index)</td><td>Secondary index dataset</td></tr>
+            <tr><td>C4</td><td>STEP01</td><td>INFILE1</td><td>SHR</td><td>AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO</td><td>FB Sequential</td><td>Input root segments for reload</td></tr>
+            <tr><td>C4</td><td>STEP01</td><td>INFILE2</td><td>SHR</td><td>AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO</td><td>FB Sequential</td><td>Input child segments for reload</td></tr>
+            <tr><td>C5</td><td>STEP01</td><td>PASFILOP</td><td>(OLD,KEEP,KEEP)</td><td>AWS.M2.CARDDEMO.PAUTDB.ROOT.GSAM</td><td>GSAM Sequential</td><td>GSAM output root segments (LRECL=100)</td></tr>
+            <tr><td>C5</td><td>STEP01</td><td>PADFILOP</td><td>(OLD,KEEP,KEEP)</td><td>AWS.M2.CARDDEMO.PAUTDB.CHILD.GSAM</td><td>GSAM Sequential</td><td>GSAM output child segments (LRECL=200)</td></tr>
+            <tr><td>C5</td><td>STEP01</td><td>DDPAUTP0</td><td>SHR</td><td>OEM.IMS.IMSP.PAUTHDB</td><td>VSAM (HIDAM)</td><td>Primary database dataset</td></tr>
+            <tr><td>C5</td><td>STEP01</td><td>DDPAUTX0</td><td>SHR</td><td>OEM.IMS.IMSP.PAUTHDBX</td><td>VSAM (Index)</td><td>Secondary index dataset</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.3 -->
+    <div class="subsection" id="s3-3">
+      <h3><span class="dot"></span> 3.3 GDG Usage</h3>
+      <div class="callout">
+        <strong>Note:</strong> None of the five jobs in this module use Generation Data Groups (GDGs). All output datasets use explicit dataset names with <code>DISP=(NEW,CATLG,DELETE)</code> or <code>DISP=(OLD,KEEP,KEEP)</code>. Prior outputs are explicitly deleted via IEFBR14 steps before recreation.
+      </div>
+    </div>
+
+    <!-- 3.4 -->
+    <div class="subsection" id="s3-4">
+      <h3><span class="dot"></span> 3.4 Scheduler Dependencies</h3>
+      <div class="callout">
+        <strong>Note:</strong> These jobs are not present in the Control-M scheduler definition (<code>app/scheduler/CardDemo.controlm</code>). They form a logical maintenance cycle that must be run during an IMS offline window.
+      </div>
+      <div class="diagram-box">
+<pre>
+  IMS Online          Maintenance Window               IMS Online
+  ──────────         ─────────────────────            ──────────
+  Quiesce IMS ─┐
+               │
+               ├──▶ C1: CBPAUP0J (Purge expired)
+               │         │
+               │         ▼
+               ├──▶ C2: DBPAUTP0 (HD Reorg Unload)
+               │         │
+               │    ┌────┴────┐
+               │    ▼         ▼
+               ├──▶ C3: UNLDPADB    C5: UNLDGSAM
+               │    (DLI unload)    (GSAM unload)
+               │         │
+               │         ▼
+               ├──▶ C4: LOADPADB (Reload)
+               │         │
+               │         ▼
+               └── Restart IMS Online
+</pre>
+      </div>
+      <div class="callout callout-red">
+        <strong>Ordering constraint:</strong> C1 must run before C2 (purge before reorg). C3 must run before C4 (unload before reload). C5 can run in parallel with C3 or after C2. C4 should only be run after a successful C3 unload or after HD Reorg Reload (not shown — uses DFSURGL0).
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 4 — Program Inventory and Call Chain
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">4</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 4.1 -->
+    <div class="subsection" id="s4-1">
+      <h3><span class="dot"></span> 4.1 Program Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Program ID</th><th>Job / Step</th><th>Purpose</th><th>Language</th><th>LOC</th><th>Source Location</th></tr></thead>
+          <tbody>
+            <tr><td><code>CBPAUP0C</code></td><td>C1 / STEP01</td><td>IMS BMP program to purge expired payment authorization detail and summary segments</td><td>COBOL</td><td>386</td><td><code>app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl</code></td></tr>
+            <tr><td><code>DFSURGU0</code></td><td>C2 / UNLOAD</td><td>IMS HD Reorganization Unload utility &mdash; sequentially unloads HIDAM database</td><td>System (IMS)</td><td>&mdash;</td><td>IMS SDFSRESL</td></tr>
+            <tr><td><code>PAUDBUNL</code></td><td>C3 / STEP01</td><td>DLI-mode unload: reads IMS database and writes root + child segments to separate flat files</td><td>COBOL</td><td>317</td><td><code>app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL</code></td></tr>
+            <tr><td><code>PAUDBLOD</code></td><td>C4 / STEP01</td><td>IMS BMP program to reload PAUTHDB from root + child flat files using ISRT calls</td><td>COBOL</td><td>369</td><td><code>app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL</code></td></tr>
+            <tr><td><code>DBUNLDGS</code></td><td>C5 / STEP01</td><td>DLI-mode unload via GSAM: reads IMS database and writes to GSAM output datasets</td><td>COBOL</td><td>366</td><td><code>app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL</code></td></tr>
+            <tr><td><code>IEFBR14</code></td><td>C2/STEPDEL, C3/STEP0</td><td>System utility for dataset allocation/deletion</td><td>System</td><td>&mdash;</td><td>z/OS system</td></tr>
+            <tr><td><code>DFSRRC00</code></td><td>All jobs</td><td>IMS region controller &mdash; manages BMP/DLI program execution</td><td>System (IMS)</td><td>&mdash;</td><td>IMS SDFSRESL</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4.2 -->
+    <div class="subsection" id="s4-2">
+      <h3><span class="dot"></span> 4.2 Paragraph Call Hierarchy</h3>
+      <div class="diagram-box">
+<pre>
+CBPAUP0C (C1 — Purge)                   PAUDBUNL (C3 — DLI Unload)
+│                                        │
+├── 1000-INITIALIZE                      ├── 1000-INITIALIZE
+│   (Accept DATE/DAY, parse SYSIN)       │   (Open OPFILE1, OPFILE2)
+├── [LOOP: UNTIL END-OF-AUTHDB]          ├── [LOOP: UNTIL END-OF-ROOT-SEG]
+│   ├── 2000-FIND-NEXT-AUTH-SUMMARY      │   └── 2000-FIND-NEXT-AUTH-SUMMARY
+│   │   (DLI GN PAUTSUM0)               │       (CBLTDLI GN PAUTSUM0)
+│   ├── [LOOP: UNTIL NO-MORE-AUTHS]     │       ├── WRITE OPFIL1-REC
+│   │   ├── 3000-FIND-NEXT-AUTH-DTL      │       └── [LOOP: UNTIL END-CHILD]
+│   │   │   (DLI GNP PAUTDTL1)          │           └── 3000-FIND-NEXT-AUTH-DTL
+│   │   └── 4000-CHECK-IF-EXPIRED        │               (CBLTDLI GNP PAUTDTL1)
+│   │       └── 5000-DELETE-AUTH-DTL      │               WRITE OPFIL2-REC
+│   │           (DLI DLET PAUTDTL1)      ├── 4000-FILE-CLOSE
+│   ├── 6000-DELETE-AUTH-SUMMARY          └── 9999-ABEND
+│   │   (DLI DLET PAUTSUM0)
+│   └── 9000-TAKE-CHECKPOINT
+│       (DLI CHKP)
+├── 9000-TAKE-CHECKPOINT (final)
+└── 9999-ABEND
+
+PAUDBLOD (C4 — Reload)                  DBUNLDGS (C5 — GSAM Unload)
+│                                        │
+├── 1000-INITIALIZE                      ├── 1000-INITIALIZE
+│   (Open INFILE1, INFILE2)              │   (Display start messages)
+├── [LOOP: UNTIL END-ROOT-SEG-FILE]      ├── [LOOP: UNTIL END-OF-ROOT-SEG]
+│   └── 2000-READ-ROOT-SEG-FILE          │   └── 2000-FIND-NEXT-AUTH-SUMMARY
+│       (READ INFILE1)                   │       (CBLTDLI GN PAUTSUM0)
+│       └── 2100-INSERT-ROOT-SEG          │       ├── 3100-INSERT-PARENT-SEG-GSAM
+│           (CBLTDLI ISRT PAUTSUM0)      │       │   (CBLTDLI ISRT PASFLPCB)
+├── [LOOP: UNTIL END-CHILD-SEG-FILE]     │       └── [LOOP: UNTIL END-CHILD]
+│   └── 3000-READ-CHILD-SEG-FILE          │           └── 3000-FIND-NEXT-AUTH-DTL
+│       (READ INFILE2)                   │               (CBLTDLI GNP PAUTDTL1)
+│       ├── CBLTDLI GU PAUTSUM0           │               └── 3200-INSERT-CHILD-SEG-GSAM
+│       │   (Qualified SSA to parent)    │                   (CBLTDLI ISRT PADFLPCB)
+│       └── 3200-INSERT-IMS-CALL          ├── 4000-FILE-CLOSE
+│           (CBLTDLI ISRT PAUTDTL1)      └── 9999-ABEND
+├── 4000-FILE-CLOSE
+└── 9999-ABEND
+</pre>
+      </div>
+    </div>
+
+    <!-- 4.3 -->
+    <div class="subsection" id="s4-3">
+      <h3><span class="dot"></span> 4.3 Copybooks Used</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Copybook</th><th>Record</th><th>Size (bytes)</th><th>Key Fields</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>CIPAUSMY</code></td><td>PENDING-AUTH-SUMMARY</td><td>100</td><td>PA-ACCT-ID (S9(11) COMP-3, 6 bytes)</td><td>Root segment layout: account ID, credit/cash limits &amp; balances, approved/declined counts &amp; amounts</td></tr>
+            <tr><td><code>CIPAUDTY</code></td><td>PENDING-AUTH-DETAILS</td><td>200</td><td>PA-AUTHORIZATION-KEY (date 9C + time 9C, 8 bytes)</td><td>Child segment layout: authorization date/time, card number, transaction amount, merchant info, match/fraud status</td></tr>
+            <tr><td><code>IMSFUNCS</code></td><td>FUNC-CODES</td><td>&mdash;</td><td>&mdash;</td><td>IMS DLI function code constants (GU, GN, GNP, GHU, GHN, GHNP, REPL, ISRT, DLET)</td></tr>
+            <tr><td><code>PAUTBPCB</code></td><td>PAUTBPCB</td><td>&mdash;</td><td>&mdash;</td><td>DB PCB mask for DBPAUTP0: DBDNAME, status, segment name, key feedback area</td></tr>
+            <tr><td><code>PASFLPCB</code></td><td>PASFLPCB</td><td>&mdash;</td><td>&mdash;</td><td>GSAM PCB mask for PASFLDBD (root GSAM output)</td></tr>
+            <tr><td><code>PADFLPCB</code></td><td>PADFLPCB</td><td>&mdash;</td><td>&mdash;</td><td>GSAM PCB mask for PADFLDBD (child GSAM output)</td></tr>
+            <tr><td><code>CCPAUERY</code></td><td>ERROR-LOG-RECORD</td><td>122</td><td>ERR-EVENT-KEY</td><td>Error log record layout (not used in batch programs but part of the module)</td></tr>
+            <tr><td><code>CCPAURQY</code></td><td>(auth request fields)</td><td>&mdash;</td><td>PA-RQ-CARD-NUM</td><td>Pending authorization request layout (online use)</td></tr>
+            <tr><td><code>CCPAURLY</code></td><td>(auth response fields)</td><td>&mdash;</td><td>PA-RL-CARD-NUM</td><td>Pending authorization response layout (online use)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 5 — File and Dataset Inventory
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">5</span>
+    <h2>File and Dataset Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 5.1 -->
+    <div class="subsection" id="s5-1">
+      <h3><span class="dot"></span> 5.1 Complete Dataset Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Dataset Name</th><th>Type</th><th>RECFM/LRECL</th><th>Access</th><th>Used By</th></tr></thead>
+          <tbody>
+            <tr><td><code>OEM.IMS.IMSP.PAUTHDB</code></td><td>VSAM (HIDAM primary)</td><td>Block=4096</td><td>Read/Write/Delete</td><td>C1, C2, C3, C5</td></tr>
+            <tr><td><code>OEM.IMS.IMSP.PAUTHDBX</code></td><td>VSAM (HIDAM index)</td><td>Block=4096</td><td>Read</td><td>C2, C3, C5</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0</code></td><td>Sequential (VB)</td><td>VB/27990</td><td>Output (C2)</td><td>C2</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO</code></td><td>Sequential (FB)</td><td>FB/100</td><td>Output (C3), Input (C4)</td><td>C3, C4</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO</code></td><td>Sequential (FB)</td><td>FB/206</td><td>Output (C3), Input (C4)</td><td>C3, C4</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.PAUTDB.ROOT.GSAM</code></td><td>GSAM Sequential (F)</td><td>F/100</td><td>Output (C5)</td><td>C5</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.PAUTDB.CHILD.GSAM</code></td><td>GSAM Sequential (F)</td><td>F/200</td><td>Output (C5)</td><td>C5</td></tr>
+            <tr><td><code>OEM.IMS.IMSP.RECONn</code> (1-3)</td><td>VSAM (DBRC)</td><td>&mdash;</td><td>Read</td><td>C2</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.2 -->
+    <div class="subsection" id="s5-2">
+      <h3><span class="dot"></span> 5.2 Record Layouts</h3>
+
+      <h4>PAUTSUM0 &mdash; Root Segment (CIPAUSMY, 100 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Offset</th><th>Field</th><th>PIC</th><th>Bytes</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>PA-ACCT-ID</td><td>S9(11) COMP-3</td><td>6</td><td>Account ID (sequence key)</td></tr>
+            <tr><td>7</td><td>PA-CUST-ID</td><td>9(09)</td><td>9</td><td>Customer ID</td></tr>
+            <tr><td>16</td><td>PA-AUTH-STATUS</td><td>X(01)</td><td>1</td><td>Authorization status flag</td></tr>
+            <tr><td>17</td><td>PA-ACCOUNT-STATUS</td><td>X(02) OCCURS 5</td><td>10</td><td>Account status array</td></tr>
+            <tr><td>27</td><td>PA-CREDIT-LIMIT</td><td>S9(09)V99 COMP-3</td><td>6</td><td>Credit limit</td></tr>
+            <tr><td>33</td><td>PA-CASH-LIMIT</td><td>S9(09)V99 COMP-3</td><td>6</td><td>Cash advance limit</td></tr>
+            <tr><td>39</td><td>PA-CREDIT-BALANCE</td><td>S9(09)V99 COMP-3</td><td>6</td><td>Current credit balance</td></tr>
+            <tr><td>45</td><td>PA-CASH-BALANCE</td><td>S9(09)V99 COMP-3</td><td>6</td><td>Current cash balance</td></tr>
+            <tr><td>51</td><td>PA-APPROVED-AUTH-CNT</td><td>S9(04) COMP</td><td>2</td><td>Count of approved authorizations</td></tr>
+            <tr><td>53</td><td>PA-DECLINED-AUTH-CNT</td><td>S9(04) COMP</td><td>2</td><td>Count of declined authorizations</td></tr>
+            <tr><td>55</td><td>PA-APPROVED-AUTH-AMT</td><td>S9(09)V99 COMP-3</td><td>6</td><td>Total approved authorization amount</td></tr>
+            <tr><td>61</td><td>PA-DECLINED-AUTH-AMT</td><td>S9(09)V99 COMP-3</td><td>6</td><td>Total declined authorization amount</td></tr>
+            <tr><td>67</td><td>FILLER</td><td>X(34)</td><td>34</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>PAUTDTL1 &mdash; Child Segment (CIPAUDTY, 200 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Offset</th><th>Field</th><th>PIC</th><th>Bytes</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>PA-AUTH-DATE-9C</td><td>S9(05) COMP-3</td><td>3</td><td>Authorization date (9&rsquo;s complement for descending sort)</td></tr>
+            <tr><td>4</td><td>PA-AUTH-TIME-9C</td><td>S9(09) COMP-3</td><td>5</td><td>Authorization time (9&rsquo;s complement)</td></tr>
+            <tr><td>9</td><td>PA-AUTH-ORIG-DATE</td><td>X(06)</td><td>6</td><td>Original authorization date</td></tr>
+            <tr><td>15</td><td>PA-AUTH-ORIG-TIME</td><td>X(06)</td><td>6</td><td>Original authorization time</td></tr>
+            <tr><td>21</td><td>PA-CARD-NUM</td><td>X(16)</td><td>16</td><td>Card number</td></tr>
+            <tr><td>37</td><td>PA-AUTH-TYPE</td><td>X(04)</td><td>4</td><td>Authorization type code</td></tr>
+            <tr><td>41</td><td>PA-CARD-EXPIRY-DATE</td><td>X(04)</td><td>4</td><td>Card expiration date</td></tr>
+            <tr><td>45</td><td>PA-MESSAGE-TYPE</td><td>X(06)</td><td>6</td><td>Message type</td></tr>
+            <tr><td>51</td><td>PA-MESSAGE-SOURCE</td><td>X(06)</td><td>6</td><td>Message source</td></tr>
+            <tr><td>57</td><td>PA-AUTH-ID-CODE</td><td>X(06)</td><td>6</td><td>Authorization ID code</td></tr>
+            <tr><td>63</td><td>PA-AUTH-RESP-CODE</td><td>X(02)</td><td>2</td><td>Response code (&lsquo;00&rsquo; = approved)</td></tr>
+            <tr><td>65</td><td>PA-AUTH-RESP-REASON</td><td>X(04)</td><td>4</td><td>Response reason code</td></tr>
+            <tr><td>69</td><td>PA-PROCESSING-CODE</td><td>9(06)</td><td>6</td><td>Processing code</td></tr>
+            <tr><td>75</td><td>PA-TRANSACTION-AMT</td><td>S9(10)V99 COMP-3</td><td>7</td><td>Transaction amount</td></tr>
+            <tr><td>82</td><td>PA-APPROVED-AMT</td><td>S9(10)V99 COMP-3</td><td>7</td><td>Approved amount</td></tr>
+            <tr><td>89</td><td>PA-MERCHANT-CATAGORY-CODE</td><td>X(04)</td><td>4</td><td>Merchant category code (note: &ldquo;CATAGORY&rdquo; typo in source)</td></tr>
+            <tr><td>93</td><td>PA-ACQR-COUNTRY-CODE</td><td>X(03)</td><td>3</td><td>Acquirer country code</td></tr>
+            <tr><td>96</td><td>PA-POS-ENTRY-MODE</td><td>9(02)</td><td>2</td><td>POS entry mode</td></tr>
+            <tr><td>98</td><td>PA-MERCHANT-ID</td><td>X(15)</td><td>15</td><td>Merchant ID</td></tr>
+            <tr><td>113</td><td>PA-MERCHANT-NAME</td><td>X(22)</td><td>22</td><td>Merchant name</td></tr>
+            <tr><td>135</td><td>PA-MERCHANT-CITY</td><td>X(13)</td><td>13</td><td>Merchant city</td></tr>
+            <tr><td>148</td><td>PA-MERCHANT-STATE</td><td>X(02)</td><td>2</td><td>Merchant state</td></tr>
+            <tr><td>150</td><td>PA-MERCHANT-ZIP</td><td>X(09)</td><td>9</td><td>Merchant ZIP code</td></tr>
+            <tr><td>159</td><td>PA-TRANSACTION-ID</td><td>X(15)</td><td>15</td><td>Transaction ID</td></tr>
+            <tr><td>174</td><td>PA-MATCH-STATUS</td><td>X(01)</td><td>1</td><td>Match status (P=Pending, D=Declined, E=Expired, M=Matched)</td></tr>
+            <tr><td>175</td><td>PA-AUTH-FRAUD</td><td>X(01)</td><td>1</td><td>Fraud flag (F=Confirmed, R=Removed)</td></tr>
+            <tr><td>176</td><td>PA-FRAUD-RPT-DATE</td><td>X(08)</td><td>8</td><td>Fraud report date</td></tr>
+            <tr><td>184</td><td>FILLER</td><td>X(17)</td><td>17</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.3 -->
+    <div class="subsection" id="s5-3">
+      <h3><span class="dot"></span> 5.3 File Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+                    ┌──────────────────────────────┐
+                    │   IMS PAUTHDB (HIDAM/VSAM)   │
+                    │   DBPAUTP0 + DBPAUTX0 (idx)  │
+                    │   Root: PAUTSUM0 (100B)       │
+                    │   Child: PAUTDTL1 (200B)      │
+                    └──────────────┬───────────────┘
+                                   │
+              ┌────────────────────┼────────────────────┐
+              ▼                    ▼                    ▼
+     C1: CBPAUP0C          C3: PAUDBUNL          C5: DBUNLDGS
+     (DLI GN/GNP/DLET)    (DLI GN/GNP)          (DLI GN/GNP)
+              │                    │                    │
+              ▼                    ▼                    ▼
+     Purged PAUTHDB        ┌──────────────┐     ┌──────────────┐
+                           │ ROOT.FILEO   │     │ ROOT.GSAM    │
+                           │ FB/100       │     │ F/100 (GSAM) │
+                           ├──────────────┤     ├──────────────┤
+                           │ CHILD.FILEO  │     │ CHILD.GSAM   │
+                           │ FB/206       │     │ F/200 (GSAM) │
+                           └──────┬───────┘     └──────────────┘
+                                  │
+                                  ▼
+                           C4: PAUDBLOD
+                           (DLI ISRT/GU)
+                                  │
+                                  ▼
+                         Reloaded PAUTHDB
+
+     C2: DFSURGU0 ──▶ IMSDATA.DBPAUTP0 (VB/27990)
+     (HD Reorg Unload)   [for DFSURGL0 reload]
+</pre>
+      </div>
+    </div>
+
+    <!-- 5.4 -->
+    <div class="subsection" id="s5-4">
+      <h3><span class="dot"></span> 5.4 Dependency Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Dataset</th><th>C1 (Purge)</th><th>C2 (HD Reorg)</th><th>C3 (Unload)</th><th>C4 (Load)</th><th>C5 (GSAM)</th></tr></thead>
+          <tbody>
+            <tr><td>PAUTHDB</td><td>R/W/D</td><td>R</td><td>R</td><td>W</td><td>R</td></tr>
+            <tr><td>PAUTHDBX</td><td>&mdash;</td><td>R</td><td>R</td><td>&mdash;</td><td>R</td></tr>
+            <tr><td>IMSDATA.DBPAUTP0</td><td>&mdash;</td><td>W</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+            <tr><td>PAUTDB.ROOT.FILEO</td><td>&mdash;</td><td>&mdash;</td><td>W</td><td>R</td><td>&mdash;</td></tr>
+            <tr><td>PAUTDB.CHILD.FILEO</td><td>&mdash;</td><td>&mdash;</td><td>W</td><td>R</td><td>&mdash;</td></tr>
+            <tr><td>PAUTDB.ROOT.GSAM</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>W</td></tr>
+            <tr><td>PAUTDB.CHILD.GSAM</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>W</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 6 — Data Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">6</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 6.1 -->
+    <div class="subsection" id="s6-1">
+      <h3><span class="dot"></span> 6.1 Data Transformation Map</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Job</th><th>Input</th><th>Transformation</th><th>Output</th></tr></thead>
+          <tbody>
+            <tr><td>C1 (Purge)</td><td>PAUTSUM0 + PAUTDTL1 segments in PAUTHDB</td><td>Compute 9&rsquo;s complement date; compare day difference against expiry threshold; delete expired detail segments; adjust summary counters; delete empty summaries</td><td>Purged PAUTHDB (fewer segments)</td></tr>
+            <tr><td>C2 (HD Reorg)</td><td>PAUTHDB HIDAM database + index</td><td>DFSURGU0 sequentially reads all segments and writes them in unload format (VB records with segment prefix)</td><td>Single VB flat file (LRECL=27990)</td></tr>
+            <tr><td>C3 (Unload)</td><td>PAUTHDB HIDAM database</td><td>GN root segments → write directly to OPFILE1 (100B); GNP child segments under each root → prepend root key (6B COMP-3) and write to OPFILE2 (206B)</td><td>Two FB flat files (root 100B, child 206B)</td></tr>
+            <tr><td>C4 (Load)</td><td>Root flat file (100B) + Child flat file (206B)</td><td>Read root records → ISRT to PAUTHDB as PAUTSUM0; Read child records → extract root key → GU parent → ISRT child as PAUTDTL1</td><td>Populated PAUTHDB</td></tr>
+            <tr><td>C5 (GSAM)</td><td>PAUTHDB HIDAM database</td><td>GN root segments → ISRT to PASFLPCB GSAM (100B); GNP child segments → ISRT to PADFLPCB GSAM (200B)</td><td>Two GSAM files (root 100B, child 200B)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 6.2 -->
+    <div class="subsection" id="s6-2">
+      <h3><span class="dot"></span> 6.2 Data Lineage Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  Online Authorization ──▶ PAUTHDB (HIDAM)
+       (IMS/CICS)              │
+                               ├── C1: Purge expired ──▶ Cleaner PAUTHDB
+                               │
+                               ├── C2: DFSURGU0 ──▶ HD Unload flat file
+                               │                     (for DFSURGL0 reload)
+                               │
+                               ├── C3: PAUDBUNL ──▶ ROOT.FILEO + CHILD.FILEO
+                               │                     │
+                               │                     └── C4: PAUDBLOD ──▶ PAUTHDB
+                               │                         (Reorganized reload)
+                               │
+                               └── C5: DBUNLDGS ──▶ ROOT.GSAM + CHILD.GSAM
+                                                     │
+                                                     └── Downstream analytics /
+                                                         Migration pipelines
+</pre>
+      </div>
+    </div>
+
+    <!-- 6.3 -->
+    <div class="subsection" id="s6-3">
+      <h3><span class="dot"></span> 6.3 Control Totals</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Job</th><th>Counter</th><th>Source Field</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>C1</td><td>WS-NO-SUMRY-READ</td><td>Incremented per GN PAUTSUM0</td><td>Total root segments read</td></tr>
+            <tr><td>C1</td><td>WS-NO-SUMRY-DELETED</td><td>Incremented per DLET PAUTSUM0</td><td>Total root segments deleted (all children expired)</td></tr>
+            <tr><td>C1</td><td>WS-NO-DTL-READ</td><td>Incremented per GNP PAUTDTL1</td><td>Total child segments read</td></tr>
+            <tr><td>C1</td><td>WS-NO-DTL-DELETED</td><td>Incremented per DLET PAUTDTL1</td><td>Total child segments deleted (expired)</td></tr>
+            <tr><td>C3</td><td>WS-NO-SUMRY-READ</td><td>Incremented per GN PAUTSUM0</td><td>Total root segments unloaded</td></tr>
+            <tr><td>C3</td><td>WS-AUTH-SMRY-PROC-CNT</td><td>Incremented per GNP PAUTDTL1</td><td>Total child segments unloaded</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>Note:</strong> C1 (CBPAUP0C) displays all four counters at program termination. C3 and C5 do not display explicit counts at termination &mdash; counters are maintained but not reported.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 7 — Sort/Merge and Utility Processing
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">7</span>
+    <h2>Sort/Merge and Utility Processing</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s7-1">
+      <h3><span class="dot"></span> 7.1 Sort/Merge Specifications</h3>
+      <div class="callout">
+        <strong>N/A:</strong> None of the five jobs use SORT/MERGE utilities. Data is processed in IMS database key sequence (PAUTSUM0 root key = ACCNTID, PAUTDTL1 child key = PAUT9CTS). The DFSURGU0 utility (C2) has <code>DFSSRT01 DD DUMMY</code> and <code>DFSWRK01 DD DUMMY</code>, indicating sort work areas are allocated but not actively used for this database.
+      </div>
+    </div>
+
+    <div class="subsection" id="s7-2">
+      <h3><span class="dot"></span> 7.2 Utility Programs</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Utility</th><th>Job</th><th>Purpose</th><th>Parameters</th></tr></thead>
+          <tbody>
+            <tr><td><code>IEFBR14</code></td><td>C2 (STEPDEL), C3 (STEP0)</td><td>Dataset deletion of prior output files</td><td>N/A</td></tr>
+            <tr><td><code>DFSURGU0</code></td><td>C2 (UNLOAD)</td><td>IMS HD Reorganization Unload utility &mdash; sequentially reads HIDAM database and creates a flat-file image for reorganization reload</td><td><code>PARM=(ULU,DFSURGU0,DBPAUTP0)</code><br>SBPARM ACTIV=COND</td></tr>
+            <tr><td><code>DFSRRC00</code></td><td>All jobs</td><td>IMS Region Controller &mdash; manages BMP and DLI batch program execution</td><td>BMP or DLI mode with program/PSB name</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 8 — Checkpoint, Restart, and Recovery
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">8</span>
+    <h2>Checkpoint, Restart, and Recovery</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s8-1">
+      <h3><span class="dot"></span> 8.1 Checkpointing Strategy</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Job</th><th>Checkpoint Method</th><th>Frequency</th><th>Checkpoint ID</th></tr></thead>
+          <tbody>
+            <tr><td>C1 (CBPAUP0C)</td><td><code>EXEC DLI CHKP</code> (IMS symbolic checkpoint)</td><td>Every <code>P-CHKP-FREQ</code> summary segments processed (default 5) + final checkpoint at end</td><td><code>WK-CHKPT-ID</code> = &lsquo;RMAD&rsquo; + 4-digit counter</td></tr>
+            <tr><td>C2 (DFSURGU0)</td><td>None (IMS utility manages internally)</td><td>N/A</td><td>N/A</td></tr>
+            <tr><td>C3 (PAUDBUNL)</td><td>None</td><td>N/A</td><td>N/A</td></tr>
+            <tr><td>C4 (PAUDBLOD)</td><td>None</td><td>N/A</td><td>N/A</td></tr>
+            <tr><td>C5 (DBUNLDGS)</td><td>None</td><td>N/A</td><td>N/A</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-red">
+        <strong>Gap:</strong> Only C1 (purge) implements checkpointing. C3, C4, and C5 have no checkpoint/restart capability. A mid-job failure in C4 (reload) would leave the IMS database in a partially loaded, inconsistent state requiring a full image copy restore.
+      </div>
+    </div>
+
+    <div class="subsection" id="s8-2">
+      <h3><span class="dot"></span> 8.2 Restart Procedures</h3>
+      <ul>
+        <li><strong>C1 (Purge):</strong> Can be restarted from the last IMS checkpoint using <code>/START REGION</code> with <code>CKPTID=RMADnnnn</code>. IMS will backout uncommitted changes and resume from the checkpoint position.</li>
+        <li><strong>C2 (HD Reorg Unload):</strong> Restart requires re-running from the beginning. Delete the partial output dataset first.</li>
+        <li><strong>C3 (DLI Unload):</strong> Restart from scratch. Delete partial output files (ROOT.FILEO, CHILD.FILEO) and re-run.</li>
+        <li><strong>C4 (Reload):</strong> Requires restoring PAUTHDB from image copy before re-running. Partial inserts cannot be easily backed out without IMS log-based recovery.</li>
+        <li><strong>C5 (GSAM Unload):</strong> Restart from scratch. GSAM output files should be deleted and re-allocated.</li>
+      </ul>
+    </div>
+
+    <div class="subsection" id="s8-3">
+      <h3><span class="dot"></span> 8.3 Recovery Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌────────────────────────────────────────────────────┐
+  │               RECOVERY PROCEDURES                   │
+  └────────────────────────────────────────────────────┘
+
+  C1 Failure:
+    ├── IMS CHKP taken → /START with CKPTID restart
+    └── No CHKP yet → Rerun from beginning
+                       (IMS backout via log)
+
+  C2 Failure:
+    └── Delete partial DFSURGU1 → Rerun DBPAUTP0
+
+  C3 Failure:
+    └── Delete ROOT.FILEO + CHILD.FILEO → Rerun UNLDPADB
+
+  C4 Failure (CRITICAL):
+    ├── Restore PAUTHDB from image copy
+    ├── Delete partial flat files if corrupted
+    └── Rerun complete C3 → C4 sequence
+
+  C5 Failure:
+    └── Delete ROOT.GSAM + CHILD.GSAM → Rerun UNLDGSAM
+</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 9 — Error Handling and Abend Resolution
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">9</span>
+    <h2>Error Handling and Abend Resolution</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 9.1 -->
+    <div class="subsection" id="s9-1">
+      <h3><span class="dot"></span> 9.1 Error Flow</h3>
+      <div class="diagram-box">
+<pre>
+  IMS DLI Call
+       │
+       ▼
+  ┌──────────────────┐
+  │ Check DIBSTAT /  │
+  │ PCB-STATUS       │
+  └──────┬───────────┘
+         │
+    ┌────┴────┐
+    │ Status? │
+    └────┬────┘
+    SPACES  │  'GB'/'GE'     │  OTHER
+      │     │    (End-of-DB)  │  (Error)
+      │     │                 │
+      ▼     ▼                 ▼
+   Process  Set EOF flag    DISPLAY error info
+   record   Continue        MOVE 16 TO RETURN-CODE
+                             GOBACK (ABEND)
+</pre>
+      </div>
+    </div>
+
+    <!-- 9.2 -->
+    <div class="subsection" id="s9-2">
+      <h3><span class="dot"></span> 9.2 Return Codes and DLI Status Codes</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Status Code</th><th>Meaning</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td><code>SPACES</code> / <code>'  '</code></td><td>Successful call</td><td>Continue processing</td></tr>
+            <tr><td><code>FW</code></td><td>Successful (variant)</td><td>Continue processing</td></tr>
+            <tr><td><code>GB</code></td><td>End of database (no more root segments)</td><td>Set END-OF-AUTHDB flag; exit main loop</td></tr>
+            <tr><td><code>GE</code></td><td>Segment not found (no more children under current parent)</td><td>Set NO-MORE-AUTHS / WS-END-OF-CHILD-SEG; move to next root</td></tr>
+            <tr><td><code>II</code></td><td>Duplicate segment (ISRT of existing key)</td><td>C4: Display informational message; continue (tolerated)</td></tr>
+            <tr><td><code>GP</code></td><td>Wrong parentage</td><td>Defined but not explicitly handled; would fall to OTHER → ABEND</td></tr>
+            <tr><td><code>BA</code></td><td>Database unavailable</td><td>Falls to OTHER → ABEND</td></tr>
+            <tr><td><code>TC</code></td><td>PSB scheduled more than once</td><td>Falls to OTHER → ABEND</td></tr>
+            <tr><td><code>TE</code></td><td>Could not schedule PSB</td><td>Falls to OTHER → ABEND</td></tr>
+            <tr><td><code>FH</code></td><td>Retry condition</td><td>Defined in 88-level but not explicitly retried; falls to ABEND</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 9.3 -->
+    <div class="subsection" id="s9-3">
+      <h3><span class="dot"></span> 9.3 Common Abend Scenarios</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Scenario</th><th>Program</th><th>Symptom</th><th>Resolution</th></tr></thead>
+          <tbody>
+            <tr><td>IMS database not available</td><td>All</td><td>DIBSTAT/PCB-STATUS = &lsquo;BA&rsquo;</td><td>Verify IMS online region status; ensure database is started and authorized</td></tr>
+            <tr><td>PSB scheduling failure</td><td>All</td><td>PCB-STATUS = &lsquo;TE&rsquo;</td><td>Check PSB/DBD gen; verify PSB is in PSBLIB; ensure no conflicting schedules</td></tr>
+            <tr><td>File open failure</td><td>C3 (PAUDBUNL), C4 (PAUDBLOD)</td><td>WS-OUTFL1/2-STATUS or WS-INFIL1/2-STATUS &ne; spaces/00</td><td>Check dataset allocation; verify DD statements; check DASD space</td></tr>
+            <tr><td>DLET failure on child segment</td><td>C1 (CBPAUP0C)</td><td>DIBSTAT &ne; spaces after DLET</td><td>Check IMS log; verify PCB PROCOPT includes &lsquo;D&rsquo;; ensure segment was positioned with GNP</td></tr>
+            <tr><td>GSAM ISRT failure</td><td>C5 (DBUNLDGS)</td><td>PASFL/PADFL-PCB-STATUS &ne; spaces</td><td>Check GSAM dataset allocation; verify DISP and space; ensure GSAM DBD is in DBDLIB</td></tr>
+            <tr><td>Checkpoint failure</td><td>C1 (CBPAUP0C)</td><td>DIBSTAT &ne; spaces after CHKP</td><td>Check IMS log subsystem; verify IEFRDER/IMSLOGR DDs</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 9.4 -->
+    <div class="subsection" id="s9-4">
+      <h3><span class="dot"></span> 9.4 File Status Handling</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Program</th><th>File Operation</th><th>Status Check</th><th>On Error</th></tr></thead>
+          <tbody>
+            <tr><td>PAUDBUNL (C3)</td><td>OPEN OUTPUT OPFILE1/2</td><td>WS-OUTFL1/2-STATUS = spaces or &lsquo;00&rsquo;</td><td>Display error message → 9999-ABEND (RC=16)</td></tr>
+            <tr><td>PAUDBUNL (C3)</td><td>CLOSE OPFILE1/2</td><td>WS-OUTFL1/2-STATUS = spaces or &lsquo;00&rsquo;</td><td>Display error message (no ABEND)</td></tr>
+            <tr><td>PAUDBLOD (C4)</td><td>OPEN INPUT INFILE1/2</td><td>WS-INFIL1/2-STATUS = spaces or &lsquo;00&rsquo;</td><td>Display error message → 9999-ABEND (RC=16)</td></tr>
+            <tr><td>PAUDBLOD (C4)</td><td>READ INFILE1/2</td><td>WS-INFIL1/2-STATUS = &lsquo;10&rsquo;</td><td>Set end-of-file flag; other status → display error</td></tr>
+            <tr><td>PAUDBLOD (C4)</td><td>CLOSE INFILE1/2</td><td>WS-INFIL1/2-STATUS = spaces or &lsquo;00&rsquo;</td><td>Display error message (no ABEND)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 10 — Security and Authorization
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s10-1">
+      <h3><span class="dot"></span> 10.1 Dataset Access Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Resource</th><th>Access Level</th><th>Required For</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>IMS.SDFSRESL / OEMA.IMS.IMSP.SDFSRESL</td><td>READ</td><td>All jobs (STEPLIB)</td><td>IMS resident library</td></tr>
+            <tr><td>IMS.PSBLIB / OEM.IMS.IMSP.PSBLIB</td><td>READ</td><td>All jobs (IMS DD)</td><td>PSB library containing PSBPAUTB, PAUTBUNL, DLIGSAMP</td></tr>
+            <tr><td>IMS.DBDLIB / OEM.IMS.IMSP.DBDLIB</td><td>READ</td><td>All jobs (IMS DD)</td><td>DBD library containing DBPAUTP0, DBPAUTX0, PASFLDBD, PADFLDBD</td></tr>
+            <tr><td>OEM.IMS.IMSP.PAUTHDB</td><td>READ/WRITE/DELETE</td><td>C1, C2, C3, C4, C5</td><td>Primary HIDAM database; PSB PROCOPT=AP (all processing)</td></tr>
+            <tr><td>OEM.IMS.IMSP.PAUTHDBX</td><td>READ</td><td>C2, C3, C5</td><td>Secondary index dataset</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.* output datasets</td><td>WRITE/CREATE</td><td>C2, C3, C5</td><td>Output flat files and GSAM datasets</td></tr>
+            <tr><td>OEM.IMS.IMSP.RECONn</td><td>READ</td><td>C2</td><td>DBRC recovery control datasets</td></tr>
+            <tr><td>Application LOADLIB</td><td>READ</td><td>All jobs</td><td>Contains compiled COBOL programs</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>Note:</strong> The C1 JCL references a placeholder loadlib (<code>XXXXXXXX.PROD.LOADLIB</code>) that must be substituted with the actual production loadlib name. All other jobs reference <code>AWS.M2.CARDDEMO.LOADLIB</code>.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 11 — Performance and Batch Window Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Performance and Batch Window Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s11-1">
+      <h3><span class="dot"></span> 11.1 I/O Characteristics</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Job</th><th>I/O Pattern</th><th>Volume Sensitivity</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>C1 (Purge)</td><td>Sequential scan of entire HIDAM database via GN/GNP; targeted DLET operations</td><td>Linear with total segment count</td><td>Checkpoints bound I/O commits; delete I/O is write-intensive</td></tr>
+            <tr><td>C2 (HD Reorg)</td><td>Full sequential scan by DFSURGU0; single sequential write output</td><td>Linear with database size</td><td>VB output with LRECL=27990 &mdash; large block sizes for efficiency</td></tr>
+            <tr><td>C3 (DLI Unload)</td><td>Sequential GN/GNP reads; two sequential file writes</td><td>Linear with total segment count</td><td>Separate root and child files allow parallel processing</td></tr>
+            <tr><td>C4 (Reload)</td><td>Sequential file reads; ISRT + GU (keyed) for each segment</td><td>Root: linear; Child: GU per child adds random I/O</td><td>GU call per child segment to position to parent is the bottleneck</td></tr>
+            <tr><td>C5 (GSAM Unload)</td><td>Sequential GN/GNP reads; GSAM sequential writes</td><td>Linear with total segment count</td><td>GSAM provides buffered sequential I/O via IMS</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s11-2">
+      <h3><span class="dot"></span> 11.2 Batch Window Fit</h3>
+      <div class="callout">
+        <strong>Key constraint:</strong> All five jobs require the IMS database to be offline or quiesced. The total maintenance cycle must complete within the IMS offline window. C4 (Reload) is the most time-sensitive due to random GU calls for child segment positioning. For large databases, consider running C3 and C5 in parallel (both are read-only against PAUTHDB) to shorten the overall window.
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Job</th><th>Estimated Duration</th><th>Parallelism</th></tr></thead>
+          <tbody>
+            <tr><td>C1 (Purge)</td><td>Proportional to expired segment volume</td><td>Must run first (serial)</td></tr>
+            <tr><td>C2 (HD Reorg)</td><td>Proportional to full database size</td><td>Must run after C1 (serial)</td></tr>
+            <tr><td>C3 (DLI Unload)</td><td>Proportional to full database size</td><td>Can run in parallel with C5</td></tr>
+            <tr><td>C4 (Reload)</td><td>Slowest &mdash; GU per child segment</td><td>Must run after C3 (serial)</td></tr>
+            <tr><td>C5 (GSAM Unload)</td><td>Proportional to full database size</td><td>Can run in parallel with C3</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 12 — Testing Approach
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s12-1">
+      <h3><span class="dot"></span> 12.1 Test Scenarios</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Scenario</th><th>Business Rule</th><th>Input Conditions</th><th>Expected Result</th></tr></thead>
+          <tbody>
+            <tr><td>TS-001: Purge with expired details</td><td>BR-001</td><td>PAUTHDB with detail segments older than WS-EXPIRY-DAYS (default 5)</td><td>Expired detail segments deleted; summary counters adjusted; root deleted if all children expired</td></tr>
+            <tr><td>TS-002: Purge with no expired details</td><td>BR-001</td><td>PAUTHDB where all detail segments are within expiry window</td><td>No segments deleted; counts show 0 deleted</td></tr>
+            <tr><td>TS-003: Purge approved vs declined</td><td>BR-002, BR-003</td><td>Mix of approved (PA-AUTH-RESP-CODE=&lsquo;00&rsquo;) and declined authorizations</td><td>Approved: PA-APPROVED-AUTH-CNT decremented, PA-APPROVED-AMT adjusted; Declined: PA-DECLINED-AUTH-CNT decremented, PA-TRANSACTION-AMT subtracted</td></tr>
+            <tr><td>TS-004: Summary deletion</td><td>BR-004</td><td>Root segment where all children have been purged (both counts &le; 0)</td><td>Root segment deleted from PAUTHDB</td></tr>
+            <tr><td>TS-005: SYSIN parameter defaults</td><td>BR-005, BR-006</td><td>SYSIN with non-numeric expiry days and spaces for checkpoint freq</td><td>Expiry defaults to 5 days; checkpoint freq defaults to 5</td></tr>
+            <tr><td>TS-006: Full unload/reload cycle</td><td>BR-007, BR-008</td><td>Pre-loaded PAUTHDB with known segment count</td><td>C3 unload produces correct file sizes; C4 reload produces identical segment count; GU + ISRT for all children successful</td></tr>
+            <tr><td>TS-007: Duplicate handling on reload</td><td>BR-008</td><td>Run C4 twice without clearing database</td><td>Second run shows &lsquo;II&rsquo; status for all segments; no ABEND; informational messages displayed</td></tr>
+            <tr><td>TS-008: GSAM unload verification</td><td>&mdash;</td><td>Pre-loaded PAUTHDB</td><td>C5 produces GSAM files with correct record counts matching C3 root file count</td></tr>
+            <tr><td>TS-009: Non-numeric account ID</td><td>BR-007</td><td>PAUTHDB with a root segment where PA-ACCT-ID is non-numeric</td><td>C3 and C5 skip the segment silently (no WRITE/ISRT)</td></tr>
+            <tr><td>TS-010: Checkpoint and restart</td><td>BR-006</td><td>Simulate failure mid-purge after checkpoint</td><td>Restart from checkpoint ID; only unprocessed segments purged on restart</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s12-2">
+      <h3><span class="dot"></span> 12.2 Test Data Requirements</h3>
+      <ul>
+        <li><strong>PAUTHDB Test Database:</strong> Populate with a mix of root segments (10+) each having 5&ndash;20 child segments with varying dates (some expired, some current)</li>
+        <li><strong>Authorization dates:</strong> Use 9&rsquo;s complement encoding (<code>99999 - YYDDD</code>) to set dates both within and outside the expiry window</li>
+        <li><strong>Response codes:</strong> Include both approved (&lsquo;00&rsquo;) and declined (non-&lsquo;00&rsquo;) detail records to verify counter adjustments</li>
+        <li><strong>Edge cases:</strong> Include at least one non-numeric PA-ACCT-ID to verify skip logic; include a root with exactly 0 remaining children after purge</li>
+        <li><strong>SYSIN parameters:</strong> Test with <code>00,00001,00001,Y</code> (as in JCL) and with defaults (spaces/non-numeric values)</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 13 — Known Issues and Modernization Considerations
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s13">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">13</span>
+    <h2>Known Issues and Modernization Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s13-1">
+      <h3><span class="dot"></span> 13.1 Known Issues</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Description</th><th>Impact</th><th>Workaround</th></tr></thead>
+          <tbody>
+            <tr><td>KI-001</td><td>Typo in CBPAUP0C program header: &ldquo;Authoriation&rdquo; (missing &lsquo;z&rsquo;) in &ldquo;Delete Expired Pending Authoriation Messages&rdquo;</td><td>Low &mdash; cosmetic, documentation only</td><td>None needed</td></tr>
+            <tr><td>KI-002</td><td>Typo in CIPAUDTY copybook: <code>PA-MERCHANT-CATAGORY-CODE</code> should be <code>PA-MERCHANT-CATEGORY-CODE</code></td><td>Low &mdash; cosmetic, does not affect processing but propagates to all programs using the copybook</td><td>None needed</td></tr>
+            <tr><td>KI-003</td><td>CBPAUP0C uses <code>EXEC DLI</code> syntax while PAUDBUNL/PAUDBLOD/DBUNLDGS use <code>CALL 'CBLTDLI'</code>. Inconsistent IMS call interface across the module.</td><td>Low &mdash; both interfaces are valid, but complicates migration and static analysis</td><td>Standardize on one interface during modernization</td></tr>
+            <tr><td>KI-004</td><td>C1 condition for deleting summary segment checks <code>PA-APPROVED-AUTH-CNT &le; 0 AND PA-APPROVED-AUTH-CNT &le; 0</code> &mdash; the second condition duplicates the first instead of checking <code>PA-DECLINED-AUTH-CNT</code></td><td>High &mdash; summary segments with remaining declined authorizations may be incorrectly deleted if all approved auths are purged</td><td>Fix the condition to check both <code>PA-APPROVED-AUTH-CNT</code> and <code>PA-DECLINED-AUTH-CNT</code></td></tr>
+            <tr><td>KI-005</td><td>WS-PGMNAME in PAUDBUNL, PAUDBLOD, and DBUNLDGS is hardcoded as &lsquo;IMSUNLOD&rsquo; rather than the actual program name</td><td>Low &mdash; misleading in diagnostic messages if WS-PGMNAME is used in displays</td><td>Update to correct program name</td></tr>
+            <tr><td>KI-006</td><td>C3 and C5 do not display final record counts at program termination. Counters are maintained but not reported.</td><td>Medium &mdash; operations cannot verify unload completeness without external file-level checks</td><td>Add DISPLAY statements before GOBACK</td></tr>
+            <tr><td>KI-007</td><td>C3, C4, and C5 have no checkpoint/restart capability. Mid-job failure leaves database or files in inconsistent state.</td><td>High &mdash; large database unload/reload requires full restart from scratch on failure</td><td>Add IMS CHKP calls (as in C1) or use IMS XRST/CHKP pairs</td></tr>
+            <tr><td>KI-008</td><td>C1 JCL uses placeholder loadlib name (<code>XXXXXXXX.PROD.LOADLIB</code>) instead of the actual production dataset name</td><td>Medium &mdash; job will fail if submitted without editing the JCL</td><td>Replace with actual loadlib name or use a JCL procedure with symbolic substitution</td></tr>
+            <tr><td>KI-009</td><td>C4 (LOADPADB) reads all root records first, then all child records in a separate loop. This two-pass approach requires GU calls to reposition to the parent for each child ISRT, adding random I/O overhead.</td><td>Medium &mdash; performance degradation for large databases</td><td>Restructure to interleave root and child inserts (read root, insert root, read+insert all its children, then next root)</td></tr>
+            <tr><td>KI-010</td><td>C5 GSAM output DDs use <code>DISP=(OLD,KEEP,KEEP)</code> which requires pre-existing datasets. If datasets don&rsquo;t exist, the job will fail with allocation error.</td><td>Medium &mdash; requires manual dataset pre-allocation</td><td>Change to <code>DISP=(NEW,CATLG,DELETE)</code> or add IEFBR14 pre-allocation step</td></tr>
+            <tr><td>KI-011</td><td>DBUNLDGS (C5) has all file I/O statements commented out in FILE SECTION and 4000-FILE-CLOSE. Uses GSAM PCBs instead but retains dead code from the non-GSAM version.</td><td>Low &mdash; dead code clutters the source</td><td>Remove commented-out file I/O code</td></tr>
+            <tr><td>KI-012</td><td>The &lsquo;retry condition&rsquo; 88-level (<code>VALUE 'BA', 'FH', 'TE'</code>) is defined in all programs but never evaluated &mdash; no retry logic is implemented</td><td>Medium &mdash; transient IMS errors cause immediate ABEND instead of retry</td><td>Implement retry loop for BA/FH/TE status codes</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s13-2">
+      <h3><span class="dot"></span> 13.2 Modernization Considerations</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Area</th><th>Current State</th><th>Target State</th><th>Complexity</th></tr></thead>
+          <tbody>
+            <tr><td>Database</td><td>IMS HIDAM/VSAM with secondary index</td><td>Relational database (PostgreSQL/Aurora) with indexed tables</td><td>High &mdash; requires segment-to-table mapping, hierarchical-to-relational data model conversion</td></tr>
+            <tr><td>Purge Logic</td><td>Batch DLI scan-and-delete with 9&rsquo;s complement date arithmetic</td><td>SQL DELETE with standard date comparison (<code>WHERE auth_date &lt; CURRENT_DATE - INTERVAL</code>)</td><td>Medium &mdash; business logic simplification</td></tr>
+            <tr><td>Unload/Reload</td><td>Custom COBOL programs + DFSURGU0 for database reorganization</td><td>Database-native maintenance (VACUUM, REINDEX, pg_dump/pg_restore)</td><td>Low &mdash; built-in RDBMS features replace custom code</td></tr>
+            <tr><td>GSAM Export</td><td>IMS GSAM interface for sequential data extraction</td><td>SQL-based export (COPY TO, data pipeline with Kafka/SQS)</td><td>Medium &mdash; GSAM semantics need mapping to streaming or batch export</td></tr>
+            <tr><td>Checkpoint/Restart</td><td>IMS symbolic CHKP in C1 only; no restart in C3/C4/C5</td><td>Database transactions with savepoints; idempotent processing with batch state tracking</td><td>Medium</td></tr>
+            <tr><td>Error Handling</td><td>DISPLAY + GOBACK with RC=16 (hard ABEND)</td><td>Structured exception handling, retry logic, dead-letter queues, observability</td><td>Medium</td></tr>
+            <tr><td>Scheduling</td><td>Manual/on-demand during IMS offline window</td><td>Event-driven or scheduled via orchestration (Step Functions, Airflow) with no downtime requirement</td><td>Low</td></tr>
+            <tr><td>Data Format</td><td>COMP-3 packed decimal, 9&rsquo;s complement dates, EBCDIC</td><td>Standard data types (INTEGER, DECIMAL, DATE/TIMESTAMP), UTF-8</td><td>Medium &mdash; requires careful field-level conversion mapping</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /page-wrap-single -->
+
+<!-- ════════════════════  FOOTER  ════════════════════ -->
+<footer class="footer">
+  <p><strong>UniCredit CardDemo</strong> &mdash; Batch Process Analysis &mdash; IMS Authorization Batch Module (C1&ndash;C5)</p>
+  <p>Generated from source: <code>app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl</code> &middot; <code>DBPAUTP0.jcl</code> &middot; <code>UNLDPADB.JCL</code> &middot; <code>LOADPADB.JCL</code> &middot; <code>UNLDGSAM.JCL</code> &middot; Programs: CBPAUP0C, PAUDBUNL, PAUDBLOD, DBUNLDGS &middot; Copybooks: CIPAUSMY, CIPAUDTY, IMSFUNCS, PAUTBPCB, PASFLPCB, PADFLPCB</p>
+</footer>
+
+</body>
+</html>
