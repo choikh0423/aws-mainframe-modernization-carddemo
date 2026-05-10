@@ -128,53 +128,163 @@
       </a>
     </div>
 
-    <h4 style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--uc-gray-400);margin:1.5rem 0 .75rem;">&#128274; CICS Online Flows</h4>
+    <h4 style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--uc-gray-400);margin:1.5rem 0 .75rem;">&#128274; CICS Online Flows &mdash; <a href="cics/index.html" style="color:var(--uc-red);text-decoration:none;font-size:.75rem;">View Full Index &rsaquo;</a></h4>
+
+    <h4 style="font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--uc-gray-500);margin:.75rem 0 .5rem;">Sign-On &amp; Navigation</h4>
     <div class="flow-nav">
       <a class="flow-nav-card" href="cics/CC00-sign-on.html">
         <div class="flow-nav-icon cics">&#128274;</div>
         <div class="flow-nav-body">
-          <h4>Sign-On Flow (CC00)</h4>
-          <p>COSGN00C authentication &amp; session initialization</p>
+          <h4>Sign-On (CC00)</h4>
+          <p>COSGN00C &mdash; authentication, USRSEC read, admin/regular routing</p>
           <span class="flow-nav-badge ready">Ready</span>
         </div>
       </a>
+      <a class="flow-nav-card" href="cics/CM00-main-menu.html">
+        <div class="flow-nav-icon cics">&#128209;</div>
+        <div class="flow-nav-body">
+          <h4>Main Menu (CM00)</h4>
+          <p>COMEN01C &mdash; regular user menu dispatcher, 11 options via XCTL</p>
+          <span class="flow-nav-badge ready">Ready</span>
+        </div>
+      </a>
+      <a class="flow-nav-card" href="cics/CA00-admin-menu.html">
+        <div class="flow-nav-icon cics">&#128736;</div>
+        <div class="flow-nav-body">
+          <h4>Admin Menu (CA00)</h4>
+          <p>COADM01C &mdash; admin user menu dispatcher, 6 options via XCTL</p>
+          <span class="flow-nav-badge ready">Ready</span>
+        </div>
+      </a>
+    </div>
+
+    <h4 style="font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--uc-gray-500);margin:.75rem 0 .5rem;">Account Management</h4>
+    <div class="flow-nav">
       <a class="flow-nav-card" href="cics/CAVW-account-view.html">
-        <div class="flow-nav-icon cics">&#127974;</div>
+        <div class="flow-nav-icon cics">&#128269;</div>
         <div class="flow-nav-body">
-          <h4>Account Management</h4>
-          <p>CAVW / CAUP &mdash; view &amp; update account details</p>
+          <h4>Account View (CAVW)</h4>
+          <p>COACTVWC &mdash; browse &amp; display account details from ACCTDAT</p>
           <span class="flow-nav-badge ready">Ready</span>
         </div>
       </a>
+      <a class="flow-nav-card" href="cics/CAUP-account-update.html">
+        <div class="flow-nav-icon cics">&#9998;</div>
+        <div class="flow-nav-body">
+          <h4>Account Update (CAUP)</h4>
+          <p>COACTUPC &mdash; modify account &amp; customer records, REWRITE ACCTDAT/CUSTDAT</p>
+          <span class="flow-nav-badge ready">Ready</span>
+        </div>
+      </a>
+    </div>
+
+    <h4 style="font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--uc-gray-500);margin:.75rem 0 .5rem;">Credit Card Management</h4>
+    <div class="flow-nav">
       <a class="flow-nav-card" href="cics/CCLI-credit-card-list.html">
-        <div class="flow-nav-icon cics">&#128179;</div>
+        <div class="flow-nav-icon cics">&#128203;</div>
         <div class="flow-nav-body">
-          <h4>Card Management</h4>
-          <p>CCLI / CCDL / CCUP &mdash; list, view, update cards</p>
+          <h4>Credit Card List (CCLI)</h4>
+          <p>COCRDLIC &mdash; browse CARDDAT with STARTBR/READNEXT</p>
           <span class="flow-nav-badge ready">Ready</span>
         </div>
       </a>
+      <a class="flow-nav-card" href="cics/CCDL-credit-card-view.html">
+        <div class="flow-nav-icon cics">&#128269;</div>
+        <div class="flow-nav-body">
+          <h4>Credit Card View (CCDL)</h4>
+          <p>COCRDSLC &mdash; display single card details from CARDDAT</p>
+          <span class="flow-nav-badge ready">Ready</span>
+        </div>
+      </a>
+      <a class="flow-nav-card" href="cics/CCUP-credit-card-update.html">
+        <div class="flow-nav-icon cics">&#9998;</div>
+        <div class="flow-nav-body">
+          <h4>Credit Card Update (CCUP)</h4>
+          <p>COCRDUPC &mdash; modify card name/status/expiry, REWRITE CARDDAT</p>
+          <span class="flow-nav-badge ready">Ready</span>
+        </div>
+      </a>
+    </div>
+
+    <h4 style="font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--uc-gray-500);margin:.75rem 0 .5rem;">Transaction Processing</h4>
+    <div class="flow-nav">
       <a class="flow-nav-card" href="cics/CT00-transaction-list.html">
-        <div class="flow-nav-icon cics">&#128260;</div>
+        <div class="flow-nav-icon cics">&#128203;</div>
         <div class="flow-nav-body">
-          <h4>Transaction Processing</h4>
-          <p>CT00 / CT01 / CT02 &mdash; list, view, add transactions</p>
+          <h4>Transaction List (CT00)</h4>
+          <p>COTRN00C &mdash; browse TRANSACT with STARTBR/READNEXT, paging</p>
           <span class="flow-nav-badge ready">Ready</span>
         </div>
       </a>
+      <a class="flow-nav-card" href="cics/CT01-transaction-view.html">
+        <div class="flow-nav-icon cics">&#128269;</div>
+        <div class="flow-nav-body">
+          <h4>Transaction View (CT01)</h4>
+          <p>COTRN01C &mdash; display single transaction detail from TRANSACT</p>
+          <span class="flow-nav-badge ready">Ready</span>
+        </div>
+      </a>
+      <a class="flow-nav-card" href="cics/CT02-transaction-add.html">
+        <div class="flow-nav-icon cics">&#10010;</div>
+        <div class="flow-nav-body">
+          <h4>Transaction Add (CT02)</h4>
+          <p>COTRN02C &mdash; create new transaction record in TRANSACT</p>
+          <span class="flow-nav-badge ready">Ready</span>
+        </div>
+      </a>
+    </div>
+
+    <h4 style="font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--uc-gray-500);margin:.75rem 0 .5rem;">Bill Payment &amp; Reporting</h4>
+    <div class="flow-nav">
       <a class="flow-nav-card" href="cics/CB00-bill-payment.html">
         <div class="flow-nav-icon cics">&#128176;</div>
         <div class="flow-nav-body">
-          <h4>Billing &amp; Reports</h4>
-          <p>CB00 bill payment &amp; CR00 report submission</p>
+          <h4>Bill Payment (CB00)</h4>
+          <p>COBIL00C &mdash; pay account balance, browse TRANSACT</p>
           <span class="flow-nav-badge ready">Ready</span>
         </div>
       </a>
-      <a class="flow-nav-card" href="cics/CU00-user-list.html">
-        <div class="flow-nav-icon cics">&#128101;</div>
+      <a class="flow-nav-card" href="cics/CR00-transaction-reports.html">
+        <div class="flow-nav-icon cics">&#128202;</div>
         <div class="flow-nav-body">
-          <h4>Admin &amp; User Management</h4>
-          <p>CA00 / CU00&ndash;03 &mdash; admin menu &amp; user CRUD</p>
+          <h4>Transaction Reports (CR00)</h4>
+          <p>CORPT00C &mdash; generate &amp; display transaction reports</p>
+          <span class="flow-nav-badge ready">Ready</span>
+        </div>
+      </a>
+    </div>
+
+    <h4 style="font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--uc-gray-500);margin:.75rem 0 .5rem;">User Security Administration (Admin Only)</h4>
+    <div class="flow-nav">
+      <a class="flow-nav-card" href="cics/CU00-user-list.html">
+        <div class="flow-nav-icon cics">&#128203;</div>
+        <div class="flow-nav-body">
+          <h4>User List (CU00)</h4>
+          <p>COUSR00C &mdash; browse USRSEC with STARTBR/READNEXT, paging</p>
+          <span class="flow-nav-badge ready">Ready</span>
+        </div>
+      </a>
+      <a class="flow-nav-card" href="cics/CU01-user-add.html">
+        <div class="flow-nav-icon cics">&#10010;</div>
+        <div class="flow-nav-body">
+          <h4>User Add (CU01)</h4>
+          <p>COUSR01C &mdash; create new user record in USRSEC</p>
+          <span class="flow-nav-badge ready">Ready</span>
+        </div>
+      </a>
+      <a class="flow-nav-card" href="cics/CU02-user-update.html">
+        <div class="flow-nav-icon cics">&#9998;</div>
+        <div class="flow-nav-body">
+          <h4>User Update (CU02)</h4>
+          <p>COUSR02C &mdash; modify user record in USRSEC</p>
+          <span class="flow-nav-badge ready">Ready</span>
+        </div>
+      </a>
+      <a class="flow-nav-card" href="cics/CU03-user-delete.html">
+        <div class="flow-nav-icon cics">&#128465;</div>
+        <div class="flow-nav-body">
+          <h4>User Delete (CU03)</h4>
+          <p>COUSR03C &mdash; remove user record from USRSEC</p>
           <span class="flow-nav-badge ready">Ready</span>
         </div>
       </a>
