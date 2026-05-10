@@ -29,6 +29,7 @@ import time
 import urllib.request
 import urllib.error
 from http.server import HTTPServer, SimpleHTTPRequestHandler
+from socketserver import ThreadingMixIn
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
 
@@ -700,7 +701,10 @@ def main():
         print("NOTE: DEVIN_API_KEY not set. Devin session trace disabled.")
         print("      /live SQLite-backed demo works without an API key.")
 
-    server = HTTPServer(("0.0.0.0", port), TraceHandler)
+    class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
+        daemon_threads = True
+
+    server = ThreadingHTTPServer(("0.0.0.0", port), TraceHandler)
     print(f"""
 +==============================================================+
 |  Devin Live COBOL Flow Trace Server (SQLite-Backed)          |
