@@ -24,6 +24,7 @@ The SQLite database is initialized on startup from app/data/ASCII/ files.
 import json
 import os
 import re
+import threading
 import time
 import urllib.request
 import urllib.error
@@ -89,6 +90,12 @@ STRUCTURED_OUTPUT_SCHEMA = {
 
 # Resolved at startup by calling /v3/self
 _ORG_ID = None
+
+# Threading event for input pause: polling loop waits on this when requires_input is detected.
+# /api/input handler sets it to resume polling.
+_input_event = threading.Event()
+_input_event.set()  # Start in "ready" state (not waiting)
+_waiting_for_input = False
 
 
 def resolve_org_id(api_key):
@@ -253,7 +260,8 @@ class TraceHandler(SimpleHTTPRequestHandler):
 
     def handle_user_input(self):
         """Handle user input from the terminal (amount + merchant).
-        Writes to DB and optionally relays to the active Devin session."""
+        Writes to DB, relays to Devin session, and resumes the polling loop."""
+        global _waiting_for_input
         body = self.read_json_body()
         amount = body.get("amount", 0)
         merchant = body.get("merchant", "UNKNOWN")
@@ -270,7 +278,8 @@ class TraceHandler(SimpleHTTPRequestHandler):
                         f"The user entered a transaction of ${amount:.2f} for merchant {merchant}. "
                         f"This has been written to the SQLite database (tran_id={result.get('tran_id')}). "
                         f"Continue tracing the batch processing flow. "
-                        f"Query the database to check the account state before the overlimit decision."
+                        f"Read CBTRN02C.cbl and trace the batch overlimit check. "
+                        f"Use db_query to check the account state at the overlimit decision point."
                     )
                     devin_api_request(
                         "POST",
@@ -280,6 +289,10 @@ class TraceHandler(SimpleHTTPRequestHandler):
                     )
                 except Exception as e:
                     print(f"Warning: could not relay input to Devin session: {e}")
+
+        # Resume the polling loop
+        _waiting_for_input = False
+        _input_event.set()
 
         self.send_json(result)
 
@@ -359,6 +372,11 @@ class TraceHandler(SimpleHTTPRequestHandler):
             poll_count = 0
 
             while poll_count < max_polls:
+                # If waiting for user input, block here until /api/input resumes us
+                if _waiting_for_input:
+                    self.send_sse_event({"type": "status", "message": "Waiting for user input..."})
+                    _input_event.wait(timeout=300)  # 5 min max wait for input
+
                 time.sleep(2)
                 poll_count += 1
 
@@ -455,10 +473,14 @@ class TraceHandler(SimpleHTTPRequestHandler):
         # Check for requires_input directive
         requires_input = step_data.get("requires_input")
         if requires_input:
+            global _waiting_for_input
             event["type"] = "input_required"
             event["input_type"] = requires_input
             event["prompt"] = step_data.get("prompt", "Enter transaction details")
             event["session_id"] = session_id
+            # Signal the polling loop to pause until user submits input
+            _input_event.clear()
+            _waiting_for_input = True
 
         # Check for db_query directive
         db_query = step_data.get("db_query")
