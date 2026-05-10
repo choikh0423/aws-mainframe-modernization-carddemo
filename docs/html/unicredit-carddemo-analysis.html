@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CardDemo – Mainframe Analysis | UniCredit</title>
+<style>
+  /* ── UniCredit Brand Palette ─────────────────────────────────── */
+  :root {
+    --uc-red:        #E4002B;
+    --uc-red-dark:   #B8001F;
+    --uc-red-light:  #FF3354;
+    --uc-navy:       #1D2B4E;
+    --uc-navy-light: #2A3D6B;
+    --uc-gold:       #C5A44E;
+    --uc-gold-light: #E2C97A;
+    --uc-white:      #FFFFFF;
+    --uc-gray-50:    #F8F9FA;
+    --uc-gray-100:   #F0F1F3;
+    --uc-gray-200:   #E2E4E8;
+    --uc-gray-400:   #9EA3AE;
+    --uc-gray-600:   #6B7280;
+    --uc-gray-800:   #374151;
+    --uc-text:       #1F2937;
+    --uc-shadow:     0 4px 24px rgba(29,43,78,.08);
+    --uc-shadow-lg:  0 12px 48px rgba(29,43,78,.12);
+    --uc-radius:     12px;
+    --uc-radius-sm:  8px;
+    --uc-transition: .25s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ── Reset & Base ───────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+    color: var(--uc-text);
+    background: var(--uc-gray-50);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Hero / Header ──────────────────────────────────────────── */
+  .hero {
+    background: linear-gradient(135deg, var(--uc-navy) 0%, var(--uc-navy-light) 50%, var(--uc-red-dark) 100%);
+    color: var(--uc-white);
+    padding: 3rem 2rem 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -60%;
+    right: -20%;
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, rgba(228,0,43,.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -10%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(197,164,78,.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .hero-logo {
+    height: 48px;
+    flex-shrink: 0;
+  }
+  .hero-logo img {
+    height: 100%;
+    width: auto;
+    display: block;
+  }
+  .hero-brand-text { font-size: .95rem; opacity: .85; letter-spacing: .04em; text-transform: uppercase; }
+  .hero h1 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -.02em;
+    line-height: 1.15;
+    margin-bottom: .75rem;
+  }
+  .hero h1 span { color: var(--uc-gold-light); }
+  .hero-subtitle { font-size: 1.15rem; opacity: .88; max-width: 720px; }
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255,255,255,.15);
+  }
+  .hero-meta dt { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin-bottom: .15rem; }
+  .hero-meta dd { font-size: .95rem; font-weight: 600; }
+
+  /* ── Layout ─────────────────────────────────────────────────── */
+  .page-wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 2rem;
+    padding: 2rem;
+  }
+  @media (max-width: 900px) {
+    .page-wrap { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+  }
+
+  /* ── Sidebar / TOC ──────────────────────────────────────────── */
+  .sidebar {
+    position: sticky;
+    top: 2rem;
+    align-self: start;
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+  }
+  .toc {
+    background: var(--uc-white);
+    border-radius: var(--uc-radius);
+    box-shadow: var(--uc-shadow);
+    padding: 1.25rem 1rem;
+  }
+  .toc-title {
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--uc-gray-400);
+    margin-bottom: .75rem;
+    padding-bottom: .5rem;
+    border-bottom: 2px solid var(--uc-red);
+  }
+  .toc ol { list-style: none; counter-reset: toc-counter; }
+  .toc li { counter-increment: toc-counter; }
+  .toc a {
+    display: flex;
+    align-items: baseline;
+    gap: .5rem;
+    text-decoration: none;
+    color: var(--uc-gray-600);
+    font-size: .82rem;
+    padding: .35rem .5rem;
+    border-radius: var(--uc-radius-sm);
+    transition: var(--uc-transition);
+  }
+  .toc a::before {
+    content: counter(toc-counter, decimal-leading-zero);
+    font-weight: 700;
+    font-size: .7rem;
+    color: var(--uc-red);
+    min-width: 1.4em;
+  }
+  .toc a:hover { background: var(--uc-gray-100); color: var(--uc-navy); }
+
+  /* ── Main content ───────────────────────────────────────────── */
+  .content { min-width: 0; }
+
+  /* ── Section card ───────────────────────────────────────────── */
+  .section {
+    background: var(--uc-white);
+    border-radius: var(--uc-radius);
+    box-shadow: var(--uc-shadow);
+    margin-bottom: 2rem;
+    overflow: hidden;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(90deg, var(--uc-navy) 0%, var(--uc-navy-light) 100%);
+    color: var(--uc-white);
+    cursor: pointer;
+    user-select: none;
+  }
+  .section-header:hover { filter: brightness(1.1); }
+  .section-num {
+    background: var(--uc-red);
+    color: var(--uc-white);
+    font-size: .72rem;
+    font-weight: 700;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .section-header h2 { font-size: 1.1rem; font-weight: 700; letter-spacing: -.01em; flex: 1; }
+  .section-toggle {
+    width: 24px;
+    height: 24px;
+    transition: transform var(--uc-transition);
+    opacity: .7;
+  }
+  .section.collapsed .section-toggle { transform: rotate(-90deg); }
+  .section-body { padding: 1.5rem; }
+  .section.collapsed .section-body { display: none; }
+
+  /* ── Sub-sections ───────────────────────────────────────────── */
+  .subsection { margin-bottom: 1.75rem; }
+  .subsection:last-child { margin-bottom: 0; }
+  .subsection h3 {
+    font-size: .95rem;
+    font-weight: 700;
+    color: var(--uc-navy);
+    margin-bottom: .75rem;
+    padding-bottom: .4rem;
+    border-bottom: 2px solid var(--uc-gray-200);
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+  .subsection h3 .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--uc-red);
+    flex-shrink: 0;
+  }
+  .subsection h4 {
+    font-size: .88rem;
+    font-weight: 600;
+    color: var(--uc-gray-800);
+    margin: 1rem 0 .5rem;
+  }
+  .subsection p, .subsection li {
+    font-size: .88rem;
+    color: var(--uc-gray-800);
+    line-height: 1.7;
+  }
+  .subsection ul, .subsection ol {
+    padding-left: 1.4rem;
+    margin-top: .35rem;
+  }
+  .subsection li { margin-bottom: .25rem; }
+
+  /* ── Tables ─────────────────────────────────────────────────── */
+  .table-wrap { overflow-x: auto; margin: .75rem 0; }
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: .82rem;
+  }
+  thead th {
+    background: var(--uc-navy);
+    color: var(--uc-white);
+    text-align: left;
+    padding: .6rem .75rem;
+    font-weight: 600;
+    letter-spacing: .02em;
+    white-space: nowrap;
+  }
+  thead th:first-child { border-radius: var(--uc-radius-sm) 0 0 0; }
+  thead th:last-child  { border-radius: 0 var(--uc-radius-sm) 0 0; }
+  tbody td {
+    padding: .55rem .75rem;
+    border-bottom: 1px solid var(--uc-gray-200);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background: var(--uc-gray-50); }
+  tbody tr:hover { background: rgba(228,0,43,.04); }
+
+  /* ── Code blocks ────────────────────────────────────────────── */
+  pre {
+    background: var(--uc-navy);
+    color: #E2E8F0;
+    border-radius: var(--uc-radius-sm);
+    padding: 1rem 1.25rem;
+    font-size: .78rem;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    overflow-x: auto;
+    line-height: 1.65;
+    margin: .75rem 0;
+  }
+  code {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: .82em;
+    background: var(--uc-gray-100);
+    padding: .1em .35em;
+    border-radius: 4px;
+    color: var(--uc-red-dark);
+  }
+  pre code { background: none; padding: 0; color: inherit; }
+
+  /* ── Callout boxes ──────────────────────────────────────────── */
+  .callout {
+    border-left: 4px solid var(--uc-gold);
+    background: rgba(197,164,78,.08);
+    padding: .85rem 1rem;
+    border-radius: 0 var(--uc-radius-sm) var(--uc-radius-sm) 0;
+    margin: .75rem 0;
+    font-size: .85rem;
+  }
+  .callout-red {
+    border-left-color: var(--uc-red);
+    background: rgba(228,0,43,.05);
+  }
+  .callout strong { color: var(--uc-navy); }
+
+  /* ── Diagram boxes ──────────────────────────────────────────── */
+  .diagram-box {
+    background: var(--uc-gray-100);
+    border: 2px dashed var(--uc-gray-200);
+    border-radius: var(--uc-radius-sm);
+    padding: 1.5rem;
+    text-align: center;
+    margin: .75rem 0;
+  }
+  .diagram-box pre {
+    text-align: left;
+    background: var(--uc-navy);
+    display: inline-block;
+    max-width: 100%;
+  }
+
+  /* ── Badges ─────────────────────────────────────────────────── */
+  .badge {
+    display: inline-block;
+    font-size: .68rem;
+    font-weight: 700;
+    padding: .15em .55em;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    line-height: 1.6;
+  }
+  .badge-red    { background: var(--uc-red);   color: #fff; }
+  .badge-navy   { background: var(--uc-navy);  color: #fff; }
+  .badge-gold   { background: var(--uc-gold);  color: var(--uc-navy); }
+  .badge-gray   { background: var(--uc-gray-200); color: var(--uc-gray-800); }
+
+  /* ── KPI strip ──────────────────────────────────────────────── */
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  .kpi-card {
+    background: var(--uc-gray-50);
+    border: 1px solid var(--uc-gray-200);
+    border-radius: var(--uc-radius-sm);
+    padding: 1rem;
+    text-align: center;
+    transition: var(--uc-transition);
+  }
+  .kpi-card:hover { border-color: var(--uc-red); box-shadow: var(--uc-shadow); transform: translateY(-2px); }
+  .kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--uc-red); line-height: 1.2; }
+  .kpi-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--uc-gray-600); margin-top: .25rem; }
+
+  /* ── Footer ─────────────────────────────────────────────────── */
+  .footer {
+    background: var(--uc-navy);
+    color: rgba(255,255,255,.6);
+    text-align: center;
+    padding: 2rem;
+    font-size: .78rem;
+  }
+  .footer strong { color: var(--uc-gold-light); }
+
+  /* ── Print ──────────────────────────────────────────────────── */
+  @media print {
+    .sidebar { display: none; }
+    .page-wrap { grid-template-columns: 1fr; }
+    .section.collapsed .section-body { display: block; }
+    .hero { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════  HERO  ════════════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. &mdash; Milano</div>
+    </div>
+    <h1>CardDemo &ndash; <span>Mainframe Analysis</span></h1>
+    <p class="hero-subtitle">
+      Comprehensive technical assessment of the CardDemo credit-card management system&mdash;COBOL/CICS/VSAM architecture, program inventory, data layouts, batch orchestration, security, and modernization readiness.
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Document Version</dt><dd>1.0</dd></div>
+      <div><dt>Last Updated</dt><dd>2026-05-10</dd></div>
+      <div><dt>Author(s)</dt><dd>UniCredit Mainframe COE</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Under Review</span></dd></div>
+      <div><dt>Application</dt><dd>CardDemo v1.0</dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ════════════════════  BODY  ════════════════════ -->
+<div class="page-wrap">
+
+<!-- ── Sidebar / TOC ────────────────────────────────────────── -->
+<aside class="sidebar">
+  <nav class="toc">
+    <div class="toc-title">Table of Contents</div>
+    <ol>
+      <li><a href="#s1">System Overview &amp; Processing Architecture</a></li>
+      <li><a href="#s2">Program Design &amp; Call Structure</a></li>
+      <li><a href="#s3">Data Structures &amp; File Layouts</a></li>
+      <li><a href="#s4">Program Interface Specifications</a></li>
+      <li><a href="#s5">Code Architecture &amp; Organization</a></li>
+      <li><a href="#s6">Transaction &amp; Batch Interfaces</a></li>
+      <li><a href="#s7">Security Implementation</a></li>
+      <li><a href="#s8">File &amp; Database Design</a></li>
+      <li><a href="#s9">Deployment &amp; Promotion</a></li>
+      <li><a href="#s10">Operations &amp; Runbooks</a></li>
+      <li><a href="#s11">Monitoring &amp; Observability</a></li>
+      <li><a href="#s12">Performance &amp; Capacity</a></li>
+      <li><a href="#s13">Testing Strategy</a></li>
+      <li><a href="#s14">Known Issues &amp; Technical Debt</a></li>
+    </ol>
+  </nav>
+</aside>
+
+<!-- ── Main content ─────────────────────────────────────────── -->
+<main class="content">
+
+<!-- ── KPI strip ─────────────────────────────── -->
+<div class="kpi-strip">
+  <div class="kpi-card"><div class="kpi-value">29</div><div class="kpi-label">COBOL Programs</div></div>
+  <div class="kpi-card"><div class="kpi-value">20,650</div><div class="kpi-label">Lines of COBOL</div></div>
+  <div class="kpi-card"><div class="kpi-value">20</div><div class="kpi-label">CICS Transactions</div></div>
+  <div class="kpi-card"><div class="kpi-value">31</div><div class="kpi-label">Copybooks</div></div>
+  <div class="kpi-card"><div class="kpi-value">14</div><div class="kpi-label">VSAM Files</div></div>
+  <div class="kpi-card"><div class="kpi-value">34</div><div class="kpi-label">Batch JCL Jobs</div></div>
+</div>
+
+<!-- ────────────────────────────────────────────────────────────
+     SECTION 1 — System Overview
+     ──────────────────────────────────────────────────────────── -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">1</span>
+    <h2>System Overview and Processing Architecture</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <p>CardDemo is a comprehensive mainframe credit-card management system built to simulate real-world card-issuer operations. It manages the full lifecycle of credit-card accounts&mdash;from customer on-boarding and card issuance through transaction processing, billing, and reporting. The system operates in dual processing modes:</p>
+    <ul>
+      <li><strong>Online (CICS)</strong> &mdash; interactive terminal sessions for account inquiries, updates, card management, and user administration.</li>
+      <li><strong>Batch (JCL)</strong> &mdash; nightly cycle for transaction posting, interest calculation, statement generation, and file maintenance.</li>
+    </ul>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 1.1 Technology Stack</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Layer</th><th>Technology</th><th>Version / Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Language</td><td>COBOL</td><td>Enterprise COBOL &mdash; 29 programs, ~20,650 LOC</td></tr>
+            <tr><td>Online TP</td><td>CICS</td><td>Pseudo-conversational; region: CARDDEMO</td></tr>
+            <tr><td>Primary Storage</td><td>VSAM (KSDS with AIX)</td><td>Account, Card, Customer, Transaction masters</td></tr>
+            <tr><td>Optional&nbsp;DB</td><td>DB2</td><td>Transaction-type reference tables</td></tr>
+            <tr><td>Optional&nbsp;DB</td><td>IMS DB</td><td>Pending authorization data (hierarchical)</td></tr>
+            <tr><td>Messaging</td><td>MQ Series</td><td>Authorization requests, account inquiries</td></tr>
+            <tr><td>Scheduler</td><td>Control-M</td><td>XML-defined job flows</td></tr>
+            <tr><td>Screen Handler</td><td>BMS</td><td>18 map definitions</td></tr>
+            <tr><td>Assembler</td><td>IBM HLASM</td><td>MVSWAIT (timer), COBDATFT (date fmt)</td></tr>
+            <tr><td>Security</td><td>RACF</td><td>Dataset &amp; transaction-level</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 1.2 Overall Technical Flow Diagram</h3>
+      <div class="diagram-box">
+<pre><code>                        ┌──────────────────────────────────┐
+                        │      3270 Terminal / TN3270       │
+                        └──────────────┬───────────────────┘
+                                       │
+                        ┌──────────────▼───────────────────┐
+                        │     CICS Region (CARDDEMO)       │
+                        │  CC00 → CM00 → Functional Txns   │
+                        │  (Pseudo-conversational)          │
+                        └──┬───────┬───────┬───────┬───────┘
+                           │       │       │       │
+            ┌──────────────▼─┐ ┌───▼────┐ ┌▼─────┐ ┌▼──────────┐
+            │  VSAM KSDS     │ │ DB2    │ │ IMS  │ │ MQ Series │
+            │  (Account,     │ │ TranTp │ │ Auth │ │ Auth Req  │
+            │   Card, Cust,  │ │ Tables │ │  DB  │ │ Acct Inq  │
+            │   Transaction) │ └────────┘ └──────┘ └───────────┘
+            └──────┬─────────┘
+                   │  CLOSEFIL / OPENFIL
+        ┌──────────▼───────────────────────────────────┐
+        │             Batch Window (JCL)               │
+        │  POSTTRAN → INTCALC → COMBTRAN → CREASTMT   │
+        │  TRANBKP / TRANREPT / DUSRSECJ / DEFGDG*    │
+        └──────────────────────────────────────────────┘</code></pre>
+      </div>
+      <div class="callout"><strong>Note:</strong> CLOSEFIL / OPENFIL jobs gate VSAM files between Online and Batch modes to prevent concurrent-access contention.</div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 1.3 Overall Business Flow Diagram</h3>
+      <div class="diagram-box">
+<pre><code>  Customer ──► Sign On (CC00) ──► Main Menu (CM00)
+                                     │
+               ┌─────────────────────┼─────────────────────┐
+               ▼                     ▼                     ▼
+        Account Mgmt          Card Mgmt            Transactions
+        • View (CAVW)         • List (CCLI)        • List  (CT00)
+        • Update (CAUP)       • View (CCDL)        • View  (CT01)
+                              • Update (CCUP)      • Add   (CT02)
+                                                   • Report(CR00)
+               │                                   • Bill  (CB00)
+               ▼
+        Admin Menu (CA00)
+        • User CRUD (CU00-03)
+        • Tran-Type Mgmt (CTTU/CTLI)
+
+  ═══════════  Nightly Batch  ═══════════
+  Close Files → Post Transactions → Interest Calc
+  → Combine → Statements → Backup → Reopen Files</code></pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 1.4 Component Interaction Patterns</h3>
+      <ul>
+        <li><strong>CICS XCTL</strong> &mdash; primary navigation between screens (e.g., COSGN00C → COMEN01C → COACTVWC). No return; each program owns the terminal until it transfers.</li>
+        <li><strong>COMMAREA-based</strong> &mdash; all inter-program data passing uses the COMMAREA (copybook <code>COCOM01Y</code>), carrying user context, flags, and screen state across pseudo-conversational cycles.</li>
+        <li><strong>Batch CALL</strong> &mdash; batch programs use static CALL for subroutines (e.g., CBTRN02C calls date-conversion utilities).</li>
+        <li><strong>MQ async</strong> &mdash; authorization requests (COPAUA0C) use MQ put/get with correlation IDs for request-response pattern.</li>
+        <li><strong>Online-to-Batch</strong> &mdash; CLOSEFIL/OPENFIL JCL jobs hand VSAM file control between CICS and batch.</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 1.5 Error Handling and Recovery Patterns</h3>
+      <ul>
+        <li>CICS programs check <code>RESP</code> / <code>RESP2</code> codes after every EXEC CICS command and route to error-display paragraphs.</li>
+        <li>VSAM file-status codes are evaluated in both online and batch programs; non-zero statuses trigger user messages or job abends.</li>
+        <li>Batch JCL uses COND codes for step-level conditional execution; POSTTRAN verifies record counts before posting.</li>
+        <li>Signon program (COSGN00C) validates user credentials against USRSEC VSAM file and locks after repeated failures.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────
+     SECTION 2 — Program Design & Call Structure
+     ──────────────────────────────────────────────────────────── -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">2</span>
+    <h2>Program Design and Call Structure</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 2.1 Key Online Programs</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Program</th><th>Txn&nbsp;ID</th><th>Type</th><th>Purpose</th><th>Key&nbsp;Copybooks</th><th>LOC</th></tr></thead>
+          <tbody>
+            <tr><td><code>COSGN00C</code></td><td>CC00</td><td>Online</td><td>Signon &amp; authentication</td><td>COCOM01Y, CSUSR01Y, COTTL01Y</td><td>260</td></tr>
+            <tr><td><code>COMEN01C</code></td><td>CM00</td><td>Online</td><td>Main menu routing</td><td>COCOM01Y, COMEN02Y</td><td>446</td></tr>
+            <tr><td><code>COACTVWC</code></td><td>CAVW</td><td>Online</td><td>Account view</td><td>CVACT01Y, COCOM01Y</td><td>601</td></tr>
+            <tr><td><code>COACTUPC</code></td><td>CAUP</td><td>Online</td><td>Account update</td><td>CVACT01Y, COCOM01Y</td><td>4,236</td></tr>
+            <tr><td><code>COCRDLIC</code></td><td>CCLI</td><td>Online</td><td>Credit card list</td><td>CVACT02Y, CVACT03Y</td><td>636</td></tr>
+            <tr><td><code>COCRDSLC</code></td><td>CCDL</td><td>Online</td><td>Credit card detail view</td><td>CVACT02Y</td><td>593</td></tr>
+            <tr><td><code>COCRDUPC</code></td><td>CCUP</td><td>Online</td><td>Credit card update</td><td>CVACT02Y, CVCRD01Y</td><td>897</td></tr>
+            <tr><td><code>COTRN00C</code></td><td>CT00</td><td>Online</td><td>Transaction list</td><td>CVTRA05Y</td><td>699</td></tr>
+            <tr><td><code>COTRN01C</code></td><td>CT01</td><td>Online</td><td>Transaction view</td><td>CVTRA05Y</td><td>632</td></tr>
+            <tr><td><code>COTRN02C</code></td><td>CT02</td><td>Online</td><td>Transaction add</td><td>CVTRA05Y, CVTRA06Y</td><td>893</td></tr>
+            <tr><td><code>CORPT00C</code></td><td>CR00</td><td>Online</td><td>Transaction report submission</td><td>CVTRA05Y</td><td>350</td></tr>
+            <tr><td><code>COBIL00C</code></td><td>CB00</td><td>Online</td><td>Bill payment</td><td>CVACT01Y, CVTRA05Y</td><td>495</td></tr>
+            <tr><td><code>COADM01C</code></td><td>CA00</td><td>Online</td><td>Admin menu</td><td>COADM02Y</td><td>340</td></tr>
+            <tr><td><code>COUSR00C</code></td><td>CU00</td><td>Online</td><td>User list</td><td>CSUSR01Y</td><td>603</td></tr>
+            <tr><td><code>COUSR01C</code></td><td>CU01</td><td>Online</td><td>Add user</td><td>CSUSR01Y</td><td>363</td></tr>
+            <tr><td><code>COUSR02C</code></td><td>CU02</td><td>Online</td><td>Update user</td><td>CSUSR01Y</td><td>462</td></tr>
+            <tr><td><code>COUSR03C</code></td><td>CU03</td><td>Online</td><td>Delete user</td><td>CSUSR01Y</td><td>359</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 2.2 Key Batch Programs</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Program</th><th>JCL Job</th><th>Purpose</th><th>LOC</th></tr></thead>
+          <tbody>
+            <tr><td><code>CBACT01C</code></td><td>ACCTFILE</td><td>Account file processing</td><td>191</td></tr>
+            <tr><td><code>CBACT02C</code></td><td>CARDFILE</td><td>Card file processing</td><td>168</td></tr>
+            <tr><td><code>CBACT03C</code></td><td>CUSTFILE</td><td>Customer file processing</td><td>243</td></tr>
+            <tr><td><code>CBACT04C</code></td><td>INTCALC</td><td>Interest calculation engine</td><td>402</td></tr>
+            <tr><td><code>CBCUS01C</code></td><td>READCUST</td><td>Customer data reader</td><td>156</td></tr>
+            <tr><td><code>CBTRN01C</code></td><td>READCARD</td><td>Card reader utility</td><td>140</td></tr>
+            <tr><td><code>CBTRN02C</code></td><td>POSTTRAN</td><td>Daily transaction posting engine</td><td>1,030</td></tr>
+            <tr><td><code>CBTRN03C</code></td><td>TRANREPT</td><td>Transaction reporting</td><td>540</td></tr>
+            <tr><td><code>CBSTM03A</code></td><td>CREASTMT</td><td>Statement generation</td><td>924</td></tr>
+            <tr><td><code>CBSTM03B</code></td><td>CREASTMT</td><td>Statement subroutine</td><td>230</td></tr>
+            <tr><td><code>CBEXPORT</code></td><td>CBEXPORT</td><td>Data export utility</td><td>210</td></tr>
+            <tr><td><code>CBIMPORT</code></td><td>CBIMPORT</td><td>Data import utility</td><td>195</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 2.3 Program Call Hierarchy Diagram</h3>
+      <div class="diagram-box">
+<pre><code>  ┌─────────────────────── ONLINE (CICS XCTL) ───────────────────────┐
+  │                                                                   │
+  │  COSGN00C (CC00)                                                  │
+  │     └── XCTL → COMEN01C (CM00 - Main Menu)                       │
+  │              ├── XCTL → COACTVWC (CAVW - Acct View)              │
+  │              ├── XCTL → COACTUPC (CAUP - Acct Update)            │
+  │              ├── XCTL → COCRDLIC (CCLI - Card List)              │
+  │              │            └── XCTL → COCRDSLC (CCDL - Card View) │
+  │              │                        └── XCTL → COCRDUPC (CCUP) │
+  │              ├── XCTL → COTRN00C (CT00 - Tran List)              │
+  │              │            ├── XCTL → COTRN01C (CT01 - Tran View) │
+  │              │            └── XCTL → COTRN02C (CT02 - Tran Add)  │
+  │              ├── XCTL → CORPT00C (CR00 - Reports)                │
+  │              ├── XCTL → COBIL00C (CB00 - Bill Pay)               │
+  │              └── XCTL → COADM01C (CA00 - Admin)                  │
+  │                           ├── XCTL → COUSR00C (CU00 - User List) │
+  │                           │            ├── XCTL → COUSR01C (CU01)│
+  │                           │            ├── XCTL → COUSR02C (CU02)│
+  │                           │            └── XCTL → COUSR03C (CU03)│
+  │                           └── XCTL → COTRTLIC (CTLI) [DB2 opt]   │
+  └───────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────── BATCH (CALL / JCL EXEC) ──────────────────┐
+  │                                                                   │
+  │  POSTTRAN: CBTRN02C ──CALL──► date utilities                     │
+  │  INTCALC:  CBACT04C ──CALL──► rate calculation modules           │
+  │  CREASTMT: CBSTM03A ──CALL──► CBSTM03B (formatting sub)         │
+  │  TRANREPT: CBTRN03C ──CALL──► sort / report writer               │
+  └───────────────────────────────────────────────────────────────────┘</code></pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────
+     SECTION 3 — Data Structures & File Layouts
+     ──────────────────────────────────────────────────────────── -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">3</span>
+    <h2>Data Structures and File Layouts</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 3.1 Copybook Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Copybook</th><th>Purpose</th><th>Used By</th><th>RECLN</th></tr></thead>
+          <tbody>
+            <tr><td><code>CVACT01Y</code></td><td>Account master record</td><td>COACTVWC, COACTUPC, COBIL00C, batch</td><td>300</td></tr>
+            <tr><td><code>CVACT02Y</code></td><td>Card entity record</td><td>COCRDLIC, COCRDSLC, COCRDUPC</td><td>150</td></tr>
+            <tr><td><code>CVACT03Y</code></td><td>Card cross-reference (XREF)</td><td>COCRDLIC, COTRN00C</td><td>50</td></tr>
+            <tr><td><code>CVCUS01Y</code></td><td>Customer record</td><td>CBCUS01C, CBACT03C</td><td>500</td></tr>
+            <tr><td><code>CVTRA05Y</code></td><td>Transaction record (online)</td><td>COTRN00C-02C, CORPT00C, COBIL00C</td><td>350</td></tr>
+            <tr><td><code>CVTRA06Y</code></td><td>Daily transaction record (batch)</td><td>CBTRN02C, POSTTRAN</td><td>350</td></tr>
+            <tr><td><code>CSUSR01Y</code></td><td>User security record</td><td>COSGN00C, COUSR00-03C</td><td>80</td></tr>
+            <tr><td><code>COCOM01Y</code></td><td>COMMAREA communication block</td><td>All online programs</td><td>Varies</td></tr>
+            <tr><td><code>COTTL01Y</code></td><td>Title line formatting</td><td>All screen programs</td><td>&mdash;</td></tr>
+            <tr><td><code>CSMSG01Y</code></td><td>System message area</td><td>All online programs</td><td>&mdash;</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 3.2 Key Record Layouts</h3>
+
+      <h4>Account Record (<code>CVACT01Y</code> &mdash; 300 bytes)</h4>
+<pre><code>01  ACCOUNT-RECORD.
+    05  ACCT-ID                    PIC 9(11).
+    05  ACCT-ACTIVE-STATUS         PIC X(01).
+    05  ACCT-CURR-BAL              PIC S9(10)V99.
+    05  ACCT-CREDIT-LIMIT          PIC S9(10)V99.
+    05  ACCT-CASH-CREDIT-LIMIT     PIC S9(10)V99.
+    05  ACCT-OPEN-DATE             PIC X(10).
+    05  ACCT-EXPIRAION-DATE        PIC X(10).
+    05  ACCT-REISSUE-DATE          PIC X(10).
+    05  ACCT-CURR-CYC-CREDIT       PIC S9(10)V99.
+    05  ACCT-CURR-CYC-DEBIT        PIC S9(10)V99.
+    05  ACCT-ADDR-ZIP              PIC X(10).
+    05  ACCT-GROUP-ID              PIC X(10).
+    05  FILLER                     PIC X(178).</code></pre>
+
+      <h4>Card Record (<code>CVACT02Y</code> &mdash; 150 bytes)</h4>
+<pre><code>01  CARD-RECORD.
+    05  CARD-NUM                   PIC X(16).
+    05  CARD-ACCT-ID               PIC 9(11).
+    05  CARD-CVV-CD                PIC 9(03).
+    05  CARD-EMBOSSED-NAME         PIC X(50).
+    05  CARD-EXPIRAION-DATE        PIC X(10).
+    05  CARD-ACTIVE-STATUS         PIC X(01).
+    05  FILLER                     PIC X(59).</code></pre>
+
+      <h4>Customer Record (<code>CVCUS01Y</code> &mdash; 500 bytes)</h4>
+<pre><code>01  CUSTOMER-RECORD.
+    05  CUST-ID                    PIC 9(09).
+    05  CUST-FIRST-NAME            PIC X(25).
+    05  CUST-MIDDLE-NAME           PIC X(25).
+    05  CUST-LAST-NAME             PIC X(25).
+    05  CUST-ADDR-LINE-1           PIC X(50).
+    05  CUST-ADDR-LINE-2           PIC X(50).
+    05  CUST-ADDR-LINE-3           PIC X(50).
+    05  CUST-ADDR-STATE-CD         PIC X(02).
+    05  CUST-ADDR-COUNTRY-CD       PIC X(03).
+    05  CUST-ADDR-ZIP              PIC X(10).
+    05  CUST-PHONE-NUM-1           PIC X(15).
+    05  CUST-PHONE-NUM-2           PIC X(15).
+    05  CUST-SSN                   PIC 9(09).
+    05  CUST-GOVT-ISSUED-ID        PIC X(20).
+    05  CUST-DOB-YYYY-MM-DD        PIC X(10).
+    05  CUST-EFT-ACCOUNT-ID        PIC X(10).
+    05  CUST-PRI-CARD-HOLDER-IND   PIC X(01).
+    05  CUST-FICO-CREDIT-SCORE     PIC 9(03).
+    05  FILLER                     PIC X(168).</code></pre>
+
+      <h4>Transaction Record (<code>CVTRA05Y</code> &mdash; 350 bytes)</h4>
+<pre><code>01  TRAN-RECORD.
+    05  TRAN-ID                    PIC X(16).
+    05  TRAN-TYPE-CD               PIC X(02).
+    05  TRAN-CAT-CD                PIC 9(04).
+    05  TRAN-SOURCE                PIC X(10).
+    05  TRAN-DESC                  PIC X(100).
+    05  TRAN-AMT                   PIC S9(09)V99.
+    05  TRAN-MERCHANT-ID           PIC 9(09).
+    05  TRAN-MERCHANT-NAME         PIC X(50).
+    05  TRAN-MERCHANT-CITY         PIC X(50).
+    05  TRAN-MERCHANT-ZIP          PIC X(10).
+    05  TRAN-CARD-NUM              PIC X(16).
+    05  TRAN-ORIG-TS               PIC X(26).
+    05  TRAN-PROC-TS               PIC X(26).
+    05  FILLER                     PIC X(20).</code></pre>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 3.3 VSAM File Specifications</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Dataset</th><th>Type</th><th>Primary&nbsp;Key</th><th>RECLN</th><th>Copybook</th></tr></thead>
+          <tbody>
+            <tr><td>ACCTDATA</td><td>KSDS</td><td>ACCT-ID (offset 0, 11 bytes)</td><td>300</td><td>CVACT01Y</td></tr>
+            <tr><td>CARDDATA</td><td>KSDS</td><td>CARD-NUM (offset 0, 16 bytes)</td><td>150</td><td>CVACT02Y</td></tr>
+            <tr><td>CUSTDATA</td><td>KSDS</td><td>CUST-ID (offset 0, 9 bytes)</td><td>500</td><td>CVCUS01Y</td></tr>
+            <tr><td>CARDXREF</td><td>KSDS</td><td>XREF-CARD-NUM (offset 0, 16 bytes)</td><td>50</td><td>CVACT03Y</td></tr>
+            <tr><td>TRANSACT</td><td>KSDS + AIX</td><td>TRAN-ID (offset 0, 16 bytes)</td><td>350</td><td>CVTRA05Y</td></tr>
+            <tr><td>DALYTRAN</td><td>KSDS</td><td>DALYTRAN-ID (offset 0, 16 bytes)</td><td>350</td><td>CVTRA06Y</td></tr>
+            <tr><td>USRSEC</td><td>KSDS</td><td>SEC-USR-ID (offset 0, 8 bytes)</td><td>80</td><td>CSUSR01Y</td></tr>
+            <tr><td>DISCGRP</td><td>KSDS</td><td>Disclosure key</td><td>50</td><td>CVTRA02Y</td></tr>
+            <tr><td>TRANCATG</td><td>KSDS</td><td>Category key</td><td>60</td><td>CVTRA04Y</td></tr>
+            <tr><td>TRANTYPE</td><td>KSDS</td><td>Type key</td><td>60</td><td>CVTRA03Y</td></tr>
+            <tr><td>TCATBALF</td><td>KSDS</td><td>Category balance key</td><td>50</td><td>CVTRA01Y</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 3.4 Working Storage Key Structures</h3>
+      <ul>
+        <li><strong><code>WS-ERR-FLG</code></strong> (88-level) &mdash; Error flag used across all online programs; <code>ERR-FLG-ON</code> / <code>ERR-FLG-OFF</code>.</li>
+        <li><strong><code>WS-RESP-CD</code> / <code>WS-REAS-CD</code></strong> &mdash; CICS RESP and RESP2 codes captured after every EXEC CICS call.</li>
+        <li><strong><code>WS-SEND-ERASE-FLG</code></strong> &mdash; Controls BMS SEND ERASE behavior on first screen display.</li>
+        <li><strong><code>WS-PAGE-NUM</code> / <code>WS-REC-COUNT</code></strong> &mdash; Pagination counters for list screens (COTRN00C, COCRDLIC).</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────
+     SECTION 4 — Program Interface Specifications
+     ──────────────────────────────────────────────────────────── -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">4</span>
+    <h2>Program Interface Specifications</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 4.1 COMMAREA Contract (<code>COCOM01Y</code>)</h3>
+      <p>All online programs exchange state through a shared COMMAREA structure. Key fields include:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Direction</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>CDEMO-FROM-TRANID</td><td>X(04)</td><td>BOTH</td><td>Source transaction identifier</td></tr>
+            <tr><td>CDEMO-FROM-PROGRAM</td><td>X(08)</td><td>BOTH</td><td>Calling program name</td></tr>
+            <tr><td>CDEMO-TO-TRANID</td><td>X(04)</td><td>BOTH</td><td>Target transaction identifier</td></tr>
+            <tr><td>CDEMO-TO-PROGRAM</td><td>X(08)</td><td>BOTH</td><td>Target program name</td></tr>
+            <tr><td>CDEMO-USER-ID</td><td>X(08)</td><td>IN</td><td>Authenticated user ID</td></tr>
+            <tr><td>CDEMO-USER-TYPE</td><td>X(01)</td><td>IN</td><td>User role (R=Regular, A=Admin)</td></tr>
+            <tr><td>CDEMO-PGM-REENTER</td><td>X(01)</td><td>BOTH</td><td>Pseudo-conversational re-entry flag</td></tr>
+            <tr><td>CDEMO-ACCT-ID</td><td>9(11)</td><td>BOTH</td><td>Selected account number</td></tr>
+            <tr><td>CDEMO-CARD-NUM</td><td>X(16)</td><td>BOTH</td><td>Selected card number</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 4.2 VSAM File I/O Patterns</h3>
+      <ul>
+        <li><strong>READ</strong> &mdash; direct keyed reads via <code>EXEC CICS READ FILE</code> with RIDFLD pointing to working-storage key fields.</li>
+        <li><strong>BROWSE</strong> &mdash; STARTBR / READNEXT / ENDBR pattern for list screens (COTRN00C, COCRDLIC, COUSR00C).</li>
+        <li><strong>REWRITE</strong> &mdash; UPDATE mode read followed by REWRITE for account/card/user updates.</li>
+        <li><strong>WRITE</strong> &mdash; new record insertion for transaction add (COTRN02C) and user creation (COUSR01C).</li>
+        <li><strong>DELETE</strong> &mdash; keyed delete for user removal (COUSR03C).</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 4.3 MQ Message Contracts (Optional Module)</h3>
+      <ul>
+        <li><strong>Authorization Request</strong> &mdash; MQ PUT to authorization queue with card number, amount, and merchant data; response via correlation-ID-matched GET.</li>
+        <li><strong>System Date Inquiry (CDRD)</strong> &mdash; lightweight MQ request/response for current mainframe date.</li>
+        <li><strong>Account Inquiry (CDRA)</strong> &mdash; MQ-based account details retrieval for distributed consumers.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────
+     SECTION 5 — Code Architecture & Organization
+     ──────────────────────────────────────────────────────────── -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">5</span>
+    <h2>Code Architecture and Organization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 5.1 Source Organization</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Directory</th><th>Contents</th><th>Count</th></tr></thead>
+          <tbody>
+            <tr><td><code>app/cbl/</code></td><td>COBOL source programs (online + batch)</td><td>29 members</td></tr>
+            <tr><td><code>app/cpy/</code></td><td>Copybooks (record layouts, communication areas)</td><td>31 members</td></tr>
+            <tr><td><code>app/bms/</code></td><td>BMS screen definitions</td><td>18 maps</td></tr>
+            <tr><td><code>app/jcl/</code></td><td>Job Control Language for batch orchestration</td><td>34 jobs</td></tr>
+            <tr><td><code>app/csd/</code></td><td>CICS CSD resource definitions</td><td>DFHCSDUP input</td></tr>
+            <tr><td><code>app/asm/</code></td><td>Assembler utilities (MVSWAIT, COBDATFT)</td><td>2 members</td></tr>
+            <tr><td><code>app/data/</code></td><td>Sample data (ASCII + EBCDIC)</td><td>~24 files</td></tr>
+            <tr><td><code>app/scheduler/</code></td><td>Control-M job flow XML definitions</td><td>XML configs</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 5.2 Naming Conventions</h3>
+      <ul>
+        <li><strong>Online programs</strong>: <code>CO&lt;func&gt;&lt;seq&gt;C</code> (e.g., <code>COSGN00C</code>, <code>COTRN01C</code>)</li>
+        <li><strong>Batch programs</strong>: <code>CB&lt;func&gt;&lt;seq&gt;C</code> (e.g., <code>CBTRN02C</code>, <code>CBACT04C</code>)</li>
+        <li><strong>Copybooks</strong>: <code>CV&lt;entity&gt;&lt;seq&gt;Y</code> for data records; <code>CO&lt;xxx&gt;Y</code> for communication; <code>CS&lt;xxx&gt;Y</code> for system</li>
+        <li><strong>BMS maps</strong>: <code>CO&lt;func&gt;&lt;seq&gt;</code> matching their parent program</li>
+        <li><strong>CICS transactions</strong>: 4-char codes &mdash; <code>CC00</code> (sign-on), <code>CM00</code> (menu), <code>CA/CU/CT/CR/CB</code> (functional)</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 5.3 Paragraph Structure Pattern</h3>
+      <p>All online COBOL programs follow a consistent paragraph pattern:</p>
+<pre><code>MAIN-PARA.
+    EVALUATE TRUE
+      WHEN CDEMO-PGM-REENTER = 'N'   →  SEND-MAP (first display)
+      WHEN CDEMO-PGM-REENTER = 'Y'   →  RECEIVE-MAP → PROCESS-INPUT
+    END-EVALUATE.
+    EXEC CICS RETURN TRANSID(ws-txn) COMMAREA(ws-comm) END-EXEC.
+
+SEND-MAP.             -- Format and SEND BMS map
+RECEIVE-MAP.          -- RECEIVE BMS map data
+PROCESS-INPUT.        -- Validate, read VSAM, update, route
+RETURN-TO-PREV-SCREEN.-- XCTL back to calling program
+SEND-PLAIN-TEXT.      -- Error message display
+ABEND-ROUTINE.        -- Handle unexpected failures</code></pre>
+    </div>
+
+  </div>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────
+     SECTION 6 — Transaction & Batch Interfaces
+     ──────────────────────────────────────────────────────────── -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">6</span>
+    <h2>Transaction and Batch Interface Specifications</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 6.1 CICS Transaction Definitions</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Txn&nbsp;ID</th><th>Entry&nbsp;Program</th><th>BMS&nbsp;Map</th><th>Pattern</th><th>Function</th></tr></thead>
+          <tbody>
+            <tr><td>CC00</td><td>COSGN00C</td><td>COSGN00</td><td>Pseudo-conv</td><td>Sign-on / authentication</td></tr>
+            <tr><td>CM00</td><td>COMEN01C</td><td>COMEN01</td><td>Pseudo-conv</td><td>Main menu navigation</td></tr>
+            <tr><td>CAVW</td><td>COACTVWC</td><td>COACTVW</td><td>Pseudo-conv</td><td>Account view (read-only)</td></tr>
+            <tr><td>CAUP</td><td>COACTUPC</td><td>COACTUP</td><td>Pseudo-conv</td><td>Account update (read-write)</td></tr>
+            <tr><td>CCLI</td><td>COCRDLIC</td><td>COCRDLI</td><td>Pseudo-conv</td><td>Card list with pagination</td></tr>
+            <tr><td>CCDL</td><td>COCRDSLC</td><td>COCRDSL</td><td>Pseudo-conv</td><td>Card detail view</td></tr>
+            <tr><td>CCUP</td><td>COCRDUPC</td><td>COCRDUP</td><td>Pseudo-conv</td><td>Card update</td></tr>
+            <tr><td>CT00</td><td>COTRN00C</td><td>COTRN00</td><td>Pseudo-conv</td><td>Transaction list</td></tr>
+            <tr><td>CT01</td><td>COTRN01C</td><td>COTRN01</td><td>Pseudo-conv</td><td>Transaction detail</td></tr>
+            <tr><td>CT02</td><td>COTRN02C</td><td>COTRN02</td><td>Pseudo-conv</td><td>Transaction add</td></tr>
+            <tr><td>CR00</td><td>CORPT00C</td><td>CORPT00</td><td>Pseudo-conv</td><td>Report submission</td></tr>
+            <tr><td>CB00</td><td>COBIL00C</td><td>COBIL00</td><td>Pseudo-conv</td><td>Bill payment</td></tr>
+            <tr><td>CA00</td><td>COADM01C</td><td>COADM01</td><td>Pseudo-conv</td><td>Admin menu</td></tr>
+            <tr><td>CU00</td><td>COUSR00C</td><td>COUSR00</td><td>Pseudo-conv</td><td>User list</td></tr>
+            <tr><td>CU01</td><td>COUSR01C</td><td>COUSR01</td><td>Pseudo-conv</td><td>Add user</td></tr>
+            <tr><td>CU02</td><td>COUSR02C</td><td>COUSR02</td><td>Pseudo-conv</td><td>Update user</td></tr>
+            <tr><td>CU03</td><td>COUSR03C</td><td>COUSR03</td><td>Pseudo-conv</td><td>Delete user</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 6.2 Batch Job Sequence (Daily Cycle)</h3>
+      <div class="diagram-box">
+<pre><code>  ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌──────────┐
+  │CLOSEFIL │───►│ACCTFILE │───►│CARDFILE │───►│ XREFFILE │
+  │Close    │    │Refresh  │    │Refresh  │    │ Refresh  │
+  │VSAM     │    │Accounts │    │Cards    │    │ XRef     │
+  └─────────┘    └─────────┘    └─────────┘    └──────────┘
+       │
+       ▼
+  ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌──────────┐
+  │CUSTFILE │───►│TRANBKP  │───►│POSTTRAN │───►│ INTCALC  │
+  │Refresh  │    │Backup   │    │Post     │    │ Interest │
+  │Customers│    │Trans    │    │Daily    │    │ Calc     │
+  └─────────┘    └─────────┘    └─────────┘    └──────────┘
+       │
+       ▼
+  ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌──────────┐
+  │COMBTRAN │───►│CREASTMT │───►│TRANIDX  │───►│ OPENFIL  │
+  │Combine  │    │Generate │    │Define   │    │ Reopen   │
+  │Trans    │    │Stmts    │    │AIX      │    │ VSAM     │
+  └─────────┘    └─────────┘    └─────────┘    └──────────┘</code></pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 6.3 File Interaction Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File / Dataset</th><th>Read By</th><th>Written By</th><th>Updated By</th></tr></thead>
+          <tbody>
+            <tr><td>ACCTDATA</td><td>COACTVWC, COACTUPC, COBIL00C, CBACT01C</td><td>ACCTFILE (IDCAMS)</td><td>COACTUPC, CBACT04C</td></tr>
+            <tr><td>CARDDATA</td><td>COCRDLIC, COCRDSLC, COCRDUPC</td><td>CARDFILE (IDCAMS)</td><td>COCRDUPC</td></tr>
+            <tr><td>CUSTDATA</td><td>CBCUS01C, COCRDLIC</td><td>CUSTFILE (IDCAMS)</td><td>&mdash;</td></tr>
+            <tr><td>CARDXREF</td><td>COCRDLIC, COTRN00C</td><td>XREFFILE (IDCAMS)</td><td>&mdash;</td></tr>
+            <tr><td>TRANSACT</td><td>COTRN00C, COTRN01C, CORPT00C</td><td>COTRN02C, CBTRN02C</td><td>CBTRN02C</td></tr>
+            <tr><td>DALYTRAN</td><td>CBTRN02C (POSTTRAN)</td><td>Daily feed</td><td>&mdash;</td></tr>
+            <tr><td>USRSEC</td><td>COSGN00C, COUSR00C</td><td>COUSR01C, DUSRSECJ</td><td>COUSR02C</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────
+     SECTION 7 — Security
+     ──────────────────────────────────────────────────────────── -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">7</span>
+    <h2>Security Implementation Details</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 7.1 Application-Level Security</h3>
+      <ul>
+        <li><strong>Authentication</strong>: COSGN00C validates user/password against the USRSEC VSAM file (<code>CSUSR01Y</code> copybook).</li>
+        <li><strong>User Types</strong>: <code>SEC-USR-TYPE</code> = <code>'A'</code> (Admin) grants access to CA00/CU00-03; <code>'R'</code> (Regular) restricts to standard functions.</li>
+        <li><strong>Session Management</strong>: User context flows via COMMAREA across all pseudo-conversational cycles; session ends on sign-off or terminal disconnect.</li>
+        <li><strong>Default Credentials</strong>: ADMIN001/PASSWORD (admin), USER0001/PASSWORD (regular) &mdash; loaded via DUSRSECJ job.</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 7.2 RACF / External Security</h3>
+      <ul>
+        <li>Dataset-level access rules protect VSAM clusters and JCL libraries under HLQ <code>AWS.M2</code>.</li>
+        <li>CICS transaction security can be layered via RACF TCICSTRN class.</li>
+        <li>Program access authorization via RACF PROGRAM class for sensitive batch programs.</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 7.3 Sensitive Data Handling</h3>
+      <ul>
+        <li>Card numbers (PAN) stored in plain text across VSAM files &mdash; modernization candidate for tokenization.</li>
+        <li>CVV codes stored in CARD-RECORD &mdash; should be excluded from non-authorization flows.</li>
+        <li>SSN stored in customer record &mdash; encryption-at-rest recommended for production.</li>
+        <li>Passwords stored in cleartext in USRSEC file &mdash; hashing recommended for modernization.</li>
+      </ul>
+      <div class="callout callout-red"><strong>Modernization Note:</strong> PCI-DSS compliance requires PAN tokenization, CVV exclusion from storage, and encryption of sensitive PII. These are high-priority items in any migration assessment.</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────
+     SECTION 8 — File & Database Design
+     ──────────────────────────────────────────────────────────── -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">8</span>
+    <h2>File and Database Design</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 8.1 VSAM Design</h3>
+      <ul>
+        <li>All primary files are <strong>KSDS</strong> (Key-Sequenced Data Sets) with fixed-length records.</li>
+        <li>TRANSACT file has an <strong>Alternate Index (AIX)</strong> defined via TRANIDX job for secondary access paths.</li>
+        <li>CLOSEFIL/OPENFIL jobs manage VSAM file sharing between CICS (online) and batch windows.</li>
+        <li>IDCAMS REPRO is used for bulk data loads from sequential datasets.</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 8.2 DB2 Design (Optional Module)</h3>
+      <ul>
+        <li>Transaction type and category reference tables managed via DB2.</li>
+        <li>CREADB21 job creates the database schema and loads initial data via DSNTEP4.</li>
+        <li>TRANEXTR job uses DSNTIAUL to unload DB2 data into sequential files for VSAM loading.</li>
+        <li>Online DB2 access via embedded SQL in COTRTUPC and COTRTLIC programs.</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 8.3 IMS DB Design (Optional Module)</h3>
+      <ul>
+        <li>Hierarchical database for pending authorization data (DBPAUTP0, DBPAUTX0).</li>
+        <li>PSB definitions (PSBPAUTB, PSBPAUTL) control program access to IMS segments.</li>
+        <li>Batch unload/reload procedures for IMS data migration testing.</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 8.4 GDG Management</h3>
+      <ul>
+        <li>DEFGDGB job defines Generation Data Group bases for transaction backups.</li>
+        <li>DEFGDGD extends GDG definitions for DB2-related datasets.</li>
+        <li>GDG provides automatic versioning of backup datasets for rollback capability.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────
+     SECTION 9 — Deployment & Promotion
+     ──────────────────────────────────────────────────────────── -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">9</span>
+    <h2>Deployment and Promotion Procedures</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 9.1 Dataset Setup</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>HLQ</th><th>Dataset</th><th>Format</th><th>LRECL</th></tr></thead>
+          <tbody>
+            <tr><td>AWS.M2</td><td>CARDDEMO.JCL</td><td>FB</td><td>80</td></tr>
+            <tr><td>AWS.M2</td><td>CARDDEMO.PROC</td><td>FB</td><td>80</td></tr>
+            <tr><td>AWS.M2</td><td>CARDDEMO.CBL</td><td>FB</td><td>80</td></tr>
+            <tr><td>AWS.M2</td><td>CARDDEMO.CPY</td><td>FB</td><td>80</td></tr>
+            <tr><td>AWS.M2</td><td>CARDDEMO.BMS</td><td>FB</td><td>80</td></tr>
+            <tr><td>AWS.M2</td><td>CARDDEMO.ASM</td><td>FB</td><td>80</td></tr>
+            <tr><td>AWS.M2</td><td>CARDDEMO.MACLIB</td><td>FB</td><td>80</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 9.2 CICS Resource Definitions</h3>
+<pre><code>DEFINE LIBRARY(COM2DOLL) GROUP(CARDDEMO) DSNAME01(&amp;HLQ..LOADLIB)
+DEF PROGRAM(COCRDLIC) GROUP(CARDDEMO)
+DEF MAPSET(COCRDLI) GROUP(CARDDEMO)
+DEFINE PROGRAM(COSGN00C) GROUP(CARDDEMO) DA(ANY) TRANSID(CC00) DESCRIPTION(LOGIN)
+DEFINE TRANSACTION(CC00) GROUP(CARDDEMO) PROGRAM(COSGN00C) TASKDATAL(ANY)
+
+-- Install and activate:
+CEDA INSTALL TRANS(CCLI) GROUP(CARDDEMO)
+CEDA INSTALL FILE(CARDDAT) GROUP(CARDDEMO)
+CECI LOAD PROG(COCRDUP)
+CECI LOAD PROG(COCRDUPC)
+CEMT SET PROG(COCRDUP) NEWCOPY
+CEMT SET PROG(COCRDUPC) NEWCOPY</code></pre>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 9.3 Initialization Sequence</h3>
+      <p>Execute the following JCLs in order to bootstrap the environment:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>Job</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>DUSRSECJ</td><td>Load user security VSAM file</td></tr>
+            <tr><td>2</td><td>CLOSEFIL</td><td>Close CICS-held VSAM files</td></tr>
+            <tr><td>3</td><td>ACCTFILE</td><td>Load account master data</td></tr>
+            <tr><td>4</td><td>CARDFILE</td><td>Load card master data</td></tr>
+            <tr><td>5</td><td>CUSTFILE</td><td>Load customer master data</td></tr>
+            <tr><td>6</td><td>XREFFILE</td><td>Load card-account-customer XREF</td></tr>
+            <tr><td>7</td><td>TRANFILE</td><td>Initialize transaction VSAM</td></tr>
+            <tr><td>8</td><td>DISCGRP</td><td>Load disclosure groups</td></tr>
+            <tr><td>9</td><td>TCATBALF</td><td>Load transaction category balances</td></tr>
+            <tr><td>10</td><td>TRANCATG</td><td>Load transaction categories</td></tr>
+            <tr><td>11</td><td>TRANTYPE</td><td>Load transaction types</td></tr>
+            <tr><td>12</td><td>OPENFIL</td><td>Reopen files for CICS</td></tr>
+            <tr><td>13</td><td>DEFGDGB</td><td>Define GDG bases</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────
+     SECTION 10 — Operations & Runbooks
+     ──────────────────────────────────────────────────────────── -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Operations and Runbooks</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 10.1 Batch Operations Schedule</h3>
+      <ul>
+        <li><strong>Daily</strong>: CLOSEFIL → file refreshes → POSTTRAN → INTCALC → COMBTRAN → CREASTMT → TRANIDX → OPENFIL</li>
+        <li><strong>On-demand</strong>: TRANREPT (submitted from CICS via CR00), WAITSTEP (configurable delay)</li>
+        <li><strong>Periodic</strong>: CBPAUP0J (purge expired authorizations &mdash; IMS module)</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 10.2 Common Abend Resolution</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Abend</th><th>Likely Cause</th><th>Resolution</th></tr></thead>
+          <tbody>
+            <tr><td>S0C7</td><td>Data exception &mdash; non-numeric data in numeric field</td><td>Check input data quality; validate VSAM records</td></tr>
+            <tr><td>S0C4</td><td>Protection exception &mdash; bad subscript or pointer</td><td>Review OCCURS DEPENDING ON limits; check COMMAREA length</td></tr>
+            <tr><td>S322</td><td>Time limit exceeded &mdash; possible loop</td><td>Check READNEXT loop termination; verify VSAM EOF handling</td></tr>
+            <tr><td>ASRA</td><td>CICS program abend</td><td>Check RESP/RESP2 codes in CICS trace; review file status</td></tr>
+            <tr><td>AEY9</td><td>CICS XCTL/LINK failure &mdash; program not found</td><td>Verify NEWCOPY; check CSD definitions</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 10.3 Backup &amp; Recovery</h3>
+      <ul>
+        <li><strong>TRANBKP</strong> job creates a GDG-versioned backup of the transaction VSAM file before the daily posting cycle.</li>
+        <li>IDCAMS REPRO can restore any VSAM file from its corresponding sequential dataset.</li>
+        <li>DB2 recovery via image copy and log apply (for optional DB2 module).</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────
+     SECTION 11 — Monitoring & Observability
+     ──────────────────────────────────────────────────────────── -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Monitoring and Observability</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 11.1 Batch Monitoring</h3>
+      <ul>
+        <li>Control-M XML definitions in <code>app/scheduler/</code> configure job scheduling, dependencies, and alert thresholds.</li>
+        <li>Step-level condition codes monitored; non-zero RC on POSTTRAN triggers operator alert.</li>
+        <li>CREASTMT output record counts validated against TRANSACT file counts for reconciliation.</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 11.2 CICS Monitoring</h3>
+      <ul>
+        <li>Transaction response times tracked via CICS statistics and CMF records.</li>
+        <li>COSGN00C sign-on failures logged for security audit.</li>
+        <li>VSAM file status codes captured in WS-RESP-CD across all programs for traceability.</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 11.3 Application Logging</h3>
+      <ul>
+        <li>Error messages displayed via BMS message lines and captured in CICS trace.</li>
+        <li>Batch programs use DISPLAY statements for step-level progress reporting.</li>
+        <li>SMF Type 110 records generated for CICS transaction accounting.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────
+     SECTION 12 — Performance & Capacity
+     ──────────────────────────────────────────────────────────── -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Performance and Capacity Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 12.1 Batch Window Analysis</h3>
+      <ul>
+        <li><strong>Critical path</strong>: CLOSEFIL → POSTTRAN → INTCALC → COMBTRAN → CREASTMT → OPENFIL</li>
+        <li><strong>Parallelization opportunities</strong>: ACCTFILE, CARDFILE, CUSTFILE, XREFFILE can run concurrently after CLOSEFIL.</li>
+        <li><strong>Bottleneck</strong>: POSTTRAN (CBTRN02C at 1,030 LOC) &mdash; processes all daily transactions sequentially.</li>
+        <li>WAITSTEP job uses COBSWAIT (assembler) for configurable inter-step delays.</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 12.2 CICS Performance Considerations</h3>
+      <ul>
+        <li>COACTUPC (4,236 LOC) is the most complex online program &mdash; account update with extensive input validation.</li>
+        <li>Pagination in COTRN00C and COCRDLIC uses VSAM BROWSE (STARTBR/READNEXT) which may degrade with large datasets.</li>
+        <li>All transactions are pseudo-conversational, minimizing CICS region resource holding.</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 12.3 Capacity Metrics</h3>
+      <div class="kpi-strip">
+        <div class="kpi-card"><div class="kpi-value">300 B</div><div class="kpi-label">Acct Record Size</div></div>
+        <div class="kpi-card"><div class="kpi-value">500 B</div><div class="kpi-label">Cust Record Size</div></div>
+        <div class="kpi-card"><div class="kpi-value">350 B</div><div class="kpi-label">Tran Record Size</div></div>
+        <div class="kpi-card"><div class="kpi-value">150 B</div><div class="kpi-label">Card Record Size</div></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────
+     SECTION 13 — Testing Strategy
+     ──────────────────────────────────────────────────────────── -->
+<section class="section" id="s13">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">13</span>
+    <h2>Testing Strategy and Test Cases</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 13.1 Unit Testing</h3>
+      <ul>
+        <li>Individual COBOL programs tested with sample VSAM data loaded via IDCAMS REPRO.</li>
+        <li>Test data provided in <code>app/data/ASCII/</code> (portable) and <code>app/data/EBCDIC/</code> (mainframe-native).</li>
+        <li>Batch programs verified by comparing output file record counts and content against expected baselines.</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 13.2 Integration Testing</h3>
+      <ul>
+        <li>Full batch cycle execution: CLOSEFIL → all loads → POSTTRAN → INTCALC → COMBTRAN → CREASTMT → OPENFIL.</li>
+        <li>Online-to-batch handoff: verify transactions added via CT02 are picked up by POSTTRAN.</li>
+        <li>MQ integration: end-to-end authorization request-response with IMS and DB2 (optional module).</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 13.3 Regression Testing</h3>
+      <ul>
+        <li>SUPERC comparison of VSAM file snapshots before/after batch runs.</li>
+        <li>BMS screen capture comparison for all online transaction flows.</li>
+        <li>CBEXPORT/CBIMPORT utilities enable data round-trip validation for migration testing.</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 13.4 Platform Testing</h3>
+      <ul>
+        <li>Application supports execution on <strong>Micro Focus</strong> and <strong>UniKix</strong> rehosting platforms.</li>
+        <li>Sample runtime artifacts provided in <code>samples/m2/</code> for both platforms.</li>
+        <li>EBCDIC-to-ASCII conversion testing supported via dual data directories.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────
+     SECTION 14 — Known Issues & Technical Debt
+     ──────────────────────────────────────────────────────────── -->
+<section class="section" id="s14">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">14</span>
+    <h2>Known Issues and Technical Debt</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 14.1 Known Issues</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Description</th><th>Impact</th><th>Workaround</th></tr></thead>
+          <tbody>
+            <tr><td>KI-001</td><td>Typo in field name: <code>ACCT-EXPIRAION-DATE</code> (missing 'T')</td><td>Low &mdash; cosmetic</td><td>Accepted; renaming requires all-program recompile</td></tr>
+            <tr><td>KI-002</td><td>Passwords stored in cleartext in USRSEC file</td><td>High &mdash; security risk</td><td>RACF external security; hash in modernized version</td></tr>
+            <tr><td>KI-003</td><td>PAN data (card numbers) stored unencrypted</td><td>High &mdash; PCI-DSS</td><td>Network-level controls; tokenization in modernized version</td></tr>
+            <tr><td>KI-004</td><td>No concurrent VSAM access &mdash; batch window requires CICS file closure</td><td>Medium &mdash; availability</td><td>CLOSEFIL/OPENFIL procedure; consider RLS for modernization</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 14.2 Technical Debt</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Description</th><th>Risk</th><th>Effort</th><th>Priority</th></tr></thead>
+          <tbody>
+            <tr><td>TD-001</td><td>Large monolithic programs (COACTUPC: 4,236 LOC)</td><td>Maintainability</td><td>High</td><td><span class="badge badge-gold">Medium</span></td></tr>
+            <tr><td>TD-002</td><td>Inconsistent coding styles across programs (intentional for testing)</td><td>Readability</td><td>Medium</td><td><span class="badge badge-gray">Low</span></td></tr>
+            <tr><td>TD-003</td><td>Sequential transaction posting in POSTTRAN (no parallelism)</td><td>Performance</td><td>High</td><td><span class="badge badge-gold">Medium</span></td></tr>
+            <tr><td>TD-004</td><td>Missing error logging infrastructure (relies on CICS trace)</td><td>Supportability</td><td>Medium</td><td><span class="badge badge-red">High</span></td></tr>
+            <tr><td>TD-005</td><td>VSAM BROWSE for pagination &mdash; no cursor/offset tracking</td><td>Performance at scale</td><td>Medium</td><td><span class="badge badge-gold">Medium</span></td></tr>
+            <tr><td>TD-006</td><td>No automated test suite &mdash; manual verification only</td><td>Quality assurance</td><td>High</td><td><span class="badge badge-red">High</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</main>
+</div>
+
+<!-- ════════════════════  FOOTER  ════════════════════ -->
+<footer class="footer">
+  <p><strong>UniCredit S.p.A.</strong> &mdash; Piazza Gae Aulenti 3, Torre A, 20154 Milano, Italia</p>
+  <p style="margin-top:.5rem;">CardDemo Mainframe Analysis &mdash; Confidential &mdash; &copy; 2026 UniCredit Group. All rights reserved.</p>
+</footer>
+
+</body>
+</html>
