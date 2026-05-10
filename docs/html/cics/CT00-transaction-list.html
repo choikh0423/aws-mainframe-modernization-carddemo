@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transaction List (CT00) – CICS Transaction Analysis | UniCredit CardDemo</title>
+<link rel="stylesheet" href="../shared/theme.css">
+</head>
+<body>
+
+<!-- ════════════════════  HERO  ════════════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. &mdash; Milano</div>
+    </div>
+    <h1>Transaction List &ndash; <span>CICS Transaction Analysis</span></h1>
+    <p class="hero-subtitle">
+      Transaction <code>CT00</code> &middot; Program <code>COTRN00C</code> &middot; Browse and select transactions from the TRANSACT VSAM file with paginated list display
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Transaction ID</dt><dd>CT00</dd></div>
+      <div><dt>Entry Program</dt><dd>COTRN00C</dd></div>
+      <div><dt>BMS Mapset</dt><dd>COTRN00</dd></div>
+      <div><dt>Design Pattern</dt><dd>Pseudo-conversational</dd></div>
+      <div><dt>LOC</dt><dd>699</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ════════════════════  BREADCRUMB  ════════════════════ -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">&rsaquo;</span>
+  <a href="index.html">CICS Flows</a>
+  <span class="sep">&rsaquo;</span>
+  Transaction List (CT00)
+</div>
+
+<!-- ════════════════════  BODY  ════════════════════ -->
+<div class="page-wrap-single">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 1 — Business Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">1</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 1.1 -->
+    <div class="subsection" id="s1-1">
+      <h3><span class="dot"></span> 1.1 Business Context</h3>
+      <p>The <strong>Transaction List</strong> screen is the primary entry point for browsing credit-card transactions within the CardDemo application. It is accessible from the Main Menu (option 6 &mdash; program <code>COTRN00C</code>) by both regular users and administrators.</p>
+      <p>The transaction allows an operator to:</p>
+      <ul>
+        <li>View a paginated list of transactions from the <code>TRANSACT</code> VSAM KSDS file, displaying 10 records per page.</li>
+        <li>Search for transactions by entering a numeric Transaction ID as a starting key.</li>
+        <li>Navigate forward (PF8) and backward (PF7) through pages of results.</li>
+        <li>Select a specific transaction (by typing &lsquo;S&rsquo; in the selection field) to transfer control to the <strong>Transaction View</strong> screen (<code>COTRN01C</code>).</li>
+      </ul>
+      <p>The business outcome is a fast, interactive lookup capability enabling operators to locate and drill into individual transaction records for review or audit.</p>
+    </div>
+
+    <!-- 1.2 -->
+    <div class="subsection" id="s1-2">
+      <h3><span class="dot"></span> 1.2 Business Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────────┐
+  │                    TRANSACTION LIST FLOW                        │
+  └─────────────────────────────────────────────────────────────────┘
+
+  Main Menu (COMEN01C)
+       │
+       ▼
+  ┌──────────────────────┐
+  │  Display Transaction │◄──────────────────────────────┐
+  │  List (10 rows/page) │                               │
+  └──────────┬───────────┘                               │
+             │                                           │
+     ┌───────┼──────────┬──────────┬──────────┐          │
+     ▼       ▼          ▼          ▼          ▼          │
+  [ENTER]  [PF7]      [PF8]     [PF3]     [Other]       │
+     │       │          │          │          │          │
+     ▼       ▼          ▼          ▼          ▼          │
+  Validate  Page       Page      Return   "Invalid      │
+  Selection Backward   Forward   to Main   key"         │
+     │       │          │        Menu      message       │
+     ▼       │          │                    │           │
+  ┌──────┐   │          │                    └───────────┘
+  │ 'S'? │   │          │
+  └──┬───┘   │          │
+  Yes│  No   │          │
+     ▼   ▼   └──────────┴──────────────────────┐
+  XCTL   "Invalid                               │
+  to     selection"                              │
+  COTRN01C message ─────────────────────────────►┘
+  (View)
+</pre>
+      </div>
+    </div>
+
+    <!-- 1.3 -->
+    <div class="subsection" id="s1-3">
+      <h3><span class="dot"></span> 1.3 Business Rules</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Rule</th><th>Source (COBOL)</th><th>Details</th></tr></thead>
+          <tbody>
+            <tr><td>BR-1</td><td>Transaction ID must be numeric</td><td>Lines 209&ndash;218</td><td>If <code>TRNIDINI</code> is non-numeric, error message &ldquo;Tran ID must be Numeric&rdquo; is shown and the browse is not started.</td></tr>
+            <tr><td>BR-2</td><td>Selection value must be &lsquo;S&rsquo; or &lsquo;s&rsquo;</td><td>Lines 185&ndash;203</td><td>Only &lsquo;S&rsquo; (case-insensitive) triggers XCTL to <code>COTRN01C</code>. Any other non-space value shows &ldquo;Invalid selection. Valid value is S&rdquo;.</td></tr>
+            <tr><td>BR-3</td><td>Page size is 10 records</td><td>Lines 290, 297</td><td>The browse loop runs <code>WS-IDX</code> from 1 to 10, populating exactly 10 rows per page.</td></tr>
+            <tr><td>BR-4</td><td>Backward navigation blocked on page 1</td><td>Lines 245&ndash;252</td><td>If <code>CDEMO-CT00-PAGE-NUM &gt; 1</code> is false, message &ldquo;You are already at the top of the page&rdquo; is shown.</td></tr>
+            <tr><td>BR-5</td><td>Forward navigation blocked at end-of-file</td><td>Lines 267&ndash;274</td><td>If <code>NEXT-PAGE-YES</code> is false, message &ldquo;You are already at the bottom of the page&rdquo; is shown.</td></tr>
+            <tr><td>BR-6</td><td>Empty search defaults to LOW-VALUES key</td><td>Lines 206&ndash;208</td><td>If <code>TRNIDINI</code> is spaces or LOW-VALUES, the browse starts from the beginning of the file.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 1.4 -->
+    <div class="subsection" id="s1-4">
+      <h3><span class="dot"></span> 1.4 User Interactions</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>User Action</th><th>System Response</th><th>Business Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Navigate to Transaction List from Main Menu (option 6)</td><td>XCTL from <code>COMEN01C</code> &rarr; <code>COTRN00C</code>; first page of transactions displayed</td><td>User enters the transaction browse function</td></tr>
+            <tr><td>2</td><td>Optionally enter a Transaction ID in the search field</td><td>STARTBR from that key position; first 10 matching records displayed</td><td>Filtered lookup starting from a specific transaction</td></tr>
+            <tr><td>3</td><td>Press PF8 (Forward)</td><td>Next 10 records loaded via READNEXT; page number incremented</td><td>Pagination &mdash; view more transactions</td></tr>
+            <tr><td>4</td><td>Press PF7 (Backward)</td><td>Previous 10 records loaded via READPREV; page number decremented</td><td>Pagination &mdash; return to earlier transactions</td></tr>
+            <tr><td>5</td><td>Type &lsquo;S&rsquo; next to a transaction and press ENTER</td><td>XCTL to <code>COTRN01C</code> with selected transaction ID in COMMAREA</td><td>Drill into transaction detail view</td></tr>
+            <tr><td>6</td><td>Press PF3 (Back)</td><td>XCTL back to <code>COMEN01C</code> (Main Menu)</td><td>Exit transaction list</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 2 — Technical Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">2</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 2.1 -->
+    <div class="subsection" id="s2-1">
+      <h3><span class="dot"></span> 2.1 Technical Flow Diagram &mdash; Overview</h3>
+      <div class="diagram-box">
+<pre>
+  TERMINAL (3270)          CICS REGION              VSAM FILES
+  ═══════════════       ════════════════════      ═══════════════
+                              │
+  User Input ──────────►  COTRN00C (CT00)  ◄────► TRANSACT (KSDS)
+  (Map COTRN0A)               │
+                              │──── XCTL ────►  COTRN01C (CT01)
+                              │                 [Transaction View]
+                              │
+                              │──── XCTL ────►  COMEN01C (CM00)
+                              │                 [Main Menu]
+                              │
+                              │──── XCTL ────►  COSGN00C (CC00)
+                              ▼                 [Sign-On, if no COMMAREA]
+                         SEND MAP
+                         COTRN0A / COTRN00
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.2 -->
+    <div class="subsection" id="s2-2">
+      <h3><span class="dot"></span> 2.2 Technical Flow Diagram &mdash; Detailed</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────┐
+  │               COTRN00C — MAIN-PARA                      │
+  └─────────────────────────────────────────────────────────┘
+
+  1. Initialize flags: ERR-FLG-OFF, TRANSACT-NOT-EOF,
+     NEXT-PAGE-NO, SEND-ERASE-YES
+
+  2. IF EIBCALEN = 0
+        → XCTL to COSGN00C (unauthorized access)
+
+  3. ELSE: MOVE DFHCOMMAREA → CARDDEMO-COMMAREA
+
+  4. IF NOT CDEMO-PGM-REENTER (first entry)
+        → SET CDEMO-PGM-REENTER = TRUE
+        → MOVE LOW-VALUES to COTRN0AO
+        → PERFORM PROCESS-ENTER-KEY
+           └→ STARTBR TRANSACT from LOW-VALUES
+           └→ READNEXT × 10 → populate rows 1–10
+           └→ Check for next page (one more READNEXT)
+           └→ ENDBR TRANSACT
+        → PERFORM SEND-TRNLST-SCREEN (ERASE)
+
+  5. ELSE (re-entry)
+        → RECEIVE MAP COTRN0A INTO COTRN0AI
+        → EVALUATE EIBAID:
+            DFHENTER → PROCESS-ENTER-KEY
+            DFHPF3   → XCTL to COMEN01C
+            DFHPF7   → PROCESS-PF7-KEY (page backward)
+            DFHPF8   → PROCESS-PF8-KEY (page forward)
+            OTHER    → "Invalid key" message
+
+  6. EXEC CICS RETURN TRANSID('CT00')
+     COMMAREA(CARDDEMO-COMMAREA)
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.3 -->
+    <div class="subsection" id="s2-3">
+      <h3><span class="dot"></span> 2.3 Pseudo-Conversational Flow</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Iteration</th><th>EIBCALEN</th><th>User Action</th><th>Entry Point</th><th>Screen Sent</th><th>RETURN TRANSID</th></tr></thead>
+          <tbody>
+            <tr><td>1 (first entry)</td><td>&gt; 0</td><td>XCTL from menu</td><td><code>NOT CDEMO-PGM-REENTER</code></td><td>COTRN0A with first page</td><td>CT00</td></tr>
+            <tr><td>2+</td><td>&gt; 0</td><td>ENTER (search/select)</td><td><code>PROCESS-ENTER-KEY</code></td><td>COTRN0A with results or XCTL to COTRN01C</td><td>CT00</td></tr>
+            <tr><td>2+</td><td>&gt; 0</td><td>PF7</td><td><code>PROCESS-PF7-KEY</code></td><td>COTRN0A with previous page</td><td>CT00</td></tr>
+            <tr><td>2+</td><td>&gt; 0</td><td>PF8</td><td><code>PROCESS-PF8-KEY</code></td><td>COTRN0A with next page</td><td>CT00</td></tr>
+            <tr><td>N/A</td><td>= 0</td><td>Direct invocation</td><td><code>RETURN-TO-PREV-SCREEN</code></td><td>XCTL to COSGN00C</td><td>N/A</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 2.4 -->
+    <div class="subsection" id="s2-4">
+      <h3><span class="dot"></span> 2.4 CICS Command Flow</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>CICS Command</th><th>Paragraph</th><th>Purpose</th><th>Response Handling</th></tr></thead>
+          <tbody>
+            <tr><td><code>SEND MAP('COTRN0A') MAPSET('COTRN00') ERASE CURSOR</code></td><td><code>SEND-TRNLST-SCREEN</code></td><td>Send transaction list screen (full erase)</td><td>None</td></tr>
+            <tr><td><code>SEND MAP('COTRN0A') MAPSET('COTRN00') CURSOR</code></td><td><code>SEND-TRNLST-SCREEN</code></td><td>Send screen without erase (partial update)</td><td>None</td></tr>
+            <tr><td><code>RECEIVE MAP('COTRN0A') MAPSET('COTRN00')</code></td><td><code>RECEIVE-TRNLST-SCREEN</code></td><td>Receive user input from terminal</td><td>RESP/RESP2 captured</td></tr>
+            <tr><td><code>STARTBR DATASET('TRANSACT')</code></td><td><code>STARTBR-TRANSACT-FILE</code></td><td>Start browse on TRANSACT file at given key</td><td>NORMAL, NOTFND (EOF msg), OTHER (error msg)</td></tr>
+            <tr><td><code>READNEXT DATASET('TRANSACT')</code></td><td><code>READNEXT-TRANSACT-FILE</code></td><td>Read next sequential record</td><td>NORMAL, ENDFILE (bottom msg), OTHER (error msg)</td></tr>
+            <tr><td><code>READPREV DATASET('TRANSACT')</code></td><td><code>READPREV-TRANSACT-FILE</code></td><td>Read previous sequential record</td><td>NORMAL, ENDFILE (top msg), OTHER (error msg)</td></tr>
+            <tr><td><code>ENDBR DATASET('TRANSACT')</code></td><td><code>ENDBR-TRANSACT-FILE</code></td><td>End browse session</td><td>None</td></tr>
+            <tr><td><code>XCTL PROGRAM(CDEMO-TO-PROGRAM)</code></td><td><code>RETURN-TO-PREV-SCREEN</code></td><td>Transfer control to menu or sign-on</td><td>None</td></tr>
+            <tr><td><code>XCTL PROGRAM('COTRN01C')</code></td><td><code>PROCESS-ENTER-KEY</code></td><td>Transfer to Transaction View for selected record</td><td>None</td></tr>
+            <tr><td><code>RETURN TRANSID('CT00')</code></td><td><code>MAIN-PARA</code></td><td>Return control to CICS, register for next invocation</td><td>None</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 3 — Screen Flow and BMS Maps
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">3</span>
+    <h2>Screen Flow and BMS Maps</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 3.1 -->
+    <div class="subsection" id="s3-1">
+      <h3><span class="dot"></span> 3.1 Screen Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌──────────────────────────────────────────────────────────┐
+  │              COTRN0A — Transaction List Map               │
+  │                                                          │
+  │  Row 1:  Tran: CT00    [TITLE01]           Date: mm/dd/yy│
+  │  Row 2:  Prog: COTRN00C [TITLE02]          Time: hh:mm:ss│
+  │  Row 4:                 List Transactions   Page: NNNNNNNN│
+  │  Row 6:  Search Tran ID: [________________]              │
+  │  Row 8:  Sel  Transaction ID   Date     Description ...  │
+  │  Row 9:  ---  ----------------  --------  ---------- ... │
+  │  Row 10: [_]  XXXXXXXXXXXXXXXX  mm/dd/yy  XXXXXXXXXX ... │
+  │  Row 11: [_]  XXXXXXXXXXXXXXXX  mm/dd/yy  XXXXXXXXXX ... │
+  │    ...   (10 data rows: rows 10–19)                      │
+  │  Row 19: [_]  XXXXXXXXXXXXXXXX  mm/dd/yy  XXXXXXXXXX ... │
+  │  Row 21:    Type 'S' to View Transaction details ...     │
+  │  Row 23: [ERROR MESSAGE]                                 │
+  │  Row 24: ENTER=Continue  F3=Back  F7=Backward  F8=Forward│
+  └──────────────────────────────────────────────────────────┘
+
+                    PF3 ──────► COMEN01C (Main Menu)
+                    ENTER+'S' ─► COTRN01C (Transaction View)
+                    PF7 ──────► Previous page (same map)
+                    PF8 ──────► Next page (same map)
+</pre>
+      </div>
+    </div>
+
+    <!-- 3.2 -->
+    <div class="subsection" id="s3-2">
+      <h3><span class="dot"></span> 3.2 BMS Map Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Map Name</th><th>Mapset</th><th>Purpose</th><th>Key Fields</th></tr></thead>
+          <tbody>
+            <tr><td>COTRN0A</td><td>COTRN00</td><td>Transaction list display with 10 selectable rows, search input, pagination, and error message area</td><td>TRNIDIN (search), SEL0001&ndash;SEL0010 (selection), TRNID01&ndash;TRNID10, TDATE01&ndash;TDATE10, TDESC01&ndash;TDESC10, TAMT001&ndash;TAMT010</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.3 -->
+    <div class="subsection" id="s3-3">
+      <h3><span class="dot"></span> 3.3 Screen Field Details</h3>
+      <h4>Map COTRN0A &mdash; Header Fields</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>POS</th><th>Length</th><th>Attribute</th><th>Color</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>TRNNAME</td><td>(1,7)</td><td>4</td><td>ASKIP,FSET,NORM</td><td>Blue</td><td>Transaction ID display</td></tr>
+            <tr><td>TITLE01</td><td>(1,21)</td><td>40</td><td>ASKIP,FSET,NORM</td><td>Yellow</td><td>Application title line 1</td></tr>
+            <tr><td>CURDATE</td><td>(1,71)</td><td>8</td><td>ASKIP,FSET,NORM</td><td>Blue</td><td>Current date (mm/dd/yy)</td></tr>
+            <tr><td>PGMNAME</td><td>(2,7)</td><td>8</td><td>ASKIP,FSET,NORM</td><td>Blue</td><td>Program name display</td></tr>
+            <tr><td>TITLE02</td><td>(2,21)</td><td>40</td><td>ASKIP,FSET,NORM</td><td>Yellow</td><td>Application title line 2</td></tr>
+            <tr><td>CURTIME</td><td>(2,71)</td><td>8</td><td>ASKIP,FSET,NORM</td><td>Blue</td><td>Current time (hh:mm:ss)</td></tr>
+            <tr><td>PAGENUM</td><td>(4,71)</td><td>8</td><td>ASKIP,FSET,NORM</td><td>Blue</td><td>Current page number</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h4>Map COTRN0A &mdash; Search &amp; Data Fields</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>POS</th><th>Length</th><th>Attribute</th><th>Color</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>TRNIDIN</td><td>(6,21)</td><td>16</td><td>FSET,NORM,UNPROT</td><td>Green</td><td>Search Transaction ID input</td></tr>
+            <tr><td>SEL0001&ndash;SEL0010</td><td>(10&ndash;19, 3)</td><td>1</td><td>FSET,NORM,UNPROT</td><td>Green</td><td>Row selection input (type &lsquo;S&rsquo; to select)</td></tr>
+            <tr><td>TRNID01&ndash;TRNID10</td><td>(10&ndash;19, 8)</td><td>16</td><td>ASKIP,FSET,NORM</td><td>Blue</td><td>Transaction ID display</td></tr>
+            <tr><td>TDATE01&ndash;TDATE10</td><td>(10&ndash;19, 27)</td><td>8</td><td>ASKIP,FSET,NORM</td><td>Blue</td><td>Transaction date (mm/dd/yy)</td></tr>
+            <tr><td>TDESC01&ndash;TDESC10</td><td>(10&ndash;19, 38)</td><td>26</td><td>ASKIP,FSET,NORM</td><td>Blue</td><td>Transaction description</td></tr>
+            <tr><td>TAMT001&ndash;TAMT010</td><td>(10&ndash;19, 67)</td><td>12</td><td>ASKIP,FSET,NORM</td><td>Blue</td><td>Transaction amount</td></tr>
+            <tr><td>ERRMSG</td><td>(23,1)</td><td>78</td><td>ASKIP,BRT,FSET</td><td>Red</td><td>Error/status message</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.4 -->
+    <div class="subsection" id="s3-4">
+      <h3><span class="dot"></span> 3.4 PF Key / AID Key Handling</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Key</th><th>EIBAID Value</th><th>Action</th><th>Details</th></tr></thead>
+          <tbody>
+            <tr><td>ENTER</td><td>DFHENTER</td><td><code>PROCESS-ENTER-KEY</code></td><td>Check for row selection (&lsquo;S&rsquo; &rarr; XCTL to COTRN01C) or re-execute search/browse from TRNIDIN</td></tr>
+            <tr><td>PF3</td><td>DFHPF3</td><td>Return to Main Menu</td><td>XCTL to <code>COMEN01C</code> via <code>RETURN-TO-PREV-SCREEN</code></td></tr>
+            <tr><td>PF7</td><td>DFHPF7</td><td><code>PROCESS-PF7-KEY</code></td><td>Page backward &mdash; STARTBR from <code>CDEMO-CT00-TRNID-FIRST</code>, then READPREV &times; 10</td></tr>
+            <tr><td>PF8</td><td>DFHPF8</td><td><code>PROCESS-PF8-KEY</code></td><td>Page forward &mdash; STARTBR from <code>CDEMO-CT00-TRNID-LAST</code>, then READNEXT &times; 10</td></tr>
+            <tr><td>Other</td><td>Any other AID</td><td>Error message</td><td><code>CCDA-MSG-INVALID-KEY</code> &rarr; &ldquo;Invalid key pressed. Please see below&rdquo;</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 4 — Program Inventory and Call Chain
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">4</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 4.1 -->
+    <div class="subsection" id="s4-1">
+      <h3><span class="dot"></span> 4.1 Program Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Program</th><th>Purpose</th><th>Entry Mechanism</th><th>LOC</th></tr></thead>
+          <tbody>
+            <tr><td><code>COTRN00C</code></td><td>Transaction List &mdash; browse and display TRANSACT file records</td><td>XCTL from COMEN01C (menu) or RETURN TRANSID CT00</td><td>699</td></tr>
+            <tr><td><code>COTRN01C</code></td><td>Transaction View &mdash; display detail of selected transaction</td><td>XCTL from COTRN00C when &lsquo;S&rsquo; is selected</td><td>&mdash;</td></tr>
+            <tr><td><code>COMEN01C</code></td><td>Main Menu &mdash; application navigation hub</td><td>XCTL from COTRN00C on PF3</td><td>&mdash;</td></tr>
+            <tr><td><code>COSGN00C</code></td><td>Sign-On &mdash; authentication program</td><td>XCTL from COTRN00C when EIBCALEN = 0</td><td>&mdash;</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4.2 -->
+    <div class="subsection" id="s4-2">
+      <h3><span class="dot"></span> 4.2 Call Chain Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  CT00 (TRANSID)
+    │
+    └──► COTRN00C (Entry Program)
+            │
+            ├──► TRANSACT (VSAM KSDS)
+            │       STARTBR / READNEXT / READPREV / ENDBR
+            │
+            ├──► XCTL ──► COTRN01C  (Transaction View)
+            │                when user selects 'S'
+            │
+            ├──► XCTL ──► COMEN01C  (Main Menu)
+            │                when PF3 pressed
+            │
+            └──► XCTL ──► COSGN00C  (Sign-On)
+                             when EIBCALEN = 0
+</pre>
+      </div>
+    </div>
+
+    <!-- 4.3 -->
+    <div class="subsection" id="s4-3">
+      <h3><span class="dot"></span> 4.3 Call Details</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Caller</th><th>Called Program</th><th>Mechanism</th><th>Data Passed</th><th>When</th></tr></thead>
+          <tbody>
+            <tr><td>COTRN00C</td><td>COTRN01C</td><td>XCTL</td><td><code>CARDDEMO-COMMAREA</code> (with <code>CDEMO-CT00-TRN-SELECTED</code> = selected TRAN-ID)</td><td>User types &lsquo;S&rsquo; and presses ENTER</td></tr>
+            <tr><td>COTRN00C</td><td>COMEN01C</td><td>XCTL</td><td><code>CARDDEMO-COMMAREA</code> (with <code>CDEMO-TO-PROGRAM</code> = &lsquo;COMEN01C&rsquo;)</td><td>PF3 pressed</td></tr>
+            <tr><td>COTRN00C</td><td>COSGN00C</td><td>XCTL</td><td><code>CARDDEMO-COMMAREA</code> (with <code>CDEMO-TO-PROGRAM</code> = &lsquo;COSGN00C&rsquo;)</td><td>EIBCALEN = 0 (no COMMAREA)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 5 — File and Data Store Inventory
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">5</span>
+    <h2>File and Data Store Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 5.1 -->
+    <div class="subsection" id="s5-1">
+      <h3><span class="dot"></span> 5.1 File Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>FCT Name</th><th>Type</th><th>Access Mode</th><th>Program</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>TRANSACT</td><td>VSAM KSDS</td><td>Browse (STARTBR, READNEXT, READPREV, ENDBR)</td><td>COTRN00C</td><td>Transaction records &mdash; primary data source for the list display</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.2 -->
+    <div class="subsection" id="s5-2">
+      <h3><span class="dot"></span> 5.2 File Access Details</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Attribute</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>FCT Name</td><td><code>TRANSACT</code> (stored in <code>WS-TRANSACT-FILE</code>)</td></tr>
+            <tr><td>Record Layout Copybook</td><td><code>CVTRA05Y.cpy</code> &mdash; <code>TRAN-RECORD</code> (350 bytes)</td></tr>
+            <tr><td>Primary Key</td><td><code>TRAN-ID</code> &mdash; PIC X(16)</td></tr>
+            <tr><td>Key Length</td><td><code>LENGTH OF TRAN-ID</code> (16 bytes)</td></tr>
+            <tr><td>Access Mode</td><td>Browse-only (STARTBR/READNEXT/READPREV/ENDBR)</td></tr>
+            <tr><td>Locking</td><td>None &mdash; read-only browse; no UPDATE option specified</td></tr>
+            <tr><td>Access Pattern</td><td>Sequential forward/backward browse starting from user-supplied key or LOW-VALUES. Reads 10 records per page plus one look-ahead to determine if more pages exist.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.3 -->
+    <div class="subsection" id="s5-3">
+      <h3><span class="dot"></span> 5.3 TSQ Usage</h3>
+      <p>N/A &mdash; This program does not use Temporary Storage Queues.</p>
+    </div>
+
+    <!-- 5.4 -->
+    <div class="subsection" id="s5-4">
+      <h3><span class="dot"></span> 5.4 TDQ Usage</h3>
+      <p>N/A &mdash; This program does not use Transient Data Queues.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 6 — Data Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">6</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 6.1 -->
+    <div class="subsection" id="s6-1">
+      <h3><span class="dot"></span> 6.1 Data Flow Through Transaction</h3>
+      <div class="diagram-box">
+<pre>
+  ┌───────────────┐     ┌──────────────────────┐     ┌───────────────┐
+  │   TERMINAL    │     │   COTRN00C Working   │     │   TRANSACT    │
+  │   (3270)      │     │      Storage         │     │  (VSAM KSDS)  │
+  └───────┬───────┘     └──────────┬───────────┘     └───────┬───────┘
+          │                        │                         │
+  RECEIVE MAP                      │                         │
+  COTRN0AI ──────────►  TRNIDIN ──►│ TRAN-ID (search key)   │
+          │              (input)   │         │               │
+          │                        │    STARTBR ────────────►│
+          │                        │    READNEXT ◄───────────│
+          │                        │         │               │
+          │                        │    TRAN-RECORD ──►      │
+          │                        │    ┌─────────────┐      │
+          │                        │    │ TRAN-ID     │      │
+          │                        │    │ TRAN-DESC   │      │
+          │                        │    │ TRAN-AMT    │      │
+          │                        │    │ TRAN-ORIG-TS│      │
+          │                        │    └──────┬──────┘      │
+          │                        │           │             │
+          │                        │    Transform:           │
+          │                        │    TRAN-AMT → WS-TRAN-AMT
+          │                        │    TRAN-ORIG-TS → WS-TRAN-DATE
+          │                        │           │             │
+          │                        │    Populate map fields:  │
+  SEND MAP  ◄──────────  COTRN0AO ◄── TRNIDnnI, TDATEnnI,  │
+  COTRN0AO                             TDESCnnI, TAMTnnnI   │
+          │                        │                         │
+          ▼                        ▼                         │
+  Display on                  ENDBR ────────────────────────►│
+  terminal                                                   │
+</pre>
+      </div>
+    </div>
+
+    <!-- 6.2 -->
+    <div class="subsection" id="s6-2">
+      <h3><span class="dot"></span> 6.2 Data Transformation Map</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Source Field</th><th>Transformation</th><th>Target Field</th></tr></thead>
+          <tbody>
+            <tr><td><code>TRAN-AMT</code> (PIC S9(09)V99)</td><td>MOVE to edited numeric <code>WS-TRAN-AMT</code> (PIC +99999999.99)</td><td><code>TAMTnnnI OF COTRN0AI</code> (display on screen)</td></tr>
+            <tr><td><code>TRAN-ORIG-TS</code> (PIC X(26), ISO timestamp)</td><td>Extract YYYY-MM-DD &rarr; reformat to MM/DD/YY via <code>WS-TIMESTAMP</code> fields</td><td><code>TDATEnnI OF COTRN0AI</code> (display as mm/dd/yy)</td></tr>
+            <tr><td><code>TRAN-ID</code> (PIC X(16))</td><td>Direct MOVE</td><td><code>TRNIDnnI OF COTRN0AI</code> (display on screen)</td></tr>
+            <tr><td><code>TRAN-DESC</code> (PIC X(100))</td><td>Direct MOVE (truncated to 26 chars by map field length)</td><td><code>TDESCnnI OF COTRN0AI</code> (display on screen)</td></tr>
+            <tr><td><code>TRAN-ID</code> (row 1)</td><td>Direct MOVE</td><td><code>CDEMO-CT00-TRNID-FIRST</code> (COMMAREA &mdash; page anchor)</td></tr>
+            <tr><td><code>TRAN-ID</code> (row 10)</td><td>Direct MOVE</td><td><code>CDEMO-CT00-TRNID-LAST</code> (COMMAREA &mdash; page anchor)</td></tr>
+            <tr><td><code>CDEMO-CT00-PAGE-NUM</code></td><td>Incremented/decremented</td><td><code>PAGENUMI OF COTRN0AI</code> (page number display)</td></tr>
+            <tr><td><code>FUNCTION CURRENT-DATE</code></td><td>Reformatted via <code>WS-CURDATE-DATA</code></td><td><code>CURDATEO</code>, <code>CURTIMEO</code> (header date/time)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 7 — COMMAREA and Interface Contracts
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">7</span>
+    <h2>COMMAREA and Interface Contracts</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 7.1 -->
+    <div class="subsection" id="s7-1">
+      <h3><span class="dot"></span> 7.1 COMMAREA Layout</h3>
+      <p>The program uses the shared <code>CARDDEMO-COMMAREA</code> defined in <code>COCOM01Y.cpy</code>, plus a transaction-specific extension <code>CDEMO-CT00-INFO</code> defined inline in the program (lines 62&ndash;71).</p>
+
+      <h4>Shared COMMAREA (COCOM01Y.cpy)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Direction</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>CDEMO-FROM-TRANID</code></td><td>X(04)</td><td>4</td><td>OUT</td><td>Originating transaction ID (&lsquo;CT00&rsquo;)</td></tr>
+            <tr><td><code>CDEMO-FROM-PROGRAM</code></td><td>X(08)</td><td>8</td><td>OUT</td><td>Originating program (&lsquo;COTRN00C&rsquo;)</td></tr>
+            <tr><td><code>CDEMO-TO-TRANID</code></td><td>X(04)</td><td>4</td><td>IN/OUT</td><td>Target transaction ID</td></tr>
+            <tr><td><code>CDEMO-TO-PROGRAM</code></td><td>X(08)</td><td>8</td><td>OUT</td><td>Target program for XCTL navigation</td></tr>
+            <tr><td><code>CDEMO-USER-ID</code></td><td>X(08)</td><td>8</td><td>IN</td><td>Authenticated user ID</td></tr>
+            <tr><td><code>CDEMO-USER-TYPE</code></td><td>X(01)</td><td>1</td><td>IN</td><td>&lsquo;A&rsquo; = Admin, &lsquo;U&rsquo; = Regular user</td></tr>
+            <tr><td><code>CDEMO-PGM-CONTEXT</code></td><td>9(01)</td><td>1</td><td>IN/OUT</td><td>0 = first entry, 1 = re-entry</td></tr>
+            <tr><td><code>CDEMO-LAST-MAP</code></td><td>X(07)</td><td>7</td><td>OUT</td><td>Last map sent</td></tr>
+            <tr><td><code>CDEMO-LAST-MAPSET</code></td><td>X(07)</td><td>7</td><td>OUT</td><td>Last mapset sent</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>CT00-Specific Extension (inline, lines 62&ndash;71)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Direction</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>CDEMO-CT00-TRNID-FIRST</code></td><td>X(16)</td><td>16</td><td>IN/OUT</td><td>Transaction ID of first row on current page (used as key for PF7 backward navigation)</td></tr>
+            <tr><td><code>CDEMO-CT00-TRNID-LAST</code></td><td>X(16)</td><td>16</td><td>IN/OUT</td><td>Transaction ID of last row on current page (used as key for PF8 forward navigation)</td></tr>
+            <tr><td><code>CDEMO-CT00-PAGE-NUM</code></td><td>9(08)</td><td>8</td><td>IN/OUT</td><td>Current page number (incremented on forward, decremented on backward)</td></tr>
+            <tr><td><code>CDEMO-CT00-NEXT-PAGE-FLG</code></td><td>X(01)</td><td>1</td><td>IN/OUT</td><td>&lsquo;Y&rsquo; = more pages available, &lsquo;N&rsquo; = at end of file</td></tr>
+            <tr><td><code>CDEMO-CT00-TRN-SEL-FLG</code></td><td>X(01)</td><td>1</td><td>OUT</td><td>Selection flag entered by user (expected: &lsquo;S&rsquo;)</td></tr>
+            <tr><td><code>CDEMO-CT00-TRN-SELECTED</code></td><td>X(16)</td><td>16</td><td>OUT</td><td>Transaction ID selected for detail view</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 7.2 -->
+    <div class="subsection" id="s7-2">
+      <h3><span class="dot"></span> 7.2 Return Code Conventions</h3>
+      <p>The program uses <code>WS-RESP-CD</code> (PIC S9(09) COMP) to capture CICS RESP codes from file operations. Response values are evaluated against <code>DFHRESP(NORMAL)</code>, <code>DFHRESP(NOTFND)</code>, <code>DFHRESP(ENDFILE)</code>, and a catch-all OTHER condition. No application-level return codes are passed to calling programs.</p>
+    </div>
+
+    <!-- 7.3 -->
+    <div class="subsection" id="s7-3">
+      <h3><span class="dot"></span> 7.3 Conversation State Management</h3>
+      <p>State is preserved across pseudo-conversational iterations via the <code>CARDDEMO-COMMAREA</code> passed on <code>EXEC CICS RETURN TRANSID('CT00') COMMAREA(CARDDEMO-COMMAREA)</code>.</p>
+      <p>Key state elements maintained between iterations:</p>
+      <ul>
+        <li><strong><code>CDEMO-PGM-CONTEXT</code></strong> &mdash; 0 on first entry, set to 1 (<code>CDEMO-PGM-REENTER</code>) after initial display. Controls whether the program performs the first-time browse or processes user input.</li>
+        <li><strong><code>CDEMO-CT00-TRNID-FIRST</code> / <code>CDEMO-CT00-TRNID-LAST</code></strong> &mdash; Anchor keys for the current page boundaries. Used to position the browse cursor for PF7 (backward) and PF8 (forward) navigation.</li>
+        <li><strong><code>CDEMO-CT00-PAGE-NUM</code></strong> &mdash; Current page counter displayed on screen and used to prevent backward navigation past page 1.</li>
+        <li><strong><code>CDEMO-CT00-NEXT-PAGE-FLG</code></strong> &mdash; &lsquo;Y&rsquo;/&lsquo;N&rsquo; flag set by the look-ahead READNEXT that determines whether PF8 should allow forward pagination.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 8 — Error Handling and User Feedback
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">8</span>
+    <h2>Error Handling and User Feedback</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 8.1 -->
+    <div class="subsection" id="s8-1">
+      <h3><span class="dot"></span> 8.1 Error Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌──────────────────┐
+  │   Normal Path    │
+  │                  │
+  │  STARTBR → OK   │──────────────────────────────────────────┐
+  │  READNEXT → OK  │                                          │
+  │  Populate rows   │                                          │
+  │  SEND MAP        │                                          │
+  └──────────────────┘                                          │
+                                                                │
+  ┌──────────────────┐     ┌────────────────────────────────┐   │
+  │   Error Paths    │     │   User Feedback                │   │
+  │                  │     │                                │   │
+  │  STARTBR NOTFND  │────►│  "You are at the top of the   │   │
+  │                  │     │   page..."                     │   │
+  │                  │     │   + TRANSACT-EOF = TRUE        │───┤
+  │  READNEXT ENDFILE│────►│  "You have reached the bottom │   │
+  │                  │     │   of the page..."              │   │
+  │                  │     │   + TRANSACT-EOF = TRUE        │───┤
+  │  READPREV ENDFILE│────►│  "You have reached the top    │   │
+  │                  │     │   of the page..."              │   │
+  │                  │     │   + TRANSACT-EOF = TRUE        │───┤
+  │  STARTBR/READ*   │     │                                │   │
+  │  OTHER           │────►│  "Unable to lookup             │   │
+  │                  │     │   transaction..."              │   │
+  │                  │     │   + WS-ERR-FLG = 'Y'          │───┤
+  │  Non-numeric ID  │────►│  "Tran ID must be Numeric..." │   │
+  │                  │     │   + WS-ERR-FLG = 'Y'          │───┤
+  │  Invalid select  │────►│  "Invalid selection. Valid     │   │
+  │                  │     │   value is S"                  │───┤
+  │  Invalid AID key │────►│  CCDA-MSG-INVALID-KEY         │   │
+  │                  │     │  "Invalid key pressed..."     │───┘
+  └──────────────────┘     └────────────────────────────────┘
+                                      │
+                                      ▼
+                              SEND MAP COTRN0A
+                              (error in ERRMSG field)
+</pre>
+      </div>
+    </div>
+
+    <!-- 8.2 -->
+    <div class="subsection" id="s8-2">
+      <h3><span class="dot"></span> 8.2 Error Handling Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Error Condition</th><th>RESP Code</th><th>Program Action</th><th>User Message</th><th>Logging</th></tr></thead>
+          <tbody>
+            <tr><td>STARTBR &mdash; record not found</td><td>DFHRESP(NOTFND)</td><td>Set <code>TRANSACT-EOF</code>, send screen</td><td>&ldquo;You are at the top of the page...&rdquo;</td><td>None</td></tr>
+            <tr><td>STARTBR &mdash; unexpected error</td><td>OTHER</td><td>Set <code>WS-ERR-FLG</code> = &lsquo;Y&rsquo;, send screen</td><td>&ldquo;Unable to lookup transaction...&rdquo;</td><td><code>DISPLAY 'RESP:' WS-RESP-CD 'REAS:' WS-REAS-CD</code></td></tr>
+            <tr><td>READNEXT &mdash; end of file</td><td>DFHRESP(ENDFILE)</td><td>Set <code>TRANSACT-EOF</code>, send screen</td><td>&ldquo;You have reached the bottom of the page...&rdquo;</td><td>None</td></tr>
+            <tr><td>READNEXT &mdash; unexpected error</td><td>OTHER</td><td>Set <code>WS-ERR-FLG</code> = &lsquo;Y&rsquo;, send screen</td><td>&ldquo;Unable to lookup transaction...&rdquo;</td><td><code>DISPLAY 'RESP:' WS-RESP-CD 'REAS:' WS-REAS-CD</code></td></tr>
+            <tr><td>READPREV &mdash; end of file</td><td>DFHRESP(ENDFILE)</td><td>Set <code>TRANSACT-EOF</code>, send screen</td><td>&ldquo;You have reached the top of the page...&rdquo;</td><td>None</td></tr>
+            <tr><td>READPREV &mdash; unexpected error</td><td>OTHER</td><td>Set <code>WS-ERR-FLG</code> = &lsquo;Y&rsquo;, send screen</td><td>&ldquo;Unable to lookup transaction...&rdquo;</td><td><code>DISPLAY 'RESP:' WS-RESP-CD 'REAS:' WS-REAS-CD</code></td></tr>
+            <tr><td>Non-numeric Transaction ID input</td><td>N/A (data validation)</td><td>Set <code>WS-ERR-FLG</code> = &lsquo;Y&rsquo;, send screen</td><td>&ldquo;Tran ID must be Numeric ...&rdquo;</td><td>None</td></tr>
+            <tr><td>Invalid selection character</td><td>N/A (data validation)</td><td>Set error message, cursor to TRNIDIN</td><td>&ldquo;Invalid selection. Valid value is S&rdquo;</td><td>None</td></tr>
+            <tr><td>Invalid AID key pressed</td><td>N/A (EIBAID check)</td><td>Set <code>WS-ERR-FLG</code> = &lsquo;Y&rsquo;, send screen</td><td><code>CCDA-MSG-INVALID-KEY</code>: &ldquo;Invalid key pressed. Please see below...&rdquo;</td><td>None</td></tr>
+            <tr><td>PF7 at page 1</td><td>N/A (page check)</td><td>Set <code>SEND-ERASE-NO</code>, send screen</td><td>&ldquo;You are already at the top of the page...&rdquo;</td><td>None</td></tr>
+            <tr><td>PF8 at last page</td><td>N/A (flag check)</td><td>Set <code>SEND-ERASE-NO</code>, send screen</td><td>&ldquo;You are already at the bottom of the page...&rdquo;</td><td>None</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 8.3 -->
+    <div class="subsection" id="s8-3">
+      <h3><span class="dot"></span> 8.3 HANDLE ABEND / HANDLE CONDITION</h3>
+      <p>This program does <strong>not</strong> use <code>EXEC CICS HANDLE ABEND</code> or <code>EXEC CICS HANDLE CONDITION</code>. All error handling is performed via inline <code>RESP</code>/<code>RESP2</code> checking on individual CICS commands.</p>
+    </div>
+
+    <!-- 8.4 -->
+    <div class="subsection" id="s8-4">
+      <h3><span class="dot"></span> 8.4 User Error Messages</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Message</th><th>Source</th><th>Trigger</th></tr></thead>
+          <tbody>
+            <tr><td>&ldquo;Tran ID must be Numeric ...&rdquo;</td><td>Inline literal (line 214)</td><td>Non-numeric value in TRNIDIN search field</td></tr>
+            <tr><td>&ldquo;Invalid selection. Valid value is S&rdquo;</td><td>Inline literal (lines 198&ndash;200)</td><td>Selection field contains value other than &lsquo;S&rsquo;/&lsquo;s&rsquo;</td></tr>
+            <tr><td>&ldquo;Invalid key pressed. Please see below...&rdquo;</td><td><code>CCDA-MSG-INVALID-KEY</code> (CSMSG01Y.cpy)</td><td>Unrecognized AID key pressed</td></tr>
+            <tr><td>&ldquo;You are at the top of the page...&rdquo;</td><td>Inline literal (line 608)</td><td>STARTBR returns NOTFND</td></tr>
+            <tr><td>&ldquo;You are already at the top of the page...&rdquo;</td><td>Inline literal (line 248)</td><td>PF7 pressed when already on page 1</td></tr>
+            <tr><td>&ldquo;You have reached the top of the page...&rdquo;</td><td>Inline literal (line 676)</td><td>READPREV returns ENDFILE</td></tr>
+            <tr><td>&ldquo;You are already at the bottom of the page...&rdquo;</td><td>Inline literal (line 270)</td><td>PF8 pressed when NEXT-PAGE-YES is false</td></tr>
+            <tr><td>&ldquo;You have reached the bottom of the page...&rdquo;</td><td>Inline literal (line 642)</td><td>READNEXT returns ENDFILE</td></tr>
+            <tr><td>&ldquo;Unable to lookup transaction...&rdquo;</td><td>Inline literal (lines 615, 649, 683)</td><td>Unexpected RESP code on STARTBR/READNEXT/READPREV</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 9 — Security and Authorization
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">9</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 9.1 -->
+    <div class="subsection" id="s9-1">
+      <h3><span class="dot"></span> 9.1 Transaction Security</h3>
+      <p>Access to the CT00 transaction is controlled through the CardDemo application&rsquo;s menu routing system:</p>
+      <ul>
+        <li>The program checks <code>EIBCALEN = 0</code> at entry (line 107). If no COMMAREA is present (indicating the user did not arrive via the authenticated menu flow), the program redirects to <code>COSGN00C</code> (Sign-On), effectively preventing unauthorized direct invocation.</li>
+        <li>In the menu definition (<code>COMEN02Y.cpy</code>), Transaction List (option 6 &rarr; <code>COTRN00C</code>) is flagged as user-type &lsquo;U&rsquo;, meaning it is accessible to both regular users and administrators.</li>
+        <li>The authenticated user ID is carried in <code>CDEMO-USER-ID</code> within the COMMAREA but is not explicitly checked within this program&rsquo;s logic.</li>
+      </ul>
+    </div>
+
+    <!-- 9.2 -->
+    <div class="subsection" id="s9-2">
+      <h3><span class="dot"></span> 9.2 Data Access Authorization</h3>
+      <p>No data-level security checks are performed within this program. All records in the <code>TRANSACT</code> VSAM file are browseable by any authenticated user. There is no filtering by user ID, account ownership, or card number. Data-level access control, if required, would need to be enforced at the CICS resource security level (e.g., RACF).</p>
+    </div>
+
+    <!-- 9.3 -->
+    <div class="subsection" id="s9-3">
+      <h3><span class="dot"></span> 9.3 Audit Trail</h3>
+      <p>No explicit audit trail or logging mechanism exists in this program. The only diagnostic output is <code>DISPLAY 'RESP:' WS-RESP-CD 'REAS:' WS-REAS-CD</code> statements executed on unexpected CICS errors, which write to the CICS CEEMSG / system log. No transaction-level audit records are written for browse activity.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 10 — Performance Characteristics
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Performance Characteristics</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 10.1 -->
+    <div class="subsection" id="s10-1">
+      <h3><span class="dot"></span> 10.1 Performance Profile</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Metric</th><th>Value</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>File I/Os per page (forward)</td><td>1 STARTBR + 11&ndash;12 READNEXT + 1 ENDBR</td><td>10 data reads + up to 1 skip read + 1 look-ahead read</td></tr>
+            <tr><td>File I/Os per page (backward)</td><td>1 STARTBR + 11&ndash;12 READPREV + 1 ENDBR</td><td>Similar to forward but using READPREV</td></tr>
+            <tr><td>COMMAREA size</td><td>~300 bytes</td><td>Shared COMMAREA (~180 bytes) + CT00 extension (~58 bytes)</td></tr>
+            <tr><td>Map sends per iteration</td><td>1</td><td>Single SEND MAP per pseudo-conversational cycle</td></tr>
+            <tr><td>Record size</td><td>350 bytes</td><td>TRAN-RECORD as defined in CVTRA05Y.cpy</td></tr>
+            <tr><td>Rows per page</td><td>10</td><td>Fixed page size</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 10.2 -->
+    <div class="subsection" id="s10-2">
+      <h3><span class="dot"></span> 10.2 Performance Considerations</h3>
+      <ul>
+        <li><strong>Browse operation overhead:</strong> Each page navigation opens a new browse session (STARTBR), reads the required records, and immediately closes it (ENDBR). This is the standard pseudo-conversational pattern but means the VSAM index is re-traversed on every page turn.</li>
+        <li><strong>Look-ahead read:</strong> After populating 10 rows, the program performs one additional READNEXT to determine if more pages exist (setting <code>NEXT-PAGE-YES</code>/<code>NO</code>). This is efficient (single extra I/O) but slightly increases per-page cost.</li>
+        <li><strong>Skip read on non-Enter keys:</strong> For PF7/PF8, the program performs one extra READNEXT/READPREV before the main loop to skip past the current boundary record, avoiding duplicate display of the last/first record.</li>
+        <li><strong>No index caching:</strong> Page position is maintained via COMMAREA keys (<code>CDEMO-CT00-TRNID-FIRST</code>, <code>CDEMO-CT00-TRNID-LAST</code>) rather than VSAM RBAs, which is portable but may be slower on very large files.</li>
+        <li><strong>Low memory footprint:</strong> Only one <code>TRAN-RECORD</code> (350 bytes) is in memory at a time during the browse loop; the 10 display rows are populated directly into the BMS map fields.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 11 — Testing Approach
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 11.1 -->
+    <div class="subsection" id="s11-1">
+      <h3><span class="dot"></span> 11.1 Test Scenarios</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Scenario</th><th>Input</th><th>Expected Result</th><th>Category</th></tr></thead>
+          <tbody>
+            <tr><td>TC-01</td><td>Initial entry from main menu</td><td>Select option 6 from Main Menu</td><td>First page of transactions displayed; page number = 1</td><td>Normal flow</td></tr>
+            <tr><td>TC-02</td><td>Page forward (PF8)</td><td>Press PF8 on first page</td><td>Next 10 transactions displayed; page number incremented</td><td>Navigation</td></tr>
+            <tr><td>TC-03</td><td>Page backward (PF7)</td><td>Press PF7 on page 2+</td><td>Previous 10 transactions displayed; page number decremented</td><td>Navigation</td></tr>
+            <tr><td>TC-04</td><td>PF7 at page 1</td><td>Press PF7 when on page 1</td><td>&ldquo;You are already at the top of the page&rdquo; message</td><td>Boundary</td></tr>
+            <tr><td>TC-05</td><td>PF8 at last page</td><td>Press PF8 when NEXT-PAGE-FLG = &lsquo;N&rsquo;</td><td>&ldquo;You are already at the bottom of the page&rdquo; message</td><td>Boundary</td></tr>
+            <tr><td>TC-06</td><td>Search by valid numeric ID</td><td>Enter valid transaction ID in search field, press ENTER</td><td>List starts from that transaction ID</td><td>Search</td></tr>
+            <tr><td>TC-07</td><td>Search by non-numeric ID</td><td>Enter alphabetic text in search field, press ENTER</td><td>&ldquo;Tran ID must be Numeric&rdquo; error message</td><td>Validation</td></tr>
+            <tr><td>TC-08</td><td>Search with empty field</td><td>Leave search field blank, press ENTER</td><td>List starts from beginning of file (LOW-VALUES key)</td><td>Default</td></tr>
+            <tr><td>TC-09</td><td>Select transaction with &lsquo;S&rsquo;</td><td>Type &lsquo;S&rsquo; next to a row, press ENTER</td><td>XCTL to COTRN01C with selected transaction ID in COMMAREA</td><td>Selection</td></tr>
+            <tr><td>TC-10</td><td>Select transaction with &lsquo;s&rsquo; (lowercase)</td><td>Type &lsquo;s&rsquo; next to a row, press ENTER</td><td>Same as TC-09 (case-insensitive)</td><td>Selection</td></tr>
+            <tr><td>TC-11</td><td>Invalid selection character</td><td>Type &lsquo;X&rsquo; next to a row, press ENTER</td><td>&ldquo;Invalid selection. Valid value is S&rdquo; error message</td><td>Validation</td></tr>
+            <tr><td>TC-12</td><td>Return to main menu</td><td>Press PF3</td><td>XCTL to COMEN01C (Main Menu)</td><td>Navigation</td></tr>
+            <tr><td>TC-13</td><td>Invalid AID key</td><td>Press PF1 or any unsupported key</td><td>&ldquo;Invalid key pressed&rdquo; error message</td><td>Validation</td></tr>
+            <tr><td>TC-14</td><td>Direct invocation (no COMMAREA)</td><td>Invoke CT00 directly without menu login</td><td>XCTL to COSGN00C (Sign-On screen)</td><td>Security</td></tr>
+            <tr><td>TC-15</td><td>TRANSACT file empty or search past end</td><td>Enter ID beyond last record</td><td>&ldquo;You are at the top of the page&rdquo; (NOTFND)</td><td>Boundary</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 11.2 -->
+    <div class="subsection" id="s11-2">
+      <h3><span class="dot"></span> 11.2 Test Data Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Requirement</th><th>Details</th></tr></thead>
+          <tbody>
+            <tr><td>TRANSACT VSAM file</td><td>Populated with at least 25+ transaction records to verify multi-page browsing (3+ pages of 10)</td></tr>
+            <tr><td>Transaction IDs</td><td>Numeric 16-character keys with varied ranges (e.g., 0000000000000001 through 0000000000000030)</td></tr>
+            <tr><td>Authenticated user session</td><td>Valid COMMAREA from COSGN00C sign-on with <code>CDEMO-USER-ID</code> and <code>CDEMO-USER-TYPE</code> populated</td></tr>
+            <tr><td>Main Menu access</td><td>COMEN01C must be available for PF3 return navigation</td></tr>
+            <tr><td>COTRN01C program</td><td>Must be deployed for &lsquo;S&rsquo; selection drill-down testing</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 12 — Known Issues and Considerations
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Known Issues and Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 12.1 -->
+    <div class="subsection" id="s12-1">
+      <h3><span class="dot"></span> 12.1 Known Issues</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Issue</th><th>Severity</th><th>Details</th></tr></thead>
+          <tbody>
+            <tr><td>KI-1</td><td>Repetitive EVALUATE for 10 rows</td><td>Low</td><td>The <code>POPULATE-TRAN-DATA</code> and <code>INITIALIZE-TRAN-DATA</code> paragraphs use a 10-branch EVALUATE on <code>WS-IDX</code> (lines 390&ndash;445, 452&ndash;505) to populate each row individually. This pattern could be simplified with a table-driven approach or OCCURS clause, reducing code volume by ~200 lines.</td></tr>
+            <tr><td>KI-2</td><td>10-branch EVALUATE for row selection</td><td>Low</td><td><code>PROCESS-ENTER-KEY</code> (lines 148&ndash;182) checks each of the 10 selection fields individually. A table-driven approach would be more maintainable.</td></tr>
+            <tr><td>KI-3</td><td>Hardcoded program names</td><td>Low</td><td><code>'COSGN00C'</code> (line 108, 513), <code>'COMEN01C'</code> (line 123), and <code>'COTRN01C'</code> (line 188) are hardcoded string literals rather than configurable constants.</td></tr>
+            <tr><td>KI-4</td><td>No HANDLE ABEND</td><td>Medium</td><td>The program does not set up an ABEND handler. An unexpected CICS ABEND (e.g., ASRA, AICA) would terminate the transaction without a user-friendly message.</td></tr>
+            <tr><td>KI-5</td><td>RECEIVE MAP error not fully handled</td><td>Low</td><td>The <code>RECEIVE-TRNLST-SCREEN</code> paragraph captures <code>WS-RESP-CD</code> and <code>WS-REAS-CD</code> but never evaluates them. A MAPFAIL condition would go undetected.</td></tr>
+            <tr><td>KI-6</td><td>Description truncation</td><td>Low</td><td><code>TRAN-DESC</code> is 100 chars but the BMS field <code>TDESCnn</code> is only 26 chars. The remaining 74 characters are silently truncated on display.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 12.2 -->
+    <div class="subsection" id="s12-2">
+      <h3><span class="dot"></span> 12.2 Modernization Considerations</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Aspect</th><th>Current State</th><th>Target State</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Screen I/O</td><td>BMS maps (COTRN0A) via 3270 terminal</td><td>REST API + modern web/mobile UI</td><td>Replace SEND/RECEIVE MAP with paginated REST endpoint returning JSON; front-end renders in HTML/React</td></tr>
+            <tr><td>Data Access</td><td>VSAM KSDS browse (STARTBR/READNEXT/READPREV)</td><td>SQL query with LIMIT/OFFSET or keyset pagination</td><td>Replace VSAM browse with <code>SELECT ... WHERE tran_id &gt;= ? ORDER BY tran_id LIMIT 10</code></td></tr>
+            <tr><td>State Management</td><td>COMMAREA-based pseudo-conversational state</td><td>Stateless API with cursor-based pagination tokens</td><td>Page anchors (<code>TRNID-FIRST</code>/<code>TRNID-LAST</code>) map naturally to cursor-based pagination</td></tr>
+            <tr><td>Navigation</td><td>PF key-driven (PF3/PF7/PF8/ENTER)</td><td>URL routing / hyperlinks / infinite scroll</td><td>PF3 &rarr; browser back; PF7/PF8 &rarr; prev/next buttons or infinite scroll</td></tr>
+            <tr><td>Selection &amp; Drill-Down</td><td>&lsquo;S&rsquo; flag + XCTL to COTRN01C</td><td>Clickable row link to /transactions/{id}</td><td>XCTL replaced by HTTP redirect or SPA route navigation</td></tr>
+            <tr><td>Error Handling</td><td>Inline RESP checking + MOVE to WS-MESSAGE</td><td>Structured exception handling + HTTP status codes</td><td>NOTFND &rarr; 404; ENDFILE &rarr; empty result set; OTHER &rarr; 500 with error log</td></tr>
+            <tr><td>Validation</td><td>IS NUMERIC check in COBOL</td><td>Schema validation (JSON Schema / Bean Validation)</td><td>Transaction ID format validation via regex or type constraints</td></tr>
+            <tr><td>Date Formatting</td><td>Manual timestamp parsing (COBOL substring moves)</td><td>Standard date library (java.time, moment.js, etc.)</td><td>Eliminate manual MM/DD/YY construction from ISO timestamp</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /page-wrap-single -->
+
+<!-- ════════════════════  FOOTER  ════════════════════ -->
+<footer class="footer">
+  <strong>UniCredit S.p.A.</strong> &mdash; CardDemo CICS Transaction Analysis &middot; Auto-generated
+</footer>
+
+</body>
+</html>
