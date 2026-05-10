@@ -106,6 +106,9 @@ _input_event = threading.Event()
 _input_event.set()  # Start in "ready" state (not waiting)
 _waiting_for_input = False
 
+# Pending transaction: stored when user submits, committed to DB when Devin traces WRITE TRANSACT
+_pending_transaction = None  # {"amount": float, "merchant": str} or None
+
 
 def resolve_org_id(api_key):
     """Auto-detect org_id from an org-scoped service user key via /v3/self."""
@@ -269,25 +272,28 @@ class TraceHandler(SimpleHTTPRequestHandler):
 
     def handle_user_input(self):
         """Handle user input from the terminal (amount + merchant).
-        Writes to DB, relays to Devin session, and resumes the polling loop."""
-        global _waiting_for_input
+        Stores the transaction as pending (NOT written to DB yet).
+        The DB write happens later when Devin's trace reaches WRITE TRANSACT."""
+        global _waiting_for_input, _pending_transaction
         body = self.read_json_body()
         amount = body.get("amount", 0)
         merchant = body.get("merchant", "UNKNOWN")
         session_id = body.get("session_id")
 
-        result = db.add_transaction(float(amount), merchant)
+        # Store as pending — don't write to DB yet
+        _pending_transaction = {"amount": float(amount), "merchant": merchant}
+        print(f"Pending transaction stored: ${amount} @ {merchant} (will commit when Devin traces WRITE TRANSACT)")
 
-        # If there's an active Devin session, send a message telling it the input was received
+        # Tell Devin the user entered the data — Devin should continue tracing
+        # the online flow (WRITE TRANSACT) then move to batch
         if session_id and _ORG_ID:
             api_key = os.environ.get("DEVIN_API_KEY", "")
             if api_key:
                 try:
                     msg = (
                         f"The user entered a transaction of ${amount:.2f} for merchant {merchant}. "
-                        f"This has been written to the SQLite database (tran_id={result.get('tran_id')}). "
-                        f"Continue tracing the batch processing flow. "
-                        f"Read CBTRN02C.cbl and trace the batch overlimit check. "
+                        f"Continue tracing COTRN02C — the program will now EXEC CICS WRITE to the TRANSACT dataset. "
+                        f"After that, trace the batch processing flow in CBTRN02C. "
                         f"Use db_query to check the account state at the overlimit decision point."
                     )
                     devin_api_request(
@@ -303,7 +309,7 @@ class TraceHandler(SimpleHTTPRequestHandler):
         _waiting_for_input = False
         _input_event.set()
 
-        self.send_json(result)
+        self.send_json({"status": "pending", "amount": amount, "merchant": merchant})
 
     def serve_landing(self):
         """Serve a landing page with links to /live and /static."""
@@ -479,6 +485,21 @@ class TraceHandler(SimpleHTTPRequestHandler):
             "code_snippet": step_data.get("code_snippet", ""),
         }
 
+        # Commit pending transaction when Devin traces WRITE TRANSACT in online phase
+        global _pending_transaction
+        programs_upper = [p.upper() for p in step_data.get("programs", [])]
+        text_upper = (step_data.get("title", "") + " " + step_data.get("finding", "") + " " + step_data.get("code_snippet", "")).upper()
+        if _pending_transaction and phase == "online" and (
+            "TRANSACT" in programs_upper or
+            ("WRITE" in text_upper and "TRANSACT" in text_upper)
+        ):
+            txn = _pending_transaction
+            _pending_transaction = None
+            result = db.add_transaction(txn["amount"], txn["merchant"])
+            print(f"Transaction committed to DB: ${txn['amount']} @ {txn['merchant']} (tran_id={result.get('tran_id')})")
+            event["db_committed"] = True
+            event["tran_id"] = result.get("tran_id")
+
         # Check for requires_input directive (explicit field or fallback: detect RECEIVE MAP in text)
         requires_input = step_data.get("requires_input")
         if not requires_input:
@@ -504,6 +525,12 @@ class TraceHandler(SimpleHTTPRequestHandler):
         if db_query:
             # Server queries the DB on behalf of Devin
             if db_query == "check_overlimit":
+                # Safety: commit pending transaction before running batch
+                if _pending_transaction:
+                    txn = _pending_transaction
+                    _pending_transaction = None
+                    result = db.add_transaction(txn["amount"], txn["merchant"])
+                    print(f"Transaction committed before batch: ${txn['amount']} @ {txn['merchant']} (tran_id={result.get('tran_id')})")
                 batch_result = db.run_batch()
                 state = db.get_state()
                 event["type"] = "db_result"
