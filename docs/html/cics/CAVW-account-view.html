@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Account View (CAVW) – CICS Transaction Analysis | UniCredit CardDemo</title>
+<link rel="stylesheet" href="../shared/theme.css">
+</head>
+<body>
+
+<!-- ════════════════════  HERO  ════════════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. &mdash; Milano</div>
+    </div>
+    <h1>Account View &ndash; <span>CICS Transaction Analysis</span></h1>
+    <p class="hero-subtitle">
+      Transaction <code>CAVW</code> &middot; Program <code>COACTVWC</code> &middot; Read-only inquiry of account details with associated customer information
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Transaction ID</dt><dd>CAVW</dd></div>
+      <div><dt>Entry Program</dt><dd>COACTVWC</dd></div>
+      <div><dt>BMS Mapset</dt><dd>COACTVW</dd></div>
+      <div><dt>Design Pattern</dt><dd>Pseudo-conversational</dd></div>
+      <div><dt>LOC</dt><dd>941</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ════════════════════  BREADCRUMB  ════════════════════ -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">&rsaquo;</span>
+  <a href="index.html">CICS Flows</a>
+  <span class="sep">&rsaquo;</span>
+  Account View (CAVW)
+</div>
+
+<!-- ════════════════════  BODY  ════════════════════ -->
+<div class="page-wrap-single">
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 1 — Business Flow Analysis
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">01</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <h3>1.1 Business Context</h3>
+    <p>The <strong>Account View</strong> transaction (<code>CAVW</code>) provides a read-only inquiry screen that allows customer service representatives and account holders to look up detailed account information. Given an 11-digit account number, the system retrieves and displays:</p>
+    <ul>
+      <li>Account master data &mdash; status, balances, credit limits, key dates, and account group</li>
+      <li>Associated customer demographics &mdash; name, address, phone numbers, SSN, date of birth, FICO score, government-issued ID, EFT account, and primary card-holder indicator</li>
+    </ul>
+    <p>The transaction is accessible from the <strong>Main Menu</strong> (transaction <code>CM00</code>, program <code>COMEN01C</code>) and returns to the caller on PF3. No data modification occurs; this is purely a display function.</p>
+
+    <h3>1.2 Business Flow Diagram</h3>
+<pre>
+ ┌────────────────┐
+ │   Main Menu    │
+ │  (CM00/CA00)   │
+ └───────┬────────┘
+         │ XCTL to COACTVWC
+         ▼
+ ┌────────────────────────────────┐
+ │  Display Empty Account View   │
+ │  Prompt: "Enter or update id  │
+ │   of account to display"      │
+ └───────┬────────────────────────┘
+         │ User enters 11-digit account number + ENTER
+         ▼
+ ┌────────────────────────────────┐
+ │  Validate Account Number      │
+ │  - Not blank?                 │
+ │  - Numeric?                   │
+ │  - Non-zero?                  │
+ └───┬───────────┬───────────────┘
+     │ PASS      │ FAIL
+     ▼           ▼
+ ┌──────────┐  ┌──────────────────┐
+ │ Read     │  │ Show error msg   │
+ │ CXACAIX  │  │ re-display form  │
+ │ ACCTDAT  │  └──────────────────┘
+ │ CUSTDAT  │
+ └────┬─────┘
+      │
+      ▼
+ ┌────────────────────────────────┐
+ │  Display Account + Customer   │
+ │  details on CACTVWA map       │
+ └───────┬────────────────────────┘
+         │ PF3
+         ▼
+ ┌────────────────┐
+ │  Return to     │
+ │  Caller / Menu │
+ └────────────────┘
+</pre>
+
+    <h3>1.3 Business Rules</h3>
+    <table>
+      <thead><tr><th>Rule ID</th><th>Rule Description</th><th>Source (Paragraph)</th></tr></thead>
+      <tbody>
+        <tr><td>BR-01</td><td>Account number must be provided (not blank or spaces)</td><td>2210-EDIT-ACCOUNT</td></tr>
+        <tr><td>BR-02</td><td>Account number must be numeric (11 digits)</td><td>2210-EDIT-ACCOUNT</td></tr>
+        <tr><td>BR-03</td><td>Account number must be non-zero</td><td>2210-EDIT-ACCOUNT</td></tr>
+        <tr><td>BR-04</td><td>Account must exist in the Card Cross-Reference file (CXACAIX)</td><td>9200-GETCARDXREF-BYACCT</td></tr>
+        <tr><td>BR-05</td><td>Account must exist in the Account Master file (ACCTDAT)</td><td>9300-GETACCTDATA-BYACCT</td></tr>
+        <tr><td>BR-06</td><td>Associated customer must exist in the Customer Master file (CUSTDAT)</td><td>9400-GETCUSTDATA-BYCUST</td></tr>
+        <tr><td>BR-07</td><td>Only ENTER and PF3 are valid AID keys; all others are treated as ENTER</td><td>0000-MAIN (PFK validation)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>1.4 User Interactions</h3>
+    <table>
+      <thead><tr><th>Step</th><th>User Action</th><th>System Response</th><th>Business Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Navigate from Main Menu</td><td>Display empty Account View screen with prompt</td><td>Begin account inquiry</td></tr>
+        <tr><td>2</td><td>Enter 11-digit account number, press ENTER</td><td>Validate input; if valid, read CXACAIX &rarr; ACCTDAT &rarr; CUSTDAT and display details</td><td>View full account and customer information</td></tr>
+        <tr><td>3</td><td>Enter different account number, press ENTER</td><td>Re-validate and display new account details</td><td>Query another account</td></tr>
+        <tr><td>4</td><td>Press PF3</td><td>XCTL back to calling program or Main Menu</td><td>Exit inquiry</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 2 — Technical Flow Analysis
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">02</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <h3>2.1 Technical Flow Diagram &mdash; Overview</h3>
+<pre>
+ ┌──────────┐      ┌──────────────────────┐      ┌─────────────────────┐
+ │ 3270     │      │    CICS Region       │      │   VSAM Files        │
+ │ Terminal │─────▶│                      │─────▶│                     │
+ │          │◀─────│  CAVW / COACTVWC     │◀─────│  CXACAIX (Xref AIX) │
+ │          │      │                      │      │  ACCTDAT (Accounts) │
+ │          │      │  Map: CACTVWA        │      │  CUSTDAT (Customers)│
+ │          │      │  Mapset: COACTVW     │      │                     │
+ └──────────┘      └──────────────────────┘      └─────────────────────┘
+</pre>
+
+    <h3>2.2 Technical Flow Diagram &mdash; Detailed</h3>
+<pre>
+  CICS dispatch CAVW &rarr; COACTVWC
+       │
+       ├─ HANDLE ABEND LABEL(ABEND-ROUTINE)
+       ├─ INITIALIZE work areas
+       ├─ Check EIBCALEN
+       │   ├─ = 0 or first entry from menu
+       │   │     INITIALIZE CARDDEMO-COMMAREA, WS-THIS-PROGCOMMAREA
+       │   └─ &gt; 0
+       │         MOVE DFHCOMMAREA &rarr; CARDDEMO-COMMAREA + WS-THIS-PROGCOMMAREA
+       │
+       ├─ PERFORM YYYY-STORE-PFKEY  (map EIBAID &rarr; CCARD-AID)
+       │
+       ├─ Validate PF key (only ENTER, PF3 accepted)
+       │   └─ Invalid keys remapped to ENTER
+       │
+       ├─ EVALUATE TRUE
+       │   ├─ CCARD-AID-PFK03  &rarr; set CDEMO-TO-PROGRAM/TRANID
+       │   │                        EXEC CICS XCTL PROGRAM(CDEMO-TO-PROGRAM)
+       │   │
+       │   ├─ CDEMO-PGM-ENTER  &rarr; 1000-SEND-MAP (initial display)
+       │   │                        GO TO COMMON-RETURN
+       │   │
+       │   ├─ CDEMO-PGM-REENTER &rarr; 2000-PROCESS-INPUTS
+       │   │   ├─ 2100-RECEIVE-MAP   (EXEC CICS RECEIVE MAP)
+       │   │   ├─ 2200-EDIT-MAP-INPUTS
+       │   │   │   └─ 2210-EDIT-ACCOUNT (validate account number)
+       │   │   │
+       │   │   ├─ INPUT-ERROR? &rarr; 1000-SEND-MAP (re-display with error)
+       │   │   └─ INPUT-OK?   &rarr; 9000-READ-ACCT
+       │   │       ├─ 9200-GETCARDXREF-BYACCT  (READ CXACAIX)
+       │   │       ├─ 9300-GETACCTDATA-BYACCT  (READ ACCTDAT)
+       │   │       └─ 9400-GETCUSTDATA-BYCUST  (READ CUSTDAT)
+       │   │       then 1000-SEND-MAP (display results)
+       │   │
+       │   └─ OTHER &rarr; SEND-PLAIN-TEXT (ABEND scenario)
+       │
+       └─ COMMON-RETURN
+            MOVE CARDDEMO-COMMAREA + WS-THIS-PROGCOMMAREA &rarr; WS-COMMAREA
+            EXEC CICS RETURN TRANSID('CAVW') COMMAREA(WS-COMMAREA)
+</pre>
+
+    <h3>2.3 Pseudo-Conversational Flow</h3>
+    <table>
+      <thead><tr><th>Iteration</th><th>EIBCALEN</th><th>PGM-CONTEXT</th><th>User Action</th><th>Entry Point</th><th>Screen Sent</th><th>Next TRANSID</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>0 (or from menu)</td><td>CDEMO-PGM-ENTER (0)</td><td>Navigated from menu</td><td>0000-MAIN</td><td>CACTVWA (empty prompt)</td><td>CAVW</td></tr>
+        <tr><td>2</td><td>&gt; 0</td><td>CDEMO-PGM-REENTER (1)</td><td>Entered account number + ENTER</td><td>2000-PROCESS-INPUTS</td><td>CACTVWA (with data or error)</td><td>CAVW</td></tr>
+        <tr><td>3</td><td>&gt; 0</td><td>CDEMO-PGM-REENTER (1)</td><td>Entered new account or ENTER</td><td>2000-PROCESS-INPUTS</td><td>CACTVWA (with data or error)</td><td>CAVW</td></tr>
+        <tr><td>N</td><td>&gt; 0</td><td>CCARD-AID-PFK03</td><td>Pressed PF3</td><td>0000-MAIN (PF3 branch)</td><td>&mdash; (XCTL)</td><td>CDEMO-TO-TRANID</td></tr>
+      </tbody>
+    </table>
+
+    <h3>2.4 CICS Command Flow</h3>
+    <table>
+      <thead><tr><th>#</th><th>CICS Command</th><th>Paragraph</th><th>Purpose</th><th>RESP Handling</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><code>EXEC CICS HANDLE ABEND LABEL(ABEND-ROUTINE)</code></td><td>0000-MAIN</td><td>Establish abend handler</td><td>N/A (set-up)</td></tr>
+        <tr><td>2</td><td><code>EXEC CICS XCTL PROGRAM(CDEMO-TO-PROGRAM) COMMAREA</code></td><td>0000-MAIN (PF3)</td><td>Transfer control back to caller</td><td>None</td></tr>
+        <tr><td>3</td><td><code>EXEC CICS SEND MAP(CCARD-NEXT-MAP) MAPSET(CCARD-NEXT-MAPSET) FROM(CACTVWAO) CURSOR ERASE FREEKB</code></td><td>1400-SEND-SCREEN</td><td>Send the account view screen to terminal</td><td>RESP(WS-RESP-CD)</td></tr>
+        <tr><td>4</td><td><code>EXEC CICS RECEIVE MAP(LIT-THISMAP) MAPSET(LIT-THISMAPSET) INTO(CACTVWAI)</code></td><td>2100-RECEIVE-MAP</td><td>Receive user input from terminal</td><td>RESP(WS-RESP-CD) RESP2(WS-REAS-CD)</td></tr>
+        <tr><td>5</td><td><code>EXEC CICS READ DATASET(LIT-CARDXREFNAME-ACCT-PATH) RIDFLD(WS-CARD-RID-ACCT-ID-X) INTO(CARD-XREF-RECORD)</code></td><td>9200-GETCARDXREF-BYACCT</td><td>Read card cross-reference by account alternate index</td><td>RESP(WS-RESP-CD) RESP2(WS-REAS-CD)</td></tr>
+        <tr><td>6</td><td><code>EXEC CICS READ DATASET(LIT-ACCTFILENAME) RIDFLD(WS-CARD-RID-ACCT-ID-X) INTO(ACCOUNT-RECORD)</code></td><td>9300-GETACCTDATA-BYACCT</td><td>Read account master by account ID</td><td>RESP(WS-RESP-CD) RESP2(WS-REAS-CD)</td></tr>
+        <tr><td>7</td><td><code>EXEC CICS READ DATASET(LIT-CUSTFILENAME) RIDFLD(WS-CARD-RID-CUST-ID-X) INTO(CUSTOMER-RECORD)</code></td><td>9400-GETCUSTDATA-BYCUST</td><td>Read customer master by customer ID</td><td>RESP(WS-RESP-CD) RESP2(WS-REAS-CD)</td></tr>
+        <tr><td>8</td><td><code>EXEC CICS RETURN TRANSID(LIT-THISTRANID) COMMAREA(WS-COMMAREA)</code></td><td>COMMON-RETURN</td><td>Return control to CICS with pseudo-conversational restart</td><td>None</td></tr>
+        <tr><td>9</td><td><code>EXEC CICS SEND TEXT FROM(WS-RETURN-MSG) ERASE FREEKB</code></td><td>SEND-PLAIN-TEXT</td><td>Emergency plain-text display (unexpected scenario)</td><td>None</td></tr>
+        <tr><td>10</td><td><code>EXEC CICS SEND FROM(ABEND-DATA)</code></td><td>ABEND-ROUTINE</td><td>Display abend info before termination</td><td>NOHANDLE</td></tr>
+        <tr><td>11</td><td><code>EXEC CICS HANDLE ABEND CANCEL</code></td><td>ABEND-ROUTINE</td><td>Cancel abend handler to prevent loop</td><td>N/A</td></tr>
+        <tr><td>12</td><td><code>EXEC CICS ABEND ABCODE('9999')</code></td><td>ABEND-ROUTINE</td><td>Force abend with code 9999</td><td>N/A</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 3 — Screen Flow and BMS Maps
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">03</span>
+    <h2>Screen Flow and BMS Maps</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <h3>3.1 Screen Flow Diagram</h3>
+<pre>
+ ┌────────────────────┐                    ┌────────────────────┐
+ │  Main Menu         │     XCTL           │  Account View      │
+ │  COMEN1A / CM00    │ ──────────────────▶│  CACTVWA / CAVW    │
+ │                    │                    │                    │
+ │                    │◀────── PF3 ────────│  [Account Number]  │
+ └────────────────────┘                    │                    │
+                                           │  ENTER = Lookup    │
+                                           │  PF3   = Exit      │
+                                           └────────────────────┘
+</pre>
+
+    <h3>3.2 BMS Map Inventory</h3>
+    <table>
+      <thead><tr><th>Map Name</th><th>Mapset</th><th>Purpose</th><th>Key Fields</th></tr></thead>
+      <tbody>
+        <tr><td>CACTVWA</td><td>COACTVW</td><td>Account View inquiry screen &mdash; displays account &amp; customer details</td><td>ACCTSID (account number input), ACSTTUS, ACRDLIM, ACURBAL, ACSFNAM, ACSLNAM, ERRMSG</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.3 Screen Field Details</h3>
+    <table>
+      <thead><tr><th>Field</th><th>Label</th><th>Pos (Row,Col)</th><th>Len</th><th>Attr</th><th>Type</th></tr></thead>
+      <tbody>
+        <tr><td>TRNNAME</td><td>Tran:</td><td>(1,7)</td><td>4</td><td>ASKIP, FSET, NORM</td><td>Display</td></tr>
+        <tr><td>TITLE01</td><td>&mdash;</td><td>(1,21)</td><td>40</td><td>ASKIP, NORM</td><td>Title</td></tr>
+        <tr><td>CURDATE</td><td>Date:</td><td>(1,71)</td><td>8</td><td>ASKIP, NORM</td><td>Display</td></tr>
+        <tr><td>PGMNAME</td><td>Prog:</td><td>(2,7)</td><td>8</td><td>ASKIP, NORM</td><td>Display</td></tr>
+        <tr><td>TITLE02</td><td>&mdash;</td><td>(2,21)</td><td>40</td><td>ASKIP, NORM</td><td>Title</td></tr>
+        <tr><td>CURTIME</td><td>Time:</td><td>(2,71)</td><td>8</td><td>ASKIP, NORM</td><td>Display</td></tr>
+        <tr><td>ACCTSID</td><td>Account Number:</td><td>(5,38)</td><td>11</td><td>FSET, IC, UNPROT, MUSTFILL</td><td>Input (PIC 99999999999)</td></tr>
+        <tr><td>ACSTTUS</td><td>Active Y/N:</td><td>(5,70)</td><td>1</td><td>ASKIP</td><td>Display</td></tr>
+        <tr><td>ADTOPEN</td><td>Opened:</td><td>(6,17)</td><td>10</td><td>Display</td><td>Date</td></tr>
+        <tr><td>ACRDLIM</td><td>Credit Limit:</td><td>(6,61)</td><td>15</td><td>Display, RIGHT</td><td>Numeric (+ZZZ,ZZZ,ZZZ.99)</td></tr>
+        <tr><td>AEXPDT</td><td>Expiry:</td><td>(7,17)</td><td>10</td><td>Display</td><td>Date</td></tr>
+        <tr><td>ACSHLIM</td><td>Cash Credit Limit:</td><td>(7,61)</td><td>15</td><td>Display, RIGHT</td><td>Numeric (+ZZZ,ZZZ,ZZZ.99)</td></tr>
+        <tr><td>AREISDT</td><td>Reissue:</td><td>(8,17)</td><td>10</td><td>Display</td><td>Date</td></tr>
+        <tr><td>ACURBAL</td><td>Current Balance:</td><td>(8,61)</td><td>15</td><td>Display, RIGHT</td><td>Numeric (+ZZZ,ZZZ,ZZZ.99)</td></tr>
+        <tr><td>ACRCYCR</td><td>Current Cycle Credit:</td><td>(9,61)</td><td>15</td><td>Display, RIGHT</td><td>Numeric (+ZZZ,ZZZ,ZZZ.99)</td></tr>
+        <tr><td>AADDGRP</td><td>Account Group:</td><td>(10,23)</td><td>10</td><td>Display</td><td>Text</td></tr>
+        <tr><td>ACRCYDB</td><td>Current Cycle Debit:</td><td>(10,61)</td><td>15</td><td>Display, RIGHT</td><td>Numeric (+ZZZ,ZZZ,ZZZ.99)</td></tr>
+        <tr><td>ACSTNUM</td><td>Customer id:</td><td>(12,23)</td><td>9</td><td>Display</td><td>Numeric</td></tr>
+        <tr><td>ACSTSSN</td><td>SSN:</td><td>(12,54)</td><td>12</td><td>Display</td><td>Formatted (xxx-xx-xxxx)</td></tr>
+        <tr><td>ACSTDOB</td><td>Date of birth:</td><td>(13,23)</td><td>10</td><td>Display</td><td>Date</td></tr>
+        <tr><td>ACSTFCO</td><td>FICO Score:</td><td>(13,61)</td><td>3</td><td>Display</td><td>Numeric</td></tr>
+        <tr><td>ACSFNAM</td><td>First Name</td><td>(15,1)</td><td>25</td><td>Display</td><td>Text</td></tr>
+        <tr><td>ACSMNAM</td><td>Middle Name:</td><td>(15,28)</td><td>25</td><td>Display</td><td>Text</td></tr>
+        <tr><td>ACSLNAM</td><td>Last Name:</td><td>(15,55)</td><td>25</td><td>Display</td><td>Text</td></tr>
+        <tr><td>ACSADL1</td><td>Address:</td><td>(16,10)</td><td>50</td><td>Display</td><td>Text</td></tr>
+        <tr><td>ACSSTTE</td><td>State</td><td>(16,73)</td><td>2</td><td>Display</td><td>Text</td></tr>
+        <tr><td>ACSADL2</td><td>&mdash;</td><td>(17,10)</td><td>50</td><td>Display</td><td>Text</td></tr>
+        <tr><td>ACSZIPC</td><td>Zip</td><td>(17,73)</td><td>5</td><td>Display, RIGHT</td><td>Numeric</td></tr>
+        <tr><td>ACSCITY</td><td>City</td><td>(18,10)</td><td>50</td><td>Display</td><td>Text</td></tr>
+        <tr><td>ACSCTRY</td><td>Country</td><td>(18,73)</td><td>3</td><td>Display</td><td>Text</td></tr>
+        <tr><td>ACSPHN1</td><td>Phone 1:</td><td>(19,10)</td><td>13</td><td>Display</td><td>Text</td></tr>
+        <tr><td>ACSGOVT</td><td>Government Issued Id Ref:</td><td>(19,58)</td><td>20</td><td>Display</td><td>Text</td></tr>
+        <tr><td>ACSPHN2</td><td>Phone 2:</td><td>(20,10)</td><td>13</td><td>Display</td><td>Text</td></tr>
+        <tr><td>ACSEFTC</td><td>EFT Account Id:</td><td>(20,41)</td><td>10</td><td>Display</td><td>Text</td></tr>
+        <tr><td>ACSPFLG</td><td>Primary Card Holder Y/N:</td><td>(20,78)</td><td>1</td><td>Display</td><td>Flag</td></tr>
+        <tr><td>INFOMSG</td><td>&mdash;</td><td>(22,23)</td><td>45</td><td>PROT</td><td>Info message</td></tr>
+        <tr><td>ERRMSG</td><td>&mdash;</td><td>(23,1)</td><td>78</td><td>ASKIP, BRT, FSET, RED</td><td>Error message</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.4 PF Key / AID Key Handling</h3>
+    <table>
+      <thead><tr><th>Key</th><th>CCARD-AID Value</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>ENTER</td><td>CCARD-AID-ENTER</td><td>Submit the account number for lookup; if <code>CDEMO-PGM-ENTER</code>, send initial map; if <code>CDEMO-PGM-REENTER</code>, process inputs and read account data</td></tr>
+        <tr><td>PF3</td><td>CCARD-AID-PFK03</td><td>Exit &mdash; XCTL to calling program (<code>CDEMO-FROM-PROGRAM</code>) or Main Menu (<code>COMEN01C</code>)</td></tr>
+        <tr><td>Any other</td><td>(various)</td><td>Treated as ENTER (remapped via <code>SET CCARD-AID-ENTER TO TRUE</code>)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 4 — Program Inventory and Call Chain
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">04</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <h3>4.1 Program Inventory</h3>
+    <table>
+      <thead><tr><th>Program</th><th>Trans ID</th><th>Purpose</th><th>Entry Mechanism</th><th>LOC</th></tr></thead>
+      <tbody>
+        <tr><td>COACTVWC</td><td>CAVW</td><td>Account View &mdash; entry program</td><td>CICS transaction dispatch</td><td>941</td></tr>
+        <tr><td>COMEN01C</td><td>CM00</td><td>Main Menu &mdash; caller / return target</td><td>XCTL from COACTVWC on PF3</td><td>&mdash;</td></tr>
+        <tr><td>COCRDLIC</td><td>CCLI</td><td>Credit Card List (referenced in literals)</td><td>Potential XCTL target</td><td>&mdash;</td></tr>
+        <tr><td>COCRDUPC</td><td>CCUP</td><td>Credit Card Update (referenced in literals)</td><td>Potential XCTL target</td><td>&mdash;</td></tr>
+        <tr><td>COCRDSLC</td><td>CCDL</td><td>Credit Card Detail (referenced in literals)</td><td>Potential XCTL target</td><td>&mdash;</td></tr>
+      </tbody>
+    </table>
+
+    <h3>4.2 Call Chain Diagram</h3>
+<pre>
+ CAVW (Transaction)
+  └─ COACTVWC (Entry program)
+       ├─ EXEC CICS XCTL &rarr; CDEMO-TO-PROGRAM (on PF3)
+       │    └─ COMEN01C (Main Menu) or calling program
+       ├─ EXEC CICS READ &rarr; CXACAIX  (Card Xref Alternate Index)
+       ├─ EXEC CICS READ &rarr; ACCTDAT  (Account Master)
+       ├─ EXEC CICS READ &rarr; CUSTDAT  (Customer Master)
+       ├─ EXEC CICS SEND MAP(CACTVWA) MAPSET(COACTVW)
+       ├─ EXEC CICS RECEIVE MAP(CACTVWA) MAPSET(COACTVW)
+       └─ EXEC CICS RETURN TRANSID('CAVW')
+</pre>
+
+    <h3>4.3 Call Details</h3>
+    <table>
+      <thead><tr><th>Caller</th><th>Called</th><th>Mechanism</th><th>Data Passed</th><th>When</th></tr></thead>
+      <tbody>
+        <tr><td>COMEN01C</td><td>COACTVWC</td><td>XCTL</td><td>CARDDEMO-COMMAREA</td><td>User selects Account View from menu</td></tr>
+        <tr><td>COACTVWC</td><td>CDEMO-TO-PROGRAM (e.g., COMEN01C)</td><td>XCTL</td><td>CARDDEMO-COMMAREA</td><td>User presses PF3 to exit</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 5 — File and Data Store Inventory
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">05</span>
+    <h2>File and Data Store Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <h3>5.1 File Inventory</h3>
+    <table>
+      <thead><tr><th>FCT Name</th><th>Type</th><th>Access Mode</th><th>Program</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>CXACAIX</td><td>VSAM KSDS (Alternate Index)</td><td>READ</td><td>COACTVWC</td><td>Card cross-reference &mdash; look up card/customer by account ID</td></tr>
+        <tr><td>ACCTDAT</td><td>VSAM KSDS</td><td>READ</td><td>COACTVWC</td><td>Account master &mdash; retrieve account details</td></tr>
+        <tr><td>CUSTDAT</td><td>VSAM KSDS</td><td>READ</td><td>COACTVWC</td><td>Customer master &mdash; retrieve customer demographics</td></tr>
+      </tbody>
+    </table>
+
+    <h3>5.2 File Access Details</h3>
+    <table>
+      <thead><tr><th>File</th><th>Record Layout (Copybook)</th><th>Key</th><th>Record Length</th><th>Access Mode</th><th>Locking</th><th>Access Pattern</th></tr></thead>
+      <tbody>
+        <tr><td>CXACAIX</td><td>CVACT03Y (CARD-XREF-RECORD)</td><td>WS-CARD-RID-ACCT-ID-X (11 bytes)</td><td>50</td><td>READ only</td><td>None (no UPDATE)</td><td>Direct keyed read by account ID alternate index</td></tr>
+        <tr><td>ACCTDAT</td><td>CVACT01Y (ACCOUNT-RECORD)</td><td>WS-CARD-RID-ACCT-ID-X (11 bytes)</td><td>300</td><td>READ only</td><td>None (no UPDATE)</td><td>Direct keyed read by account ID</td></tr>
+        <tr><td>CUSTDAT</td><td>CVCUS01Y (CUSTOMER-RECORD)</td><td>WS-CARD-RID-CUST-ID-X (9 bytes)</td><td>500</td><td>READ only</td><td>None (no UPDATE)</td><td>Direct keyed read by customer ID (obtained from CXACAIX)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>5.3 TSQ Usage</h3>
+    <p><em>N/A &mdash; No Temporary Storage Queues are used by this transaction.</em></p>
+
+    <h3>5.4 TDQ Usage</h3>
+    <p><em>N/A &mdash; No Transient Data Queues are used by this transaction.</em></p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 6 — Data Flow Analysis
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">06</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <h3>6.1 Data Flow Through Transaction</h3>
+<pre>
+ Terminal Input                Working Storage                   VSAM Files
+ ┌────────────┐               ┌──────────────┐                  ┌────────────┐
+ │ ACCTSIDI   │──RECEIVE──▶  │ CC-ACCT-ID   │                  │            │
+ │ (11-digit  │   MAP        │              │                  │            │
+ │  acct num) │               │ CDEMO-ACCT-ID│──READ KEY──────▶│ CXACAIX    │
+ └────────────┘               │              │◀─CARD-XREF-REC──│            │
+                              │              │                  └────────────┘
+                              │ XREF-CUST-ID │                  ┌────────────┐
+                              │ XREF-ACCT-ID │──READ KEY──────▶│ ACCTDAT    │
+                              │              │◀─ACCOUNT-RECORD──│            │
+                              │              │                  └────────────┘
+                              │ CDEMO-CUST-ID│                  ┌────────────┐
+                              │              │──READ KEY──────▶│ CUSTDAT    │
+                              │              │◀─CUSTOMER-RECORD─│            │
+                              └──────┬───────┘                  └────────────┘
+                                     │
+                              1200-SETUP-SCREEN-VARS
+                                     │
+                              ┌──────▼───────┐
+ Terminal Output              │  CACTVWAO    │
+ ┌────────────┐               │  (output map)│
+ │ ACRDLIMO   │◀──SEND MAP───│  Account +   │
+ │ ACURBALO   │               │  Customer    │
+ │ ACSFNAMO   │               │  fields      │
+ │ etc.       │               └──────────────┘
+ └────────────┘
+</pre>
+
+    <h3>6.2 Data Transformation Map</h3>
+    <table>
+      <thead><tr><th>Source</th><th>Transformation</th><th>Target</th></tr></thead>
+      <tbody>
+        <tr><td>ACCTSIDI (map input)</td><td>Copy to CC-ACCT-ID; move to CDEMO-ACCT-ID after validation</td><td>WS-CARD-RID-ACCT-ID (READ key)</td></tr>
+        <tr><td>XREF-CUST-ID (from CXACAIX)</td><td>Move to CDEMO-CUST-ID</td><td>WS-CARD-RID-CUST-ID (READ key for CUSTDAT)</td></tr>
+        <tr><td>XREF-CARD-NUM (from CXACAIX)</td><td>Move to CDEMO-CARD-NUM</td><td>COMMAREA field</td></tr>
+        <tr><td>ACCT-ACTIVE-STATUS</td><td>Direct move</td><td>ACSTTUSO (map output)</td></tr>
+        <tr><td>ACCT-CURR-BAL (PIC S9(10)V99)</td><td>Formatted via PICOUT +ZZZ,ZZZ,ZZZ.99</td><td>ACURBALO (map output)</td></tr>
+        <tr><td>ACCT-CREDIT-LIMIT (PIC S9(10)V99)</td><td>Formatted via PICOUT +ZZZ,ZZZ,ZZZ.99</td><td>ACRDLIMO (map output)</td></tr>
+        <tr><td>ACCT-CASH-CREDIT-LIMIT</td><td>Formatted via PICOUT +ZZZ,ZZZ,ZZZ.99</td><td>ACSHLIMO (map output)</td></tr>
+        <tr><td>ACCT-CURR-CYC-CREDIT</td><td>Formatted via PICOUT +ZZZ,ZZZ,ZZZ.99</td><td>ACRCYCRO (map output)</td></tr>
+        <tr><td>ACCT-CURR-CYC-DEBIT</td><td>Formatted via PICOUT +ZZZ,ZZZ,ZZZ.99</td><td>ACRCYDBO (map output)</td></tr>
+        <tr><td>ACCT-OPEN-DATE</td><td>Direct move</td><td>ADTOPENO (map output)</td></tr>
+        <tr><td>ACCT-EXPIRAION-DATE</td><td>Direct move</td><td>AEXPDTO (map output)</td></tr>
+        <tr><td>ACCT-REISSUE-DATE</td><td>Direct move</td><td>AREISDTO (map output)</td></tr>
+        <tr><td>ACCT-GROUP-ID</td><td>Direct move</td><td>AADDGRPO (map output)</td></tr>
+        <tr><td>CUST-SSN (PIC 9(09))</td><td>STRING: SSN(1:3) &lsquo;-&rsquo; SSN(4:2) &lsquo;-&rsquo; SSN(6:4)</td><td>ACSTSSNO (formatted xxx-xx-xxxx)</td></tr>
+        <tr><td>CUST-FIRST-NAME, CUST-MIDDLE-NAME, CUST-LAST-NAME</td><td>Direct move</td><td>ACSFNAMO, ACSMNAMO, ACSLNAMO</td></tr>
+        <tr><td>CUST-ADDR-LINE-1/2/3, CUST-ADDR-STATE-CD, CUST-ADDR-ZIP, CUST-ADDR-COUNTRY-CD</td><td>Direct move</td><td>ACSADL1O, ACSADL2O, ACSCITYO, ACSSTTEO, ACSZIPCO, ACSCTRYO</td></tr>
+        <tr><td>CUST-PHONE-NUM-1/2</td><td>Direct move</td><td>ACSPHN1O, ACSPHN2O</td></tr>
+        <tr><td>CUST-GOVT-ISSUED-ID</td><td>Direct move</td><td>ACSGOVTO</td></tr>
+        <tr><td>CUST-EFT-ACCOUNT-ID</td><td>Direct move</td><td>ACSEFTCO</td></tr>
+        <tr><td>CUST-PRI-CARD-HOLDER-IND</td><td>Direct move</td><td>ACSPFLGO</td></tr>
+        <tr><td>CUST-FICO-CREDIT-SCORE</td><td>Direct move</td><td>ACSTFCOO</td></tr>
+        <tr><td>CUST-DOB-YYYY-MM-DD</td><td>Direct move</td><td>ACSTDOBO</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 7 — COMMAREA and Interface Contracts
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">07</span>
+    <h2>COMMAREA and Interface Contracts</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <h3>7.1 COMMAREA Layout (COCOM01Y &mdash; CARDDEMO-COMMAREA)</h3>
+    <table>
+      <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Direction</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>CDEMO-FROM-TRANID</td><td>X(04)</td><td>4</td><td>IN/OUT</td><td>Transaction ID of the calling program</td></tr>
+        <tr><td>CDEMO-FROM-PROGRAM</td><td>X(08)</td><td>8</td><td>IN/OUT</td><td>Program name of the caller</td></tr>
+        <tr><td>CDEMO-TO-TRANID</td><td>X(04)</td><td>4</td><td>OUT</td><td>Target transaction ID for XCTL navigation</td></tr>
+        <tr><td>CDEMO-TO-PROGRAM</td><td>X(08)</td><td>8</td><td>OUT</td><td>Target program name for XCTL navigation</td></tr>
+        <tr><td>CDEMO-USER-ID</td><td>X(08)</td><td>8</td><td>IN</td><td>Signed-on user ID</td></tr>
+        <tr><td>CDEMO-USER-TYPE</td><td>X(01)</td><td>1</td><td>IN</td><td>&lsquo;A&rsquo; = Admin, &lsquo;U&rsquo; = User</td></tr>
+        <tr><td>CDEMO-PGM-CONTEXT</td><td>9(01)</td><td>1</td><td>IN/OUT</td><td>0 = first entry, 1 = re-entry</td></tr>
+        <tr><td>CDEMO-CUST-ID</td><td>9(09)</td><td>9</td><td>OUT</td><td>Customer ID from CXACAIX lookup</td></tr>
+        <tr><td>CDEMO-CUST-FNAME</td><td>X(25)</td><td>25</td><td>IN</td><td>Customer first name (passed from caller)</td></tr>
+        <tr><td>CDEMO-CUST-MNAME</td><td>X(25)</td><td>25</td><td>IN</td><td>Customer middle name</td></tr>
+        <tr><td>CDEMO-CUST-LNAME</td><td>X(25)</td><td>25</td><td>IN</td><td>Customer last name</td></tr>
+        <tr><td>CDEMO-ACCT-ID</td><td>9(11)</td><td>11</td><td>IN/OUT</td><td>Account ID &mdash; set from validated input</td></tr>
+        <tr><td>CDEMO-ACCT-STATUS</td><td>X(01)</td><td>1</td><td>IN</td><td>Account status</td></tr>
+        <tr><td>CDEMO-CARD-NUM</td><td>9(16)</td><td>16</td><td>OUT</td><td>Card number from CXACAIX lookup</td></tr>
+        <tr><td>CDEMO-LAST-MAP</td><td>X(7)</td><td>7</td><td>OUT</td><td>Last BMS map displayed</td></tr>
+        <tr><td>CDEMO-LAST-MAPSET</td><td>X(7)</td><td>7</td><td>OUT</td><td>Last BMS mapset displayed</td></tr>
+      </tbody>
+    </table>
+
+    <h4>WS-THIS-PROGCOMMAREA (program-local extension)</h4>
+    <table>
+      <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>CA-FROM-PROGRAM</td><td>X(08)</td><td>8</td><td>Calling program context</td></tr>
+        <tr><td>CA-FROM-TRANID</td><td>X(04)</td><td>4</td><td>Calling transaction context</td></tr>
+      </tbody>
+    </table>
+
+    <h3>7.2 Return Code Conventions</h3>
+    <p>This program uses 88-level condition names on <code>WS-RETURN-MSG</code> to communicate status. The actual CICS RESP codes from file operations are evaluated via <code>EVALUATE WS-RESP-CD</code> with <code>DFHRESP(NORMAL)</code>, <code>DFHRESP(NOTFND)</code>, and <code>OTHER</code> branches. The <code>INPUT-OK</code> / <code>INPUT-ERROR</code> flags (<code>WS-INPUT-FLAG</code>) control flow between validation and data retrieval.</p>
+
+    <h3>7.3 Conversation State Management</h3>
+    <p>State is preserved across pseudo-conversational iterations via the combined COMMAREA:</p>
+    <ul>
+      <li><code>CARDDEMO-COMMAREA</code> (shared layout from COCOM01Y) occupies the first segment</li>
+      <li><code>WS-THIS-PROGCOMMAREA</code> (12 bytes) is appended after CARDDEMO-COMMAREA</li>
+      <li>At <code>COMMON-RETURN</code>, both are concatenated into <code>WS-COMMAREA</code> (PIC X(2000)) and passed via <code>EXEC CICS RETURN TRANSID('CAVW') COMMAREA(WS-COMMAREA)</code></li>
+      <li>On re-entry, DFHCOMMAREA is split back into CARDDEMO-COMMAREA and WS-THIS-PROGCOMMAREA</li>
+      <li><code>CDEMO-PGM-CONTEXT</code> (0=ENTER, 1=REENTER) governs which branch of the EVALUATE in 0000-MAIN is taken</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 8 — Error Handling and User Feedback
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">08</span>
+    <h2>Error Handling and User Feedback</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <h3>8.1 Error Flow Diagram</h3>
+<pre>
+                ┌───────────────────────┐
+                │   Normal Path         │
+                │   Input &rarr; Validate   │
+                │   &rarr; Read files       │
+                │   &rarr; Display results  │
+                └───────────┬───────────┘
+                            │
+        ┌───────────┬───────┴────────┬─────────────────┐
+        ▼           ▼                ▼                  ▼
+  ┌──────────┐ ┌──────────┐  ┌────────────┐    ┌───────────────┐
+  │ Blank    │ │ Invalid  │  │ Not found  │    │ File I/O      │
+  │ account  │ │ format   │  │ in CXACAIX │    │ error         │
+  │ number   │ │ (not     │  │ or ACCTDAT │    │ (OTHER RESP)  │
+  │          │ │ numeric/ │  │ or CUSTDAT │    │               │
+  │          │ │ zeroes)  │  │            │    │               │
+  └─────┬────┘ └─────┬────┘  └─────┬──────┘    └───────┬───────┘
+        │           │              │                    │
+        ▼           ▼              ▼                    ▼
+  ┌──────────────────────────────────────────────────────────┐
+  │  SET INPUT-ERROR TO TRUE                                 │
+  │  Move error message to WS-RETURN-MSG                     │
+  │  Re-display CACTVWA map with error in ERRMSG field       │
+  └──────────────────────────────────────────────────────────┘
+
+  ┌──────────────────────────────────────────────────────────┐
+  │  ABEND Path (unexpected scenarios)                       │
+  │  &rarr; SEND-PLAIN-TEXT  or  ABEND-ROUTINE                  │
+  │  &rarr; EXEC CICS ABEND ABCODE('9999')                      │
+  └──────────────────────────────────────────────────────────┘
+</pre>
+
+    <h3>8.2 Error Handling Matrix</h3>
+    <table>
+      <thead><tr><th>Error Condition</th><th>Paragraph</th><th>RESP Code</th><th>Program Action</th><th>User Message</th></tr></thead>
+      <tbody>
+        <tr><td>Account number blank/spaces</td><td>2210-EDIT-ACCOUNT</td><td>N/A (input)</td><td>SET INPUT-ERROR, FLG-ACCTFILTER-BLANK</td><td>&ldquo;Account number not provided&rdquo;</td></tr>
+        <tr><td>Account number not numeric or all zeros</td><td>2210-EDIT-ACCOUNT</td><td>N/A (input)</td><td>SET INPUT-ERROR, FLG-ACCTFILTER-NOT-OK</td><td>&ldquo;Account Filter must be a non-zero 11 digit number&rdquo;</td></tr>
+        <tr><td>No input received (cross-field)</td><td>2200-EDIT-MAP-INPUTS</td><td>N/A (input)</td><td>SET NO-SEARCH-CRITERIA-RECEIVED</td><td>&ldquo;No input received&rdquo;</td></tr>
+        <tr><td>Account not in CXACAIX</td><td>9200-GETCARDXREF-BYACCT</td><td>DFHRESP(NOTFND)</td><td>SET INPUT-ERROR, FLG-ACCTFILTER-NOT-OK</td><td>&ldquo;Account:&lt;id&gt; not found in Cross ref file. Resp:&lt;n&gt; Reas:&lt;n&gt;&rdquo;</td></tr>
+        <tr><td>CXACAIX I/O error</td><td>9200-GETCARDXREF-BYACCT</td><td>OTHER</td><td>SET INPUT-ERROR; build WS-FILE-ERROR-MESSAGE</td><td>&ldquo;File Error: READ on CXACAIX returned RESP &lt;n&gt;,RESP2 &lt;n&gt;&rdquo;</td></tr>
+        <tr><td>Account not in ACCTDAT</td><td>9300-GETACCTDATA-BYACCT</td><td>DFHRESP(NOTFND)</td><td>SET INPUT-ERROR, FLG-ACCTFILTER-NOT-OK</td><td>&ldquo;Account:&lt;id&gt; not found in Acct Master file. Resp:&lt;n&gt; Reas:&lt;n&gt;&rdquo;</td></tr>
+        <tr><td>ACCTDAT I/O error</td><td>9300-GETACCTDATA-BYACCT</td><td>OTHER</td><td>SET INPUT-ERROR; build WS-FILE-ERROR-MESSAGE</td><td>&ldquo;File Error: READ on ACCTDAT returned RESP &lt;n&gt;,RESP2 &lt;n&gt;&rdquo;</td></tr>
+        <tr><td>Customer not in CUSTDAT</td><td>9400-GETCUSTDATA-BYCUST</td><td>DFHRESP(NOTFND)</td><td>SET INPUT-ERROR, FLG-CUSTFILTER-NOT-OK</td><td>&ldquo;CustId:&lt;id&gt; not found in customer master. Resp:&lt;n&gt; REAS:&lt;n&gt;&rdquo;</td></tr>
+        <tr><td>CUSTDAT I/O error</td><td>9400-GETCUSTDATA-BYCUST</td><td>OTHER</td><td>SET INPUT-ERROR; build WS-FILE-ERROR-MESSAGE</td><td>&ldquo;File Error: READ on CUSTDAT returned RESP &lt;n&gt;,RESP2 &lt;n&gt;&rdquo;</td></tr>
+        <tr><td>Unexpected data scenario</td><td>0000-MAIN (OTHER)</td><td>N/A</td><td>SEND-PLAIN-TEXT, set ABEND-CODE &lsquo;0001&rsquo;</td><td>&ldquo;UNEXPECTED DATA SCENARIO&rdquo;</td></tr>
+        <tr><td>Unhandled ABEND</td><td>ABEND-ROUTINE</td><td>N/A</td><td>SEND ABEND-DATA, ABEND ABCODE(&lsquo;9999&rsquo;)</td><td>&ldquo;UNEXPECTED ABEND OCCURRED.&rdquo;</td></tr>
+      </tbody>
+    </table>
+
+    <h3>8.3 HANDLE ABEND / HANDLE CONDITION</h3>
+    <table>
+      <thead><tr><th>Statement</th><th>Location</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><code>EXEC CICS HANDLE ABEND LABEL(ABEND-ROUTINE)</code></td><td>0000-MAIN (line 264)</td><td>Establish abend handler at program start</td></tr>
+        <tr><td><code>EXEC CICS HANDLE ABEND CANCEL</code></td><td>ABEND-ROUTINE (line 930)</td><td>Cancel handler before issuing ABEND to prevent infinite loop</td></tr>
+      </tbody>
+    </table>
+
+    <h3>8.4 User Error Messages</h3>
+    <table>
+      <thead><tr><th>88-Level / Literal</th><th>Message Text</th><th>Displayed In</th></tr></thead>
+      <tbody>
+        <tr><td>WS-PROMPT-FOR-INPUT</td><td>&ldquo;Enter or update id of account to display&rdquo;</td><td>INFOMSG field</td></tr>
+        <tr><td>WS-INFORM-OUTPUT</td><td>&ldquo;Displaying details of given Account&rdquo;</td><td>INFOMSG field</td></tr>
+        <tr><td>WS-PROMPT-FOR-ACCT</td><td>&ldquo;Account number not provided&rdquo;</td><td>ERRMSG field</td></tr>
+        <tr><td>NO-SEARCH-CRITERIA-RECEIVED</td><td>&ldquo;No input received&rdquo;</td><td>ERRMSG field</td></tr>
+        <tr><td>SEARCHED-ACCT-ZEROES</td><td>&ldquo;Account number must be a non zero 11 digit number&rdquo;</td><td>ERRMSG field</td></tr>
+        <tr><td>SEARCHED-ACCT-NOT-NUMERIC</td><td>&ldquo;Account number must be a non zero 11 digit number&rdquo;</td><td>ERRMSG field</td></tr>
+        <tr><td>DID-NOT-FIND-ACCT-IN-CARDXREF</td><td>&ldquo;Did not find this account in account card xref file&rdquo;</td><td>ERRMSG field</td></tr>
+        <tr><td>DID-NOT-FIND-ACCT-IN-ACCTDAT</td><td>&ldquo;Did not find this account in account master file&rdquo;</td><td>ERRMSG field</td></tr>
+        <tr><td>DID-NOT-FIND-CUST-IN-CUSTDAT</td><td>&ldquo;Did not find associated customer in master file&rdquo;</td><td>ERRMSG field</td></tr>
+        <tr><td>XREF-READ-ERROR</td><td>&ldquo;Error reading account card xref File&rdquo;</td><td>ERRMSG field</td></tr>
+        <tr><td>(inline literal)</td><td>&ldquo;Account Filter must be a non-zero 11 digit number&rdquo;</td><td>ERRMSG field</td></tr>
+        <tr><td>WS-EXIT-MESSAGE</td><td>&ldquo;PF03 pressed. Exiting&rdquo;</td><td>ERRMSG field</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 9 — Security and Authorization
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">09</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <h3>9.1 Transaction Security</h3>
+    <p>The CAVW transaction does not implement its own authentication or authorization logic. Access control relies on:</p>
+    <ul>
+      <li><strong>CICS transaction-level security:</strong> The transaction ID <code>CAVW</code> can be secured via RACF/external security manager to restrict which user IDs may invoke it.</li>
+      <li><strong>Application-level routing:</strong> The Main Menu program (<code>COMEN01C</code>) controls navigation. Account View is presented as a menu option to regular users (user type &lsquo;U&rsquo;). The <code>CDEMO-USER-TYPE</code> field in COMMAREA carries the user type established at sign-on (<code>COSGN00C</code>).</li>
+      <li><strong>No row-level security:</strong> Any authenticated user with access to the transaction can view any account by providing its 11-digit account number.</li>
+    </ul>
+
+    <h3>9.2 Data Access Authorization</h3>
+    <p>All three VSAM file reads (CXACAIX, ACCTDAT, CUSTDAT) are performed under the CICS region&rsquo;s security context. There are no per-user data restrictions within the program. Sensitive data such as SSN is displayed on screen without masking (formatted as xxx-xx-xxxx via STRING).</p>
+
+    <h3>9.3 Audit Trail</h3>
+    <p>The program does not implement explicit audit logging. Any audit trail relies on CICS system-level journal/logging and SMF records that may be configured at the region level.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 10 — Performance Characteristics
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Performance Characteristics</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <h3>10.1 Performance Profile</h3>
+    <table>
+      <thead><tr><th>Metric</th><th>Value</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>File I/Os per inquiry</td><td>3</td><td>1&times; CXACAIX + 1&times; ACCTDAT + 1&times; CUSTDAT</td></tr>
+        <tr><td>Map sends per iteration</td><td>1</td><td>Single SEND MAP per pseudo-conversational cycle</td></tr>
+        <tr><td>Map receives per iteration</td><td>1</td><td>Single RECEIVE MAP (on re-entry)</td></tr>
+        <tr><td>COMMAREA size</td><td>~2000 bytes</td><td>WS-COMMAREA PIC X(2000)</td></tr>
+        <tr><td>Largest record read</td><td>500 bytes</td><td>CUSTOMER-RECORD from CUSTDAT</td></tr>
+        <tr><td>Browse operations</td><td>0</td><td>All file access is direct keyed READ</td></tr>
+      </tbody>
+    </table>
+
+    <h3>10.2 Performance Considerations</h3>
+    <ul>
+      <li><strong>Lightweight transaction:</strong> Only 3 direct keyed reads with no browse, no write, and no queue operations &mdash; very efficient per iteration.</li>
+      <li><strong>No locking:</strong> All READs are without UPDATE, so no VSAM record locking overhead and no risk of deadlocks.</li>
+      <li><strong>Alternate index path:</strong> CXACAIX is an alternate index over the card cross-reference file, which adds an extra I/O hop compared to a direct base cluster read, but is negligible for single-record lookups.</li>
+      <li><strong>COMMAREA size:</strong> At 2000 bytes, the COMMAREA is modest and should not cause storage concerns.</li>
+      <li><strong>Pseudo-conversational:</strong> Resources are released between terminal interactions, minimizing region resource consumption.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 11 — Testing Approach
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <h3>11.1 Test Scenarios</h3>
+    <table>
+      <thead><tr><th>TC#</th><th>Scenario</th><th>Input</th><th>Expected Result</th><th>Validates</th></tr></thead>
+      <tbody>
+        <tr><td>TC-01</td><td>Initial screen display</td><td>Navigate from Main Menu</td><td>Empty CACTVWA map with prompt &ldquo;Enter or update id of account to display&rdquo;</td><td>First-entry flow (EIBCALEN=0)</td></tr>
+        <tr><td>TC-02</td><td>Valid account lookup</td><td>Enter valid 11-digit account number, press ENTER</td><td>Account and customer details displayed; no error message</td><td>Happy path: CXACAIX &rarr; ACCTDAT &rarr; CUSTDAT</td></tr>
+        <tr><td>TC-03</td><td>Blank account number</td><td>Press ENTER without entering data</td><td>Error: &ldquo;Account number not provided&rdquo; or &ldquo;No input received&rdquo;</td><td>BR-01 (blank check)</td></tr>
+        <tr><td>TC-04</td><td>Non-numeric account number</td><td>Enter &ldquo;ABCDEFGHIJK&rdquo;</td><td>Error: &ldquo;Account Filter must be a non-zero 11 digit number&rdquo;</td><td>BR-02 (numeric check)</td></tr>
+        <tr><td>TC-05</td><td>All-zeros account number</td><td>Enter &ldquo;00000000000&rdquo;</td><td>Error: &ldquo;Account Filter must be a non-zero 11 digit number&rdquo;</td><td>BR-03 (non-zero check)</td></tr>
+        <tr><td>TC-06</td><td>Account not in cross-reference</td><td>Enter valid-format account number not in CXACAIX</td><td>Error: &ldquo;Account:&lt;id&gt; not found in Cross ref file&rdquo;</td><td>BR-04 (NOTFND on CXACAIX)</td></tr>
+        <tr><td>TC-07</td><td>Account in xref but not in master</td><td>Account exists in CXACAIX but not ACCTDAT</td><td>Error: &ldquo;Account:&lt;id&gt; not found in Acct Master file&rdquo;</td><td>BR-05 (NOTFND on ACCTDAT)</td></tr>
+        <tr><td>TC-08</td><td>Customer not in master</td><td>Account/xref valid but customer ID not in CUSTDAT</td><td>Error: &ldquo;CustId:&lt;id&gt; not found in customer master&rdquo;</td><td>BR-06 (NOTFND on CUSTDAT)</td></tr>
+        <tr><td>TC-09</td><td>PF3 exit to Main Menu</td><td>Press PF3 (no prior caller)</td><td>XCTL to COMEN01C (Main Menu)</td><td>PF3 navigation</td></tr>
+        <tr><td>TC-10</td><td>PF3 exit to caller</td><td>Press PF3 (with CDEMO-FROM-PROGRAM set)</td><td>XCTL to calling program</td><td>Return-to-caller logic</td></tr>
+        <tr><td>TC-11</td><td>Invalid PF key</td><td>Press PF7 (or any unsupported key)</td><td>Treated as ENTER; re-processes inputs</td><td>PFK remapping logic</td></tr>
+        <tr><td>TC-12</td><td>SSN formatting</td><td>Lookup account with known customer SSN</td><td>SSN displayed as xxx-xx-xxxx format</td><td>STRING transformation in 1200-SETUP-SCREEN-VARS</td></tr>
+        <tr><td>TC-13</td><td>Currency formatting</td><td>Lookup account with known balances</td><td>Balances displayed with +ZZZ,ZZZ,ZZZ.99 format</td><td>BMS PICOUT formatting</td></tr>
+        <tr><td>TC-14</td><td>Sequential lookups</td><td>Lookup account A, then account B</td><td>Screen refreshes with account B details</td><td>Pseudo-conversational re-entry</td></tr>
+      </tbody>
+    </table>
+
+    <h3>11.2 Test Data Requirements</h3>
+    <table>
+      <thead><tr><th>Data Category</th><th>Requirement</th></tr></thead>
+      <tbody>
+        <tr><td>CXACAIX</td><td>At least 2 card cross-reference records with different account IDs, linked to valid customers</td></tr>
+        <tr><td>ACCTDAT</td><td>At least 2 account master records with varying balances, statuses, and dates</td></tr>
+        <tr><td>CUSTDAT</td><td>At least 2 customer master records with complete demographics (name, address, SSN, DOB, FICO)</td></tr>
+        <tr><td>Negative test data</td><td>An account ID that exists in CXACAIX but not in ACCTDAT; a customer ID that doesn&rsquo;t exist in CUSTDAT</td></tr>
+        <tr><td>User session</td><td>Signed-on user session with COMMAREA pre-populated by COSGN00C</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 12 — Known Issues and Considerations
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Known Issues and Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <h3>12.1 Known Issues</h3>
+    <table>
+      <thead><tr><th>Issue</th><th>Severity</th><th>Details</th></tr></thead>
+      <tbody>
+        <tr><td>Duplicate paragraph name</td><td>Low</td><td><code>0000-MAIN-EXIT</code> is defined twice (lines 408 and 411). While this compiles, it is misleading and indicates a copy-paste artifact.</td></tr>
+        <tr><td>SSN displayed without masking</td><td>Medium</td><td>Full SSN is displayed on screen (formatted as xxx-xx-xxxx). In a production environment, PII regulations may require partial masking (e.g., ***-**-xxxx).</td></tr>
+        <tr><td>CUST-ADDR-LINE-3 mapped to City field</td><td>Low</td><td><code>CUST-ADDR-LINE-3</code> is moved to <code>ACSCITYO</code> (City field), which is semantically incorrect &mdash; it is actually the third address line, not the city. The BMS label says &ldquo;City&rdquo; but the data is address line 3.</td></tr>
+        <tr><td>Referenced programs not called</td><td>Low</td><td>Literal values for COCRDLIC, COCRDUPC, COCRDSLC are defined in WS-LITERALS but never used in the PROCEDURE DIVISION. These may be remnants from a planned feature or copy-paste from another program.</td></tr>
+        <tr><td>No RESP handling on SEND MAP</td><td>Low</td><td>While <code>RESP(WS-RESP-CD)</code> is captured on the SEND MAP command, the response is never evaluated. A SEND failure would go undetected.</td></tr>
+        <tr><td>No RESP handling on RECEIVE MAP</td><td>Low</td><td>Similarly, <code>RESP(WS-RESP-CD)</code> and <code>RESP2(WS-REAS-CD)</code> are captured on RECEIVE MAP but never checked post-execution.</td></tr>
+        <tr><td>Hardcoded abend code</td><td>Low</td><td>Abend code <code>'9999'</code> is hardcoded. A more descriptive abend code scheme would improve diagnostics.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>12.2 Modernization Considerations</h3>
+    <table>
+      <thead><tr><th>Area</th><th>Current State</th><th>Target State</th></tr></thead>
+      <tbody>
+        <tr><td>Screen I/O</td><td>BMS maps via 3270 terminal (SEND/RECEIVE MAP)</td><td>REST API endpoint returning JSON; React/Angular frontend</td></tr>
+        <tr><td>Data Access</td><td>EXEC CICS READ against VSAM KSDS files</td><td>JPA/Hibernate queries against relational database (PostgreSQL/DB2)</td></tr>
+        <tr><td>State Management</td><td>Pseudo-conversational COMMAREA passing</td><td>Stateless REST with session tokens (JWT); server-side cache or database for state</td></tr>
+        <tr><td>Navigation</td><td>XCTL between COBOL programs</td><td>Client-side routing (React Router, Angular Router)</td></tr>
+        <tr><td>Error Handling</td><td>88-level flags, EVALUATE RESP, HANDLE ABEND</td><td>Structured exception handling (try/catch); HTTP error codes; centralized error middleware</td></tr>
+        <tr><td>Security</td><td>RACF transaction security; no row-level controls; SSN displayed in full</td><td>OAuth 2.0/OIDC; role-based access control; PII masking; audit logging</td></tr>
+        <tr><td>Data Formatting</td><td>BMS PICOUT for currency; STRING for SSN</td><td>Internationalized number/date formatters (ICU, Intl API); server-side masking</td></tr>
+        <tr><td>File Layout</td><td>Fixed-length VSAM records with FILLER padding</td><td>Normalized relational tables; variable-length columns</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</div><!-- /page-wrap-single -->
+
+<!-- ════════════════════  FOOTER  ════════════════════ -->
+<footer class="footer">
+  <strong>UniCredit S.p.A.</strong> &mdash; CardDemo CICS Transaction Analysis &middot; Auto-generated
+</footer>
+
+</body>
+</html>
