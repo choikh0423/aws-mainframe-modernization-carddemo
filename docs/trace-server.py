@@ -188,10 +188,10 @@ class TraceHandler(SimpleHTTPRequestHandler):
 
         if path == "/":
             self.serve_landing()
-        elif path in ("/live", "/live/"):
-            self.serve_file("live-trace-demo.html")
-        elif path in ("/static", "/static/", "/dataflow", "/dataflow/"):
+        elif path in ("/live", "/live/", "/dataflow", "/dataflow/"):
             self.serve_file("data-flow-demo.html")
+        elif path in ("/trace", "/trace/"):
+            self.serve_file("live-trace-demo.html")
         elif path in ("/api/db/state",):
             self.handle_db_state()
         elif path in ("/api/db/querylog",):
@@ -638,9 +638,9 @@ LANDING_HTML = """
     &ldquo;What does this flow do?&rdquo;
   </p>
   <div class="cards">
-    <a href="/dataflow" class="card db">
+    <a href="/live" class="card db">
       <div class="badge">SQLITE-BACKED &mdash; NO API KEY NEEDED</div>
-      <h2>/dataflow</h2>
+      <h2>/live</h2>
       <p>
         Live database-driven demo. Transactions write to SQLite,
         batch processing queries real DB state for overlimit decisions.
@@ -648,9 +648,9 @@ LANDING_HTML = """
         Shows actual SQL queries in real-time.
       </p>
     </a>
-    <a href="/live" class="card live">
+    <a href="/trace" class="card live">
       <div class="badge">REQUIRES SERVER ENV VARS</div>
-      <h2>/live</h2>
+      <h2>/trace</h2>
       <p>
         Ask Devin &ldquo;what does this flow do?&rdquo; and watch the call
         tree light up in real-time as Devin reads through the COBOL source
@@ -687,10 +687,10 @@ def main():
             print(f"  Org ID: {_ORG_ID}")
         except Exception as e:
             print(f"WARNING: Could not resolve org ID: {e}")
-            print("  /live route will not work, but /dataflow will.")
+            print("  /trace route will not work, but /live will.")
     else:
-        print("NOTE: DEVIN_API_KEY not set. /live route disabled.")
-        print("      /dataflow route works without an API key.")
+        print("NOTE: DEVIN_API_KEY not set. /trace route disabled.")
+        print("      /live route works without an API key.")
 
     server = HTTPServer(("0.0.0.0", port), TraceHandler)
     print(f"""
@@ -700,8 +700,8 @@ def main():
 |                                                              |
 |  Routes:                                                     |
 |    http://localhost:{port}          Landing page               |
-|    http://localhost:{port}/dataflow SQLite-backed live demo    |
-|    http://localhost:{port}/live     Live trace (asks Devin)    |
+|    http://localhost:{port}/live     SQLite-backed live demo    |
+|    http://localhost:{port}/trace    Live trace (asks Devin)    |
 |                                                              |
 |  API Endpoints:                                              |
 |    GET  /api/db/state       Full database state              |
