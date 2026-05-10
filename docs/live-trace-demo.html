@@ -1822,6 +1822,9 @@ function handleInputRequired(data) {
 }
 
 async function handleDBResult(data) {
+  // handleDBResult only updates the DB sidebar and logs queries.
+  // Accept/reject path highlighting is handled by handleTraceStep
+  // based on Devin's actual words (ACCEPTED/REJECTED in title/finding).
   const batchResult = data.batch_result || {};
   const queries = data.queries_executed || batchResult.queries_executed || [];
   const results = batchResult.results || [];
@@ -1829,11 +1832,8 @@ async function handleDBResult(data) {
   const decision = r.decision || 'UNKNOWN';
   const tempBal = r.temp_bal || 0;
 
-  showStep(data.title || 'Overlimit Result', data.finding ? data.finding.substring(0, 80) : '');
+  showStep(data.title || 'Overlimit Check', data.finding ? data.finding.substring(0, 80) : '');
   highlightPrograms(data.programs, 'batch');
-
-  // Light the decision edge
-  activateEdge('e-acct-decision', 'el-acct-decision', 'batch');
 
   logQueries(queries);
   switchTab('sql');
@@ -1842,30 +1842,12 @@ async function handleDBResult(data) {
   await refreshDbState();
   switchTab('vsam');
 
+  // Log the result but do NOT activate accept/reject paths here.
+  // Devin will output a follow-up trace_step saying ACCEPTED or REJECTED,
+  // and handleTraceStep's text matching will light the correct path.
   if (decision === 'ACCEPTED') {
-    activateDecision('d-overlimit', 'dl-overlimit', 'active');
-    activateDecision(null, 'dl-overlimit2', 'active');
-    activateEdge('e-decision-accept', 'el-decision-accept');
-    activateNode('n-accept');
-    activateEdge('e-accept-transact', 'el-accept-transact');
-    activateEdge('e-accept-tcatbal', 'el-accept-tcatbal');
-    activateNode('n-transact-posted');
-    activateNode('n-tcatbal');
-    showBadge('vb-result', `REWRITE bal → $${acctBal.toFixed(0)}`);
-    const balTd = document.getElementById('td-bal');
-    const cycCrTd = document.getElementById('td-cyc-cr');
-    balTd.classList.add('changed', 'flash-green');
-    cycCrTd.classList.add('changed', 'flash-green');
-    setTimeout(() => { balTd.classList.remove('flash-green'); cycCrTd.classList.remove('flash-green'); }, 1200);
     addTrace('accept', `→ credit_limit($${creditLimit.toFixed(2)}) >= temp_bal($${typeof tempBal === 'number' ? tempBal.toFixed(2) : tempBal}) → <span class="highlight">ACCEPTED</span>`);
-  } else {
-    activateDecision('d-overlimit', 'dl-overlimit', 'reject-active');
-    activateDecision(null, 'dl-overlimit2', 'reject-active');
-    activateEdge('e-decision-reject', 'el-decision-reject', 'reject');
-    activateNode('n-reject', 'reject');
-    activateEdge('e-reject-rejs', 'el-reject-rejs', 'reject');
-    activateNode('n-dalyrejs', 'reject');
-    showBadge('vb-reject-reason', 'Code 102: OVERLIMIT');
+  } else if (decision === 'REJECTED') {
     addTrace('reject', `→ credit_limit($${creditLimit.toFixed(2)}) < temp_bal($${typeof tempBal === 'number' ? tempBal.toFixed(2) : tempBal}) → <span class="warn">REJECTED</span>`);
   }
 
