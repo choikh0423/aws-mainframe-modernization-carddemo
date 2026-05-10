@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transaction View (CT01) – CICS Transaction Analysis | UniCredit CardDemo</title>
+<link rel="stylesheet" href="../shared/theme.css">
+</head>
+<body>
+
+<!-- Hero -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. — Milano</div>
+    </div>
+    <h1>Transaction View – <span>CICS Transaction Analysis</span></h1>
+    <p class="hero-subtitle">
+      Transaction <code>CT01</code> · Program <code>COTRN01C</code> · View individual transaction details by ID lookup from TRANSACT file
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Transaction ID</dt><dd>CT01</dd></div>
+      <div><dt>Entry Program</dt><dd>COTRN01C</dd></div>
+      <div><dt>BMS Mapset</dt><dd>COTRN01</dd></div>
+      <div><dt>Design Pattern</dt><dd>Pseudo-conversational</dd></div>
+      <div><dt>LOC</dt><dd>330</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">›</span>
+  <a href="index.html">CICS Flows</a>
+  <span class="sep">›</span>
+  Transaction View (CT01)
+</div>
+
+<!-- Body -->
+<div class="page-wrap-single">
+
+<!-- ════════════════════════════════════════════════════════════════════
+     SECTION 1: Business Flow Analysis
+     ════════════════════════════════════════════════════════════════════ -->
+<section class="section">
+  <h2>1. Business Flow Analysis</h2>
+
+  <h3>1.1 Business Context</h3>
+  <p>
+    The <strong>Transaction View</strong> function allows cardholders and customer service agents to
+    retrieve and display the full details of a single credit card transaction. The user enters a
+    16-character Transaction ID, and the system performs a keyed read against the TRANSACT VSAM file
+    to display all associated fields: card number, type/category codes, source, description,
+    amount, origination/processing timestamps, and merchant information.
+  </p>
+  <p>
+    This is a <em>read-only inquiry</em> screen typically accessed from the Transaction List (CT00)
+    when a user selects a specific transaction for detailed review. It supports quick re-query via
+    ENTER and navigation back to the list via PF5.
+  </p>
+
+  <h3>1.2 Business Flow Diagram</h3>
+<pre>
+┌─────────────────────────────────────────────────────────────────┐
+│                    TRANSACTION VIEW FLOW                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌──────────┐     ┌──────────────┐     ┌───────────────────┐   │
+│  │ CT00     │────▶│ CT01 Entry   │────▶│ Display COTRN1A   │   │
+│  │ Tran List│     │ (Pre-filled  │     │ (empty or pre-    │   │
+│  │ Selection│     │  TRNID)      │     │  populated)       │   │
+│  └──────────┘     └──────────────┘     └─────────┬─────────┘   │
+│                                                   │             │
+│                          ┌────────────────────────┘             │
+│                          ▼                                      │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │ User enters Transaction ID → presses ENTER               │   │
+│  └─────────────────────────────┬────────────────────────────┘   │
+│                                ▼                                │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │ Validate: TRNID not empty                                 │   │
+│  │   ├── FAIL → "Tran ID can NOT be empty..." message       │   │
+│  │   └── PASS → READ TRANSACT file by TRAN-ID key           │   │
+│  └─────────────────────────────┬────────────────────────────┘   │
+│                                ▼                                │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │ File Read Result:                                         │   │
+│  │   ├── NORMAL    → Populate all display fields             │   │
+│  │   ├── NOTFND    → "Transaction ID NOT found..."          │   │
+│  │   └── OTHER     → "Unable to lookup Transaction..."      │   │
+│  └─────────────────────────────┬────────────────────────────┘   │
+│                                ▼                                │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │ SEND MAP COTRN1A → RETURN TRANSID('CT01')                 │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+</pre>
+
+  <h3>1.3 Business Rules</h3>
+  <table>
+    <thead>
+      <tr><th>Rule ID</th><th>Business Rule</th><th>Enforcement</th><th>Error Message</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>BR-01</td>
+        <td>Transaction ID must not be empty</td>
+        <td>EVALUATE check on TRNIDINI field</td>
+        <td>"Tran ID can NOT be empty..."</td>
+      </tr>
+      <tr>
+        <td>BR-02</td>
+        <td>Transaction ID must exist in TRANSACT file</td>
+        <td>EXEC CICS READ RESP check for NOTFND</td>
+        <td>"Transaction ID NOT found..."</td>
+      </tr>
+      <tr>
+        <td>BR-03</td>
+        <td>Transaction is read-only (no update capability)</td>
+        <td>All display fields use ASKIP attribute in BMS</td>
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>1.4 User Interactions</h3>
+  <table>
+    <thead>
+      <tr><th>Step</th><th>User Action</th><th>System Response</th><th>Business Meaning</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>Navigate from Transaction List (CT00) or enter CT01 trans</td>
+        <td>Display COTRN1A screen with cursor on "Enter Tran ID" field (pre-filled if coming from CT00)</td>
+        <td>Transaction inquiry initiation</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Enter/confirm Transaction ID, press ENTER</td>
+        <td>System reads TRANSACT file and populates all detail fields</td>
+        <td>Transaction detail retrieval</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Press PF3</td>
+        <td>Return to calling program (COTRN00C or COMEN01C)</td>
+        <td>Exit transaction view</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>Press PF4</td>
+        <td>Clear all fields, reset cursor to Transaction ID input</td>
+        <td>Start fresh inquiry</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>Press PF5</td>
+        <td>Transfer to COTRN00C (Transaction List browser)</td>
+        <td>Navigate to transaction list</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     SECTION 2: Technical Flow Analysis
+     ════════════════════════════════════════════════════════════════════ -->
+<section class="section">
+  <h2>2. Technical Flow Analysis</h2>
+
+  <h3>2.1 Technical Flow Diagram — Overview</h3>
+<pre>
+┌──────────────┐      ┌───────────────────────┐      ┌──────────────┐
+│   3270       │      │     CICS REGION        │      │   VSAM       │
+│  TERMINAL    │◀════▶│                        │◀════▶│   FILES      │
+│              │      │  ┌─────────────────┐   │      │              │
+│  MAP:        │      │  │   COTRN01C      │   │      │  TRANSACT    │
+│  COTRN1A     │      │  │   (CT01)        │   │      │  (KSDS)      │
+│              │      │  └────────┬────────┘   │      │              │
+│              │      │           │XCTL         │      └──────────────┘
+│              │      │  ┌────────▼────────┐   │
+│              │      │  │  COTRN00C (PF5) │   │
+│              │      │  │  COMEN01C (PF3) │   │
+│              │      │  │  COSGN00C (err) │   │
+│              │      │  └─────────────────┘   │
+│              │      └───────────────────────────┘
+└──────────────┘
+</pre>
+
+  <h3>2.2 Technical Flow Diagram — Detailed</h3>
+<pre>
+MAIN-PARA:
+  │
+  ├── SET ERR-FLG-OFF, USR-MODIFIED-NO
+  ├── MOVE SPACES TO WS-MESSAGE, ERRMSGO
+  │
+  ├── IF EIBCALEN = 0
+  │     └── XCTL to COSGN00C (unauthorized access)
+  │
+  ├── MOVE DFHCOMMAREA → CARDDEMO-COMMAREA
+  │
+  ├── IF NOT CDEMO-PGM-REENTER (first entry)
+  │     ├── SET CDEMO-PGM-REENTER TO TRUE
+  │     ├── MOVE LOW-VALUES TO COTRN1AO
+  │     ├── IF CDEMO-CT01-TRN-SELECTED ≠ SPACES/LOW-VALUES
+  │     │     ├── Pre-fill TRNIDINI from selected tran
+  │     │     └── PERFORM PROCESS-ENTER-KEY (auto-fetch)
+  │     └── PERFORM SEND-TRNVIEW-SCREEN
+  │
+  ├── ELSE (re-entry)
+  │     ├── PERFORM RECEIVE-TRNVIEW-SCREEN
+  │     └── EVALUATE EIBAID
+  │           ├── DFHENTER  → PROCESS-ENTER-KEY
+  │           ├── DFHPF3   → XCTL to FROM-PROGRAM or COMEN01C
+  │           ├── DFHPF4   → CLEAR-CURRENT-SCREEN
+  │           ├── DFHPF5   → XCTL to COTRN00C
+  │           └── OTHER    → "Invalid key pressed..."
+  │
+  └── EXEC CICS RETURN TRANSID('CT01') COMMAREA(CARDDEMO-COMMAREA)
+</pre>
+
+  <h3>2.3 Pseudo-Conversational Flow</h3>
+  <table>
+    <thead>
+      <tr><th>Iteration</th><th>EIBCALEN</th><th>User Action</th><th>Entry Point</th><th>Screen Sent</th><th>RETURN TRANSID</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>0</td>
+        <td>Direct invocation without COMMAREA</td>
+        <td>MAIN-PARA</td>
+        <td>N/A (XCTL to COSGN00C)</td>
+        <td>N/A</td>
+      </tr>
+      <tr>
+        <td>1</td>
+        <td>&gt;0, PGM-ENTER</td>
+        <td>XCTL from CT00 or menu with pre-selected transaction</td>
+        <td>MAIN-PARA → first-entry path</td>
+        <td>COTRN1A (pre-populated if TRN-SELECTED set)</td>
+        <td>CT01</td>
+      </tr>
+      <tr>
+        <td>2+</td>
+        <td>&gt;0, PGM-REENTER</td>
+        <td>ENTER with Transaction ID</td>
+        <td>MAIN-PARA → re-entry → PROCESS-ENTER-KEY</td>
+        <td>COTRN1A (with transaction details or error)</td>
+        <td>CT01</td>
+      </tr>
+      <tr>
+        <td>2+</td>
+        <td>&gt;0, PGM-REENTER</td>
+        <td>PF4 (Clear)</td>
+        <td>MAIN-PARA → re-entry → CLEAR-CURRENT-SCREEN</td>
+        <td>COTRN1A (all fields cleared)</td>
+        <td>CT01</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>2.4 CICS Command Flow</h3>
+  <table>
+    <thead>
+      <tr><th>#</th><th>CICS Command</th><th>Location</th><th>Purpose</th><th>Response Handling</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>EXEC CICS XCTL PROGRAM(CDEMO-TO-PROGRAM)</td>
+        <td>RETURN-TO-PREV-SCREEN</td>
+        <td>Transfer control to calling/target program</td>
+        <td>None (control leaves program)</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>EXEC CICS SEND MAP('COTRN1A') MAPSET('COTRN01')</td>
+        <td>SEND-TRNVIEW-SCREEN</td>
+        <td>Display the transaction view screen</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>EXEC CICS RECEIVE MAP('COTRN1A') MAPSET('COTRN01')</td>
+        <td>RECEIVE-TRNVIEW-SCREEN</td>
+        <td>Receive user input from terminal</td>
+        <td>RESP(WS-RESP-CD) RESP2(WS-REAS-CD)</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>EXEC CICS READ DATASET(WS-TRANSACT-FILE) RIDFLD(TRAN-ID)</td>
+        <td>READ-TRANSACT-FILE</td>
+        <td>Read transaction record by key</td>
+        <td>RESP: NORMAL, NOTFND, OTHER</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>EXEC CICS RETURN TRANSID(WS-TRANID) COMMAREA(CARDDEMO-COMMAREA)</td>
+        <td>MAIN-PARA (end)</td>
+        <td>Return control to CICS, schedule next invocation</td>
+        <td>None</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     SECTION 3: Screen Flow and BMS Maps
+     ════════════════════════════════════════════════════════════════════ -->
+<section class="section">
+  <h2>3. Screen Flow and BMS Maps</h2>
+
+  <h3>3.1 Screen Flow Diagram</h3>
+<pre>
+                    ┌──────────────────────┐
+                    │   COTRN00C (CT00)    │
+                    │   Transaction List   │
+                    └──────────┬───────────┘
+                               │ Select transaction
+                               ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                     COTRN1A (CT01)                                │
+│                   Transaction View                                │
+│                                                                  │
+│  ┌─ Enter Tran ID: [________________] ─┐                        │
+│  │                                      │                        │
+│  │  Transaction ID: XXXXXXXXXXXXXXXX    Card Number: XXXXXXXX    │
+│  │  Type CD: XX   Category CD: XXXX    Source: XXXXXXXXXX       │
+│  │  Description: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX                  │
+│  │  Amount: +XXXXXXXX.XX   Orig Date: XX/XX/XXXX                │
+│  │  Merchant ID: XXXXXXXXX  Merchant Name: XXXXXXXXXX           │
+│  │  Merchant City: XXXXXXXXX  Merchant Zip: XXXXXXXXXX          │
+│  │                                                               │
+│  │  ENTER=Fetch  F3=Back  F4=Clear  F5=Browse Tran.             │
+│  └───────────────────────────────────────────────────────────────┘
+│                                                                  │
+│   PF3 ──▶ From Program / COMEN01C                               │
+│   PF4 ──▶ Clear fields (stay on COTRN1A)                        │
+│   PF5 ──▶ COTRN00C (Transaction List)                           │
+└──────────────────────────────────────────────────────────────────┘
+</pre>
+
+  <h3>3.2 BMS Map Inventory</h3>
+  <table>
+    <thead>
+      <tr><th>Map Name</th><th>Mapset</th><th>Purpose</th><th>Key Fields</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>COTRN1A</td>
+        <td>COTRN01</td>
+        <td>Transaction detail view screen</td>
+        <td>TRNIDIN (input), TRNID, CARDNUM, TTYPCD, TCATCD, TRNSRC, TDESC, TRNAMT, TORIGDT, TPROCDT, MID, MNAME, MCITY, MZIP, ERRMSG</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>3.3 Screen Field Details</h3>
+  <table>
+    <thead>
+      <tr><th>Field Name</th><th>Position</th><th>Length</th><th>Attribute</th><th>Color</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>TRNNAME</td><td>(1,7)</td><td>4</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Transaction ID display (header)</td></tr>
+      <tr><td>TITLE01</td><td>(1,21)</td><td>40</td><td>ASKIP, FSET, NORM</td><td>YELLOW</td><td>Application title line 1</td></tr>
+      <tr><td>CURDATE</td><td>(1,71)</td><td>8</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Current date mm/dd/yy</td></tr>
+      <tr><td>PGMNAME</td><td>(2,7)</td><td>8</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Program name display</td></tr>
+      <tr><td>TITLE02</td><td>(2,21)</td><td>40</td><td>ASKIP, FSET, NORM</td><td>YELLOW</td><td>Application title line 2</td></tr>
+      <tr><td>CURTIME</td><td>(2,71)</td><td>8</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Current time hh:mm:ss</td></tr>
+      <tr><td>TRNIDIN</td><td>(6,21)</td><td>16</td><td>FSET, IC, NORM, UNPROT</td><td>GREEN</td><td>Transaction ID input (user-enterable)</td></tr>
+      <tr><td>TRNID</td><td>(10,22)</td><td>16</td><td>ASKIP, NORM</td><td>BLUE</td><td>Transaction ID (display)</td></tr>
+      <tr><td>CARDNUM</td><td>(10,58)</td><td>16</td><td>ASKIP, NORM</td><td>BLUE</td><td>Card number</td></tr>
+      <tr><td>TTYPCD</td><td>(12,15)</td><td>2</td><td>ASKIP, NORM</td><td>BLUE</td><td>Transaction type code</td></tr>
+      <tr><td>TCATCD</td><td>(12,36)</td><td>4</td><td>ASKIP, NORM</td><td>BLUE</td><td>Transaction category code</td></tr>
+      <tr><td>TRNSRC</td><td>(12,54)</td><td>10</td><td>ASKIP, NORM</td><td>BLUE</td><td>Transaction source</td></tr>
+      <tr><td>TDESC</td><td>(14,19)</td><td>60</td><td>ASKIP, NORM</td><td>BLUE</td><td>Transaction description</td></tr>
+      <tr><td>TRNAMT</td><td>(16,14)</td><td>12</td><td>ASKIP, NORM</td><td>BLUE</td><td>Transaction amount</td></tr>
+      <tr><td>TORIGDT</td><td>(16,42)</td><td>10</td><td>ASKIP, NORM</td><td>BLUE</td><td>Origination date</td></tr>
+      <tr><td>TPROCDT</td><td>(16,68)</td><td>10</td><td>ASKIP, NORM</td><td>BLUE</td><td>Processing date</td></tr>
+      <tr><td>MID</td><td>(18,19)</td><td>9</td><td>ASKIP, NORM</td><td>BLUE</td><td>Merchant ID</td></tr>
+      <tr><td>MNAME</td><td>(18,48)</td><td>30</td><td>ASKIP, NORM</td><td>BLUE</td><td>Merchant name</td></tr>
+      <tr><td>MCITY</td><td>(20,21)</td><td>25</td><td>ASKIP, NORM</td><td>BLUE</td><td>Merchant city</td></tr>
+      <tr><td>MZIP</td><td>(20,67)</td><td>10</td><td>ASKIP, NORM</td><td>BLUE</td><td>Merchant zip code</td></tr>
+      <tr><td>ERRMSG</td><td>(23,1)</td><td>78</td><td>ASKIP, BRT, FSET</td><td>RED</td><td>Error/status message line</td></tr>
+    </tbody>
+  </table>
+
+  <h3>3.4 PF Key / AID Key Handling</h3>
+  <table>
+    <thead>
+      <tr><th>Key</th><th>EIBAID Value</th><th>Action</th><th>Target</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>ENTER</td><td>DFHENTER</td><td>Validate input and fetch transaction</td><td>PROCESS-ENTER-KEY → SEND-TRNVIEW-SCREEN</td></tr>
+      <tr><td>PF3</td><td>DFHPF3</td><td>Return to previous screen</td><td>XCTL to CDEMO-FROM-PROGRAM or COMEN01C</td></tr>
+      <tr><td>PF4</td><td>DFHPF4</td><td>Clear all fields</td><td>CLEAR-CURRENT-SCREEN → SEND-TRNVIEW-SCREEN</td></tr>
+      <tr><td>PF5</td><td>DFHPF5</td><td>Navigate to Transaction List</td><td>XCTL to COTRN00C</td></tr>
+      <tr><td>Other</td><td>Any other AID</td><td>Display invalid key message</td><td>SEND-TRNVIEW-SCREEN with CCDA-MSG-INVALID-KEY</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     SECTION 4: Program Inventory and Call Chain
+     ════════════════════════════════════════════════════════════════════ -->
+<section class="section">
+  <h2>4. Program Inventory and Call Chain</h2>
+
+  <h3>4.1 Program Inventory</h3>
+  <table>
+    <thead>
+      <tr><th>Program</th><th>Type</th><th>Entry Mechanism</th><th>Purpose</th><th>LOC</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>COTRN01C</td><td>Entry program</td><td>CICS TRANSID CT01</td><td>Transaction view — read and display single transaction</td><td>330</td></tr>
+      <tr><td>COTRN00C</td><td>Navigation target</td><td>XCTL (PF5)</td><td>Transaction list/browse</td><td>—</td></tr>
+      <tr><td>COMEN01C</td><td>Navigation target</td><td>XCTL (PF3 default)</td><td>Main menu</td><td>—</td></tr>
+      <tr><td>COSGN00C</td><td>Security redirect</td><td>XCTL (EIBCALEN=0)</td><td>Sign-on program</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <h3>4.2 Call Chain Diagram</h3>
+<pre>
+CICS Transaction CT01
+  │
+  └── COTRN01C (entry program)
+        │
+        ├── EXEC CICS READ → TRANSACT (VSAM KSDS)
+        │
+        ├── EXEC CICS SEND MAP('COTRN1A') MAPSET('COTRN01')
+        │
+        ├── EXEC CICS RECEIVE MAP('COTRN1A') MAPSET('COTRN01')
+        │
+        ├── EXEC CICS XCTL → COTRN00C  (PF5: Browse transactions)
+        │
+        ├── EXEC CICS XCTL → COMEN01C  (PF3: Main menu)
+        │
+        ├── EXEC CICS XCTL → COSGN00C  (No COMMAREA: sign-on redirect)
+        │
+        └── EXEC CICS RETURN TRANSID('CT01') COMMAREA(CARDDEMO-COMMAREA)
+</pre>
+
+  <h3>4.3 Call Details</h3>
+  <table>
+    <thead>
+      <tr><th>Caller</th><th>Called</th><th>Mechanism</th><th>Data Passed</th><th>When</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>COTRN01C</td><td>COSGN00C</td><td>XCTL</td><td>CARDDEMO-COMMAREA</td><td>EIBCALEN = 0 (unauthorized access)</td></tr>
+      <tr><td>COTRN01C</td><td>COTRN00C</td><td>XCTL</td><td>CARDDEMO-COMMAREA</td><td>PF5 pressed (return to transaction list)</td></tr>
+      <tr><td>COTRN01C</td><td>COMEN01C</td><td>XCTL</td><td>CARDDEMO-COMMAREA</td><td>PF3 pressed with no FROM-PROGRAM</td></tr>
+      <tr><td>COTRN01C</td><td>CDEMO-FROM-PROGRAM</td><td>XCTL</td><td>CARDDEMO-COMMAREA</td><td>PF3 pressed with FROM-PROGRAM set</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     SECTION 5: File and Data Store Inventory
+     ════════════════════════════════════════════════════════════════════ -->
+<section class="section">
+  <h2>5. File and Data Store Inventory</h2>
+
+  <h3>5.1 File Inventory</h3>
+  <table>
+    <thead>
+      <tr><th>FCT Name</th><th>Type</th><th>Access Mode</th><th>Program</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>TRANSACT</td><td>VSAM KSDS</td><td>READ (with UPDATE option)</td><td>COTRN01C</td><td>Transaction master file — keyed by TRAN-ID</td></tr>
+    </tbody>
+  </table>
+
+  <h3>5.2 File Access Details</h3>
+  <table>
+    <thead>
+      <tr><th>Attribute</th><th>Value</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Dataset Name</td><td>TRANSACT (WS-TRANSACT-FILE)</td></tr>
+      <tr><td>Record Layout</td><td>CVTRA05Y.cpy — TRAN-RECORD (350 bytes)</td></tr>
+      <tr><td>Primary Key</td><td>TRAN-ID (PIC X(16), positions 1–16)</td></tr>
+      <tr><td>Key Length</td><td>LENGTH OF TRAN-ID (16 bytes)</td></tr>
+      <tr><td>Access Mode</td><td>READ with UPDATE option</td></tr>
+      <tr><td>Locking</td><td>UPDATE keyword acquires exclusive lock (released at task end)</td></tr>
+      <tr><td>Access Pattern</td><td>Direct keyed read — single record per user request</td></tr>
+    </tbody>
+  </table>
+
+  <h3>5.3 TSQ Usage</h3>
+  <p><em>N/A — This transaction does not use Temporary Storage Queues.</em></p>
+
+  <h3>5.4 TDQ Usage</h3>
+  <p><em>N/A — This transaction does not use Transient Data Queues.</em></p>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     SECTION 6: Data Flow Analysis
+     ════════════════════════════════════════════════════════════════════ -->
+<section class="section">
+  <h2>6. Data Flow Analysis</h2>
+
+  <h3>6.1 Data Flow Through Transaction</h3>
+<pre>
+┌────────────────┐        ┌──────────────────────────┐        ┌──────────────┐
+│   TERMINAL     │        │     WORKING STORAGE      │        │  TRANSACT    │
+│   (3270)       │        │                          │        │  (VSAM)      │
+├────────────────┤        ├──────────────────────────┤        ├──────────────┤
+│                │        │                          │        │              │
+│  COTRN1AI      │──IN──▶│  TRNIDINI → TRAN-ID     │──KEY─▶│  READ        │
+│  (input map)   │        │                          │        │  TRAN-RECORD │
+│                │        │                          │◀─DATA──│  (350 bytes) │
+│                │        │  TRAN-RECORD fields:     │        │              │
+│  COTRN1AO      │◀─OUT──│   TRAN-ID → TRNIDI      │        └──────────────┘
+│  (output map)  │        │   TRAN-CARD-NUM → CARDNUMI│
+│                │        │   TRAN-TYPE-CD → TTYPCDI │
+│                │        │   TRAN-CAT-CD → TCATCDI  │
+│                │        │   TRAN-SOURCE → TRNSRCI  │
+│                │        │   TRAN-AMT → WS-TRAN-AMT │
+│                │        │     → TRNAMTI            │
+│                │        │   TRAN-DESC → TDESCI     │
+│                │        │   TRAN-ORIG-TS → TORIGDTI│
+│                │        │   TRAN-PROC-TS → TPROCDTI│
+│                │        │   TRAN-MERCHANT-ID → MIDI│
+│                │        │   TRAN-MERCHANT-NAME     │
+│                │        │     → MNAMEI             │
+│                │        │   TRAN-MERCHANT-CITY     │
+│                │        │     → MCITYI             │
+│                │        │   TRAN-MERCHANT-ZIP      │
+│                │        │     → MZIPI              │
+│                │        └──────────────────────────┘
+└────────────────┘
+</pre>
+
+  <h3>6.2 Data Transformation Map</h3>
+  <table>
+    <thead>
+      <tr><th>Source Field</th><th>Transformation</th><th>Target Field</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>TRNIDINI OF COTRN1AI</td><td>Direct move (input to key)</td><td>TRAN-ID</td></tr>
+      <tr><td>TRAN-ID</td><td>Direct move</td><td>TRNIDI OF COTRN1AI</td></tr>
+      <tr><td>TRAN-CARD-NUM</td><td>Direct move</td><td>CARDNUMI OF COTRN1AI</td></tr>
+      <tr><td>TRAN-TYPE-CD</td><td>Direct move</td><td>TTYPCDI OF COTRN1AI</td></tr>
+      <tr><td>TRAN-CAT-CD</td><td>Direct move</td><td>TCATCDI OF COTRN1AI</td></tr>
+      <tr><td>TRAN-SOURCE</td><td>Direct move</td><td>TRNSRCI OF COTRN1AI</td></tr>
+      <tr><td>TRAN-AMT</td><td>Numeric format: PIC S9(09)V99 → PIC +99999999.99</td><td>WS-TRAN-AMT → TRNAMTI OF COTRN1AI</td></tr>
+      <tr><td>TRAN-DESC</td><td>Direct move</td><td>TDESCI OF COTRN1AI</td></tr>
+      <tr><td>TRAN-ORIG-TS</td><td>Direct move (26-char timestamp to 10-char display)</td><td>TORIGDTI OF COTRN1AI</td></tr>
+      <tr><td>TRAN-PROC-TS</td><td>Direct move (26-char timestamp to 10-char display)</td><td>TPROCDTI OF COTRN1AI</td></tr>
+      <tr><td>TRAN-MERCHANT-ID</td><td>Direct move</td><td>MIDI OF COTRN1AI</td></tr>
+      <tr><td>TRAN-MERCHANT-NAME</td><td>Direct move</td><td>MNAMEI OF COTRN1AI</td></tr>
+      <tr><td>TRAN-MERCHANT-CITY</td><td>Direct move</td><td>MCITYI OF COTRN1AI</td></tr>
+      <tr><td>TRAN-MERCHANT-ZIP</td><td>Direct move</td><td>MZIPI OF COTRN1AI</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     SECTION 7: COMMAREA and Interface Contracts
+     ════════════════════════════════════════════════════════════════════ -->
+<section class="section">
+  <h2>7. COMMAREA and Interface Contracts</h2>
+
+  <h3>7.1 COMMAREA Layout</h3>
+  <p>This transaction uses the shared <code>CARDDEMO-COMMAREA</code> defined in <code>COCOM01Y.cpy</code>,
+     plus transaction-specific fields defined inline (<code>CDEMO-CT01-INFO</code>).</p>
+  <table>
+    <thead>
+      <tr><th>Field</th><th>PIC</th><th>Length</th><th>Direction</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>CDEMO-FROM-TRANID</td><td>X(04)</td><td>4</td><td>IN/OUT</td><td>Calling transaction ID</td></tr>
+      <tr><td>CDEMO-FROM-PROGRAM</td><td>X(08)</td><td>8</td><td>IN/OUT</td><td>Calling program name (used by PF3 for return)</td></tr>
+      <tr><td>CDEMO-TO-TRANID</td><td>X(04)</td><td>4</td><td>OUT</td><td>Target transaction ID</td></tr>
+      <tr><td>CDEMO-TO-PROGRAM</td><td>X(08)</td><td>8</td><td>OUT</td><td>Target program for XCTL</td></tr>
+      <tr><td>CDEMO-USER-ID</td><td>X(08)</td><td>8</td><td>IN</td><td>Authenticated user ID</td></tr>
+      <tr><td>CDEMO-USER-TYPE</td><td>X(01)</td><td>1</td><td>IN</td><td>User type: 'A'=Admin, 'U'=User</td></tr>
+      <tr><td>CDEMO-PGM-CONTEXT</td><td>9(01)</td><td>1</td><td>IN/OUT</td><td>0=first entry, 1=re-entry</td></tr>
+      <tr><td>CDEMO-CT01-TRNID-FIRST</td><td>X(16)</td><td>16</td><td>IN</td><td>First transaction ID in browse range</td></tr>
+      <tr><td>CDEMO-CT01-TRNID-LAST</td><td>X(16)</td><td>16</td><td>IN</td><td>Last transaction ID in browse range</td></tr>
+      <tr><td>CDEMO-CT01-PAGE-NUM</td><td>9(08)</td><td>8</td><td>IN/OUT</td><td>Current page number in browse</td></tr>
+      <tr><td>CDEMO-CT01-NEXT-PAGE-FLG</td><td>X(01)</td><td>1</td><td>IN/OUT</td><td>'Y'=more pages available, 'N'=last page</td></tr>
+      <tr><td>CDEMO-CT01-TRN-SEL-FLG</td><td>X(01)</td><td>1</td><td>IN</td><td>Transaction selection flag</td></tr>
+      <tr><td>CDEMO-CT01-TRN-SELECTED</td><td>X(16)</td><td>16</td><td>IN</td><td>Selected transaction ID (pre-fill from CT00)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>7.2 Return Code Conventions</h3>
+  <table>
+    <thead>
+      <tr><th>Variable</th><th>Value</th><th>Meaning</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>WS-ERR-FLG</td><td>'N'</td><td>No error — normal processing</td></tr>
+      <tr><td>WS-ERR-FLG</td><td>'Y'</td><td>Error detected — message displayed, processing stops</td></tr>
+      <tr><td>WS-RESP-CD</td><td>DFHRESP(NORMAL)</td><td>CICS command succeeded</td></tr>
+      <tr><td>WS-RESP-CD</td><td>DFHRESP(NOTFND)</td><td>Record not found in file</td></tr>
+    </tbody>
+  </table>
+
+  <h3>7.3 Conversation State Management</h3>
+  <p>State is preserved between pseudo-conversational iterations via the <code>CARDDEMO-COMMAREA</code>:</p>
+  <ul>
+    <li><strong>CDEMO-PGM-CONTEXT</strong>: Set to 1 (CDEMO-PGM-REENTER) on first entry to distinguish first-time display from subsequent interactions.</li>
+    <li><strong>CDEMO-CT01-TRN-SELECTED</strong>: Carries the pre-selected Transaction ID from CT00 list screen into CT01 on first entry.</li>
+    <li><strong>CDEMO-FROM-PROGRAM / CDEMO-FROM-TRANID</strong>: Stored before XCTL to track navigation history for PF3 return.</li>
+    <li>The entire COMMAREA is passed on every RETURN TRANSID and XCTL call, preserving context across all program boundaries.</li>
+  </ul>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     SECTION 8: Error Handling and User Feedback
+     ════════════════════════════════════════════════════════════════════ -->
+<section class="section">
+  <h2>8. Error Handling and User Feedback</h2>
+
+  <h3>8.1 Error Flow Diagram</h3>
+<pre>
+                         ┌─────────────────┐
+                         │  PROCESS-ENTER  │
+                         └────────┬────────┘
+                                  │
+                    ┌─────────────┼─────────────┐
+                    ▼             ▼              ▼
+           ┌──────────────┐ ┌──────────┐ ┌──────────────┐
+           │ TRNID empty  │ │ TRNID OK │ │ Invalid key  │
+           │              │ │          │ │ (OTHER AID)  │
+           └──────┬───────┘ └────┬─────┘ └──────┬───────┘
+                  │              │               │
+                  ▼              ▼               ▼
+           ┌──────────┐   ┌──────────┐   ┌──────────────┐
+           │ ERR-FLG  │   │ READ     │   │ CCDA-MSG-    │
+           │ = 'Y'    │   │ TRANSACT │   │ INVALID-KEY  │
+           │ Msg sent │   │          │   │ displayed    │
+           └──────────┘   └────┬─────┘   └──────────────┘
+                               │
+                 ┌─────────────┼─────────────┐
+                 ▼             ▼              ▼
+          ┌───────────┐ ┌───────────┐ ┌────────────────┐
+          │ NORMAL    │ │ NOTFND    │ │ OTHER          │
+          │ (success) │ │ Msg shown │ │ DISPLAY + Msg  │
+          └───────────┘ └───────────┘ └────────────────┘
+</pre>
+
+  <h3>8.2 Error Handling Matrix</h3>
+  <table>
+    <thead>
+      <tr><th>Condition</th><th>RESP Code</th><th>Program Action</th><th>User Message</th><th>Logging</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Transaction ID empty</td>
+        <td>N/A (input validation)</td>
+        <td>Set ERR-FLG='Y', cursor to TRNIDIN</td>
+        <td>"Tran ID can NOT be empty..."</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td>Record not found</td>
+        <td>DFHRESP(NOTFND)</td>
+        <td>Set ERR-FLG='Y', cursor to TRNIDIN</td>
+        <td>"Transaction ID NOT found..."</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td>Other file error</td>
+        <td>Any other RESP</td>
+        <td>Set ERR-FLG='Y', DISPLAY RESP/REAS, cursor to TRNIDIN</td>
+        <td>"Unable to lookup Transaction..."</td>
+        <td>DISPLAY 'RESP:' WS-RESP-CD 'REAS:' WS-REAS-CD (to SYSOUT)</td>
+      </tr>
+      <tr>
+        <td>Invalid AID key</td>
+        <td>N/A</td>
+        <td>Set ERR-FLG='Y'</td>
+        <td>"Invalid key pressed. Please see below..."</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td>No COMMAREA (EIBCALEN=0)</td>
+        <td>N/A</td>
+        <td>XCTL to COSGN00C</td>
+        <td>None (redirected to sign-on)</td>
+        <td>None</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>8.3 HANDLE ABEND / HANDLE CONDITION</h3>
+  <p><em>This program does not use HANDLE ABEND or HANDLE CONDITION statements. All error handling is
+     performed via inline RESP/RESP2 checking on the EXEC CICS READ command.</em></p>
+
+  <h3>8.4 User Error Messages</h3>
+  <table>
+    <thead>
+      <tr><th>Message Text</th><th>Trigger</th><th>Field Highlighted</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>"Tran ID can NOT be empty..."</td><td>ENTER with blank TRNIDINI</td><td>TRNIDIN (cursor repositioned)</td></tr>
+      <tr><td>"Transaction ID NOT found..."</td><td>TRAN-ID not in TRANSACT file</td><td>TRNIDIN (cursor repositioned)</td></tr>
+      <tr><td>"Unable to lookup Transaction..."</td><td>Unexpected file I/O error</td><td>TRNIDIN (cursor repositioned)</td></tr>
+      <tr><td>"Invalid key pressed. Please see below..."</td><td>Unrecognized AID key pressed</td><td>N/A</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     SECTION 9: Security and Authorization
+     ════════════════════════════════════════════════════════════════════ -->
+<section class="section">
+  <h2>9. Security and Authorization</h2>
+
+  <h3>9.1 Transaction Security</h3>
+  <ul>
+    <li><strong>EIBCALEN = 0 check</strong>: If the transaction is invoked without a COMMAREA (indicating no prior sign-on), the program immediately transfers control to <code>COSGN00C</code> (Sign-On) via XCTL. This prevents unauthorized direct invocation.</li>
+    <li><strong>CICS Transaction Security</strong>: Standard RACF/ESM transaction-level security is assumed to control who can invoke CT01.</li>
+    <li><strong>Menu-based access control</strong>: Access to the Transaction View is routed through the authenticated menu system (COMEN01C/COTRN00C), ensuring users must sign in first.</li>
+  </ul>
+
+  <h3>9.2 Data Access Authorization</h3>
+  <p>No additional data-level authorization checks are performed within this program. The TRANSACT file
+     is accessible to all authenticated users (both Admin 'A' and Regular 'U' types). File-level
+     security is managed by the CICS FCT and underlying VSAM/RACF definitions.</p>
+
+  <h3>9.3 Audit Trail</h3>
+  <p>This program does not write explicit audit records. The only logging is the DISPLAY statement
+     for unexpected RESP codes, which writes to the CICS SYSOUT/CEEMSG destination. CICS journal/SMF
+     records would capture transaction-level activity externally.</p>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     SECTION 10: Performance Characteristics
+     ════════════════════════════════════════════════════════════════════ -->
+<section class="section">
+  <h2>10. Performance Characteristics</h2>
+
+  <h3>10.1 Performance Profile</h3>
+  <table>
+    <thead>
+      <tr><th>Metric</th><th>Value</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>File I/Os per iteration</td><td>0–1</td><td>Single READ on ENTER; no I/O on PF3/PF4/PF5</td></tr>
+      <tr><td>COMMAREA size</td><td>~300 bytes</td><td>CARDDEMO-COMMAREA + CDEMO-CT01-INFO</td></tr>
+      <tr><td>MAP sends per iteration</td><td>1</td><td>SEND MAP COTRN1A on every iteration</td></tr>
+      <tr><td>MAP receives per iteration</td><td>0–1</td><td>RECEIVE only on re-entry (PGM-REENTER)</td></tr>
+      <tr><td>XCTL calls per iteration</td><td>0–1</td><td>Only on PF3/PF5 navigation or error redirect</td></tr>
+      <tr><td>Program size</td><td>330 LOC</td><td>Lightweight single-function program</td></tr>
+    </tbody>
+  </table>
+
+  <h3>10.2 Performance Considerations</h3>
+  <ul>
+    <li><strong>UPDATE keyword on READ</strong>: The program uses <code>READ ... UPDATE</code> even though it only displays data and never issues a REWRITE. This acquires an exclusive lock on the record until the task ends, which could create contention if multiple users view the same transaction simultaneously. Consider removing the UPDATE option for a read-only operation.</li>
+    <li><strong>Single direct key read</strong>: Very efficient — no browse operations, no sequential processing. Response time is effectively one VSAM CI (Control Interval) access.</li>
+    <li><strong>Small COMMAREA</strong>: Minimal storage overhead for pseudo-conversational state.</li>
+    <li><strong>No GETMAIN/FREEMAIN</strong>: All storage is working-storage based, minimizing dynamic storage acquisition overhead.</li>
+  </ul>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     SECTION 11: Testing Approach
+     ════════════════════════════════════════════════════════════════════ -->
+<section class="section">
+  <h2>11. Testing Approach</h2>
+
+  <h3>11.1 Test Scenarios</h3>
+  <table>
+    <thead>
+      <tr><th>Test ID</th><th>Scenario</th><th>Input</th><th>Expected Result</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>TC-01</td><td>Normal fetch — valid Transaction ID</td><td>Enter existing TRAN-ID, press ENTER</td><td>All 13 detail fields populated correctly</td></tr>
+      <tr><td>TC-02</td><td>Empty Transaction ID</td><td>Leave TRNIDIN blank, press ENTER</td><td>"Tran ID can NOT be empty..." message</td></tr>
+      <tr><td>TC-03</td><td>Non-existent Transaction ID</td><td>Enter invalid ID (e.g., 'ZZZZZZZZZZZZZZZZ')</td><td>"Transaction ID NOT found..." message</td></tr>
+      <tr><td>TC-04</td><td>Pre-filled from CT00</td><td>Select transaction from CT00 list</td><td>CT01 auto-populates TRNIDINI and fetches record</td></tr>
+      <tr><td>TC-05</td><td>PF3 — return to caller</td><td>Press PF3</td><td>XCTL to FROM-PROGRAM or COMEN01C</td></tr>
+      <tr><td>TC-06</td><td>PF4 — clear screen</td><td>Press PF4</td><td>All display fields cleared, cursor on TRNIDIN</td></tr>
+      <tr><td>TC-07</td><td>PF5 — navigate to transaction list</td><td>Press PF5</td><td>XCTL to COTRN00C</td></tr>
+      <tr><td>TC-08</td><td>Invalid key press</td><td>Press PF7, PF8, or any unsupported key</td><td>"Invalid key pressed. Please see below..." message</td></tr>
+      <tr><td>TC-09</td><td>Direct invocation without COMMAREA</td><td>Invoke CT01 from CECI with no COMMAREA</td><td>Redirect to COSGN00C (sign-on)</td></tr>
+      <tr><td>TC-10</td><td>Amount formatting</td><td>Fetch transaction with negative amount</td><td>Amount displays with sign: -00000100.50</td></tr>
+      <tr><td>TC-11</td><td>Multiple fetches in same session</td><td>Fetch ID A, then type new ID B, press ENTER</td><td>Fields refresh with transaction B data</td></tr>
+    </tbody>
+  </table>
+
+  <h3>11.2 Test Data Requirements</h3>
+  <table>
+    <thead>
+      <tr><th>Requirement</th><th>Details</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>TRANSACT file</td><td>Must contain test records with known TRAN-ID values and varied data (different merchants, amounts, types)</td></tr>
+      <tr><td>Valid user session</td><td>COMMAREA with authenticated user (CDEMO-USER-ID set, PGM-CONTEXT=0 for first entry)</td></tr>
+      <tr><td>CT00 integration</td><td>Transaction list must be able to pass CDEMO-CT01-TRN-SELECTED to CT01</td></tr>
+      <tr><td>Edge case records</td><td>Records with maximum-length fields, zero amounts, long merchant names</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     SECTION 12: Known Issues and Considerations
+     ════════════════════════════════════════════════════════════════════ -->
+<section class="section">
+  <h2>12. Known Issues and Considerations</h2>
+
+  <h3>12.1 Known Issues</h3>
+  <table>
+    <thead>
+      <tr><th>Issue</th><th>Severity</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Unnecessary UPDATE lock</td>
+        <td>Medium</td>
+        <td>READ with UPDATE acquires an exclusive lock on the record even though no REWRITE/DELETE is performed. This can cause lock contention in high-volume environments.</td>
+      </tr>
+      <tr>
+        <td>Timestamp truncation</td>
+        <td>Low</td>
+        <td>TRAN-ORIG-TS and TRAN-PROC-TS are 26-character timestamps (PIC X(26)) but the display fields (TORIGDT, TPROCDT) are only 10 characters. Data may be truncated on display.</td>
+      </tr>
+      <tr>
+        <td>No RESP check on RECEIVE MAP</td>
+        <td>Low</td>
+        <td>The RECEIVE MAP command captures WS-RESP-CD but never evaluates it. A MAPFAIL condition would go undetected.</td>
+      </tr>
+      <tr>
+        <td>Hardcoded program names</td>
+        <td>Low</td>
+        <td>Navigation targets ('COSGN00C', 'COMEN01C', 'COTRN00C') are hardcoded string literals rather than configuration-driven.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>12.2 Modernization Considerations</h3>
+  <table>
+    <thead>
+      <tr><th>Aspect</th><th>Current State</th><th>Target State</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Screen I/O</td>
+        <td>BMS SEND/RECEIVE MAP (3270 terminal)</td>
+        <td>REST API endpoint returning JSON; React/Angular detail component</td>
+      </tr>
+      <tr>
+        <td>Data Access</td>
+        <td>EXEC CICS READ against VSAM KSDS</td>
+        <td>JPA/JDBC query against relational database (PostgreSQL/DB2)</td>
+      </tr>
+      <tr>
+        <td>State Management</td>
+        <td>COMMAREA pseudo-conversational</td>
+        <td>Stateless REST with JWT authentication; client-side state</td>
+      </tr>
+      <tr>
+        <td>Navigation</td>
+        <td>XCTL/RETURN TRANSID with COMMAREA</td>
+        <td>Client-side routing (React Router / Angular Router)</td>
+      </tr>
+      <tr>
+        <td>Error Handling</td>
+        <td>WS-ERR-FLG flag + message on line 23</td>
+        <td>HTTP status codes (404 Not Found, 400 Bad Request) + JSON error body</td>
+      </tr>
+      <tr>
+        <td>Security</td>
+        <td>EIBCALEN check + RACF transaction security</td>
+        <td>OAuth2/JWT token validation + RBAC middleware</td>
+      </tr>
+      <tr>
+        <td>Locking</td>
+        <td>VSAM exclusive lock via UPDATE keyword</td>
+        <td>Optimistic concurrency (version column) or no lock for read-only</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+</div><!-- /page-wrap-single -->
+
+<footer class="footer">
+  <strong>UniCredit S.p.A.</strong> — CardDemo CICS Transaction Analysis · Auto-generated
+</footer>
+
+</body>
+</html>
