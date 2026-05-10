@@ -109,6 +109,9 @@ _waiting_for_input = False
 # Pending transaction: stored when user submits, committed to DB when Devin traces WRITE TRANSACT
 _pending_transaction = None  # {"amount": float, "merchant": str} or None
 
+# Guard: prevents batch from running twice for the same overlimit check
+_batch_ran_this_cycle = False
+
 
 def resolve_org_id(api_key):
     """Auto-detect org_id from an org-scoped service user key via /v3/self."""
@@ -274,11 +277,14 @@ class TraceHandler(SimpleHTTPRequestHandler):
         """Handle user input from the terminal (amount + merchant).
         Stores the transaction as pending (NOT written to DB yet).
         The DB write happens later when Devin's trace reaches WRITE TRANSACT."""
-        global _waiting_for_input, _pending_transaction
+        global _waiting_for_input, _pending_transaction, _batch_ran_this_cycle
         body = self.read_json_body()
         amount = body.get("amount", 0)
         merchant = body.get("merchant", "UNKNOWN")
         session_id = body.get("session_id")
+
+        # New input cycle — reset batch guard so next batch can run
+        _batch_ran_this_cycle = False
 
         # Store as pending — don't write to DB yet
         _pending_transaction = {"amount": float(amount), "merchant": merchant}
@@ -525,6 +531,13 @@ class TraceHandler(SimpleHTTPRequestHandler):
         if db_query:
             # Server queries the DB on behalf of Devin
             if db_query == "check_overlimit":
+                global _batch_ran_this_cycle
+                # Guard: only run batch once per input cycle
+                # (prevents double-trigger from structured_output + message scan)
+                if _batch_ran_this_cycle:
+                    print("Skipping duplicate batch run for this cycle")
+                    self.send_sse_event(event)
+                    return
                 # Safety: commit pending transaction before running batch
                 if _pending_transaction:
                     txn = _pending_transaction
@@ -532,6 +545,8 @@ class TraceHandler(SimpleHTTPRequestHandler):
                     result = db.add_transaction(txn["amount"], txn["merchant"])
                     print(f"Transaction committed before batch: ${txn['amount']} @ {txn['merchant']} (tran_id={result.get('tran_id')})")
                 batch_result = db.run_batch()
+                _batch_ran_this_cycle = True
+                print("Batch run completed for this cycle")
                 state = db.get_state()
                 event["type"] = "db_result"
                 event["db_query"] = db_query
