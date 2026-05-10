@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POSTTRAN – Daily Transaction Posting | Batch Process Analysis | UniCredit CardDemo</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   UniCredit CardDemo — Shared Theme (inlined for standalone viewing)
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --uc-red:        #E4002B;
+  --uc-red-dark:   #B8001F;
+  --uc-red-light:  #FF3354;
+  --uc-navy:       #1D2B4E;
+  --uc-navy-light: #2A3D6B;
+  --uc-gold:       #C5A44E;
+  --uc-gold-light: #E2C97A;
+  --uc-white:      #FFFFFF;
+  --uc-gray-50:    #F8F9FA;
+  --uc-gray-100:   #F0F1F3;
+  --uc-gray-200:   #E2E4E8;
+  --uc-gray-400:   #9EA3AE;
+  --uc-gray-600:   #6B7280;
+  --uc-gray-800:   #374151;
+  --uc-text:       #1F2937;
+  --uc-shadow:     0 4px 24px rgba(29,43,78,.08);
+  --uc-shadow-lg:  0 12px 48px rgba(29,43,78,.12);
+  --uc-radius:     12px;
+  --uc-radius-sm:  8px;
+  --uc-transition: .25s cubic-bezier(.4,0,.2,1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--uc-text);
+  background: var(--uc-gray-50);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+.hero {
+  background: linear-gradient(135deg, var(--uc-navy) 0%, var(--uc-navy-light) 50%, var(--uc-red-dark) 100%);
+  color: var(--uc-white);
+  padding: 3rem 2rem 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -60%; right: -20%;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(228,0,43,.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute; bottom: -30%; left: -10%;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(197,164,78,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-inner { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+.hero-brand { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.hero-logo { height: 48px; flex-shrink: 0; }
+.hero-logo img { height: 100%; width: auto; display: block; }
+.hero-brand-text { font-size: .95rem; opacity: .85; letter-spacing: .04em; text-transform: uppercase; }
+.hero h1 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; letter-spacing: -.02em; line-height: 1.15; margin-bottom: .75rem; }
+.hero h1 span { color: var(--uc-gold-light); }
+.hero-subtitle { font-size: 1.15rem; opacity: .88; max-width: 720px; }
+.hero-meta { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,.15); }
+.hero-meta dt { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin-bottom: .15rem; }
+.hero-meta dd { font-size: .95rem; font-weight: 600; }
+.breadcrumb { max-width: 1200px; margin: 1.25rem auto .5rem; padding: 0 2rem; font-size: .8rem; color: var(--uc-gray-400); }
+.breadcrumb a { color: var(--uc-red); text-decoration: none; font-weight: 600; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb .sep { margin: 0 .4rem; opacity: .5; }
+.page-wrap-single { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+.section { background: var(--uc-white); border-radius: var(--uc-radius); box-shadow: var(--uc-shadow); margin-bottom: 2rem; overflow: hidden; }
+.section-header { display: flex; align-items: center; gap: .75rem; padding: 1.25rem 1.5rem; background: linear-gradient(90deg, var(--uc-navy) 0%, var(--uc-navy-light) 100%); color: var(--uc-white); cursor: pointer; user-select: none; }
+.section-header:hover { filter: brightness(1.1); }
+.section-num { background: var(--uc-red); color: var(--uc-white); font-size: .72rem; font-weight: 700; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.section-header h2 { font-size: 1.1rem; font-weight: 700; letter-spacing: -.01em; flex: 1; }
+.section-toggle { width: 24px; height: 24px; transition: transform var(--uc-transition); opacity: .7; }
+.section.collapsed .section-toggle { transform: rotate(-90deg); }
+.section-body { padding: 1.5rem; }
+.section.collapsed .section-body { display: none; }
+.subsection { margin-bottom: 1.75rem; }
+.subsection:last-child { margin-bottom: 0; }
+.subsection h3 { font-size: .95rem; font-weight: 700; color: var(--uc-navy); margin-bottom: .75rem; padding-bottom: .4rem; border-bottom: 2px solid var(--uc-gray-200); display: flex; align-items: center; gap: .5rem; }
+.subsection h3 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--uc-red); flex-shrink: 0; }
+.subsection h4 { font-size: .88rem; font-weight: 600; color: var(--uc-gray-800); margin: 1rem 0 .5rem; }
+.subsection p, .subsection li { font-size: .88rem; color: var(--uc-gray-800); line-height: 1.7; }
+.subsection ul, .subsection ol { padding-left: 1.4rem; margin-top: .35rem; }
+.subsection li { margin-bottom: .25rem; }
+.table-wrap { overflow-x: auto; margin: .75rem 0; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .82rem; }
+thead th { background: var(--uc-navy); color: var(--uc-white); text-align: left; padding: .6rem .75rem; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
+thead th:first-child { border-radius: var(--uc-radius-sm) 0 0 0; }
+thead th:last-child  { border-radius: 0 var(--uc-radius-sm) 0 0; }
+tbody td { padding: .55rem .75rem; border-bottom: 1px solid var(--uc-gray-200); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:nth-child(even) { background: var(--uc-gray-50); }
+tbody tr:hover { background: rgba(228,0,43,.04); }
+pre { background: var(--uc-navy); color: #E2E8F0; border-radius: var(--uc-radius-sm); padding: 1rem 1.25rem; font-size: .78rem; font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; overflow-x: auto; line-height: 1.65; margin: .75rem 0; }
+code { font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; font-size: .82em; background: var(--uc-gray-100); padding: .1em .35em; border-radius: 4px; color: var(--uc-red-dark); }
+pre code { background: none; padding: 0; color: inherit; }
+.callout { border-left: 4px solid var(--uc-gold); background: rgba(197,164,78,.08); padding: .85rem 1rem; border-radius: 0 var(--uc-radius-sm) var(--uc-radius-sm) 0; margin: .75rem 0; font-size: .85rem; }
+.callout-red { border-left-color: var(--uc-red); background: rgba(228,0,43,.05); }
+.callout strong { color: var(--uc-navy); }
+.diagram-box { background: var(--uc-gray-100); border: 2px dashed var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1.5rem; text-align: center; margin: .75rem 0; }
+.diagram-box pre { text-align: left; background: var(--uc-navy); display: inline-block; max-width: 100%; }
+.badge { display: inline-block; font-size: .68rem; font-weight: 700; padding: .15em .55em; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; line-height: 1.6; }
+.badge-red    { background: var(--uc-red);   color: #fff; }
+.badge-navy   { background: var(--uc-navy);  color: #fff; }
+.badge-gold   { background: var(--uc-gold);  color: var(--uc-navy); }
+.badge-gray   { background: var(--uc-gray-200); color: var(--uc-gray-800); }
+.kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin: 1rem 0; }
+.kpi-card { background: var(--uc-gray-50); border: 1px solid var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1rem; text-align: center; transition: var(--uc-transition); }
+.kpi-card:hover { border-color: var(--uc-red); box-shadow: var(--uc-shadow); transform: translateY(-2px); }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--uc-red); line-height: 1.2; }
+.kpi-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--uc-gray-600); margin-top: .25rem; }
+.footer { background: var(--uc-navy); color: rgba(255,255,255,.6); text-align: center; padding: 2rem; font-size: .78rem; }
+.footer strong { color: var(--uc-gold-light); }
+@media print {
+  .section.collapsed .section-body { display: block; }
+  .hero { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════  HERO  ════════════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. &mdash; Milano</div>
+    </div>
+    <h1>POSTTRAN &ndash; <span>Batch Process Analysis</span></h1>
+    <p class="hero-subtitle">
+      Job <code>POSTTRAN</code> &middot; Program <code>CBTRN02C</code> &middot; Post daily credit-card transactions to the Transaction Master VSAM, update account balances and transaction category balances, and route invalid transactions to a rejection GDG
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Job Name</dt><dd>POSTTRAN</dd></div>
+      <div><dt>Entry Program</dt><dd>CBTRN02C</dd></div>
+      <div><dt>Frequency</dt><dd>Daily (On-demand)</dd></div>
+      <div><dt>LOC</dt><dd>731</dd></div>
+      <div><dt>Files Touched</dt><dd>6</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ════════════════════  BREADCRUMB  ════════════════════ -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">&rsaquo;</span>
+  <a href="index.html">Batch Flows</a>
+  <span class="sep">&rsaquo;</span>
+  POSTTRAN &ndash; Daily Transaction Posting
+</div>
+
+<!-- ════════════════════  BODY  ════════════════════ -->
+<div class="page-wrap-single">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     IDENTIFICATION
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s0">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">ID</span>
+    <h2>Identification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <tbody>
+          <tr><td><strong>Job Name</strong></td><td><code>POSTTRAN</code></td></tr>
+          <tr><td><strong>Job Stream / Schedule</strong></td><td>On-demand (not in Control-M scheduler; triggered after CICS daily close or as needed)</td></tr>
+          <tr><td><strong>Business Domain</strong></td><td>End-of-Day Transaction Processing / Card Account Lifecycle</td></tr>
+          <tr><td><strong>Owning Team</strong></td><td>CardDemo Batch Operations</td></tr>
+          <tr><td><strong>Frequency</strong></td><td>Daily (on-demand)</td></tr>
+          <tr><td><strong>Batch Window</strong></td><td>After business-day close, before next-day CICS open</td></tr>
+          <tr><td><strong>Criticality</strong></td><td><span class="badge badge-red">Critical</span></td></tr>
+          <tr><td><strong>Elapsed Time SLA</strong></td><td>Must complete before OPENFIL reopens CICS files</td></tr>
+          <tr><td><strong>Primary Program</strong></td><td><code>CBTRN02C</code> (COBOL Batch, 731 LOC)</td></tr>
+          <tr><td><strong>Source Location</strong></td><td><code>app/cbl/CBTRN02C.cbl</code> &middot; JCL: <code>app/jcl/POSTTRAN.jcl</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 1 — Business Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">1</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 1.1 -->
+    <div class="subsection" id="s1-1">
+      <h3><span class="dot"></span> 1.1 Business Context</h3>
+      <ul>
+        <li><strong>What:</strong> Reads a flat file of daily credit-card transactions, validates each against the Card Cross-Reference and Account Master, and posts valid transactions to the Transaction Master VSAM file. Updates account current balances and cycle-level credits/debits. Maintains the Transaction Category Balance file for downstream interest calculation.</li>
+        <li><strong>Who:</strong> Downstream consumers include the <em>Monthly Interest Calculation</em> batch (INTCALC/CBACT04C), the <em>Transaction Report</em> job (TRANREPT/CBTRN03C), and the <em>Statement Generation</em> job (CREASTMT/CBSTM03A).</li>
+        <li><strong>When:</strong> Runs daily after business-day close, typically following the DAILY-TransactionBackup job stream which backs up the previous day&rsquo;s transaction VSAM and resets it.</li>
+        <li><strong>Why:</strong> Core operational requirement&mdash;ensures all authorized card transactions are reflected in account balances, category-level running totals, and the permanent transaction ledger.</li>
+        <li><strong>Outcome:</strong> Transaction Master populated with validated transactions; Account Master balances updated; Transaction Category Balance file updated; rejected transactions captured with reason codes for investigation.</li>
+      </ul>
+    </div>
+
+    <!-- 1.2 -->
+    <div class="subsection" id="s1-2">
+      <h3><span class="dot"></span> 1.2 Business Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────────┐
+  │             DAILY TRANSACTION POSTING FLOW                      │
+  └─────────────────────────────────────────────────────────────────┘
+
+  End-of-Day Close
+       │
+       ▼
+  ┌──────────────────────┐
+  │ DAILY-TransactionBkup│  (CLOSEFIL → TRANBKP → OPENFIL)
+  │ Backs up prev day &  │
+  │ resets TRANSACT VSAM  │
+  └──────────┬───────────┘
+             │
+             ▼
+  ┌──────────────────────┐     ┌──────────────────────┐
+  │ Read Daily            │     │ Card Cross-Reference │
+  │ Transaction File      │────▶│ (XREFFILE)           │
+  │ (DALYTRAN.PS)         │     │ Validate card number │
+  └──────────┬───────────┘     └──────────────────────┘
+             │
+         ┌───┴───┐
+         │Lookup │
+         │ XREF  │
+         └───┬───┘
+            ╱ ╲
+    Invalid╱   ╲Valid
+          ▼     ▼
+  ┌──────────┐ ┌──────────────────────┐
+  │ REJECT   │ │ Lookup Account Master│
+  │ FILE     │ │ (ACCTFILE)           │
+  │ (+reason)│ │ Validate credit limit│
+  └──────────┘ │ & expiration date    │
+               └──────────┬───────────┘
+                          │
+                      ┌───┴───┐
+                      │Validate│
+                      │Account │
+                      └───┬───┘
+                         ╱ ╲
+                 Invalid╱   ╲Valid
+                       ▼     ▼
+               ┌──────────┐ ┌──────────────────────┐
+               │ REJECT   │ │ Post Transaction      │
+               │ FILE     │ │ ┌──────────────────┐  │
+               │ (+reason)│ │ │ TRANSACT VSAM    │  │
+               └──────────┘ │ │ (WRITE new rec)  │  │
+                            │ ├──────────────────┤  │
+                            │ │ ACCTFILE          │  │
+                            │ │ (REWRITE balance) │  │
+                            │ ├──────────────────┤  │
+                            │ │ TCATBALF          │  │
+                            │ │ (WRITE or REWRITE)│  │
+                            │ └──────────────────┘  │
+                            └───────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 1.3 -->
+    <div class="subsection" id="s1-3">
+      <h3><span class="dot"></span> 1.3 Business Rules Applied in This Process</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Rule ID</th><th>Description</th><th>Applied At</th><th>Exception Handling</th></tr></thead>
+          <tbody>
+            <tr><td>BR-001</td><td>Card number must exist in Card Cross-Reference (XREFFILE)</td><td>1500-A-LOOKUP-XREF</td><td>Reason 100: &ldquo;INVALID CARD NUMBER FOUND&rdquo; &rarr; reject</td></tr>
+            <tr><td>BR-002</td><td>Account referenced by XREF must exist in Account Master</td><td>1500-B-LOOKUP-ACCT</td><td>Reason 101: &ldquo;ACCOUNT RECORD NOT FOUND&rdquo; &rarr; reject</td></tr>
+            <tr><td>BR-003</td><td>Transaction must not cause account balance to exceed credit limit: <code>ACCT-CURR-CYC-CREDIT - ACCT-CURR-CYC-DEBIT + TRAN-AMT &le; ACCT-CREDIT-LIMIT</code></td><td>1500-B-LOOKUP-ACCT</td><td>Reason 102: &ldquo;OVERLIMIT TRANSACTION&rdquo; &rarr; reject</td></tr>
+            <tr><td>BR-004</td><td>Transaction origination date must not be after account expiration date</td><td>1500-B-LOOKUP-ACCT</td><td>Reason 103: &ldquo;TRANSACTION RECEIVED AFTER ACCT EXPIRATION&rdquo; &rarr; reject</td></tr>
+            <tr><td>BR-005</td><td>Transaction Category Balance record is created if it does not exist for the account/type/category combination</td><td>2700-UPDATE-TCATBAL</td><td>Auto-creates new TCATBAL record (displays message)</td></tr>
+            <tr><td>BR-006</td><td>Positive amounts are credits, negative amounts are debits (updates cycle-level accumulators accordingly)</td><td>2800-UPDATE-ACCOUNT-REC</td><td>N/A</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 1.4 -->
+    <div class="subsection" id="s1-4">
+      <h3><span class="dot"></span> 1.4 Business Inputs and Outputs</h3>
+      <h4>Inputs</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Input</th><th>Source System</th><th>Business Description</th><th>Timing</th></tr></thead>
+          <tbody>
+            <tr><td>Daily Transaction File (<code>DALYTRAN.PS</code>)</td><td>Online CICS transaction capture</td><td>All credit-card transactions entered during the business day</td><td>Available after business-day close</td></tr>
+            <tr><td>Card Cross-Reference (<code>CARDXREF.VSAM.KSDS</code>)</td><td>Account setup</td><td>Maps card numbers to customer and account IDs</td><td>Static reference</td></tr>
+            <tr><td>Account Master (<code>ACCTDATA.VSAM.KSDS</code>)</td><td>Account management</td><td>Account balances, credit limits, expiration dates</td><td>Updated by this job</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h4>Outputs</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Output</th><th>Destination</th><th>Business Description</th><th>Timing</th></tr></thead>
+          <tbody>
+            <tr><td>Transaction Master (<code>TRANSACT.VSAM.KSDS</code>)</td><td>CICS online, TRANREPT, CREASTMT</td><td>Permanent ledger of all posted transactions</td><td>Available immediately after job</td></tr>
+            <tr><td>Updated Account Balances (<code>ACCTDATA.VSAM.KSDS</code>)</td><td>CICS online, INTCALC</td><td>Current balance, cycle credits/debits updated</td><td>Available immediately after job</td></tr>
+            <tr><td>Transaction Category Balance (<code>TCATBALF.VSAM.KSDS</code>)</td><td>INTCALC (monthly interest calc)</td><td>Running balance by account/type/category</td><td>Available immediately after job</td></tr>
+            <tr><td>Daily Rejects (<code>DALYREJS</code> GDG +1)</td><td>Operations / exception processing</td><td>Rejected transactions with 4-digit reason code + 76-byte description</td><td>Available immediately; GDG limit 5</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 2 — Technical Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">2</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 2.1 -->
+    <div class="subsection" id="s2-1">
+      <h3><span class="dot"></span> 2.1 Technical Flow Diagram &ndash; Overview</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ JOB: POSTTRAN                                                   │
+  │                                                                 │
+  │  STEP15: PGM=CBTRN02C (Single-step job)                        │
+  │  ┌─────────────────────────────────────────────────────────┐   │
+  │  │                                                         │   │
+  │  │  DALYTRAN.PS ──(Sequential READ)──┐                     │   │
+  │  │                                    │                     │   │
+  │  │  CARDXREF.VSAM ──(Keyed READ)─────┼──▶ VALIDATE         │   │
+  │  │                                    │                     │   │
+  │  │  ACCTDATA.VSAM ──(Keyed READ/     │                     │   │
+  │  │                   REWRITE)─────────┘                     │   │
+  │  │                        │                                 │   │
+  │  │                   ┌────┴────┐                            │   │
+  │  │                   │ Valid?  │                            │   │
+  │  │                   └────┬────┘                            │   │
+  │  │                  Yes╱    ╲No                             │   │
+  │  │                   ╱      ╲                               │   │
+  │  │              ┌────▼──┐  ┌─▼────────┐                    │   │
+  │  │              │ POST  │  │ REJECT   │                    │   │
+  │  │              └───┬───┘  └──────────┘                    │   │
+  │  │                  │         │                             │   │
+  │  │                  ▼         ▼                             │   │
+  │  │  TRANSACT.VSAM (WRITE)  DALYREJS GDG(+1) (WRITE)       │   │
+  │  │  ACCTDATA.VSAM (REWRITE balance)                        │   │
+  │  │  TCATBALF.VSAM (WRITE or REWRITE)                       │   │
+  │  └─────────────────────────────────────────────────────────┘   │
+  └─────────────────────────────────────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.2 -->
+    <div class="subsection" id="s2-2">
+      <h3><span class="dot"></span> 2.2 Technical Flow Diagram &ndash; Detailed (Step-by-Step)</h3>
+      <div class="diagram-box">
+<pre>
+  STEP15 - EXEC PGM=CBTRN02C
+    INPUTS:
+      - DALYTRAN: AWS.M2.CARDDEMO.DALYTRAN.PS         (sequential read)
+      - XREFFILE: AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS  (keyed random read)
+      - ACCTFILE: AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS  (keyed random I-O)
+      - TCATBALF: AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS  (keyed random I-O)
+    OUTPUTS:
+      - TRANFILE: AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS  (keyed output/write)
+      - DALYREJS: AWS.M2.CARDDEMO.DALYREJS(+1)         (sequential output)
+
+    PROCESSING:
+      1. Open all 6 files (ABEND if any open fails)
+      2. READ DALYTRAN-FILE until EOF
+         a. Increment WS-TRANSACTION-COUNT
+         b. PERFORM 1500-VALIDATE-TRAN:
+            i.  1500-A-LOOKUP-XREF: READ XREFFILE by DALYTRAN-CARD-NUM
+                - INVALID KEY → reason 100 → skip to reject
+            ii. 1500-B-LOOKUP-ACCT: READ ACCTFILE by XREF-ACCT-ID
+                - INVALID KEY → reason 101
+                - COMPUTE temp-bal = cyc-credit - cyc-debit + tran-amt
+                  If temp-bal &gt; CREDIT-LIMIT → reason 102
+                - If ACCT-EXPIRATION-DATE &lt; TRAN-ORIG-TS → reason 103
+         c. If validation passed (reason = 0):
+            PERFORM 2000-POST-TRANSACTION:
+              - Map DALYTRAN fields → TRAN-RECORD
+              - Generate DB2-format timestamp for TRAN-PROC-TS
+              - 2700-UPDATE-TCATBAL: READ/REWRITE (or CREATE) TCATBAL
+              - 2800-UPDATE-ACCOUNT-REC: ADD amount to ACCT-CURR-BAL
+                + ACCT-CURR-CYC-CREDIT (if &ge; 0) or CYC-DEBIT (if &lt; 0)
+                REWRITE ACCTFILE
+              - 2900-WRITE-TRANSACTION-FILE: WRITE to TRANSACT VSAM
+         d. If validation failed (reason &ne; 0):
+            Increment WS-REJECT-COUNT
+            PERFORM 2500-WRITE-REJECT-REC: WRITE to DALYREJS
+      3. Close all files
+      4. Display counts: TRANSACTIONS PROCESSED / REJECTED
+      5. If WS-REJECT-COUNT &gt; 0: set RETURN-CODE = 4
+         Else: RETURN-CODE = 0
+    RC: 0=All valid, 4=Some rejects, 999=ABEND (file I/O error)
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.3 -->
+    <div class="subsection" id="s2-3">
+      <h3><span class="dot"></span> 2.3 Step Dependency and Condition Code Logic</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>Program</th><th>Executes If</th><th>Condition Code Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>STEP15</td><td>CBTRN02C</td><td>Always (single-step job)</td><td>0 = All transactions posted successfully<br>4 = Some transactions rejected (WS-REJECT-COUNT &gt; 0)<br>999 = ABEND via CEE3ABD (file I/O failure)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 3 — JCL Job Stream Specification
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">3</span>
+    <h2>JCL Job Stream Specification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 3.1 -->
+    <div class="subsection" id="s3-1">
+      <h3><span class="dot"></span> 3.1 JCL Overview</h3>
+<pre><code>//POSTTRAN JOB 'POSTTRAN',CLASS=A,MSGCLASS=0,
+//   NOTIFY=&amp;SYSUID
+//*
+//* Process and load daily transaction file and create transaction
+//* category balance and update transaction master VSAM
+//*
+//STEP15   EXEC PGM=CBTRN02C
+//STEPLIB  DD DISP=SHR,DSN=AWS.M2.CARDDEMO.LOADLIB
+//SYSPRINT DD SYSOUT=*
+//SYSOUT   DD SYSOUT=*
+//TRANFILE DD DISP=SHR,DSN=AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS
+//DALYTRAN DD DISP=SHR,DSN=AWS.M2.CARDDEMO.DALYTRAN.PS
+//XREFFILE DD DISP=SHR,DSN=AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS
+//DALYREJS DD DISP=(NEW,CATLG,DELETE),UNIT=SYSDA,
+//            DCB=(RECFM=F,LRECL=430,BLKSIZE=0),
+//            SPACE=(CYL,(1,1),RLSE),
+//            DSN=AWS.M2.CARDDEMO.DALYREJS(+1)
+//ACCTFILE DD DISP=SHR,DSN=AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS
+//TCATBALF DD DISP=SHR,DSN=AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS</code></pre>
+    </div>
+
+    <!-- 3.2 -->
+    <div class="subsection" id="s3-2">
+      <h3><span class="dot"></span> 3.2 DD Statement Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>DD Name</th><th>Disposition</th><th>Dataset Name</th><th>Type</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>STEP15</td><td>STEPLIB</td><td>SHR</td><td>AWS.M2.CARDDEMO.LOADLIB</td><td>PDS</td><td>Program load library</td></tr>
+            <tr><td>STEP15</td><td>DALYTRAN</td><td>SHR</td><td>AWS.M2.CARDDEMO.DALYTRAN.PS</td><td>Sequential (PS)</td><td>Input daily transactions</td></tr>
+            <tr><td>STEP15</td><td>TRANFILE</td><td>SHR</td><td>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</td><td>VSAM KSDS</td><td>Output: posted transactions (WRITE)</td></tr>
+            <tr><td>STEP15</td><td>XREFFILE</td><td>SHR</td><td>AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</td><td>VSAM KSDS</td><td>Input: card-to-account cross-reference (READ)</td></tr>
+            <tr><td>STEP15</td><td>ACCTFILE</td><td>SHR</td><td>AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS</td><td>VSAM KSDS</td><td>I-O: account master (READ + REWRITE)</td></tr>
+            <tr><td>STEP15</td><td>TCATBALF</td><td>SHR</td><td>AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS</td><td>VSAM KSDS</td><td>I-O: transaction category balance (READ + WRITE/REWRITE)</td></tr>
+            <tr><td>STEP15</td><td>DALYREJS</td><td>(NEW,CATLG,DELETE)</td><td>AWS.M2.CARDDEMO.DALYREJS(+1)</td><td>GDG / Sequential</td><td>Output: rejected transactions</td></tr>
+            <tr><td>STEP15</td><td>SYSPRINT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>COBOL DISPLAY output</td></tr>
+            <tr><td>STEP15</td><td>SYSOUT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>System output</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.3 -->
+    <div class="subsection" id="s3-3">
+      <h3><span class="dot"></span> 3.3 GDG Usage</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>GDG Base</th><th>Generation</th><th>RECFM/LRECL</th><th>Retention</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>AWS.M2.CARDDEMO.DALYREJS</code></td><td>+1 (new)</td><td>F / 430</td><td>5 generations (SCRATCH)</td><td>Daily rejection file: 350-byte transaction data + 80-byte validation trailer (4-digit reason code + 76-byte description)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.4 -->
+    <div class="subsection" id="s3-4">
+      <h3><span class="dot"></span> 3.4 Scheduler Dependencies</h3>
+      <div class="callout">
+        <strong>Note:</strong> POSTTRAN is not directly in the Control-M schedule but is logically positioned between the <em>DAILY-TransactionBackup</em> stream (which empties the TRANSACT VSAM) and the next day&rsquo;s CICS open. It must run <strong>after</strong> TRANBKP backs up and resets the VSAM and <strong>before</strong> OPENFIL reopens CICS files.
+      </div>
+      <div class="diagram-box">
+<pre>
+  DAILY-TransactionBackup          POSTTRAN              CICS Online
+  ─────────────────────           ──────────            ────────────
+  CLOSEFIL ─┐
+             ├─▶ TRANBKP ──▶ (VSAM reset) ──▶ POSTTRAN ──▶ OPENFIL
+             │                                              (reopen)
+             └─── WAITSTEP
+</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 4 — Program Inventory and Call Chain
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">4</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 4.1 -->
+    <div class="subsection" id="s4-1">
+      <h3><span class="dot"></span> 4.1 Program Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Program ID</th><th>Step</th><th>Purpose</th><th>Language</th><th>LOC</th><th>Source Location</th></tr></thead>
+          <tbody>
+            <tr><td><code>CBTRN02C</code></td><td>STEP15</td><td>Main batch driver &mdash; reads daily transactions, validates, posts to VSAM, updates balances</td><td>COBOL</td><td>731</td><td><code>app/cbl/CBTRN02C.cbl</code></td></tr>
+            <tr><td><code>CEE3ABD</code></td><td>STEP15 (called)</td><td>LE abend service &mdash; invoked on fatal I/O errors</td><td>System</td><td>&mdash;</td><td>Language Environment runtime</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4.2 -->
+    <div class="subsection" id="s4-2">
+      <h3><span class="dot"></span> 4.2 Paragraph Call Hierarchy</h3>
+      <div class="diagram-box">
+<pre>
+CBTRN02C (PROCEDURE DIVISION)
+│
+├── 0000-DALYTRAN-OPEN      (Open daily transaction input)
+├── 0100-TRANFILE-OPEN      (Open transaction master output)
+├── 0200-XREFFILE-OPEN      (Open card cross-reference input)
+├── 0300-DALYREJS-OPEN      (Open daily rejects output)
+├── 0400-ACCTFILE-OPEN      (Open account master I-O)
+├── 0500-TCATBALF-OPEN      (Open tran cat balance I-O)
+│
+├── [MAIN LOOP: PERFORM UNTIL END-OF-FILE = 'Y']
+│   ├── 1000-DALYTRAN-GET-NEXT   (Read next daily transaction)
+│   ├── 1500-VALIDATE-TRAN       (Validate transaction)
+│   │   ├── 1500-A-LOOKUP-XREF   (Card number lookup in XREFFILE)
+│   │   └── 1500-B-LOOKUP-ACCT   (Account lookup + credit/expiry checks)
+│   │
+│   ├── [IF VALID]
+│   │   └── 2000-POST-TRANSACTION
+│   │       ├── Z-GET-DB2-FORMAT-TIMESTAMP  (Generate processing timestamp)
+│   │       ├── 2700-UPDATE-TCATBAL         (Update category balance)
+│   │       │   ├── 2700-A-CREATE-TCATBAL-REC  (WRITE new record)
+│   │       │   └── 2700-B-UPDATE-TCATBAL-REC  (REWRITE existing record)
+│   │       ├── 2800-UPDATE-ACCOUNT-REC     (REWRITE account balance)
+│   │       └── 2900-WRITE-TRANSACTION-FILE (WRITE to TRANSACT VSAM)
+│   │
+│   └── [IF INVALID]
+│       └── 2500-WRITE-REJECT-REC  (WRITE to DALYREJS)
+│
+├── 9000-DALYTRAN-CLOSE     (Close daily transaction)
+├── 9100-TRANFILE-CLOSE     (Close transaction master)
+├── 9200-XREFFILE-CLOSE     (Close cross-reference)
+├── 9300-DALYREJS-CLOSE     (Close daily rejects)
+├── 9400-ACCTFILE-CLOSE     (Close account master)
+├── 9500-TCATBALF-CLOSE     (Close tran cat balance)
+│
+├── 9910-DISPLAY-IO-STATUS  (Format &amp; display file status code)
+└── 9999-ABEND-PROGRAM      (CALL CEE3ABD with abend code 999)
+</pre>
+      </div>
+    </div>
+
+    <!-- 4.3 -->
+    <div class="subsection" id="s4-3">
+      <h3><span class="dot"></span> 4.3 Copybooks Used</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Copybook</th><th>Record</th><th>LRECL</th><th>Key Fields</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>CVTRA06Y</code></td><td>DALYTRAN-RECORD</td><td>350</td><td>DALYTRAN-ID (PIC X(16))</td><td>Daily transaction input record layout</td></tr>
+            <tr><td><code>CVTRA05Y</code></td><td>TRAN-RECORD</td><td>350</td><td>TRAN-ID (PIC X(16))</td><td>Transaction master record layout</td></tr>
+            <tr><td><code>CVACT03Y</code></td><td>CARD-XREF-RECORD</td><td>50</td><td>XREF-CARD-NUM (PIC X(16))</td><td>Card cross-reference record layout</td></tr>
+            <tr><td><code>CVACT01Y</code></td><td>ACCOUNT-RECORD</td><td>300</td><td>ACCT-ID (PIC 9(11))</td><td>Account master record layout</td></tr>
+            <tr><td><code>CVTRA01Y</code></td><td>TRAN-CAT-BAL-RECORD</td><td>50</td><td>TRAN-CAT-KEY (PIC: 9(11)+X(2)+9(4))</td><td>Transaction category balance record</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 5 — File and Dataset Inventory
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">5</span>
+    <h2>File and Dataset Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 5.1 -->
+    <div class="subsection" id="s5-1">
+      <h3><span class="dot"></span> 5.1 Complete File Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File/Dataset</th><th>Type</th><th>Access</th><th>LRECL</th><th>Key</th><th>Purpose in Flow</th></tr></thead>
+          <tbody>
+            <tr><td><code>AWS.M2.CARDDEMO.DALYTRAN.PS</code></td><td>Sequential (PS)</td><td>INPUT</td><td>350</td><td>&mdash;</td><td>Daily transaction input file</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>OUTPUT</td><td>350</td><td>TRAN-ID (16 bytes, offset 0)</td><td>Transaction master &mdash; receives posted transactions</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>INPUT</td><td>50</td><td>XREF-CARD-NUM (16 bytes, offset 0)</td><td>Card number to account ID cross-reference</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>I-O</td><td>300</td><td>ACCT-ID (11 bytes, offset 0)</td><td>Account master &mdash; read for validation, rewrite for balance update</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>I-O</td><td>50</td><td>TRAN-CAT-KEY (17 bytes, offset 0)</td><td>Transaction category balance &mdash; read/update or create</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.DALYREJS(+1)</code></td><td>GDG / Sequential</td><td>OUTPUT</td><td>430</td><td>&mdash;</td><td>Daily rejection output (350-byte tran + 80-byte trailer)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.2 -->
+    <div class="subsection" id="s5-2">
+      <h3><span class="dot"></span> 5.2 Key Record Layouts</h3>
+
+      <h4>DALYTRAN-RECORD (Copybook: CVTRA06Y, 350 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Offset</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>DALYTRAN-ID</td><td>X(16)</td><td>1</td><td>16</td><td>Transaction ID (unique key)</td></tr>
+            <tr><td>DALYTRAN-TYPE-CD</td><td>X(02)</td><td>17</td><td>2</td><td>Transaction type code</td></tr>
+            <tr><td>DALYTRAN-CAT-CD</td><td>9(04)</td><td>19</td><td>4</td><td>Transaction category code</td></tr>
+            <tr><td>DALYTRAN-SOURCE</td><td>X(10)</td><td>23</td><td>10</td><td>Transaction source</td></tr>
+            <tr><td>DALYTRAN-DESC</td><td>X(100)</td><td>33</td><td>100</td><td>Transaction description</td></tr>
+            <tr><td>DALYTRAN-AMT</td><td>S9(09)V99</td><td>133</td><td>11</td><td>Transaction amount (signed decimal)</td></tr>
+            <tr><td>DALYTRAN-MERCHANT-ID</td><td>9(09)</td><td>144</td><td>9</td><td>Merchant identifier</td></tr>
+            <tr><td>DALYTRAN-MERCHANT-NAME</td><td>X(50)</td><td>153</td><td>50</td><td>Merchant name</td></tr>
+            <tr><td>DALYTRAN-MERCHANT-CITY</td><td>X(50)</td><td>203</td><td>50</td><td>Merchant city</td></tr>
+            <tr><td>DALYTRAN-MERCHANT-ZIP</td><td>X(10)</td><td>253</td><td>10</td><td>Merchant zip code</td></tr>
+            <tr><td>DALYTRAN-CARD-NUM</td><td>X(16)</td><td>263</td><td>16</td><td>Card number (used for XREF lookup)</td></tr>
+            <tr><td>DALYTRAN-ORIG-TS</td><td>X(26)</td><td>279</td><td>26</td><td>Origination timestamp</td></tr>
+            <tr><td>DALYTRAN-PROC-TS</td><td>X(26)</td><td>305</td><td>26</td><td>Processing timestamp</td></tr>
+            <tr><td>FILLER</td><td>X(20)</td><td>331</td><td>20</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>ACCOUNT-RECORD (Copybook: CVACT01Y, 300 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>ACCT-ID</td><td>9(11)</td><td>11</td><td>Account identifier (key)</td></tr>
+            <tr><td>ACCT-ACTIVE-STATUS</td><td>X(01)</td><td>1</td><td>Active status flag</td></tr>
+            <tr><td>ACCT-CURR-BAL</td><td>S9(10)V99</td><td>12</td><td>Current balance (updated by POSTTRAN)</td></tr>
+            <tr><td>ACCT-CREDIT-LIMIT</td><td>S9(10)V99</td><td>12</td><td>Credit limit (used in BR-003 validation)</td></tr>
+            <tr><td>ACCT-CASH-CREDIT-LIMIT</td><td>S9(10)V99</td><td>12</td><td>Cash credit limit</td></tr>
+            <tr><td>ACCT-OPEN-DATE</td><td>X(10)</td><td>10</td><td>Account open date</td></tr>
+            <tr><td>ACCT-EXPIRAION-DATE</td><td>X(10)</td><td>10</td><td>Account expiration date (used in BR-004)</td></tr>
+            <tr><td>ACCT-REISSUE-DATE</td><td>X(10)</td><td>10</td><td>Reissue date</td></tr>
+            <tr><td>ACCT-CURR-CYC-CREDIT</td><td>S9(10)V99</td><td>12</td><td>Current cycle credit total (updated)</td></tr>
+            <tr><td>ACCT-CURR-CYC-DEBIT</td><td>S9(10)V99</td><td>12</td><td>Current cycle debit total (updated)</td></tr>
+            <tr><td>ACCT-ADDR-ZIP</td><td>X(10)</td><td>10</td><td>Account zip code</td></tr>
+            <tr><td>ACCT-GROUP-ID</td><td>X(10)</td><td>10</td><td>Account group</td></tr>
+            <tr><td>FILLER</td><td>X(178)</td><td>178</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>Reject Record (FD-REJS-RECORD, 430 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>REJECT-TRAN-DATA</td><td>X(350)</td><td>350</td><td>Full transaction record (copied from DALYTRAN)</td></tr>
+            <tr><td>WS-VALIDATION-FAIL-REASON</td><td>9(04)</td><td>4</td><td>Rejection reason code (100&ndash;103)</td></tr>
+            <tr><td>WS-VALIDATION-FAIL-REASON-DESC</td><td>X(76)</td><td>76</td><td>Human-readable rejection description</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.3 -->
+    <div class="subsection" id="s5-3">
+      <h3><span class="dot"></span> 5.3 File Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+  │  DALYTRAN.PS     │  │ CARDXREF VSAM    │  │ ACCTDATA VSAM    │
+  │  (Sequential)    │  │ (KSDS, key=16)   │  │ (KSDS, key=11)   │
+  │  LRECL=350       │  │ LRECL=50         │  │ LRECL=300        │
+  └────────┬─────────┘  └────────┬─────────┘  └────────┬─────────┘
+           │ READ                │ READ                 │ READ+
+           │ Sequential          │ by card#             │ REWRITE
+           ▼                     ▼                      ▼
+  ┌─────────────────────────────────────────────────────────────────┐
+  │  STEP15: CBTRN02C                                               │
+  │                                                                 │
+  │  For each DALYTRAN record:                                      │
+  │    1. Lookup CARDXREF by DALYTRAN-CARD-NUM                      │
+  │    2. Lookup ACCTDATA by XREF-ACCT-ID                           │
+  │    3. Validate credit limit &amp; expiration                        │
+  │    4. Post or Reject                                            │
+  └─────┬──────────────────┬─────────────────────┬──────────────────┘
+        │ WRITE            │ WRITE/REWRITE        │ WRITE
+        ▼                  ▼                      ▼
+  ┌──────────────┐  ┌──────────────────┐  ┌──────────────────┐
+  │ TRANSACT     │  │ TCATBALF VSAM    │  │ DALYREJS GDG(+1) │
+  │ VSAM (KSDS)  │  │ (KSDS, key=17)   │  │ LRECL=430        │
+  │ LRECL=350    │  │ LRECL=50         │  │ (Reject + Reason) │
+  └──────────────┘  └──────────────────┘  └──────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 5.4 -->
+    <div class="subsection" id="s5-4">
+      <h3><span class="dot"></span> 5.4 File Dependency Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>Created In</th><th>Read In</th><th>Updated In</th><th>Must Exist Before Job?</th><th>Consumed Downstream?</th></tr></thead>
+          <tbody>
+            <tr><td>DALYTRAN.PS</td><td>CICS online</td><td>STEP15</td><td>&mdash;</td><td>Yes</td><td>No (consumed here)</td></tr>
+            <tr><td>CARDXREF VSAM</td><td>XREFFILE job</td><td>STEP15</td><td>&mdash;</td><td>Yes</td><td>Yes &mdash; CREASTMT, TRANREPT</td></tr>
+            <tr><td>ACCTDATA VSAM</td><td>ACCTFILE job</td><td>STEP15</td><td>STEP15</td><td>Yes</td><td>Yes &mdash; CICS, INTCALC, CREASTMT</td></tr>
+            <tr><td>TRANSACT VSAM</td><td>TRANBKP (reset)</td><td>&mdash;</td><td>&mdash;</td><td>Yes (empty after TRANBKP)</td><td>Yes &mdash; CICS, TRANREPT, CREASTMT, COMBTRAN</td></tr>
+            <tr><td>TCATBALF VSAM</td><td>TCATBALF job</td><td>STEP15</td><td>STEP15</td><td>Yes</td><td>Yes &mdash; INTCALC, PRTCATBL</td></tr>
+            <tr><td>DALYREJS GDG</td><td>STEP15</td><td>&mdash;</td><td>&mdash;</td><td>GDG base must exist</td><td>Exception processing</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 6 — Data Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">6</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 6.1 -->
+    <div class="subsection" id="s6-1">
+      <h3><span class="dot"></span> 6.1 Data Transformation Map</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Source Field</th><th>Source File</th><th>Transformation</th><th>Target Field</th><th>Target File</th></tr></thead>
+          <tbody>
+            <tr><td>DALYTRAN-ID</td><td>DALYTRAN.PS</td><td>Direct copy (MOVE)</td><td>TRAN-ID</td><td>TRANSACT VSAM</td></tr>
+            <tr><td>DALYTRAN-TYPE-CD</td><td>DALYTRAN.PS</td><td>Direct copy</td><td>TRAN-TYPE-CD</td><td>TRANSACT VSAM</td></tr>
+            <tr><td>DALYTRAN-AMT</td><td>DALYTRAN.PS</td><td>Direct copy</td><td>TRAN-AMT</td><td>TRANSACT VSAM</td></tr>
+            <tr><td>DALYTRAN-AMT</td><td>DALYTRAN.PS</td><td>ADD to existing balance</td><td>TRAN-CAT-BAL</td><td>TCATBALF VSAM</td></tr>
+            <tr><td>DALYTRAN-AMT</td><td>DALYTRAN.PS</td><td>ADD to ACCT-CURR-BAL</td><td>ACCT-CURR-BAL</td><td>ACCTDATA VSAM</td></tr>
+            <tr><td>DALYTRAN-AMT (&ge; 0)</td><td>DALYTRAN.PS</td><td>ADD to ACCT-CURR-CYC-CREDIT</td><td>ACCT-CURR-CYC-CREDIT</td><td>ACCTDATA VSAM</td></tr>
+            <tr><td>DALYTRAN-AMT (&lt; 0)</td><td>DALYTRAN.PS</td><td>ADD to ACCT-CURR-CYC-DEBIT</td><td>ACCT-CURR-CYC-DEBIT</td><td>ACCTDATA VSAM</td></tr>
+            <tr><td>CURRENT-DATE</td><td>System (FUNCTION)</td><td>Formatted to DB2 timestamp (YYYY-MM-DD-HH.MM.SS.HH0000)</td><td>TRAN-PROC-TS</td><td>TRANSACT VSAM</td></tr>
+            <tr><td>XREF-ACCT-ID</td><td>CARDXREF VSAM</td><td>Used as key for ACCTFILE and TCATBALF lookups</td><td>FD-ACCT-ID, FD-TRANCAT-ACCT-ID</td><td>(Lookup keys)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 6.2 -->
+    <div class="subsection" id="s6-2">
+      <h3><span class="dot"></span> 6.2 Data Lineage Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  DALYTRAN.PS (source: CICS online capture)
+       │
+       │ DALYTRAN-CARD-NUM
+       ▼
+  CARDXREF VSAM ──▶ XREF-ACCT-ID (derived account number)
+       │
+       │ XREF-ACCT-ID
+       ▼
+  ACCTDATA VSAM (READ for validation)
+       │
+       ├──▶ Validation: CREDIT-LIMIT vs computed balance
+       │                 EXPIRATION-DATE vs TRAN-ORIG-TS
+       │
+       ▼ (if valid)
+  ┌─────────────────────────────────────────────┐
+  │ 2000-POST-TRANSACTION                       │
+  │                                             │
+  │ DALYTRAN fields ──MOVE──▶ TRAN-RECORD       │
+  │                           │                 │
+  │ DALYTRAN-AMT ──ADD──▶ ACCT-CURR-BAL         │
+  │              ──ADD──▶ ACCT-CURR-CYC-*       │
+  │              ──ADD──▶ TRAN-CAT-BAL          │
+  │                                             │
+  │ CURRENT-DATE ──FORMAT──▶ TRAN-PROC-TS       │
+  └─────────────────────────────────────────────┘
+       │                    │              │
+       ▼                    ▼              ▼
+  TRANSACT VSAM      ACCTDATA VSAM   TCATBALF VSAM
+  (new record)       (updated bal)   (updated/new)
+</pre>
+      </div>
+    </div>
+
+    <!-- 6.3 -->
+    <div class="subsection" id="s6-3">
+      <h3><span class="dot"></span> 6.3 Control Totals and Reconciliation</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Control Point</th><th>What&rsquo;s Counted</th><th>Where Stored</th><th>Reconciled Against</th></tr></thead>
+          <tbody>
+            <tr><td>WS-TRANSACTION-COUNT</td><td>Total records read from DALYTRAN</td><td>SYSPRINT (DISPLAY)</td><td>Source system extract count</td></tr>
+            <tr><td>WS-REJECT-COUNT</td><td>Records that failed validation</td><td>SYSPRINT (DISPLAY)</td><td>DALYREJS record count</td></tr>
+            <tr><td>Implied: Posted count</td><td>WS-TRANSACTION-COUNT &minus; WS-REJECT-COUNT</td><td>Computed</td><td>TRANSACT VSAM record count</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 7 — Sort/Merge and Utility Processing
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">7</span>
+    <h2>Sort/Merge and Utility Processing</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="callout">
+      <strong>Not applicable.</strong> POSTTRAN is a single-step COBOL program with no SORT, MERGE, or IDCAMS utility steps. The daily transaction file is processed in input order; no pre-sorting is required because transactions are written to the VSAM KSDS by their unique TRAN-ID key (random access WRITE).
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 8 — Checkpoint, Restart, and Recovery
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">8</span>
+    <h2>Checkpoint, Restart, and Recovery</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s8-1">
+      <h3><span class="dot"></span> 8.1 Checkpoint Strategy</h3>
+      <div class="callout callout-red">
+        <strong>Warning:</strong> CBTRN02C does <em>not</em> implement application-level checkpointing. In the event of an abend mid-processing, the TRANSACT VSAM, ACCTDATA VSAM, and TCATBALF VSAM will contain partially posted data. Recovery requires restoring from backup.
+      </div>
+    </div>
+
+    <div class="subsection" id="s8-2">
+      <h3><span class="dot"></span> 8.2 Restart Procedures</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Failure Scenario</th><th>Restart Step</th><th>Prerequisites</th><th>Data Reset Required</th></tr></thead>
+          <tbody>
+            <tr><td>Abend in STEP15 (mid-processing)</td><td>STEP15 (resubmit entire job)</td><td>1. Re-run TRANBKP to reset TRANSACT VSAM<br>2. Restore ACCTDATA from pre-job backup<br>3. Restore TCATBALF from pre-job backup<br>4. Delete DALYREJS(+1) if partially created</td><td>Yes &mdash; full reset of 3 VSAM files</td></tr>
+            <tr><td>JCL error (before program starts)</td><td>Resubmit</td><td>Fix JCL</td><td>None</td></tr>
+            <tr><td>Input file missing (DALYTRAN status &ne; &lsquo;00&rsquo;)</td><td>Resubmit</td><td>Ensure DALYTRAN.PS is available</td><td>None</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s8-3">
+      <h3><span class="dot"></span> 8.3 Recovery Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  Normal:  TRANBKP (reset VSAM) → POSTTRAN → OPENFIL → Done
+
+  Failure at STEP15 (mid-processing):
+    1. Identify abend cause (SYSPRINT, SYSUDUMP)
+    2. TRANSACT/ACCTDATA/TCATBALF are partially updated
+       ├── Re-run TRANBKP to reset TRANSACT VSAM (DELETE/DEFINE/REPRO backup)
+       ├── Restore ACCTDATA from backup (REPRO from pre-job snapshot)
+       └── Restore TCATBALF from backup (REPRO from pre-job snapshot)
+    3. Fix root cause
+    4. Resubmit POSTTRAN
+</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 9 — Error Handling and Abend Resolution
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">9</span>
+    <h2>Error Handling and Abend Resolution</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 9.1 -->
+    <div class="subsection" id="s9-1">
+      <h3><span class="dot"></span> 9.1 Error Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  Record-Level Validation Errors (non-fatal, continue processing):
+  ──────────────────────────────────────────────────────────────
+    Invalid card number   → Reason 100 → WRITE to DALYREJS, continue
+    Account not found     → Reason 101 → WRITE to DALYREJS, continue
+    Over credit limit     → Reason 102 → WRITE to DALYREJS, continue
+    Expired account       → Reason 103 → WRITE to DALYREJS, continue
+
+  File I/O Errors (fatal, ABEND immediately):
+  ──────────────────────────────────────────────
+    Any file OPEN failure      → DISPLAY error + status → 9999-ABEND-PROGRAM
+    DALYTRAN READ error        → DISPLAY error + status → 9999-ABEND-PROGRAM
+    TRANSACT WRITE error       → DISPLAY error + status → 9999-ABEND-PROGRAM
+    DALYREJS WRITE error       → DISPLAY error + status → 9999-ABEND-PROGRAM
+    ACCTFILE REWRITE error     → Reason 109 set (but no ABEND for this path)
+    TCATBALF READ/WRITE error  → DISPLAY error + status → 9999-ABEND-PROGRAM
+    Any file CLOSE failure     → DISPLAY error + status → 9999-ABEND-PROGRAM
+</pre>
+      </div>
+    </div>
+
+    <!-- 9.2 -->
+    <div class="subsection" id="s9-2">
+      <h3><span class="dot"></span> 9.2 Return Code Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>RC=0</th><th>RC=4</th><th>RC=999 (ABEND)</th></tr></thead>
+          <tbody>
+            <tr><td>STEP15</td><td>All transactions posted; WS-REJECT-COUNT = 0</td><td>Some transactions rejected; WS-REJECT-COUNT &gt; 0. Job completes normally but signals rejects for investigation.</td><td>Fatal file I/O error. Program calls CEE3ABD with ABCODE=999, TIMING=0. System produces SYSUDUMP.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 9.3 -->
+    <div class="subsection" id="s9-3">
+      <h3><span class="dot"></span> 9.3 Common Abend Codes and Resolution</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Abend</th><th>Likely Cause</th><th>Resolution</th></tr></thead>
+          <tbody>
+            <tr><td>U0999</td><td>File I/O error detected by CBTRN02C (file status &ne; &lsquo;00&rsquo;)</td><td>Check SYSPRINT for the &ldquo;FILE STATUS IS:&rdquo; message with the NNNN status code. Common causes: VSAM full (status 24), VSAM not found (status 35), duplicate key (status 22)</td></tr>
+            <tr><td>S0C7</td><td>Non-numeric data in PIC 9 field (e.g., corrupted DALYTRAN-AMT)</td><td>Check input data quality in DALYTRAN.PS; verify record layout alignment</td></tr>
+            <tr><td>S0C4</td><td>Invalid storage reference</td><td>Check SYSUDUMP for failing instruction; likely data alignment issue</td></tr>
+            <tr><td>S213-04</td><td>VSAM dataset not found (OPEN failure)</td><td>Verify VSAM cluster exists; run IDCAMS LISTCAT</td></tr>
+            <tr><td>S913</td><td>RACF security violation on dataset access</td><td>Check job userid authority for all datasets</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 9.4 -->
+    <div class="subsection" id="s9-4">
+      <h3><span class="dot"></span> 9.4 I/O Status Code Handling</h3>
+      <p>Paragraph <code>9910-DISPLAY-IO-STATUS</code> handles both numeric and non-numeric VSAM file status codes:</p>
+      <ul>
+        <li>If <code>IO-STAT1 = '9'</code> or status is non-numeric: extracts the binary value from IO-STAT2 and displays as <code>FILE STATUS IS: NNNN&lt;value&gt;</code> (VSAM extended status)</li>
+        <li>Otherwise: displays the 2-byte status directly as <code>FILE STATUS IS: &lt;IO-STATUS&gt;</code></li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 10 — Security and Authorization
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="subsection" id="s10-1">
+      <h3><span class="dot"></span> 10.1 Dataset Security Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Dataset Pattern</th><th>Access Required</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr><td>AWS.M2.CARDDEMO.DALYTRAN.PS</td><td>READ</td><td>Input file</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</td><td>UPDATE (WRITE)</td><td>Post new transaction records</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</td><td>READ</td><td>Cross-reference lookup</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS</td><td>UPDATE (READ + REWRITE)</td><td>Validate and update account balances</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS</td><td>UPDATE (READ + WRITE/REWRITE)</td><td>Update or create category balance records</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.DALYREJS</td><td>ALTER (create new generation)</td><td>Output rejection file</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.LOADLIB</td><td>READ (FETCH)</td><td>Program load library</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 11 — Performance and Batch Window Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Performance and Batch Window Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s11-1">
+      <h3><span class="dot"></span> 11.1 Performance Characteristics</h3>
+      <p>CBTRN02C processes each input record with up to <strong>5 VSAM I/O operations</strong> per record:</p>
+      <ol>
+        <li>READ DALYTRAN (sequential)</li>
+        <li>READ XREFFILE (random, by card number)</li>
+        <li>READ ACCTFILE (random, by account ID)</li>
+        <li>READ + REWRITE (or WRITE) TCATBALF (random, by composite key)</li>
+        <li>REWRITE ACCTFILE (random)</li>
+        <li>WRITE TRANSACT (random)</li>
+      </ol>
+      <div class="callout">
+        <strong>Performance note:</strong> The random VSAM access pattern (one READ per record across 3 different KSDS files) means elapsed time scales linearly with input volume. For large volumes, consider pre-sorting DALYTRAN by card number to improve VSAM buffering locality on the XREFFILE reads.
+      </div>
+    </div>
+
+    <div class="subsection" id="s11-2">
+      <h3><span class="dot"></span> 11.2 Batch Window Fit</h3>
+      <div class="table-wrap">
+        <table>
+          <tbody>
+            <tr><td><strong>Window Opens</strong></td><td>After TRANBKP completes (TRANSACT VSAM reset)</td></tr>
+            <tr><td><strong>Window Closes</strong></td><td>Before OPENFIL (CICS files reopened for next business day)</td></tr>
+            <tr><td><strong>Predecessor</strong></td><td>DAILY-TransactionBackup (CLOSEFIL &rarr; TRANBKP)</td></tr>
+            <tr><td><strong>Successor</strong></td><td>OPENFIL (reopen CICS files)</td></tr>
+            <tr><td><strong>Critical Path</strong></td><td>Yes &mdash; blocks CICS online system from reopening</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 12 — Testing Approach
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s12-1">
+      <h3><span class="dot"></span> 12.1 Test Scenarios</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Scenario</th><th>Input Setup</th><th>Expected Output</th><th>Verify Method</th></tr></thead>
+          <tbody>
+            <tr><td>TC-001</td><td>Normal run (all valid)</td><td>DALYTRAN with valid card numbers, within limits</td><td>RC=0; TRANSACT count = input count; DALYREJS empty</td><td>Compare WS-TRANSACTION-COUNT = TRANSACT records; WS-REJECT-COUNT = 0</td></tr>
+            <tr><td>TC-002</td><td>Invalid card numbers</td><td>DALYTRAN with non-existent card numbers</td><td>RC=4; rejects with reason 100</td><td>Check DALYREJS for reason code 0100</td></tr>
+            <tr><td>TC-003</td><td>Account not found</td><td>Card exists in XREF but account missing from ACCTDATA</td><td>RC=4; rejects with reason 101</td><td>Check DALYREJS for reason code 0101</td></tr>
+            <tr><td>TC-004</td><td>Over credit limit</td><td>Transaction amount exceeds available credit</td><td>RC=4; rejects with reason 102</td><td>Check DALYREJS for reason code 0102</td></tr>
+            <tr><td>TC-005</td><td>Expired account</td><td>Transaction date after ACCT-EXPIRAION-DATE</td><td>RC=4; rejects with reason 103</td><td>Check DALYREJS for reason code 0103</td></tr>
+            <tr><td>TC-006</td><td>Mixed valid and invalid</td><td>Mix of valid and invalid transactions</td><td>RC=4; valid posted, invalid rejected</td><td>posted + rejected = total read</td></tr>
+            <tr><td>TC-007</td><td>New TCATBAL record creation</td><td>Transaction for account/type/category not in TCATBALF</td><td>New TCATBALF record created with TRAN-CAT-BAL = tran amount</td><td>IDCAMS PRINT TCATBALF; check new key</td></tr>
+            <tr><td>TC-008</td><td>Credit vs debit accumulation</td><td>Positive and negative transaction amounts</td><td>ACCT-CURR-CYC-CREDIT updated for positive; ACCT-CURR-CYC-DEBIT for negative</td><td>Before/after comparison of ACCTDATA</td></tr>
+            <tr><td>TC-009</td><td>Empty input file</td><td>0-record DALYTRAN.PS</td><td>RC=0; WS-TRANSACTION-COUNT = 0</td><td>Check SYSPRINT</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s12-2">
+      <h3><span class="dot"></span> 12.2 Test Data Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>Records Needed</th><th>Setup Method</th></tr></thead>
+          <tbody>
+            <tr><td>DALYTRAN.PS</td><td>Variable (10&ndash;1000+)</td><td>IEBGENER from inline data or extract from production</td></tr>
+            <tr><td>CARDXREF VSAM</td><td>Must contain card numbers referenced in DALYTRAN</td><td>XREFFILE job (IDCAMS DELETE/DEFINE/REPRO)</td></tr>
+            <tr><td>ACCTDATA VSAM</td><td>Must contain accounts referenced by XREF</td><td>ACCTFILE job</td></tr>
+            <tr><td>TCATBALF VSAM</td><td>Pre-loaded or empty (program creates records)</td><td>TCATBALF job</td></tr>
+            <tr><td>TRANSACT VSAM</td><td>Must be empty (defined but no records)</td><td>TRANBKP job (DELETE/DEFINE)</td></tr>
+            <tr><td>DALYREJS GDG base</td><td>GDG base must exist</td><td>DEFGDGB or DALYREJS job</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 13 — Known Issues and Considerations
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s13">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">13</span>
+    <h2>Known Issues and Modernization Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s13-1">
+      <h3><span class="dot"></span> 13.1 Known Issues</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Description</th><th>Impact</th><th>Workaround</th></tr></thead>
+          <tbody>
+            <tr><td>KI-001</td><td>No checkpoint/restart. Mid-job failure leaves 3 VSAM files in inconsistent state.</td><td>High &mdash; recovery requires full restore from backup and rerun</td><td>Take VSAM backups before running POSTTRAN</td></tr>
+            <tr><td>KI-002</td><td>TRANSACT file opened as OUTPUT (sequential load mode). If any records exist, OPEN will fail. Requires TRANBKP to reset the file first.</td><td>Medium &mdash; job will ABEND if VSAM is not empty</td><td>Always run TRANBKP before POSTTRAN</td></tr>
+            <tr><td>KI-003</td><td>ACCTFILE REWRITE failure in 2800-UPDATE-ACCOUNT-REC sets reason 109 but does <em>not</em> ABEND or reject the record. The transaction is still written to TRANSACT VSAM even though the account balance may not be updated.</td><td>Medium &mdash; potential data inconsistency between TRANSACT and ACCTDATA</td><td>Monitor for reason 109 in post-processing</td></tr>
+            <tr><td>KI-004</td><td>Typo in ACCT-EXPIRAION-DATE (missing &lsquo;T&rsquo;) in copybook CVACT01Y &mdash; carried through to all programs</td><td>Low &mdash; cosmetic, does not affect processing</td><td>None needed</td></tr>
+            <tr><td>KI-005</td><td>Validation checks are short-circuited: if BR-003 (overlimit) fails but BR-004 (expired) also fails, only the <em>last</em> failing reason is recorded (103 overwrites 102)</td><td>Low &mdash; first valid rejection stops further checks only at XREF level; both 102 and 103 can overwrite each other</td><td>Add compound reason code tracking</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s13-2">
+      <h3><span class="dot"></span> 13.2 Modernization Considerations</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Area</th><th>Current State</th><th>Target State</th><th>Complexity</th></tr></thead>
+          <tbody>
+            <tr><td>Transaction Processing</td><td>Batch file-based (daily cycle)</td><td>Real-time event stream (e.g., Kafka/SQS)</td><td>High</td></tr>
+            <tr><td>Validation</td><td>Sequential COBOL paragraphs, reason codes</td><td>Rules engine or microservice with structured error responses</td><td>Medium</td></tr>
+            <tr><td>Data Storage</td><td>VSAM KSDS files (TRANSACT, ACCTDATA, TCATBALF, CARDXREF)</td><td>Relational database (PostgreSQL/Aurora) with ACID transactions</td><td>Medium</td></tr>
+            <tr><td>Error Handling</td><td>ABEND via CEE3ABD, file status display</td><td>Structured exception handling, retry logic, dead-letter queue</td><td>Medium</td></tr>
+            <tr><td>Recovery</td><td>No checkpoint; full restore required</td><td>Database transactions with automatic rollback; idempotent processing</td><td>High</td></tr>
+            <tr><td>Scheduling</td><td>Manual/on-demand between TRANBKP and OPENFIL</td><td>Event-driven trigger or orchestration (Step Functions, Airflow)</td><td>Low</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /page-wrap-single -->
+
+<!-- ════════════════════  FOOTER  ════════════════════ -->
+<footer class="footer">
+  <p><strong>UniCredit CardDemo</strong> &mdash; Batch Process Analysis &mdash; POSTTRAN / CBTRN02C</p>
+  <p>Generated from source: <code>app/jcl/POSTTRAN.jcl</code> &middot; <code>app/cbl/CBTRN02C.cbl</code> &middot; Copybooks: CVTRA06Y, CVTRA05Y, CVACT03Y, CVACT01Y, CVTRA01Y</p>
+</footer>
+
+</body>
+</html>
