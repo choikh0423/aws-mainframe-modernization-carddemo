@@ -355,11 +355,11 @@ class TraceHandler(SimpleHTTPRequestHandler):
             triggered_steps = set()
             cursor = None
             prev_structured_count = 0
-            max_polls = 180  # 15 minutes max
+            max_polls = 450  # 15 minutes max at 2s intervals
             poll_count = 0
 
             while poll_count < max_polls:
-                time.sleep(5)
+                time.sleep(2)
                 poll_count += 1
 
                 try:
