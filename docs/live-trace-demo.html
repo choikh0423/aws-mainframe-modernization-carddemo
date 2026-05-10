@@ -1584,8 +1584,9 @@ function waitForTerminalClose() {
 let _activeSessionId = null;
 let _evtSource = null;
 let _inputTxnNum = 1;
+let _lastPhase = null;
 
-// Program name → node ID mapping for fallback dynamic matching
+// Program name → SVG node ID
 const PROGRAM_NODE_MAP = {
   'COMEN01C': 'n-menu', 'COMEN02Y': 'n-comen02y',
   'COTRN02C': 'n-cotrn02c',
@@ -1599,74 +1600,65 @@ const PROGRAM_NODE_MAP = {
   'DALYREJS': 'n-dalyrejs', 'TCATBAL': 'n-tcatbal',
 };
 
-// Step index → diagram highlighting instructions
-const STEP_HIGHLIGHTS = {
-  // Phase 1: CICS Online Entry
-  0: {
-    label: 'Phase 1.1 — Menu Dispatch',
-    phase: 'Phase 1 of 3 — CICS Online Entry',
-    nodes: [['n-terminal'], ['n-menu'], ['n-comen02y']],
-    edges: [['e-term-menu', 'el-term-menu'], ['e-menu-comen02y', 'el-menu-comen02y']],
-  },
-  1: {
-    label: 'Phase 1.2 — XCTL to COTRN02C',
-    nodes: [['n-cotrn02c']],
-    edges: [['e-menu-cotrn', 'el-menu-cotrn']],
-  },
-  2: {
-    label: 'Phase 1.3 — CCXREF + Date Validation',
-    nodes: [['n-xref-online'], ['n-cxacaix'], ['n-csutldtc'], ['n-ceedays']],
-    edges: [['e-cotrn-xref', 'el-cotrn-xref'], ['e-cotrn-cxacaix', 'el-cotrn-cxacaix'], ['e-cotrn-csutldtc', 'el-cotrn-csutldtc'], ['e-csutldtc-ceedays', 'el-csutldtc-ceedays']],
-  },
-  3: {
-    label: 'Phase 1.4 — User Input Required',
-    decisions: [['d-confirm', null, 'active']],
-    edges: [['e-cotrn-confirm', 'el-cotrn-confirm']],
-  },
-  4: {
-    label: 'Phase 1.5 — WRITE to TRANSACT',
-    nodes: [['n-transact-write']],
-    edges: [['e-confirm-transact', 'el-confirm-transact']],
-  },
-  // Phase 2: Batch Processing
-  5: {
-    label: 'Phase 2.1 — Batch CBTRN02C',
-    phase: 'Phase 2 of 3 — Batch Processing',
-    nodes: [['n-cbtrn02c', 'batch']],
-    edges: [['e-trigger', 'el-trigger', 'batch']],
-  },
-  6: {
-    label: 'Phase 2.2 — DALYTRAN + XREF + Account',
-    nodes: [['n-dalytran', 'batch'], ['n-xref-batch', 'batch'], ['n-acct-read', 'batch']],
-    edges: [['e-cbtrn-daly', 'el-cbtrn-daly', 'batch'], ['e-cbtrn-xref', 'el-cbtrn-xref', 'batch'], ['e-cbtrn-acct', 'el-cbtrn-acct', 'batch']],
-  },
-  7: {
-    label: 'Phase 2.3 — Overlimit Check',
-    edges: [['e-acct-decision', 'el-acct-decision', 'batch']],
-  },
-  // Phase 3: Second Transaction + Batch
-  8: {
-    label: 'Phase 3.1 — Second Transaction Entry',
-    phase: 'Phase 3 of 3 — New Transaction',
-    clearFirst: true,
-  },
-  9: {
-    label: 'Phase 3.2 — WRITE Second Transaction',
-    nodes: [['n-terminal'], ['n-menu'], ['n-cotrn02c'], ['n-transact-write']],
-    edges: [['e-term-menu', 'el-term-menu'], ['e-menu-cotrn', 'el-menu-cotrn'], ['e-confirm-transact', 'el-confirm-transact']],
-  },
-  10: {
-    label: 'Phase 3.3 — Second Overlimit Check',
-    nodes: [['n-cbtrn02c', 'batch'], ['n-dalytran', 'batch'], ['n-xref-batch', 'batch'], ['n-acct-read', 'batch']],
-    edges: [['e-trigger', 'el-trigger', 'batch'], ['e-cbtrn-daly', 'el-cbtrn-daly', 'batch'], ['e-cbtrn-xref', 'el-cbtrn-xref', 'batch'], ['e-cbtrn-acct', 'el-cbtrn-acct', 'batch'], ['e-acct-decision', 'el-acct-decision', 'batch']],
-  },
+// Edge adjacency: nodeA-nodeB → [edgeId, labelId, style?]
+// When both nodes are active, light the edge between them
+const EDGE_ADJACENCY = {
+  'n-terminal|n-menu':         ['e-term-menu', 'el-term-menu'],
+  'n-menu|n-comen02y':         ['e-menu-comen02y', 'el-menu-comen02y'],
+  'n-menu|n-cotrn02c':         ['e-menu-cotrn', 'el-menu-cotrn'],
+  'n-cotrn02c|n-xref-online':  ['e-cotrn-xref', 'el-cotrn-xref'],
+  'n-cotrn02c|n-cxacaix':      ['e-cotrn-cxacaix', 'el-cotrn-cxacaix'],
+  'n-cotrn02c|n-csutldtc':     ['e-cotrn-csutldtc', 'el-cotrn-csutldtc'],
+  'n-csutldtc|n-ceedays':      ['e-csutldtc-ceedays', 'el-csutldtc-ceedays'],
+  'n-cotrn02c|n-transact-write': ['e-confirm-transact', 'el-confirm-transact'],
+  'n-cbtrn02c|n-dalytran':     ['e-cbtrn-daly', 'el-cbtrn-daly'],
+  'n-cbtrn02c|n-xref-batch':   ['e-cbtrn-xref', 'el-cbtrn-xref'],
+  'n-cbtrn02c|n-acct-read':    ['e-cbtrn-acct', 'el-cbtrn-acct'],
+  'n-accept|n-transact-posted': ['e-accept-transact', 'el-accept-transact'],
+  'n-accept|n-tcatbal':        ['e-accept-tcatbal', 'el-accept-tcatbal'],
+  'n-reject|n-dalyrejs':       ['e-reject-rejs', 'el-reject-rejs'],
+  'n-menu|n-cocrdlic':         ['e-menu-cocrdlic', 'el-menu-cocrdlic'],
+  'n-cocrdlic|n-carddat':      ['e-cocrdlic-carddat', 'el-cocrdlic-carddat'],
+  'n-cocrdlic|n-cocrdslc':     ['e-cocrdlic-cocrdslc', 'el-cocrdlic-cocrdslc'],
+  'n-cocrdlic|n-cocrdupc':     ['e-cocrdlic-cocrdupc', 'el-cocrdlic-cocrdupc'],
 };
+
+// Track which nodes are currently active for edge inference
+let _activeNodes = new Set();
+
+function highlightPrograms(programs, phase) {
+  if (!programs || !programs.length) return;
+  const style = (phase === 'batch') ? 'batch' : undefined;
+  const nodeIds = [];
+
+  for (const pgm of programs) {
+    const nodeId = PROGRAM_NODE_MAP[pgm.toUpperCase()];
+    if (nodeId) {
+      activateNode(nodeId, style);
+      _activeNodes.add(nodeId);
+      nodeIds.push(nodeId);
+    }
+  }
+
+  // Infer edges: check every pair of active nodes
+  for (const nA of _activeNodes) {
+    for (const nB of nodeIds) {
+      if (nA === nB) continue;
+      const key1 = nA + '|' + nB;
+      const key2 = nB + '|' + nA;
+      const edge = EDGE_ADJACENCY[key1] || EDGE_ADJACENCY[key2];
+      if (edge) activateEdge(edge[0], edge[1], style);
+    }
+  }
+}
 
 function startLiveTrace() {
   if (isRunning) return;
   isRunning = true;
   _inputTxnNum = 1;
   _activeSessionId = null;
+  _lastPhase = null;
+  _activeNodes = new Set();
   document.getElementById('run-btn').disabled = true;
   document.getElementById('trace-log').innerHTML = '';
   document.getElementById('sql-log').innerHTML = '';
@@ -1682,6 +1674,17 @@ function startLiveTrace() {
     const opt = _selectedOption;
     const optInfo = MENU_OPTIONS.find(o => o.num === opt);
     addTrace('step', `Selected <span class="highlight">Option ${opt} — ${optInfo.name}</span>`);
+
+    // Pre-light the known entry nodes (these are givens)
+    activateNode('n-terminal');
+    activateEdge('e-term-menu', 'el-term-menu');
+    activateNode('n-menu');
+    activateEdge('e-menu-comen02y', 'el-menu-comen02y');
+    activateNode('n-comen02y');
+    _activeNodes.add('n-terminal');
+    _activeNodes.add('n-menu');
+    _activeNodes.add('n-comen02y');
+
     addTrace('step', 'Connecting to Devin trace server...');
 
     const url = `/events?option=${opt}&option_name=${encodeURIComponent(optInfo.name)}`;
@@ -1734,22 +1737,26 @@ function handleSSEEvent(data) {
 }
 
 function handleTraceStep(data) {
-  const idx = data.step_index;
-  if (idx === -1) { handleComplete(data); return; }
+  const phase = data.phase || 'online';
 
-  const hl = STEP_HIGHLIGHTS[idx];
-  if (hl) {
-    if (hl.phase) setPhase(hl.phase);
-    if (hl.clearFirst) clearDiagramState();
-    showStep(hl.label || `Step ${idx}`, data.title || '');
-    if (hl.nodes) hl.nodes.forEach(([n, s]) => activateNode(n, s));
-    if (hl.edges) hl.edges.forEach(([e, l, s]) => activateEdge(e, l, s));
-    if (hl.decisions) hl.decisions.forEach(([p, l, c]) => activateDecision(p, l, c));
-  } else {
-    showStep(`Step ${idx}`, data.title || '');
+  // Phase transition: clear diagram when switching to batch or back
+  if (phase !== _lastPhase) {
+    if (_lastPhase && phase === 'batch') {
+      clearDiagramState();
+      _activeNodes = new Set();
+    }
+    _lastPhase = phase;
+    if (phase === 'online') setPhase('Online — CICS Interactive');
+    else if (phase === 'batch') setPhase('Batch Processing');
+    else if (phase === 'complete') { handleComplete(data); return; }
   }
 
-  // Fallback: highlight any mentioned program names
+  showStep(data.title || 'Tracing...', data.finding ? data.finding.substring(0, 80) : '');
+
+  // Highlight programs from the programs array
+  highlightPrograms(data.programs, phase);
+
+  // Fallback: scan text for program names
   highlightMentionedPrograms(data);
 
   // Build trace entry
@@ -1764,25 +1771,32 @@ function handleTraceStep(data) {
   }
   if (html) addTrace('step', html);
 
-  // Refresh DB for data access / mutation steps
-  if ([2, 4, 6, 9].includes(idx)) {
+  // Refresh DB state when touching data-access programs
+  const pgms = (data.programs || []).map(p => p.toUpperCase());
+  if (pgms.some(p => ['CCXREF', 'TRANSACT', 'ACCOUNT', 'ACCTDAT', 'DALYTRAN', 'CARDDAT'].includes(p))) {
     refreshDbState();
-    if (idx === 2) highlightXref();
   }
 }
 
 function handleInputRequired(data) {
   _activeSessionId = data.session_id || _activeSessionId;
-  const idx = data.step_index;
-  const hl = STEP_HIGHLIGHTS[idx];
-  if (hl) {
-    if (hl.phase) setPhase(hl.phase);
-    if (hl.clearFirst) clearDiagramState();
-    showStep(hl.label || 'Input Required', data.title || '');
-    if (hl.decisions) hl.decisions.forEach(([p, l, c]) => activateDecision(p, l, c));
-    if (hl.edges) hl.edges.forEach(([e, l, s]) => activateEdge(e, l, s));
+  const phase = data.phase || 'online';
+  if (phase !== _lastPhase) {
+    if (_lastPhase && phase !== _lastPhase) {
+      clearDiagramState();
+      _activeNodes = new Set();
+    }
+    _lastPhase = phase;
   }
-  addTrace('step', `<span class="highlight">AWAITING INPUT</span>: ${data.prompt || 'Enter transaction details in the 3270 terminal'}`);
+
+  showStep(data.title || 'Input Required', 'Waiting for user input');
+  highlightPrograms(data.programs, phase);
+
+  // Show the confirmation decision diamond
+  activateEdge('e-cotrn-confirm', 'el-cotrn-confirm');
+  activateDecision('d-confirm', null, 'active');
+
+  addTrace('step', `<span class="highlight">AWAITING INPUT</span>: ${data.finding || 'Enter transaction details in the 3270 terminal'}`);
   showTransactionScreen(0, _inputTxnNum);
 }
 
@@ -1793,14 +1807,12 @@ async function handleDBResult(data) {
   const r = results[0] || {};
   const decision = r.decision || 'UNKNOWN';
   const tempBal = r.temp_bal || 0;
-  const idx = data.step_index;
 
-  const hl = STEP_HIGHLIGHTS[idx];
-  if (hl) {
-    showStep(hl.label || 'Overlimit Result', data.title || '');
-    if (hl.nodes) hl.nodes.forEach(([n, s]) => activateNode(n, s));
-    if (hl.edges) hl.edges.forEach(([e, l, s]) => activateEdge(e, l, s));
-  }
+  showStep(data.title || 'Overlimit Result', data.finding ? data.finding.substring(0, 80) : '');
+  highlightPrograms(data.programs, 'batch');
+
+  // Light the decision edge
+  activateEdge('e-acct-decision', 'el-acct-decision', 'batch');
 
   logQueries(queries);
   switchTab('sql');
@@ -1842,7 +1854,7 @@ async function handleDBResult(data) {
 }
 
 function handleComplete(data) {
-  showStep('Trace Complete', data.title || `${data.steps_resolved || ''} steps resolved`);
+  showStep('Trace Complete', data.title || 'All programs resolved');
   setPhase('Complete');
   addTrace('phase', '═══ TRACE COMPLETE ═══');
   if (data.finding) addTrace('step', '<div class="devin-response"><div class="devin-label">Devin Summary</div>' + data.finding + '</div>');
@@ -1856,8 +1868,12 @@ function handleComplete(data) {
 
 function highlightMentionedPrograms(data) {
   const text = [data.title, data.file, data.finding, data.code_snippet].filter(Boolean).join(' ').toUpperCase();
+  const phase = data.phase || 'online';
   for (const [pgm, nodeId] of Object.entries(PROGRAM_NODE_MAP)) {
-    if (text.includes(pgm)) activateNode(nodeId);
+    if (text.includes(pgm)) {
+      activateNode(nodeId, phase === 'batch' ? 'batch' : undefined);
+      _activeNodes.add(nodeId);
+    }
   }
 }
 
@@ -2052,6 +2068,8 @@ async function resetAll() {
   if (_evtSource) { _evtSource.close(); _evtSource = null; }
   _activeSessionId = null;
   _inputTxnNum = 1;
+  _lastPhase = null;
+  _activeNodes = new Set();
   const sessionLink = document.getElementById('session-link');
   if (sessionLink) sessionLink.style.display = 'none';
 

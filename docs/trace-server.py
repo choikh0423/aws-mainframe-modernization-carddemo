@@ -52,13 +52,19 @@ STRUCTURED_OUTPUT_SCHEMA = {
             "items": {
                 "type": "object",
                 "properties": {
-                    "step_index": {
-                        "type": "integer",
-                        "description": "0-10 for trace steps (Phase 1: 0-4, Phase 2: 5-7, Phase 3: 8-10), -1 for completion"
+                    "phase": {
+                        "type": "string",
+                        "enum": ["online", "batch", "complete"],
+                        "description": "Execution phase: online (CICS interactive), batch (batch processing), complete (summary)"
                     },
                     "title": {
                         "type": "string",
                         "description": "Short title for this trace step"
+                    },
+                    "programs": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Program/file names touched in this step (drives diagram highlighting)"
                     },
                     "file": {
                         "type": "string",
@@ -66,14 +72,14 @@ STRUCTURED_OUTPUT_SCHEMA = {
                     },
                     "finding": {
                         "type": "string",
-                        "description": "What was discovered in this step"
+                        "description": "What was discovered — use real DB values when available"
                     },
                     "code_snippet": {
                         "type": "string",
-                        "description": "Key COBOL source lines"
+                        "description": "Key COBOL source lines (3-8 lines, from actual source)"
                     }
                 },
-                "required": ["step_index", "title", "finding"]
+                "required": ["phase", "title", "programs", "finding"]
             }
         }
     },
@@ -367,14 +373,15 @@ class TraceHandler(SimpleHTTPRequestHandler):
                         steps_list = structured.get("trace_steps", [])
                         if len(steps_list) > prev_structured_count:
                             for step_data in steps_list[prev_structured_count:]:
-                                idx = step_data.get("step_index", -99)
-                                if idx not in triggered_steps:
-                                    triggered_steps.add(idx)
+                                step_key = step_data.get("title", str(len(triggered_steps)))
+                                if step_key not in triggered_steps:
+                                    triggered_steps.add(step_key)
                                     self._process_trace_step(
-                                        step_data, idx, session_id,
+                                        step_data, session_id,
                                         api_key, org_id
                                     )
-                                    if idx == -1:
+                                    if step_data.get("phase") == "complete":
+                                        triggered_steps.add("__complete__")
                                         break
                             prev_structured_count = len(steps_list)
 
@@ -388,20 +395,22 @@ class TraceHandler(SimpleHTTPRequestHandler):
                         if not content:
                             continue
                         for step_data in extract_trace_steps_from_message(content):
-                            idx = step_data.get("step_index", -99)
-                            if idx not in triggered_steps:
-                                triggered_steps.add(idx)
+                            step_key = step_data.get("title", str(len(triggered_steps)))
+                            if step_key not in triggered_steps:
+                                triggered_steps.add(step_key)
                                 self._process_trace_step(
-                                    step_data, idx, session_id,
+                                    step_data, session_id,
                                     api_key, org_id
                                 )
+                                if step_data.get("phase") == "complete":
+                                    triggered_steps.add("__complete__")
 
                     new_cursor = msg_resp.get("end_cursor")
                     if new_cursor:
                         cursor = new_cursor
 
                     # Check if complete
-                    if -1 in triggered_steps:
+                    if "__complete__" in triggered_steps:
                         break
                     if status in ("exit", "error"):
                         break
@@ -413,19 +422,31 @@ class TraceHandler(SimpleHTTPRequestHandler):
             # Send completion
             self.send_sse_event({
                 "type": "complete",
-                "steps_resolved": len([s for s in triggered_steps if s >= 0]),
+                "steps_resolved": len(triggered_steps) - (1 if "__complete__" in triggered_steps else 0),
                 "session_url": session_url,
             })
 
         except Exception as e:
             self.send_sse_event({"type": "error", "message": str(e)})
 
-    def _process_trace_step(self, step_data, idx, session_id, api_key, org_id):
+    def _process_trace_step(self, step_data, session_id, api_key, org_id):
         """Process a trace step — send SSE event and handle requires_input/db_query."""
+        phase = step_data.get("phase", "online")
+        if phase == "complete":
+            self.send_sse_event({
+                "type": "complete",
+                "title": step_data.get("title", "Trace Complete"),
+                "finding": step_data.get("finding", ""),
+                "programs": step_data.get("programs", []),
+                "session_url": "",
+            })
+            return
+
         event = {
             "type": "step",
-            "step_index": idx,
+            "phase": phase,
             "title": step_data.get("title", ""),
+            "programs": step_data.get("programs", []),
             "file": step_data.get("file", ""),
             "finding": step_data.get("finding", ""),
             "code_snippet": step_data.get("code_snippet", ""),
