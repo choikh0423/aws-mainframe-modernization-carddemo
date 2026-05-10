@@ -167,6 +167,8 @@ class TraceHandler(SimpleHTTPRequestHandler):
             self.serve_file("live-trace-demo.html")
         elif self.path == "/static" or self.path == "/static/":
             self.serve_file("static-trace-demo.html")
+        elif self.path == "/dataflow" or self.path == "/dataflow/":
+            self.serve_file("data-flow-demo.html")
         elif self.path.startswith("/events"):
             self.handle_sse()
         elif self.path == "/health":
@@ -461,6 +463,15 @@ LANDING_HTML = """
         tree light up in real-time as Devin reads through the COBOL source
         and discovers each dynamic call. Powered by the Live COBOL Flow
         Trace playbook.
+      </p>
+    </a>
+    <a href="/dataflow" class="card static" style="border-color:#ff6b9d;">
+      <div class="badge" style="background:rgba(255,107,157,0.15);color:#ff6b9d;border-color:rgba(255,107,157,0.3);">NO API KEY NEEDED</div>
+      <h2 style="color:#ff6b9d;">/dataflow</h2>
+      <p>
+        End-to-end data flow demo: enter a $500 transaction (accepted),
+        watch batch processing update the account, then enter $1,000
+        (rejected &mdash; overlimit). Shows real VSAM data changing live.
       </p>
     </a>
   </div>
