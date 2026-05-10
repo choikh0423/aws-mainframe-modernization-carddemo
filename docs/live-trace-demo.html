@@ -1766,33 +1766,11 @@ function handleTraceStep(data) {
   }
   if (html) addTrace('step', html);
 
-  // Detect accept/reject path from programs array
-  const pgms = (data.programs || []).map(p => p.toUpperCase());
-  if (phase === 'batch') {
-    // ACCEPT path: Devin mentions TCATBAL or TRANSACT after overlimit check
-    if (pgms.includes('TCATBAL') || (pgms.includes('TRANSACT') && _activeNodes.has('n-acct-read'))) {
-      activateEdge('e-acct-decision', 'el-acct-decision', 'batch');
-      activateDecision('d-overlimit', 'dl-overlimit', 'active');
-      activateDecision(null, 'dl-overlimit2', 'active');
-      activateEdge('e-decision-accept', 'el-decision-accept');
-      activateNode('n-accept');
-      activateEdge('e-accept-transact', 'el-accept-transact');
-      activateEdge('e-accept-tcatbal', 'el-accept-tcatbal');
-      activateNode('n-transact-posted');
-    }
-    // REJECT path: Devin mentions DALYREJS
-    if (pgms.includes('DALYREJS')) {
-      activateEdge('e-acct-decision', 'el-acct-decision', 'batch');
-      activateDecision('d-overlimit', 'dl-overlimit', 'reject-active');
-      activateDecision(null, 'dl-overlimit2', 'reject-active');
-      activateEdge('e-decision-reject', 'el-decision-reject', 'reject');
-      activateNode('n-reject', 'reject');
-      activateEdge('e-reject-rejs', 'el-reject-rejs', 'reject');
-      showBadge('vb-reject-reason', 'Code 102: OVERLIMIT');
-    }
-  }
+  // Accept/reject paths are handled exclusively by handleDBResult (based on actual DB decision).
+  // Do NOT infer accept/reject from programs array — it causes false positives.
 
   // Refresh DB state when touching data-access programs or when transaction was committed
+  const pgms = (data.programs || []).map(p => p.toUpperCase());
   if (data.db_committed || pgms.some(p => ['CCXREF', 'TRANSACT', 'ACCOUNT', 'ACCTDAT', 'DALYTRAN', 'CARDDAT', 'TCATBAL', 'DALYREJS'].includes(p))) {
     refreshDbState();
     if (data.db_committed) {
