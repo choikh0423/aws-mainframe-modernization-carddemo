@@ -18,6 +18,7 @@ import time
 from pathlib import Path
 
 DB_PATH = Path(__file__).parent / "carddemo.db"
+DATA_DIR = Path(__file__).parent.parent / "app" / "data" / "ASCII"
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS accounts (
@@ -25,9 +26,13 @@ CREATE TABLE IF NOT EXISTS accounts (
     status      TEXT NOT NULL DEFAULT 'Y',
     balance     REAL NOT NULL DEFAULT 0.0,
     credit_limit REAL NOT NULL DEFAULT 0.0,
+    cash_credit_limit REAL NOT NULL DEFAULT 0.0,
+    open_date   TEXT NOT NULL DEFAULT '',
     expires     TEXT NOT NULL DEFAULT '2027-12-31',
+    reissue_date TEXT NOT NULL DEFAULT '',
     cyc_credit  REAL NOT NULL DEFAULT 0.0,
-    cyc_debit   REAL NOT NULL DEFAULT 0.0
+    cyc_debit   REAL NOT NULL DEFAULT 0.0,
+    group_id    TEXT NOT NULL DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS cardxref (
@@ -65,13 +70,126 @@ CREATE TABLE IF NOT EXISTS query_log (
 );
 """
 
-SEED_SQL = """
-INSERT OR REPLACE INTO accounts (acct_id, status, balance, credit_limit, expires, cyc_credit, cyc_debit)
-VALUES ('00001', 'Y', 400.00, 1000.00, '2027-12-31', 0.00, 0.00);
 
-INSERT OR REPLACE INTO cardxref (card_num, cust_id, acct_id)
-VALUES ('9680294154603697', '00001', '00001');
-"""
+# ---------------------------------------------------------------------------
+# ASCII data file parsers (mirrors COBOL copybook layouts)
+# ---------------------------------------------------------------------------
+
+def _parse_signed(s):
+    """Parse COBOL S9(n)V99 DISPLAY format with trailing overpunch sign."""
+    sign_pos = {'{': 0, 'A': 1, 'B': 2, 'C': 3, 'D': 4,
+                'E': 5, 'F': 6, 'G': 7, 'H': 8, 'I': 9}
+    sign_neg = {'}': 0, 'J': 1, 'K': 2, 'L': 3, 'M': 4,
+                'N': 5, 'O': 6, 'P': 7, 'Q': 8, 'R': 9}
+    last = s[-1]
+    digits = s[:-1]
+    if last in sign_pos:
+        return (int(digits) * 10 + sign_pos[last]) / 100.0
+    elif last in sign_neg:
+        return -(int(digits) * 10 + sign_neg[last]) / 100.0
+    return int(s) / 100.0
+
+
+def _parse_acctdata(filepath):
+    """Parse acctdata.txt using CVACT01Y.cpy layout (RECLN 300).
+
+    Fields (0-based offsets):
+      ACCT-ID               PIC 9(11)     [0:11]
+      ACCT-ACTIVE-STATUS    PIC X(1)      [11:12]
+      ACCT-CURR-BAL         PIC S9(10)V99 [12:24]   (12 chars, trailing sign)
+      ACCT-CREDIT-LIMIT     PIC S9(10)V99 [24:36]
+      ACCT-CASH-CREDIT-LIM  PIC S9(10)V99 [36:48]
+      ACCT-OPEN-DATE        PIC X(10)     [48:58]
+      ACCT-EXPIRAION-DATE   PIC X(10)     [58:68]
+      ACCT-REISSUE-DATE     PIC X(10)     [68:78]
+      ACCT-CURR-CYC-CREDIT  PIC S9(10)V99 [78:90]
+      ACCT-CURR-CYC-DEBIT   PIC S9(10)V99 [90:102]
+      ACCT-ADDR-ZIP         PIC X(10)     [102:112]
+      ACCT-GROUP-ID         PIC X(10)     [112:122]  (if present)
+    """
+    records = []
+    for line in open(filepath):
+        line = line.rstrip()
+        if len(line) < 102:
+            continue
+        records.append({
+            "acct_id":     line[0:11].lstrip("0") or "0",
+            "status":      line[11:12],
+            "balance":     _parse_signed(line[12:24]),
+            "credit_limit": _parse_signed(line[24:36]),
+            "cash_credit_limit": _parse_signed(line[36:48]),
+            "open_date":   line[48:58],
+            "expires":     line[58:68],
+            "reissue_date": line[68:78],
+            "cyc_credit":  _parse_signed(line[78:90]),
+            "cyc_debit":   _parse_signed(line[90:102]),
+            "group_id":    line[112:122].strip() if len(line) >= 122 else "",
+        })
+    return records
+
+
+def _parse_cardxref(filepath):
+    """Parse cardxref.txt using CVACT03Y.cpy layout (RECLN 50).
+
+    Fields (0-based offsets):
+      XREF-CARD-NUM  PIC X(16)  [0:16]
+      XREF-CUST-ID   PIC 9(9)   [16:25]
+      XREF-ACCT-ID   PIC 9(11)  [25:36]
+    """
+    records = []
+    for line in open(filepath):
+        line = line.rstrip()
+        if len(line) < 36:
+            continue
+        records.append({
+            "card_num": line[0:16],
+            "cust_id":  line[16:25].lstrip("0") or "0",
+            "acct_id":  line[25:36].lstrip("0") or "0",
+        })
+    return records
+
+
+def _seed_from_data_files(conn):
+    """Seed the database from the repo's ASCII data files."""
+    acct_file = DATA_DIR / "acctdata.txt"
+    xref_file = DATA_DIR / "cardxref.txt"
+
+    if acct_file.exists():
+        accounts = _parse_acctdata(str(acct_file))
+        for a in accounts:
+            conn.execute(
+                "INSERT OR REPLACE INTO accounts "
+                "(acct_id, status, balance, credit_limit, cash_credit_limit, "
+                "open_date, expires, reissue_date, cyc_credit, cyc_debit, group_id) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (a["acct_id"], a["status"], a["balance"], a["credit_limit"],
+                 a["cash_credit_limit"], a["open_date"], a["expires"],
+                 a["reissue_date"], a["cyc_credit"], a["cyc_debit"], a["group_id"]),
+            )
+        print(f"  Loaded {len(accounts)} accounts from {acct_file.name}")
+    else:
+        conn.execute(
+            "INSERT OR REPLACE INTO accounts "
+            "(acct_id, status, balance, credit_limit, expires, cyc_credit, cyc_debit) "
+            "VALUES ('1', 'Y', 400.00, 1000.00, '2027-12-31', 0.00, 0.00)"
+        )
+        print("  WARNING: acctdata.txt not found, using fallback seed")
+
+    if xref_file.exists():
+        xrefs = _parse_cardxref(str(xref_file))
+        for x in xrefs:
+            conn.execute(
+                "INSERT OR REPLACE INTO cardxref (card_num, cust_id, acct_id) "
+                "VALUES (?, ?, ?)",
+                (x["card_num"], x["cust_id"], x["acct_id"]),
+            )
+        print(f"  Loaded {len(xrefs)} card cross-references from {xref_file.name}")
+    else:
+        conn.execute(
+            "INSERT OR REPLACE INTO cardxref (card_num, cust_id, acct_id) "
+            "VALUES ('9680294154603697', '1', '1')"
+        )
+        print("  WARNING: cardxref.txt not found, using fallback seed")
 
 
 def _log_query(conn, query_type, sql_text, result_summary=None):
@@ -92,7 +210,7 @@ def get_connection():
 def init_db():
     conn = get_connection()
     conn.executescript(SCHEMA_SQL)
-    conn.executescript(SEED_SQL)
+    _seed_from_data_files(conn)
     conn.commit()
     conn.close()
 
@@ -102,21 +220,37 @@ def reset_db():
     conn.execute("DELETE FROM daily_rejects")
     conn.execute("DELETE FROM transactions")
     conn.execute("DELETE FROM query_log")
-    conn.executescript(SEED_SQL)
+    conn.execute("DELETE FROM accounts")
+    conn.execute("DELETE FROM cardxref")
+    _seed_from_data_files(conn)
     conn.commit()
     conn.close()
-    return {"status": "ok", "message": "Database reset to initial state"}
+    return {"status": "ok", "message": "Database reset to initial state (from ASCII data files)"}
 
 
-def get_state():
-    """Return full DB state for the frontend VSAM panel."""
+def get_state(acct_id=None):
+    """Return full DB state for the frontend VSAM panel.
+
+    If acct_id is None, looks up the account linked to the demo card.
+    """
     conn = get_connection()
 
-    acct_sql = "SELECT * FROM accounts WHERE acct_id = '00001'"
-    acct = dict(conn.execute(acct_sql).fetchone())
-    _log_query(conn, "SELECT", acct_sql,
-               f"balance={acct['balance']}, credit_limit={acct['credit_limit']}, "
-               f"cyc_credit={acct['cyc_credit']}, cyc_debit={acct['cyc_debit']}")
+    if acct_id is None:
+        xref = conn.execute(
+            "SELECT acct_id FROM cardxref WHERE card_num = '9680294154603697'"
+        ).fetchone()
+        acct_id = xref["acct_id"] if xref else "1"
+
+    acct_sql = f"SELECT * FROM accounts WHERE acct_id = '{acct_id}'"
+    row = conn.execute(acct_sql).fetchone()
+    acct = dict(row) if row else {}
+    if acct:
+        _log_query(conn, "SELECT", acct_sql,
+                   f"balance={acct['balance']}, credit_limit={acct['credit_limit']}, "
+                   f"cyc_credit={acct['cyc_credit']}, cyc_debit={acct['cyc_debit']}")
+
+    all_accts_sql = "SELECT acct_id, status, balance, credit_limit, cyc_credit, cyc_debit FROM accounts ORDER BY acct_id"
+    all_accts = [dict(r) for r in conn.execute(all_accts_sql).fetchall()]
 
     xref_sql = "SELECT * FROM cardxref"
     xrefs = [dict(r) for r in conn.execute(xref_sql).fetchall()]
@@ -135,10 +269,15 @@ def get_state():
 
     return {
         "account": acct,
+        "all_accounts": all_accts,
         "cardxref": xrefs,
         "transactions": txns,
         "daily_rejects": rejs,
         "query_log": logs,
+        "stats": {
+            "total_accounts": len(all_accts),
+            "total_xrefs": len(xrefs),
+        },
     }
 
 

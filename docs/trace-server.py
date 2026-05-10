@@ -3,7 +3,7 @@
 Devin Live Trace Server — SQLite-Backed
 =========================================
 A lightweight Python server that:
-1. Serves the live-trace-demo.html and data-flow-demo.html frontends
+1. Serves the live-trace-demo.html and data-flow-demo.html (SQLite-backed) frontends
 2. Manages a SQLite database mirroring VSAM datasets (ACCTDAT, TRANSACT, etc.)
 3. Exposes REST API endpoints for DB operations
 4. Creates Devin sessions using the "Live COBOL Flow Trace" playbook
@@ -190,10 +190,8 @@ class TraceHandler(SimpleHTTPRequestHandler):
             self.serve_landing()
         elif path in ("/live", "/live/"):
             self.serve_file("live-trace-demo.html")
-        elif path in ("/static", "/static/"):
+        elif path in ("/static", "/static/", "/dataflow", "/dataflow/"):
             self.serve_file("data-flow-demo.html")
-        elif path in ("/dataflow", "/dataflow/"):
-            self.serve_file("db-flow-demo.html")
         elif path in ("/api/db/state",):
             self.handle_db_state()
         elif path in ("/api/db/querylog",):
@@ -640,15 +638,6 @@ LANDING_HTML = """
     &ldquo;What does this flow do?&rdquo;
   </p>
   <div class="cards">
-    <a href="/static" class="card static">
-      <div class="badge">NO API KEY NEEDED</div>
-      <h2>/static</h2>
-      <p>
-        Combined demo: Option 3 (COCRDLIC read-only trace) &amp; Option 8
-        (full 3-phase data flow with batch processing, overlimit detection,
-        and live VSAM updates). Scripted animation with hardcoded values.
-      </p>
-    </a>
     <a href="/dataflow" class="card db">
       <div class="badge">SQLITE-BACKED &mdash; NO API KEY NEEDED</div>
       <h2>/dataflow</h2>
@@ -698,10 +687,10 @@ def main():
             print(f"  Org ID: {_ORG_ID}")
         except Exception as e:
             print(f"WARNING: Could not resolve org ID: {e}")
-            print("  /live route will not work, but /static and /dataflow will.")
+            print("  /live route will not work, but /dataflow will.")
     else:
         print("NOTE: DEVIN_API_KEY not set. /live route disabled.")
-        print("      /static and /dataflow routes work without an API key.")
+        print("      /dataflow route works without an API key.")
 
     server = HTTPServer(("0.0.0.0", port), TraceHandler)
     print(f"""
@@ -711,7 +700,6 @@ def main():
 |                                                              |
 |  Routes:                                                     |
 |    http://localhost:{port}          Landing page               |
-|    http://localhost:{port}/static   Scripted replay            |
 |    http://localhost:{port}/dataflow SQLite-backed live demo    |
 |    http://localhost:{port}/live     Live trace (asks Devin)    |
 |                                                              |
