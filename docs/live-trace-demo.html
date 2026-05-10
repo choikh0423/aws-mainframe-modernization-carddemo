@@ -1610,9 +1610,8 @@ const EDGE_ADJACENCY = {
   'n-cbtrn02c|n-dalytran':     ['e-cbtrn-daly', 'el-cbtrn-daly'],
   'n-cbtrn02c|n-xref-batch':   ['e-cbtrn-xref', 'el-cbtrn-xref'],
   'n-cbtrn02c|n-acct-read':    ['e-cbtrn-acct', 'el-cbtrn-acct'],
-  'n-accept|n-transact-posted': ['e-accept-transact', 'el-accept-transact'],
-  'n-accept|n-tcatbal':        ['e-accept-tcatbal', 'el-accept-tcatbal'],
-  'n-reject|n-dalyrejs':       ['e-reject-rejs', 'el-reject-rejs'],
+  // Accept/reject path edges are NOT here — they are activated exclusively
+  // by handleDBResult based on the actual DB decision, not by edge inference.
   'n-menu|n-cocrdlic':         ['e-menu-cocrdlic', 'el-menu-cocrdlic'],
   'n-cocrdlic|n-carddat':      ['e-cocrdlic-carddat', 'el-cocrdlic-carddat'],
   'n-cocrdlic|n-cocrdslc':     ['e-cocrdlic-cocrdslc', 'el-cocrdlic-cocrdslc'],
@@ -1766,11 +1765,11 @@ function handleTraceStep(data) {
   }
   if (html) addTrace('step', html);
 
-  // Detect accept/reject path from programs array
+  // Detect accept/reject from Devin's actual words — strict keyword matching
   const pgms = (data.programs || []).map(p => p.toUpperCase());
   if (phase === 'batch') {
-    // ACCEPT path: Devin mentions TCATBAL or TRANSACT after overlimit check
-    if (pgms.includes('TCATBAL') || (pgms.includes('TRANSACT') && _activeNodes.has('n-acct-read'))) {
+    const text = ((data.title || '') + ' ' + (data.finding || '')).toUpperCase();
+    if (/\bACCEPT(ED)?\b/.test(text)) {
       activateEdge('e-acct-decision', 'el-acct-decision', 'batch');
       activateDecision('d-overlimit', 'dl-overlimit', 'active');
       activateDecision(null, 'dl-overlimit2', 'active');
@@ -1780,8 +1779,7 @@ function handleTraceStep(data) {
       activateEdge('e-accept-tcatbal', 'el-accept-tcatbal');
       activateNode('n-transact-posted');
     }
-    // REJECT path: Devin mentions DALYREJS
-    if (pgms.includes('DALYREJS')) {
+    if (/\bREJECT(ED)?\b/.test(text)) {
       activateEdge('e-acct-decision', 'el-acct-decision', 'batch');
       activateDecision('d-overlimit', 'dl-overlimit', 'reject-active');
       activateDecision(null, 'dl-overlimit2', 'reject-active');

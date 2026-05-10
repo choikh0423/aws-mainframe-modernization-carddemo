@@ -300,7 +300,11 @@ class TraceHandler(SimpleHTTPRequestHandler):
                         f"The user entered a transaction of ${amount:.2f} for merchant {merchant}. "
                         f"Continue tracing COTRN02C — the program will now EXEC CICS WRITE to the TRANSACT dataset. "
                         f"After that, trace the batch processing flow in CBTRN02C. "
-                        f"Use db_query to check the account state at the overlimit decision point."
+                        f"Use db_query to check the account state at the overlimit decision point.\n\n"
+                        f"IMPORTANT: Output a trace_step JSON block IMMEDIATELY for each discovery. "
+                        f"The frontend is waiting for your output to update the diagram in real-time. "
+                        f"Do NOT read multiple files without outputting. One file read = one trace_step output. "
+                        f"Include the programs array with the exact program names you are reading."
                     )
                     devin_api_request(
                         "POST",
@@ -561,6 +565,7 @@ class TraceHandler(SimpleHTTPRequestHandler):
                         decision = results[0].get("decision", "UNKNOWN") if results else "UNKNOWN"
                         temp_bal = results[0].get("temp_bal", 0) if results else 0
                         acct = state.get("account", {})
+                        accepted = decision == "ACCEPTED"
                         msg = (
                             f"Database query results:\n"
                             f"- Account balance: ${acct.get('balance', 0):.2f}\n"
@@ -570,7 +575,10 @@ class TraceHandler(SimpleHTTPRequestHandler):
                             f"- Computed temp_bal: ${temp_bal:.2f}\n"
                             f"- Decision: {decision}\n"
                             f"The overlimit check has been performed. "
-                            f"{'Transaction was ACCEPTED and posted.' if decision == 'ACCEPTED' else 'Transaction was REJECTED — overlimit.'}"
+                            f"{'Transaction was ACCEPTED and posted.' if accepted else 'Transaction was REJECTED — overlimit.'}\n\n"
+                            f"IMPORTANT: Output a trace_step JSON block NOW showing the accept/reject result. "
+                            f"{'Include programs: [\"ACCOUNT\", \"TRANSACT\", \"TCATBAL\"] for the accept path.' if accepted else 'Include programs: [\"DALYREJS\"] for the reject path.'} "
+                            f"Use the real numbers above in your finding. The frontend needs this output to light up the correct path on the diagram."
                         )
                         devin_api_request(
                             "POST",
