@@ -201,6 +201,48 @@
   .trace-entry .code { color: #8b949e; font-size: 10px; }
   .trace-entry .highlight { color: #00ff88; font-weight: 700; }
   .trace-entry .warn { color: #ff6b6b; font-weight: 700; }
+  .trace-entry .devin-response {
+    background: #161b22;
+    border: 1px solid #1e3a5f;
+    border-left: 3px solid #4da6ff;
+    border-radius: 4px;
+    padding: 8px 10px;
+    margin-top: 6px;
+    font-size: 10px;
+    color: #8b949e;
+    line-height: 1.6;
+  }
+  .trace-entry .devin-response .devin-label {
+    color: #4da6ff;
+    font-weight: 700;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .trace-entry .devin-response code {
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 3px;
+    padding: 2px 4px;
+    font-size: 10px;
+    color: #e0e0e0;
+  }
+  .trace-entry .devin-response .cobol-block {
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 4px;
+    padding: 6px 8px;
+    margin: 6px 0;
+    font-size: 10px;
+    white-space: pre;
+    overflow-x: auto;
+    color: #8b949e;
+  }
+  .trace-entry .devin-response .cobol-block .kw { color: #ff7b72; }
+  .trace-entry .devin-response .cobol-block .str { color: #a5d6ff; }
+  .trace-entry .devin-response .cobol-block .resolved { color: #00ff88; font-weight: 700; }
+  .trace-entry .devin-response .cobol-block .cmt { color: #555; font-style: italic; }
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-3px); }
     to { opacity: 1; transform: translateY(0); }
@@ -652,6 +694,33 @@
   .value-badge.reject rect { stroke: #ff6b6b; }
   .value-badge.reject text { fill: #ff6b6b; }
 
+  .readonly-badge rect {
+    fill: #0d2818;
+    stroke: #4ecdc4;
+    stroke-width: 1;
+    rx: 3;
+  }
+  .readonly-badge text {
+    fill: #4ecdc4;
+    font-family: 'SF Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    text-anchor: middle;
+    pointer-events: none;
+  }
+  .readonly-badge { opacity: 0; transition: opacity 0.5s; }
+  .readonly-badge.visible { opacity: 1; }
+
+  .subtree-label {
+    fill: #4ecdc4;
+    font-family: 'SF Mono', monospace;
+    font-size: 9px;
+    font-weight: 600;
+    text-anchor: middle;
+    letter-spacing: 0.5px;
+    opacity: 0.7;
+  }
+
   @keyframes pulse {
     0%, 100% { filter: drop-shadow(0 0 8px rgba(0,255,136,0.4)); }
     50% { filter: drop-shadow(0 0 16px rgba(0,255,136,0.7)); }
@@ -929,6 +998,47 @@
       <text id="el-accept-tcatbal" class="edge-label" x="480" y="679">UPDATE</text>
       <line id="e-reject-rejs" class="edge-line" x1="540" y1="695" x2="678" y2="705" marker-end="url(#arr-gray)"/>
       <text id="el-reject-rejs" class="edge-label" x="615" y="693">WRITE</text>
+
+      <!-- ===== RIGHT TREE: Option 3 — Credit Card List ===== -->
+      <text class="subtree-label" x="1050" y="98">Option 3 — Credit Card List</text>
+
+      <g id="n-cocrdlic">
+        <rect class="node-rect" x="960" y="110" width="180" height="42"/>
+        <text class="node-label" x="1050" y="134">COCRDLIC</text>
+        <text class="node-sublabel" x="1050" y="144">Credit Card List</text>
+      </g>
+
+      <g id="n-carddat">
+        <rect class="node-rect" x="960" y="210" width="180" height="42"/>
+        <text class="node-label" x="1050" y="234">CARDDAT</text>
+        <text class="node-sublabel" x="1050" y="244">Card Data VSAM</text>
+      </g>
+      <g id="badge-readonly" class="readonly-badge">
+        <rect x="1148" y="218" width="90" height="20"/>
+        <text x="1193" y="231">READ ONLY</text>
+      </g>
+
+      <g id="n-cocrdslc">
+        <rect class="node-rect" x="880" y="310" width="150" height="42"/>
+        <text class="node-label" x="955" y="334">COCRDSLC</text>
+        <text class="node-sublabel" x="955" y="344">Card Detail View</text>
+      </g>
+      <g id="n-cocrdupc">
+        <rect class="node-rect" x="1070" y="310" width="150" height="42"/>
+        <text class="node-label" x="1145" y="334">COCRDUPC</text>
+        <text class="node-sublabel" x="1145" y="344">Card Update</text>
+      </g>
+
+      <!-- Right tree edges -->
+      <line id="e-menu-cocrdlic" class="edge-line" x1="390" y1="126" x2="958" y2="131" marker-end="url(#arr-gray)"/>
+      <text id="el-menu-cocrdlic" class="edge-label" x="680" y="120">XCTL</text>
+      <line id="e-cocrdlic-carddat" class="edge-line" x1="1050" y1="152" x2="1050" y2="208" marker-end="url(#arr-gray)"/>
+      <text id="el-cocrdlic-carddat" class="edge-label" x="1080" y="183">VSAM BROWSE</text>
+      <line id="e-cocrdlic-cocrdslc" class="edge-line" x1="1010" y1="152" x2="955" y2="308" marker-end="url(#arr-gray)"/>
+      <text id="el-cocrdlic-cocrdslc" class="edge-label" x="970" y="240">XCTL (select S)</text>
+      <line id="e-cocrdlic-cocrdupc" class="edge-line" x1="1090" y1="152" x2="1145" y2="308" marker-end="url(#arr-gray)"/>
+      <text id="el-cocrdlic-cocrdupc" class="edge-label" x="1130" y="240">XCTL (select U)</text>
+
       </g><!-- end svg-pan-group -->
     </svg>
 
@@ -1001,7 +1111,7 @@
     </h3>
     <div id="trace-log">
       <div style="padding: 10px; color: #555; font-size: 11px; text-align: center;">
-        Click <b>Start Demo</b> to open the CICS terminal and begin the 3-phase data flow simulation
+        Click <b>Start Demo</b> to open the CICS terminal — choose <b>Option 3</b> (Credit Card List) or <b>Option 8</b> (Transaction Add + batch data flow)
       </div>
     </div>
   </div>
@@ -1021,6 +1131,7 @@ let phase1Amount = 500;
 let phase3Amount = 1000;
 let isPaused = false;
 let _pauseResolve = null;
+let _selectedOption = null;
 
 // ============================================================
 //  ZOOM / PAN
@@ -1140,7 +1251,7 @@ function showTerminalMenu() {
       <input type="text" id="term-input" class="term-field-input" style="width:40px" maxlength="2" autocomplete="off" />
       <span class="term-cursor"></span>
     </div>
-    <div id="terminal-status" class="terminal-status">Enter option number (1-11) or click a menu item</div>
+    <div id="terminal-status" class="terminal-status">Select Option 3 or 8 for traced flows, or click any menu item</div>
   `;
   document.getElementById('terminal-overlay').classList.add('open');
   setTimeout(() => {
@@ -1169,23 +1280,25 @@ function showTerminalMenu() {
 let _menuResolve = null;
 
 function selectMenuOption(num) {
-  if (num !== 8) {
-    document.getElementById('terminal-status').textContent = 'Demo only supports Option 8 (Transaction Add)';
+  if (num !== 8 && num !== 3) {
+    document.getElementById('terminal-status').textContent = 'Demo supports Option 3 (Credit Card List) and Option 8 (Transaction Add)';
     return;
   }
+  _selectedOption = num;
   // Highlight
   document.querySelectorAll('.menu-option').forEach((el, i) => {
     el.classList.toggle('selected', MENU_OPTIONS[i].num === num);
   });
   const inp = document.getElementById('term-input');
-  if (inp) inp.value = '8';
+  if (inp) inp.value = String(num);
 
+  const chosen = MENU_OPTIONS.find(o => o.num === num);
   const status = document.getElementById('terminal-status');
   status.className = 'terminal-status resolving';
-  status.innerHTML = 'Resolving XCTL PROGRAM(CDEMO-MENU-OPT-PGMNAME(8))...';
+  status.innerHTML = `Resolving XCTL PROGRAM(CDEMO-MENU-OPT-PGMNAME(${num}))...`;
 
   setTimeout(() => {
-    status.innerHTML = 'RESOLVED &rarr; <span class="resolved-pgm">COTRN02C</span> (Transaction Add)';
+    status.innerHTML = `RESOLVED &rarr; <span class="resolved-pgm">${chosen.pgm}</span> (${chosen.name})`;
     setTimeout(() => {
       document.getElementById('terminal-overlay').classList.remove('open');
       if (_menuResolve) { _menuResolve(); _menuResolve = null; }
@@ -1372,29 +1485,185 @@ async function runOnlinePhase(phaseNum, txnNum) {
   await sleep(2000);
 }
 
+// After-menu variant: skips COMEN01C+COMEN02Y+menu steps (already done in startDemo)
+async function runOnlinePhaseAfterMenu(phaseNum, txnNum) {
+  const stepPrefix = phaseNum === 1 ? '1' : '3';
+
+  setPhase(`Phase ${phaseNum} of 3 — CICS Online: Transaction Entry`);
+  addTrace('step', '<span class="code">COMEN01C → XCTL to COTRN02C</span>');
+
+  // Step 3: Menu closed — light up nodes in sequence
+  showStep(`Phase ${stepPrefix}.2`, 'XCTL dispatch → COTRN02C (Transaction Add)');
+  activateEdge('e-menu-cotrn', 'el-menu-cotrn');
+  activateNode('n-cotrn02c');
+  await sleep(1500);
+
+  // Step 4: XREF + date validation nodes
+  showStep(`Phase ${stepPrefix}.3`, 'CCXREF lookup + date validation');
+  activateNode('n-xref-online');
+  activateEdge('e-cotrn-xref', 'el-cotrn-xref');
+  await sleep(1000);
+  activateNode('n-cxacaix');
+  activateEdge('e-cotrn-cxacaix', 'el-cotrn-cxacaix');
+  await sleep(1000);
+  activateNode('n-csutldtc');
+  activateEdge('e-cotrn-csutldtc', 'el-cotrn-csutldtc');
+  await sleep(800);
+  activateNode('n-ceedays');
+  activateEdge('e-csutldtc-ceedays', 'el-csutldtc-ceedays');
+  addTrace('data', 'READ CCXREF: Card 9680294154603697 → <span class="highlight">Acct 00001, Cust 00001</span>');
+  addTrace('step', '<span class="code">EXEC CICS READ DATASET(CCXREF) RIDFLD(XREF-CARD-NUM)  |  CALL CSUTLDTC → CEEDAYS</span>');
+  highlightXref();
+  await sleep(1500);
+
+  // Step 5: Y/N confirm diamond lights up
+  showStep(`Phase ${stepPrefix}.4`, 'User confirmation required — Y/N');
+  activateEdge('e-cotrn-confirm', 'el-cotrn-confirm');
+  activateDecision('d-confirm', null, 'active');
+  await sleep(1000);
+
+  // Step 6: Terminal reopens for transaction entry
+  showTransactionScreen(0, txnNum);
+  await waitForTerminalClose();
+  await sleep(800);
+
+  // Step 7: TRANSACT write — nodes light up after terminal closes
+  showStep(`Phase ${stepPrefix}.5`, 'WRITE to TRANSACT file');
+  activateEdge('e-confirm-transact', 'el-confirm-transact');
+  activateNode('n-transact-write');
+  const amt = txnNum === 1 ? phase1Amount : phase3Amount;
+  showBadge('vb-txn-amt', `$${amt.toFixed(2)}`);
+  addTrace('step', '<span class="code">EXEC CICS WRITE DATASET(WS-TRANSACT-FILE) FROM(TRAN-RECORD)</span>');
+  addTransactRow(tranIdCounter, 'PR', amt, '968029...3697', 'Pending');
+  addTrace('accept', '→ Transaction #' + tranIdCounter + ' written. Status: <span class="highlight">PENDING</span> (awaiting batch posting)');
+  tranIdCounter++;
+  await sleep(2000);
+}
+
+// ============================================================
+//  OPTION 3: COCRDLIC Trace (Credit Card List — Right Tree)
+// ============================================================
+async function runOption3Trace() {
+  setPhase('Option 3 — COCRDLIC: Credit Card List');
+  addTrace('phase', '═══ Option 3: COCRDLIC — Credit Card List (Read-Only Browse) ═══');
+
+  // Step 1: XCTL to COCRDLIC
+  showStep('Step 1', 'XCTL dispatch → COCRDLIC (Credit Card List)');
+  addTrace('step', '<span class="code">COMEN01C → XCTL to COCRDLIC</span>');
+  addTrace('step', `<div class="devin-response"><div class="devin-label">Devin reading COMEN02Y.cpy</div>I found the menu data table at <code>app/cpy/COMEN02Y.cpy</code>. The structure uses a <code>REDEFINES</code> overlay to map option numbers to program names.<div class="cobol-block"><span class="cmt">* COMEN02Y.cpy — option 3:</span>
+10 FILLER  PIC 9(02) VALUE <span class="resolved">3</span>.
+10 FILLER  PIC X(35) VALUE
+    <span class="str">'Credit Card List'</span>.
+10 FILLER  PIC X(08) VALUE <span class="resolved">'COCRDLIC'</span>.</div>The menu dispatch resolves option 3 to <code>COCRDLIC</code> — a <b>completely different program</b> than option 8's <code>COTRN02C</code>. Same XCTL instruction, different runtime target.</div>`);
+  activateEdge('e-menu-cocrdlic', 'el-menu-cocrdlic');
+  activateNode('n-cocrdlic');
+  await sleep(3000);
+
+  // Step 2: XCTL detail — COCRDLIC receives COMMAREA
+  showStep('Step 2', 'COCRDLIC — pseudo-conversational CICS program');
+  addTrace('step', `<div class="devin-response"><div class="devin-label">Devin reading COCRDLIC.cbl</div>COCRDLIC is a <b>pseudo-conversational CICS program</b> that lists credit cards with pagination. It follows the standard SEND-then-RETURN pattern:<div class="cobol-block"><span class="kw">EXEC CICS</span>
+    <span class="kw">XCTL PROGRAM</span>(CDEMO-MENU-OPT-PGMNAME(<span class="resolved">3</span>))
+    <span class="cmt">← resolves to 'COCRDLIC'</span>
+    <span class="kw">COMMAREA</span>(CARDDEMO-COMMAREA)
+<span class="kw">END-EXEC</span></div>COCRDLIC receives the shared <code>CARDDEMO-COMMAREA</code> (COCOM01Y.cpy) plus its own extension <code>WS-THIS-PROGCOMMAREA</code> for pagination state.<br><br><b>Key difference from COTRN02C:</b> COCRDLIC has <b>no CALL statements</b> — all transfers use XCTL. And it only <b>reads</b> data, never writes.</div>`);
+  await sleep(3000);
+
+  // Step 3: CARDDAT Browse (read-only VSAM)
+  showStep('Step 3', 'CARDDAT VSAM Browse — read-only paginated');
+  activateEdge('e-cocrdlic-carddat', 'el-cocrdlic-carddat');
+  activateNode('n-carddat');
+  const badge = document.getElementById('badge-readonly');
+  if (badge) badge.classList.add('visible');
+  addTrace('step', `<div class="devin-response"><div class="devin-label">Devin reading COCRDLIC.cbl — browse logic</div>COCRDLIC browses the CARDDAT VSAM file to list credit cards with pagination:<div class="cobol-block"><span class="cmt">* 9000-READ-FORWARD:</span>
+<span class="kw">EXEC CICS STARTBR</span>
+    DATASET(<span class="resolved">LIT-CARD-FILE</span>)   <span class="cmt">← 'CARDDAT'</span>
+    RIDFLD(WS-CARD-RID-CARDNUM)
+    GTEQ
+<span class="kw">END-EXEC</span>
+
+<span class="cmt">* Loop: READNEXT up to 7 rows</span>
+<span class="kw">EXEC CICS READNEXT</span>
+    DATASET(<span class="resolved">LIT-CARD-FILE</span>)
+    INTO(<span class="resolved">CARD-RECORD</span>)  <span class="cmt">← CVACT02Y (150 bytes)</span>
+    RIDFLD(WS-CARD-RID-CARDNUM)
+<span class="kw">END-EXEC</span>
+
+<span class="cmt">* Peek-ahead + ENDBR to detect next page</span>
+<span class="kw">EXEC CICS ENDBR</span> DATASET(LIT-CARD-FILE)
+<span class="kw">END-EXEC</span></div><b>Contrast with COTRN02C:</b> COCRDLIC is <b>read-only</b> — it only browses CARDDAT using STARTBR/READNEXT/READPREV/ENDBR. It never writes, rewrites, or deletes records. COTRN02C writes to TRANSACT. Different programs, different data access patterns.</div>`);
+  await sleep(3500);
+
+  // Step 4: Downstream Navigation — COCRDSLC / COCRDUPC
+  showStep('Step 4', 'Dynamic XCTL to detail view (S) or update (U)');
+  activateEdge('e-cocrdlic-cocrdslc', 'el-cocrdlic-cocrdslc');
+  activateNode('n-cocrdslc');
+  await sleep(800);
+  activateEdge('e-cocrdlic-cocrdupc', 'el-cocrdlic-cocrdupc');
+  activateNode('n-cocrdupc');
+  addTrace('step', `<div class="devin-response"><div class="devin-label">Devin reading COCRDLIC.cbl — downstream transfers</div>When the user selects a card row, COCRDLIC transfers control via another dynamic XCTL:<div class="cobol-block"><span class="cmt">* User types 'S' next to a row:</span>
+<span class="kw">MOVE</span> LIT-CARDDTLPGM <span class="kw">TO</span> CCARD-NEXT-PROG
+<span class="cmt">    → 'COCRDSLC' (Card Detail View)</span>
+
+<span class="cmt">* User types 'U' next to a row:</span>
+<span class="kw">MOVE</span> LIT-CARDUPDPGM <span class="kw">TO</span> CCARD-NEXT-PROG
+<span class="cmt">    → 'COCRDUPC' (Card Update)</span>
+
+<span class="cmt">* Dynamic transfer — resolved at runtime:</span>
+<span class="kw">EXEC CICS XCTL</span>
+    PROGRAM(<span class="resolved">CCARD-NEXT-PROG</span>)
+<span class="kw">END-EXEC</span></div><b>Full chain:</b> Menu option → COCRDLIC → user selection → COCRDSLC or COCRDUPC. Every link resolved at runtime.</div>`);
+  await sleep(3000);
+
+  // Completion
+  showStep('Trace Complete', 'COCRDLIC flow traced — compare with Option 8');
+  setPhase('Option 3 — Complete');
+  addTrace('phase', '═══ TRACE COMPLETE — Option 3 (Right Tree) ═══');
+  addTrace('step', `<div class="devin-response"><div class="devin-label">Devin Summary</div>All 4 COCRDLIC resolution steps traced from actual COBOL source.<br><br><b style="color:#00ff88;">Programs resolved:</b> COMEN01C → COCRDLIC → COCRDSLC / COCRDUPC<br><b style="color:#4ecdc4;">Data access:</b> CARDDAT VSAM (read-only browse — STARTBR/READNEXT/ENDBR)<br><b style="color:#ffa94d;">Resolution mechanisms:</b> XCTL data table, CCARD-NEXT-PROG variable indirection<br><br><b>Key contrast with Option 8:</b><br><table style="font-size:11px;margin:8px 0;border-collapse:collapse;width:100%;"><tr style="border-bottom:1px solid #2a2a3e;"><td style="padding:4px;"></td><td style="padding:4px;color:#00ff88;"><b>Option 8 (Left)</b></td><td style="padding:4px;color:#4ecdc4;"><b>Option 3 (Right)</b></td></tr><tr style="border-bottom:1px solid #1a1a2e;"><td style="padding:4px;color:#888;">Program</td><td style="padding:4px;">COTRN02C</td><td style="padding:4px;">COCRDLIC</td></tr><tr style="border-bottom:1px solid #1a1a2e;"><td style="padding:4px;color:#888;">CALL stmts</td><td style="padding:4px;">Yes (CSUTLDTC → CEEDAYS)</td><td style="padding:4px;">None</td></tr><tr style="border-bottom:1px solid #1a1a2e;"><td style="padding:4px;color:#888;">Data access</td><td style="padding:4px;"><span style="color:#ff6b6b;">WRITE</span> to TRANSACT</td><td style="padding:4px;"><span style="color:#4ecdc4;">READ ONLY</span> from CARDDAT</td></tr><tr><td style="padding:4px;color:#888;">Batch link</td><td style="padding:4px;">Yes (CBTRN02C)</td><td style="padding:4px;">None</td></tr></table>Same <code>XCTL PROGRAM(variable)</code> instruction, completely different runtime behavior.<br><br><div style="padding:8px;background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.2);border-radius:4px;"><b style="color:#00ff88;">Click Reset</b> and try <b>Option 8</b> (Transaction Add) to see the full 3-phase data flow demo with batch processing, overlimit detection, and VSAM file updates.</div></div>`);
+}
+
 async function startDemo() {
   if (isRunning) return;
   isRunning = true;
+  _selectedOption = null;
   document.getElementById('run-btn').disabled = true;
   document.getElementById('trace-log').innerHTML = '';
 
-  // Phase 1: Full online sequence
-  await runOnlinePhase(1, 1);
+  // Step 1: Light up COMEN01C + COMEN02Y first
+  setPhase('Menu Dispatch — COMEN01C reads COMEN02Y');
+  showStep('Menu Dispatch', 'COMEN01C reads COMEN02Y.cpy menu data table');
+  activateNode('n-terminal');
+  activateEdge('e-term-menu', 'el-term-menu');
+  activateNode('n-menu');
+  await sleep(1200);
+  activateEdge('e-menu-comen02y', 'el-menu-comen02y');
+  activateNode('n-comen02y');
+  addTrace('step', '<span class="code">COMEN01C reads COMEN02Y.cpy data table</span>');
+  await sleep(1500);
 
-  // Phase 2: Batch processing
-  await runPhase2();
+  // Step 2: Show terminal menu — wait for selection
+  showTerminalMenu();
+  addTrace('step', '3270 Terminal displays CARDDEMO Main Menu — select Option 3 or 8');
+  await waitForMenuSelect();
 
-  // Phase 3: Clear diagram, restart from menu
-  clearDiagramState();
+  const opt = _selectedOption;
+  addTrace('step', `User selected <span class="highlight">Option ${opt}</span> from menu`);
   await sleep(800);
-  await runOnlinePhase(3, 2);
 
-  // Phase 3 batch: REJECTED
-  await runPhase3Batch();
+  if (opt === 3) {
+    await runOption3Trace();
+  } else {
+    // Option 8: Full 3-phase data flow
+    addTrace('phase', '═══ PHASE 1: CICS Online Transaction Entry ═══');
+    await runOnlinePhaseAfterMenu(1, 1);
+    await runPhase2();
+    clearDiagramState();
+    await sleep(800);
+    await runOnlinePhase(3, 2);
+    await runPhase3Batch();
+    showStep('Demo Complete', 'All 3 phases traced — data alteration drove route change');
+    setPhase('Complete');
+  }
 
-  // Done
-  showStep('Demo Complete', 'All 3 phases traced — data alteration drove route change');
-  setPhase('Complete');
   isRunning = false;
   document.getElementById('run-btn').disabled = false;
 }
@@ -1731,7 +2000,10 @@ function resetAll() {
   isPaused = false;
   _pauseResolve = null;
   _menuResolve = null;
+  _selectedOption = null;
   document.getElementById('pause-indicator').classList.remove('visible');
+  const readonlyBadge = document.getElementById('badge-readonly');
+  if (readonlyBadge) readonlyBadge.classList.remove('visible');
   document.getElementById('td-bal').textContent = '$400.00';
   document.getElementById('td-bal').className = '';
   document.getElementById('td-cyc-cr').textContent = '$0.00';
@@ -1739,7 +2011,7 @@ function resetAll() {
   document.getElementById('transact-tbody').innerHTML = '<tr style="color:#555"><td colspan="5" style="text-align:center">— empty —</td></tr>';
   document.getElementById('rejs-tbody').innerHTML = '<tr style="color:#555"><td colspan="4" style="text-align:center">— empty —</td></tr>';
   clearDiagramState();
-  document.getElementById('trace-log').innerHTML = '<div style="padding: 10px; color: #555; font-size: 11px; text-align: center;">Click <b>Start Demo</b> to open the CICS terminal and begin the 3-phase data flow simulation</div>';
+  document.getElementById('trace-log').innerHTML = '<div style="padding: 10px; color: #555; font-size: 11px; text-align: center;">Click <b>Start Demo</b> to open the CICS terminal — choose <b>Option 3</b> (Credit Card List) or <b>Option 8</b> (Transaction Add + batch data flow)</div>';
 }
 
 function waitIfPaused() {
