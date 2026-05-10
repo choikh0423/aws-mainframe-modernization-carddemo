@@ -459,6 +459,24 @@
     color: #8af;
     font-family: inherit;
   }
+  .pause-indicator {
+    display: none;
+    font-size: 11px;
+    color: #ffcc00;
+    background: rgba(255, 204, 0, 0.1);
+    border: 1px solid #ffcc0044;
+    border-radius: 4px;
+    padding: 2px 10px;
+    margin-left: 10px;
+    letter-spacing: 1px;
+    font-weight: 700;
+    animation: pulse-pause 1s ease-in-out infinite;
+  }
+  .pause-indicator.visible { display: inline-block; }
+  @keyframes pulse-pause {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
   .term-confirm-btn {
     background: transparent;
     border: 1px solid #33ff33;
@@ -654,6 +672,8 @@
     <button id="run-btn" onclick="startDemo()">Start Demo</button>
     <button id="reset-btn" onclick="resetAll()">Reset</button>
     <span class="kbd-hint"><kbd>Ctrl</kbd>+<kbd>I</kbd> toggle terminal</span>
+    <span class="kbd-hint"><kbd>Space</kbd> pause / resume</span>
+    <span id="pause-indicator" class="pause-indicator">⏸ PAUSED</span>
   </div>
 </header>
 
@@ -999,6 +1019,8 @@ const CREDIT_LIMIT = 1000.00;
 let tranIdCounter = 1;
 let phase1Amount = 500;
 let phase3Amount = 1000;
+let isPaused = false;
+let _pauseResolve = null;
 
 // ============================================================
 //  ZOOM / PAN
@@ -1144,6 +1166,8 @@ function showTerminalMenu() {
   }, 150);
 }
 
+let _menuResolve = null;
+
 function selectMenuOption(num) {
   if (num !== 8) {
     document.getElementById('terminal-status').textContent = 'Demo only supports Option 8 (Transaction Add)';
@@ -1160,27 +1184,17 @@ function selectMenuOption(num) {
   status.className = 'terminal-status resolving';
   status.innerHTML = 'Resolving XCTL PROGRAM(CDEMO-MENU-OPT-PGMNAME(8))...';
 
-  addTrace('phase', '═══ PHASE 1: CICS Online Transaction Entry ═══');
-  addTrace('step', 'User selected <span class="highlight">Option 8 — Transaction Add</span> from CARDDEMO Main Menu');
-  addTrace('step', '<span class="code">COMEN01C reads COMEN02Y.cpy data table → XCTL to COTRN02C</span>');
-
   setTimeout(() => {
     status.innerHTML = 'RESOLVED &rarr; <span class="resolved-pgm">COTRN02C</span> (Transaction Add)';
-
-    // Light up menu dispatch
-    activateNode('n-terminal');
-    activateNode('n-menu');
-    activateNode('n-comen02y');
-    activateEdge('e-term-menu', 'el-term-menu');
-    activateEdge('e-menu-comen02y', 'el-menu-comen02y');
-    activateEdge('e-menu-cotrn', 'el-menu-cotrn');
-    activateNode('n-cotrn02c');
-    showStep('Phase 1.1', 'Menu dispatch: COMEN01C → XCTL → COTRN02C');
-
     setTimeout(() => {
-      showTransactionScreen(0, 1); // empty amount, first transaction
-    }, 1800);
+      document.getElementById('terminal-overlay').classList.remove('open');
+      if (_menuResolve) { _menuResolve(); _menuResolve = null; }
+    }, 1200);
   }, 1200);
+}
+
+function waitForMenuSelect() {
+  return new Promise(resolve => { _menuResolve = resolve; });
 }
 
 let _termResolve = null;
@@ -1260,43 +1274,13 @@ function confirmTransaction(amount, txnNum) {
 
   setTimeout(() => {
     status.innerHTML = '<span class="resolved-pgm">TRANSACTION RECORDED — PENDING BATCH</span>';
-
-    // Show XREF lookup + date validation in diagram
-    activateNode('n-xref-online');
-    activateEdge('e-cotrn-xref', 'el-cotrn-xref');
-    activateNode('n-cxacaix');
-    activateEdge('e-cotrn-cxacaix', 'el-cotrn-cxacaix');
-    activateNode('n-csutldtc');
-    activateEdge('e-cotrn-csutldtc', 'el-cotrn-csutldtc');
-    activateNode('n-ceedays');
-    activateEdge('e-csutldtc-ceedays', 'el-csutldtc-ceedays');
-
-    addTrace('data', 'READ CCXREF: Card 9680294154603697 → <span class="highlight">Acct 00001, Cust 00001</span>');
-    addTrace('step', '<span class="code">EXEC CICS READ DATASET(CCXREF) RIDFLD(XREF-CARD-NUM)  |  CALL CSUTLDTC → CEEDAYS</span>');
-    highlightXref();
-
     setTimeout(() => {
-      // Confirm decision + TRANSACT write
-      activateDecision('d-confirm', null, 'active');
-      activateEdge('e-cotrn-confirm', 'el-cotrn-confirm');
-      activateEdge('e-confirm-transact', 'el-confirm-transact');
-      activateNode('n-transact-write');
-      showBadge('vb-txn-amt', `$${amount.toFixed(2)}`);
-
-      addTrace('step', '<span class="code">EXEC CICS WRITE DATASET(WS-TRANSACT-FILE) FROM(TRAN-RECORD)</span>');
-      addTransactRow(tranIdCounter, 'PR', amount, '968029...3697', 'Pending');
-      addTrace('accept', '→ Transaction #' + tranIdCounter + ' written. Status: <span class="highlight">PENDING</span> (awaiting batch posting)');
-      tranIdCounter++;
-
-      setTimeout(() => {
-        // Close terminal
-        document.getElementById('terminal-overlay').classList.remove('open');
-        if (_termResolve) {
-          _termResolve();
-          _termResolve = null;
-        }
-      }, 2200);
-    }, 1800);
+      document.getElementById('terminal-overlay').classList.remove('open');
+      if (_termResolve) {
+        _termResolve();
+        _termResolve = null;
+      }
+    }, 1500);
   }, 1200);
 }
 
@@ -1311,39 +1295,99 @@ function waitForTerminalClose() {
 // ============================================================
 //  DEMO RUNNER
 // ============================================================
+async function runOnlinePhase(phaseNum, txnNum) {
+  const phaseLabel = phaseNum === 1 ? 'Phase 1 of 3' : 'Phase 3 of 3';
+  const stepPrefix = phaseNum === 1 ? '1' : '3';
+
+  // Step 1: Light up COMEN01C + COMEN02Y first
+  setPhase(`${phaseLabel} — CICS Online: Transaction Entry`);
+  if (phaseNum === 1) {
+    addTrace('phase', '═══ PHASE 1: CICS Online Transaction Entry ═══');
+  } else {
+    addTrace('phase', '═══ PHASE 3: New Transaction — Enter Amount ═══');
+  }
+  showStep(`Phase ${stepPrefix}.1`, 'COMEN01C reads COMEN02Y.cpy menu data table');
+  activateNode('n-terminal');
+  activateEdge('e-term-menu', 'el-term-menu');
+  activateNode('n-menu');
+  await sleep(1200);
+  activateEdge('e-menu-comen02y', 'el-menu-comen02y');
+  activateNode('n-comen02y');
+  addTrace('step', '<span class="code">COMEN01C reads COMEN02Y.cpy data table</span>');
+  await sleep(1500);
+
+  // Step 2: Show terminal menu
+  showTerminalMenu();
+  addTrace('step', '3270 Terminal displays CARDDEMO Main Menu');
+  await waitForMenuSelect();
+  addTrace('step', 'User selected <span class="highlight">Option 8 — Transaction Add</span> from menu');
+  addTrace('step', '<span class="code">COMEN01C → XCTL to COTRN02C</span>');
+  await sleep(800);
+
+  // Step 3: Menu closed — light up nodes in sequence
+  showStep(`Phase ${stepPrefix}.2`, 'XCTL dispatch → COTRN02C (Transaction Add)');
+  activateEdge('e-menu-cotrn', 'el-menu-cotrn');
+  activateNode('n-cotrn02c');
+  await sleep(1500);
+
+  // Step 4: XREF + date validation nodes
+  showStep(`Phase ${stepPrefix}.3`, 'CCXREF lookup + date validation');
+  activateNode('n-xref-online');
+  activateEdge('e-cotrn-xref', 'el-cotrn-xref');
+  await sleep(1000);
+  activateNode('n-cxacaix');
+  activateEdge('e-cotrn-cxacaix', 'el-cotrn-cxacaix');
+  await sleep(1000);
+  activateNode('n-csutldtc');
+  activateEdge('e-cotrn-csutldtc', 'el-cotrn-csutldtc');
+  await sleep(800);
+  activateNode('n-ceedays');
+  activateEdge('e-csutldtc-ceedays', 'el-csutldtc-ceedays');
+  addTrace('data', 'READ CCXREF: Card 9680294154603697 → <span class="highlight">Acct 00001, Cust 00001</span>');
+  addTrace('step', '<span class="code">EXEC CICS READ DATASET(CCXREF) RIDFLD(XREF-CARD-NUM)  |  CALL CSUTLDTC → CEEDAYS</span>');
+  highlightXref();
+  await sleep(1500);
+
+  // Step 5: Y/N confirm diamond lights up
+  showStep(`Phase ${stepPrefix}.4`, 'User confirmation required — Y/N');
+  activateEdge('e-cotrn-confirm', 'el-cotrn-confirm');
+  activateDecision('d-confirm', null, 'active');
+  await sleep(1000);
+
+  // Step 6: Terminal reopens for transaction entry
+  showTransactionScreen(0, txnNum);
+  await waitForTerminalClose();
+  await sleep(800);
+
+  // Step 7: TRANSACT write — nodes light up after terminal closes
+  showStep(`Phase ${stepPrefix}.5`, 'WRITE to TRANSACT file');
+  activateEdge('e-confirm-transact', 'el-confirm-transact');
+  activateNode('n-transact-write');
+  const amt = txnNum === 1 ? phase1Amount : phase3Amount;
+  showBadge('vb-txn-amt', `$${amt.toFixed(2)}`);
+  addTrace('step', '<span class="code">EXEC CICS WRITE DATASET(WS-TRANSACT-FILE) FROM(TRAN-RECORD)</span>');
+  addTransactRow(tranIdCounter, 'PR', amt, '968029...3697', 'Pending');
+  addTrace('accept', '→ Transaction #' + tranIdCounter + ' written. Status: <span class="highlight">PENDING</span> (awaiting batch posting)');
+  tranIdCounter++;
+  await sleep(2000);
+}
+
 async function startDemo() {
   if (isRunning) return;
   isRunning = true;
   document.getElementById('run-btn').disabled = true;
   document.getElementById('trace-log').innerHTML = '';
 
-  // Phase 1: Show terminal for transaction
-  setPhase('Phase 1 of 3 — CICS Online: Transaction Entry');
-  showTerminalMenu();
-  await waitForTerminalClose();
-  await sleep(800);
+  // Phase 1: Full online sequence
+  await runOnlinePhase(1, 1);
 
   // Phase 2: Batch processing
   await runPhase2();
 
-  // Phase 3: second transaction
+  // Phase 3: Clear diagram, restart from menu
   clearDiagramState();
-  setPhase('Phase 3 of 3 — CICS Online: Second Transaction Entry');
-  addTrace('phase', '═══ PHASE 3: New Transaction → Enter Amount ═══');
   await sleep(800);
-
-  // Quickly light up online nodes
-  activateNode('n-terminal');
-  activateNode('n-menu');
-  activateEdge('e-term-menu', 'el-term-menu');
-  activateEdge('e-menu-cotrn', 'el-menu-cotrn');
-  activateNode('n-cotrn02c');
-  showStep('Phase 3.1', 'User enters second transaction');
-
-  // Show terminal for second transaction
-  showTransactionScreen(0, 2);
-  await waitForTerminalClose();
-  await sleep(800);
+  await runOnlinePhase(3, 2);
 
   // Phase 3 batch: REJECTED
   await runPhase3Batch();
@@ -1684,6 +1728,10 @@ function resetAll() {
   phase1Amount = 500;
   phase3Amount = 1000;
   _lastMerchant = 'UNSPECIFIED';
+  isPaused = false;
+  _pauseResolve = null;
+  _menuResolve = null;
+  document.getElementById('pause-indicator').classList.remove('visible');
   document.getElementById('td-bal').textContent = '$400.00';
   document.getElementById('td-bal').className = '';
   document.getElementById('td-cyc-cr').textContent = '$0.00';
@@ -1694,8 +1742,23 @@ function resetAll() {
   document.getElementById('trace-log').innerHTML = '<div style="padding: 10px; color: #555; font-size: 11px; text-align: center;">Click <b>Start Demo</b> to open the CICS terminal and begin the 3-phase data flow simulation</div>';
 }
 
+function waitIfPaused() {
+  if (!isPaused) return Promise.resolve();
+  return new Promise(resolve => { _pauseResolve = resolve; });
+}
+
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return waitIfPaused().then(() => new Promise(resolve => setTimeout(resolve, ms)));
+}
+
+function togglePause() {
+  isPaused = !isPaused;
+  document.getElementById('pause-indicator').classList.toggle('visible', isPaused);
+  if (!isPaused && _pauseResolve) {
+    const r = _pauseResolve;
+    _pauseResolve = null;
+    r();
+  }
 }
 
 // Ctrl+I to toggle terminal overlay
@@ -1704,6 +1767,13 @@ document.addEventListener('keydown', function(e) {
     e.preventDefault();
     const overlay = document.getElementById('terminal-overlay');
     overlay.classList.toggle('open');
+  }
+  if (e.key === ' ' && isRunning && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag !== 'input' && tag !== 'textarea' && tag !== 'button') {
+      e.preventDefault();
+      togglePause();
+    }
   }
 });
 </script>
