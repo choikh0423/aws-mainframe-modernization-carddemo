@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transaction Add (CT02) – CICS Transaction Analysis | UniCredit CardDemo</title>
+<link rel="stylesheet" href="../shared/theme.css">
+</head>
+<body>
+
+<!-- Hero -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. &mdash; Milano</div>
+    </div>
+    <h1>Transaction Add &ndash; <span>CICS Transaction Analysis</span></h1>
+    <p class="hero-subtitle">
+      Transaction <code>CT02</code> &middot; Program <code>COTRN02C</code> &middot; Adds a new credit-card transaction record to the TRANSACT VSAM file with full field validation and confirmation
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Transaction ID</dt><dd>CT02</dd></div>
+      <div><dt>Entry Program</dt><dd>COTRN02C</dd></div>
+      <div><dt>BMS Mapset</dt><dd>COTRN02</dd></div>
+      <div><dt>Design Pattern</dt><dd>Pseudo-conversational</dd></div>
+      <div><dt>LOC</dt><dd>783</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">&rsaquo;</span>
+  <a href="index.html">CICS Flows</a>
+  <span class="sep">&rsaquo;</span>
+  Transaction Add (CT02)
+</div>
+
+<!-- Body -->
+<div class="page-wrap-single">
+
+<!-- ============================================================ -->
+<!--  SECTION 1 — Business Flow Analysis                          -->
+<!-- ============================================================ -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">1</span>
+    <h2>Business Flow Analysis</h2>
+    <span class="collapse-icon"></span>
+  </div>
+  <div class="section-body">
+
+    <h3>1.1 Business Context</h3>
+    <p>
+      The <strong>Transaction Add</strong> function (<code>CT02</code>) enables authorized CardDemo users to create a new credit-card transaction record. The user identifies the account either by <em>Account ID</em> or <em>Card Number</em>, fills in transaction details (type, category, source, description, amount, dates, merchant information), confirms the entry, and the system writes the new record to the <code>TRANSACT</code> VSAM KSDS file with a system-generated sequential transaction ID.
+    </p>
+    <p>
+      <strong>Users:</strong> Regular users and administrators who have navigated through the main menu (<code>CM00</code>) to the Transaction List screen (<code>CT00</code>) and selected the add option.<br>
+      <strong>Business Outcome:</strong> A new transaction record is persisted with a unique auto-incremented ID, ready for downstream batch processing (daily post-transaction cycle).
+    </p>
+
+    <h3>1.2 Business Flow Diagram</h3>
+<pre>
+ User navigates from Transaction List (CT00)
+              │
+              ▼
+ ┌───────────────────────────────┐
+ │  CT02 — Add Transaction       │
+ │  Screen displayed (COTRN2A)   │
+ └──────────────┬────────────────┘
+                │
+   ┌────────────┴────────────┐
+   │  Enter Account ID       │
+   │  OR Card Number         │
+   └────────────┬────────────┘
+                │
+                ▼
+   ┌────────────────────────────┐
+   │  System cross-references   │
+   │  via CXACAIX / CCXREF      │
+   │  Resolves Acct ↔ Card      │
+   └────────────┬───────────────┘
+                │
+                ▼
+   ┌────────────────────────────┐
+   │  User fills transaction    │
+   │  details:                  │
+   │  - Type CD, Category CD    │
+   │  - Source, Description     │
+   │  - Amount, Orig/Proc Date  │
+   │  - Merchant ID/Name/City/  │
+   │    Zip                     │
+   └────────────┬───────────────┘
+                │
+                ▼
+   ┌────────────────────────────┐
+   │  System validates all      │
+   │  fields (empty, numeric,   │
+   │  date format, amount fmt)  │
+   └──────┬─────────────┬───────┘
+          │             │
+     Valid│        Invalid
+          │             │
+          ▼             ▼
+   ┌──────────┐  ┌──────────────┐
+   │ Prompt:  │  │ Error msg    │
+   │ Confirm  │  │ displayed,   │
+   │ Y/N?     │  │ cursor on    │
+   └────┬─────┘  │ bad field    │
+        │        └──────────────┘
+   Y────┤
+        │
+        ▼
+   ┌────────────────────────────┐
+   │  STARTBR at HIGH-VALUES    │
+   │  READPREV → get last ID    │
+   │  ENDBR                     │
+   │  New ID = last ID + 1      │
+   └────────────┬───────────────┘
+                │
+                ▼
+   ┌────────────────────────────┐
+   │  WRITE new TRAN-RECORD     │
+   │  to TRANSACT file          │
+   └────────────┬───────────────┘
+                │
+                ▼
+   ┌────────────────────────────┐
+   │  Success: "Transaction     │
+   │  added successfully.       │
+   │  Your Tran ID is XXXX."   │
+   │  Screen fields cleared     │
+   └────────────────────────────┘
+</pre>
+
+    <h3>1.3 Business Rules</h3>
+    <table>
+      <thead><tr><th>Rule</th><th>Field(s)</th><th>Validation</th><th>Error Message</th></tr></thead>
+      <tbody>
+        <tr><td>Account/Card Required</td><td>ACTIDIN or CARDNIN</td><td>At least one must be provided</td><td>Account or Card Number must be entered...</td></tr>
+        <tr><td>Account ID Numeric</td><td>ACTIDIN</td><td>Must be numeric</td><td>Account ID must be Numeric...</td></tr>
+        <tr><td>Card Number Numeric</td><td>CARDNIN</td><td>Must be numeric</td><td>Card Number must be Numeric...</td></tr>
+        <tr><td>Account Exists</td><td>ACTIDIN</td><td>Must exist in CXACAIX</td><td>Account ID NOT found...</td></tr>
+        <tr><td>Card Exists</td><td>CARDNIN</td><td>Must exist in CCXREF</td><td>Card Number NOT found...</td></tr>
+        <tr><td>Type CD Required</td><td>TTYPCD</td><td>Non-empty, numeric</td><td>Type CD can NOT be empty... / Type CD must be Numeric...</td></tr>
+        <tr><td>Category CD Required</td><td>TCATCD</td><td>Non-empty, numeric</td><td>Category CD can NOT be empty... / Category CD must be Numeric...</td></tr>
+        <tr><td>Source Required</td><td>TRNSRC</td><td>Non-empty</td><td>Source can NOT be empty...</td></tr>
+        <tr><td>Description Required</td><td>TDESC</td><td>Non-empty</td><td>Description can NOT be empty...</td></tr>
+        <tr><td>Amount Required &amp; Format</td><td>TRNAMT</td><td>Non-empty; format <code>-99999999.99</code></td><td>Amount can NOT be empty... / Amount should be in format -99999999.99</td></tr>
+        <tr><td>Orig Date Required &amp; Format</td><td>TORIGDT</td><td>Non-empty; <code>YYYY-MM-DD</code>; valid calendar date (via CSUTLDTC)</td><td>Orig Date can NOT be empty... / Orig Date should be in format YYYY-MM-DD / Orig Date - Not a valid date...</td></tr>
+        <tr><td>Proc Date Required &amp; Format</td><td>TPROCDT</td><td>Non-empty; <code>YYYY-MM-DD</code>; valid calendar date (via CSUTLDTC)</td><td>Proc Date can NOT be empty... / Proc Date should be in format YYYY-MM-DD / Proc Date - Not a valid date...</td></tr>
+        <tr><td>Merchant ID Numeric</td><td>MID</td><td>Must be numeric</td><td>Merchant ID must be Numeric...</td></tr>
+        <tr><td>Merchant Name Required</td><td>MNAME</td><td>Non-empty</td><td>Merchant Name can NOT be empty...</td></tr>
+        <tr><td>Merchant City Required</td><td>MCITY</td><td>Non-empty</td><td>Merchant City can NOT be empty...</td></tr>
+        <tr><td>Merchant Zip Required</td><td>MZIP</td><td>Non-empty</td><td>Merchant Zip can NOT be empty...</td></tr>
+        <tr><td>Confirmation Required</td><td>CONFIRM</td><td>Must be &lsquo;Y&rsquo; or &lsquo;y&rsquo; to proceed</td><td>Confirm to add this transaction... / Invalid value. Valid values are (Y/N)...</td></tr>
+      </tbody>
+    </table>
+
+    <h3>1.4 User Interactions</h3>
+    <table>
+      <thead><tr><th>Step</th><th>User Action</th><th>System Response</th><th>Business Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Arrives from Transaction List (CT00) or enters CT02</td><td>Displays blank Add Transaction screen (COTRN2A); if card number passed from CT00, pre-populates it and cross-references</td><td>Initiate new transaction entry</td></tr>
+        <tr><td>2</td><td>Enters Account ID or Card Number</td><td>Cross-references via CXACAIX (acct→card) or CCXREF (card→acct); fills complementary field</td><td>Associates transaction with a valid account/card pair</td></tr>
+        <tr><td>3</td><td>Fills transaction detail fields</td><td>Validates each field for emptiness, numeric format, date format; calls CSUTLDTC for date validation</td><td>Ensures data quality before persistence</td></tr>
+        <tr><td>4</td><td>Enters &lsquo;Y&rsquo; in Confirm field and presses ENTER</td><td>Generates next transaction ID (last ID + 1), writes TRAN-RECORD, displays success message with new ID, clears fields</td><td>Transaction is now persisted and available for batch processing</td></tr>
+        <tr><td>5</td><td>Presses PF3</td><td>Returns to previous screen (CDEMO-FROM-PROGRAM or main menu COMEN01C)</td><td>Navigate back without adding</td></tr>
+        <tr><td>6</td><td>Presses PF4</td><td>Clears all input fields on screen</td><td>Reset form for fresh entry</td></tr>
+        <tr><td>7</td><td>Presses PF5</td><td>Copies data from the last transaction in the file into the form fields</td><td>Convenience: duplicate previous transaction as template</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!--  SECTION 2 — Technical Flow Analysis                         -->
+<!-- ============================================================ -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">2</span>
+    <h2>Technical Flow Analysis</h2>
+    <span class="collapse-icon"></span>
+  </div>
+  <div class="section-body">
+
+    <h3>2.1 Technical Flow Diagram &mdash; Overview</h3>
+<pre>
+ ┌──────────┐    ┌──────────────────────────────────────┐
+ │ TERMINAL │◄──►│         CICS REGION                  │
+ │ (3270)   │    │                                      │
+ └──────────┘    │  ┌────────────┐   ┌──────────────┐   │
+                 │  │ COTRN02C   │──►│ CSUTLDTC     │   │
+                 │  │ (CT02)     │   │ (date util)  │   │
+                 │  └─────┬──────┘   └──────────────┘   │
+                 │        │                              │
+                 │  ┌─────┴──────────────────────────┐   │
+                 │  │         VSAM Files             │   │
+                 │  │  TRANSACT  CXACAIX  CCXREF     │   │
+                 │  └────────────────────────────────┘   │
+                 │                                      │
+                 │  ┌────────────────────────────────┐   │
+                 │  │  BMS Map: COTRN2A / COTRN02    │   │
+                 │  └────────────────────────────────┘   │
+                 └──────────────────────────────────────┘
+</pre>
+
+    <h3>2.2 Technical Flow Diagram &mdash; Detailed</h3>
+<pre>
+ ENTRY (EIBCALEN = 0 → XCTL to COSGN00C)
+   │
+   ▼ EIBCALEN &gt; 0
+ MOVE DFHCOMMAREA → CARDDEMO-COMMAREA
+   │
+   ├── First Entry (CDEMO-PGM-CONTEXT = 0)
+   │     SET CDEMO-PGM-REENTER TO TRUE
+   │     MOVE LOW-VALUES TO COTRN2AO
+   │     If CDEMO-CT02-TRN-SELECTED has value:
+   │       MOVE to CARDNINI → PERFORM PROCESS-ENTER-KEY
+   │     PERFORM SEND-TRNADD-SCREEN
+   │     EXEC CICS RETURN TRANSID('CT02') COMMAREA(...)
+   │
+   └── Re-entry (CDEMO-PGM-CONTEXT = 1)
+         PERFORM RECEIVE-TRNADD-SCREEN
+           │
+           ├── DFHENTER → PROCESS-ENTER-KEY
+           │     VALIDATE-INPUT-KEY-FIELDS
+           │       Account ID → READ CXACAIX → resolve card
+           │       Card Number → READ CCXREF → resolve acct
+           │     VALIDATE-INPUT-DATA-FIELDS
+           │       Empty checks on all 11 fields
+           │       Numeric checks on Type CD, Category CD, Merchant ID
+           │       Format check on Amount (-99999999.99)
+           │       Format + CALL CSUTLDTC on Orig Date &amp; Proc Date
+           │     EVALUATE CONFIRMI
+           │       'Y'/'y' → ADD-TRANSACTION
+           │         STARTBR TRANSACT at HIGH-VALUES
+           │         READPREV → get last TRAN-ID
+           │         ENDBR
+           │         new ID = last + 1
+           │         INITIALIZE TRAN-RECORD
+           │         Populate fields from screen
+           │         WRITE TRANSACT
+           │         INITIALIZE-ALL-FIELDS
+           │         SEND success message
+           │       'N'/SPACES → prompt "Confirm to add..."
+           │       OTHER → "Invalid value..."
+           │
+           ├── DFHPF3 → RETURN-TO-PREV-SCREEN
+           │     XCTL to CDEMO-FROM-PROGRAM or COMEN01C
+           │
+           ├── DFHPF4 → CLEAR-CURRENT-SCREEN
+           │     INITIALIZE-ALL-FIELDS
+           │     SEND-TRNADD-SCREEN
+           │
+           ├── DFHPF5 → COPY-LAST-TRAN-DATA
+           │     VALIDATE-INPUT-KEY-FIELDS (resolve acct/card)
+           │     STARTBR TRANSACT at HIGH-VALUES
+           │     READPREV → last transaction
+           │     ENDBR
+           │     Populate form fields from TRAN-RECORD
+           │     PROCESS-ENTER-KEY
+           │
+           └── OTHER → "Invalid key pressed..."
+                 SEND-TRNADD-SCREEN
+</pre>
+
+    <h3>2.3 Pseudo-Conversational Flow</h3>
+    <table>
+      <thead><tr><th>Iteration</th><th>EIBCALEN</th><th>User Action</th><th>Entry Point</th><th>Screen Sent</th><th>RETURN TRANSID</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td>= 0</td><td>Direct entry (no COMMAREA)</td><td>MAIN-PARA</td><td>XCTL → COSGN00C (sign-on)</td><td>N/A</td></tr>
+        <tr><td>1</td><td>&gt; 0</td><td>Navigate from CT00 / XCTL</td><td>MAIN-PARA (first entry)</td><td>COTRN2A (blank or pre-filled card#)</td><td>CT02</td></tr>
+        <tr><td>2</td><td>&gt; 0</td><td>ENTER with Acct/Card</td><td>RECEIVE → PROCESS-ENTER-KEY</td><td>COTRN2A (validated, prompts confirm)</td><td>CT02</td></tr>
+        <tr><td>3</td><td>&gt; 0</td><td>ENTER with Confirm=Y</td><td>RECEIVE → PROCESS-ENTER-KEY → ADD-TRANSACTION</td><td>COTRN2A (success message, fields cleared)</td><td>CT02</td></tr>
+        <tr><td>N</td><td>&gt; 0</td><td>PF3</td><td>RECEIVE → RETURN-TO-PREV-SCREEN</td><td>XCTL to previous program</td><td>N/A (XCTL)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>2.4 CICS Command Flow</h3>
+    <table>
+      <thead><tr><th>Command</th><th>Paragraph</th><th>Purpose</th><th>RESP Handling</th></tr></thead>
+      <tbody>
+        <tr><td><code>EXEC CICS SEND MAP('COTRN2A') MAPSET('COTRN02')</code></td><td>SEND-TRNADD-SCREEN</td><td>Send the Add Transaction screen to terminal</td><td>N/A (no explicit RESP)</td></tr>
+        <tr><td><code>EXEC CICS RECEIVE MAP('COTRN2A') MAPSET('COTRN02')</code></td><td>RECEIVE-TRNADD-SCREEN</td><td>Receive user input from terminal</td><td>WS-RESP-CD, WS-REAS-CD</td></tr>
+        <tr><td><code>EXEC CICS RETURN TRANSID('CT02') COMMAREA(...)</code></td><td>MAIN-PARA, SEND-TRNADD-SCREEN</td><td>Pseudo-conversational return; wait for next user input</td><td>N/A</td></tr>
+        <tr><td><code>EXEC CICS READ DATASET(WS-CXACAIX-FILE)</code></td><td>READ-CXACAIX-FILE</td><td>Look up card number by account ID via AIX</td><td>NORMAL, NOTFND, OTHER</td></tr>
+        <tr><td><code>EXEC CICS READ DATASET(WS-CCXREF-FILE)</code></td><td>READ-CCXREF-FILE</td><td>Look up account ID by card number via XREF</td><td>NORMAL, NOTFND, OTHER</td></tr>
+        <tr><td><code>EXEC CICS STARTBR DATASET(WS-TRANSACT-FILE)</code></td><td>STARTBR-TRANSACT-FILE</td><td>Start browse at HIGH-VALUES to position at end of file</td><td>NORMAL, NOTFND, OTHER</td></tr>
+        <tr><td><code>EXEC CICS READPREV DATASET(WS-TRANSACT-FILE)</code></td><td>READPREV-TRANSACT-FILE</td><td>Read the last (highest-key) transaction record</td><td>NORMAL, ENDFILE, OTHER</td></tr>
+        <tr><td><code>EXEC CICS ENDBR DATASET(WS-TRANSACT-FILE)</code></td><td>ENDBR-TRANSACT-FILE</td><td>End the browse operation</td><td>N/A</td></tr>
+        <tr><td><code>EXEC CICS WRITE DATASET(WS-TRANSACT-FILE)</code></td><td>WRITE-TRANSACT-FILE</td><td>Write the new transaction record</td><td>NORMAL, DUPKEY/DUPREC, OTHER</td></tr>
+        <tr><td><code>EXEC CICS XCTL PROGRAM(CDEMO-TO-PROGRAM)</code></td><td>RETURN-TO-PREV-SCREEN</td><td>Transfer control back to calling program</td><td>N/A</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!--  SECTION 3 — Screen Flow and BMS Maps                        -->
+<!-- ============================================================ -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">3</span>
+    <h2>Screen Flow and BMS Maps</h2>
+    <span class="collapse-icon"></span>
+  </div>
+  <div class="section-body">
+
+    <h3>3.1 Screen Flow Diagram</h3>
+<pre>
+                      ┌─────────────────────┐
+                      │ Transaction List    │
+                      │ CT00 (COTRN00C)     │
+                      └─────────┬───────────┘
+                                │ XCTL (select add)
+                                ▼
+                      ┌─────────────────────┐
+                      │   Add Transaction   │
+                  ┌──►│   CT02 / COTRN2A    │◄──┐
+                  │   └──┬────┬────┬────┬───┘   │
+                  │      │    │    │    │        │
+            PF4   │ ENTER│ PF5│    │PF3 │   loop │
+           Clear  │      │Copy│    │    │        │
+                  │      │Last│    │    │        │
+                  │      ▼    ▼    │    ▼        │
+                  │  Validate &amp;    │  Return to  │
+                  │  Confirm ──────│  prev screen│
+                  │      │        │  (COMEN01C  │
+                  │   Y──┘        │   or caller)│
+                  │      │        │             │
+                  │      ▼        │             │
+                  │  Write record │             │
+                  │  Success msg  │             │
+                  └───────────────┘             │
+                                                │
+                         OTHER keys ────────────┘
+                         "Invalid key pressed"
+</pre>
+
+    <h3>3.2 BMS Map Inventory</h3>
+    <table>
+      <thead><tr><th>Map Name</th><th>Mapset</th><th>Purpose</th><th>Key Fields</th></tr></thead>
+      <tbody>
+        <tr><td>COTRN2A</td><td>COTRN02</td><td>Add Transaction data entry form (24&times;80)</td><td>ACTIDIN, CARDNIN, TTYPCD, TCATCD, TRNSRC, TDESC, TRNAMT, TORIGDT, TPROCDT, MID, MNAME, MCITY, MZIP, CONFIRM</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.3 Screen Field Details</h3>
+    <table>
+      <thead><tr><th>Field</th><th>Position</th><th>Length</th><th>Attribute</th><th>Color</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>TRNNAME</td><td>(1,7)</td><td>4</td><td>ASKIP, FSET, NORM</td><td>Blue</td><td>Transaction ID display</td></tr>
+        <tr><td>TITLE01</td><td>(1,21)</td><td>40</td><td>ASKIP, FSET, NORM</td><td>Yellow</td><td>Title line 1</td></tr>
+        <tr><td>CURDATE</td><td>(1,71)</td><td>8</td><td>ASKIP, FSET, NORM</td><td>Blue</td><td>Current date (mm/dd/yy)</td></tr>
+        <tr><td>PGMNAME</td><td>(2,7)</td><td>8</td><td>ASKIP, FSET, NORM</td><td>Blue</td><td>Program name display</td></tr>
+        <tr><td>TITLE02</td><td>(2,21)</td><td>40</td><td>ASKIP, FSET, NORM</td><td>Yellow</td><td>Title line 2</td></tr>
+        <tr><td>CURTIME</td><td>(2,71)</td><td>8</td><td>ASKIP, FSET, NORM</td><td>Blue</td><td>Current time (hh:mm:ss)</td></tr>
+        <tr><td>ACTIDIN</td><td>(6,21)</td><td>11</td><td>FSET, IC, UNPROT</td><td>Green</td><td>Account ID input</td></tr>
+        <tr><td>CARDNIN</td><td>(6,55)</td><td>16</td><td>FSET, UNPROT</td><td>Green</td><td>Card Number input</td></tr>
+        <tr><td>TTYPCD</td><td>(10,15)</td><td>2</td><td>FSET, UNPROT</td><td>Green</td><td>Transaction Type Code</td></tr>
+        <tr><td>TCATCD</td><td>(10,36)</td><td>4</td><td>FSET, UNPROT</td><td>Green</td><td>Transaction Category Code</td></tr>
+        <tr><td>TRNSRC</td><td>(10,54)</td><td>10</td><td>FSET, UNPROT</td><td>Green</td><td>Transaction Source</td></tr>
+        <tr><td>TDESC</td><td>(12,19)</td><td>60</td><td>FSET, UNPROT</td><td>Green</td><td>Transaction Description</td></tr>
+        <tr><td>TRNAMT</td><td>(14,14)</td><td>12</td><td>FSET, UNPROT</td><td>Green</td><td>Transaction Amount</td></tr>
+        <tr><td>TORIGDT</td><td>(14,42)</td><td>10</td><td>FSET, UNPROT</td><td>Green</td><td>Origination Date (YYYY-MM-DD)</td></tr>
+        <tr><td>TPROCDT</td><td>(14,68)</td><td>10</td><td>FSET, UNPROT</td><td>Green</td><td>Processing Date (YYYY-MM-DD)</td></tr>
+        <tr><td>MID</td><td>(16,19)</td><td>9</td><td>FSET, UNPROT</td><td>Green</td><td>Merchant ID</td></tr>
+        <tr><td>MNAME</td><td>(16,48)</td><td>30</td><td>FSET, UNPROT</td><td>Green</td><td>Merchant Name</td></tr>
+        <tr><td>MCITY</td><td>(18,21)</td><td>25</td><td>FSET, UNPROT</td><td>Green</td><td>Merchant City</td></tr>
+        <tr><td>MZIP</td><td>(18,67)</td><td>10</td><td>FSET, UNPROT</td><td>Green</td><td>Merchant Zip Code</td></tr>
+        <tr><td>CONFIRM</td><td>(21,63)</td><td>1</td><td>FSET, UNPROT</td><td>Green</td><td>Confirmation (Y/N)</td></tr>
+        <tr><td>ERRMSG</td><td>(23,1)</td><td>78</td><td>ASKIP, BRT, FSET</td><td>Red</td><td>Error / status message line</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.4 PF Key / AID Key Handling</h3>
+    <table>
+      <thead><tr><th>Key</th><th>EIBAID</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>ENTER</td><td>DFHENTER</td><td>Validate all fields; if Confirm = Y, write new transaction record; otherwise prompt for confirmation</td></tr>
+        <tr><td>PF3</td><td>DFHPF3</td><td>Return to previous screen (CDEMO-FROM-PROGRAM or COMEN01C main menu) via XCTL</td></tr>
+        <tr><td>PF4</td><td>DFHPF4</td><td>Clear all input fields on the current screen (INITIALIZE-ALL-FIELDS)</td></tr>
+        <tr><td>PF5</td><td>DFHPF5</td><td>Copy data from the last transaction in the TRANSACT file into the form fields (COPY-LAST-TRAN-DATA)</td></tr>
+        <tr><td>Other</td><td>Any other</td><td>Display error: &ldquo;Invalid key pressed. Please see below...&rdquo;</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!--  SECTION 4 — Program Inventory and Call Chain                -->
+<!-- ============================================================ -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">4</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <span class="collapse-icon"></span>
+  </div>
+  <div class="section-body">
+
+    <h3>4.1 Program Inventory</h3>
+    <table>
+      <thead><tr><th>Program</th><th>Type</th><th>Purpose</th><th>Entry Mechanism</th><th>LOC</th></tr></thead>
+      <tbody>
+        <tr><td>COTRN02C</td><td>CICS COBOL</td><td>Transaction Add — main entry program</td><td>CICS TRANSID CT02</td><td>783</td></tr>
+        <tr><td>CSUTLDTC</td><td>Subroutine</td><td>Date validation utility (validates date string against format)</td><td>CALL &lsquo;CSUTLDTC&rsquo;</td><td>N/A</td></tr>
+        <tr><td>COSGN00C</td><td>CICS COBOL</td><td>Sign-On program (XCTL target when EIBCALEN = 0)</td><td>XCTL</td><td>N/A</td></tr>
+        <tr><td>COMEN01C</td><td>CICS COBOL</td><td>Main Menu program (default return target on PF3)</td><td>XCTL</td><td>N/A</td></tr>
+      </tbody>
+    </table>
+
+    <h3>4.2 Call Chain Diagram</h3>
+<pre>
+ CICS TRANSID CT02
+       │
+       ▼
+ ┌──────────────────────┐
+ │     COTRN02C         │
+ │   (Entry Program)    │
+ ├──────────────────────┤
+ │                      │
+ │  CALL 'CSUTLDTC'  ──┼──► Date Validation Utility
+ │    (Orig Date)       │      ├─ CSUTLDTC-DATE
+ │    (Proc Date)       │      ├─ CSUTLDTC-DATE-FORMAT
+ │                      │      └─ CSUTLDTC-RESULT
+ │                      │
+ │  READ CXACAIX ───────┼──► VSAM AIX (Acct → Card XREF)
+ │  READ CCXREF ────────┼──► VSAM KSDS (Card → Acct XREF)
+ │  STARTBR/READPREV ──┼──► VSAM KSDS TRANSACT
+ │  WRITE TRANSACT ─────┼──► VSAM KSDS TRANSACT
+ │                      │
+ │  XCTL COSGN00C ──────┼──► Sign-On (if no COMMAREA)
+ │  XCTL (prev pgm) ────┼──► COMEN01C or caller (PF3)
+ └──────────────────────┘
+</pre>
+
+    <h3>4.3 Call Details</h3>
+    <table>
+      <thead><tr><th>Caller</th><th>Called</th><th>Mechanism</th><th>Data Passed</th><th>When</th></tr></thead>
+      <tbody>
+        <tr><td>COTRN02C</td><td>CSUTLDTC</td><td>CALL (static)</td><td>CSUTLDTC-DATE, CSUTLDTC-DATE-FORMAT, CSUTLDTC-RESULT</td><td>During VALIDATE-INPUT-DATA-FIELDS for Orig Date and Proc Date</td></tr>
+        <tr><td>COTRN02C</td><td>COSGN00C</td><td>XCTL</td><td>CARDDEMO-COMMAREA</td><td>When EIBCALEN = 0 (no COMMAREA — user entered directly)</td></tr>
+        <tr><td>COTRN02C</td><td>COMEN01C (or CDEMO-FROM-PROGRAM)</td><td>XCTL</td><td>CARDDEMO-COMMAREA</td><td>PF3 — return to previous screen</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!--  SECTION 5 — File and Data Store Inventory                   -->
+<!-- ============================================================ -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">5</span>
+    <h2>File and Data Store Inventory</h2>
+    <span class="collapse-icon"></span>
+  </div>
+  <div class="section-body">
+
+    <h3>5.1 File Inventory</h3>
+    <table>
+      <thead><tr><th>FCT Name</th><th>Type</th><th>Access Mode</th><th>Program</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>TRANSACT</td><td>VSAM KSDS</td><td>READ (STARTBR, READPREV, ENDBR), WRITE</td><td>COTRN02C</td><td>Transaction records — browse to find last ID; write new record</td></tr>
+        <tr><td>CXACAIX</td><td>VSAM AIX</td><td>READ</td><td>COTRN02C</td><td>Alternate index: Account ID → Card XREF record</td></tr>
+        <tr><td>CCXREF</td><td>VSAM KSDS</td><td>READ</td><td>COTRN02C</td><td>Card cross-reference: Card Number → Account/Customer</td></tr>
+      </tbody>
+    </table>
+
+    <h3>5.2 File Access Details</h3>
+    <table>
+      <thead><tr><th>File</th><th>Record Layout</th><th>Key Field</th><th>Key Length</th><th>Record Length</th><th>Access Pattern</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>TRANSACT</td>
+          <td>CVTRA05Y (TRAN-RECORD)</td>
+          <td>TRAN-ID PIC X(16)</td>
+          <td>16</td>
+          <td>350</td>
+          <td>STARTBR at HIGH-VALUES → READPREV to get last key → ENDBR → Compute new ID (last + 1) → WRITE new record</td>
+        </tr>
+        <tr>
+          <td>CXACAIX</td>
+          <td>CVACT03Y (CARD-XREF-RECORD)</td>
+          <td>XREF-ACCT-ID PIC 9(11)</td>
+          <td>11</td>
+          <td>50</td>
+          <td>READ by XREF-ACCT-ID (KEYLENGTH = LENGTH OF XREF-ACCT-ID) to resolve card number</td>
+        </tr>
+        <tr>
+          <td>CCXREF</td>
+          <td>CVACT03Y (CARD-XREF-RECORD)</td>
+          <td>XREF-CARD-NUM PIC X(16)</td>
+          <td>16</td>
+          <td>50</td>
+          <td>READ by XREF-CARD-NUM to resolve account ID</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>5.3 TSQ Usage</h3>
+    <p>N/A &mdash; This transaction does not use Temporary Storage Queues.</p>
+
+    <h3>5.4 TDQ Usage</h3>
+    <p>N/A &mdash; This transaction does not use Transient Data Queues.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!--  SECTION 6 — Data Flow Analysis                              -->
+<!-- ============================================================ -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">6</span>
+    <h2>Data Flow Analysis</h2>
+    <span class="collapse-icon"></span>
+  </div>
+  <div class="section-body">
+
+    <h3>6.1 Data Flow Through Transaction</h3>
+<pre>
+ ┌─────────────────────────────────────────────────────────────────┐
+ │                         TERMINAL                                │
+ │  User enters: ACTIDIN / CARDNIN + 11 detail fields + CONFIRM   │
+ └───────────────────────────┬─────────────────────────────────────┘
+                             │ RECEIVE MAP('COTRN2A')
+                             ▼
+ ┌─────────────────────────────────────────────────────────────────┐
+ │               COTRN2AI (Input Symbolic Map)                     │
+ │  ACTIDINI, CARDNINI, TTYPCDI, TCATCDI, TRNSRCI, TDESCI,       │
+ │  TRNAMTI, TORIGDTI, TPROCDTI, MIDI, MNAMEI, MCITYI, MZIPI,    │
+ │  CONFIRMI                                                       │
+ └───────────────────────────┬─────────────────────────────────────┘
+                             │ Validation + Cross-reference
+                             ▼
+ ┌─────────────────────────────────────────────────────────────────┐
+ │                   WORKING STORAGE                                │
+ │  CARD-XREF-RECORD (from CXACAIX/CCXREF)                        │
+ │  WS-ACCT-ID-N, WS-CARD-NUM-N, WS-TRAN-AMT-N, WS-TRAN-ID-N    │
+ │  CSUTLDTC-RESULT (date validation)                              │
+ └───────────────────────────┬─────────────────────────────────────┘
+                             │ Populate TRAN-RECORD
+                             ▼
+ ┌─────────────────────────────────────────────────────────────────┐
+ │                    TRAN-RECORD (CVTRA05Y)                       │
+ │  TRAN-ID (auto-gen), TRAN-TYPE-CD, TRAN-CAT-CD, TRAN-SOURCE,   │
+ │  TRAN-DESC, TRAN-AMT, TRAN-CARD-NUM, TRAN-MERCHANT-ID,         │
+ │  TRAN-MERCHANT-NAME, TRAN-MERCHANT-CITY, TRAN-MERCHANT-ZIP,    │
+ │  TRAN-ORIG-TS, TRAN-PROC-TS                                    │
+ └───────────────────────────┬─────────────────────────────────────┘
+                             │ WRITE DATASET('TRANSACT')
+                             ▼
+ ┌─────────────────────────────────────────────────────────────────┐
+ │               TRANSACT VSAM KSDS File                           │
+ │  New record with auto-incremented TRAN-ID                       │
+ └─────────────────────────────────────────────────────────────────┘
+</pre>
+
+    <h3>6.2 Data Transformation Map</h3>
+    <table>
+      <thead><tr><th>Source</th><th>Transformation</th><th>Target</th></tr></thead>
+      <tbody>
+        <tr><td>ACTIDINI (screen input)</td><td>NUMVAL → WS-ACCT-ID-N → READ CXACAIX → resolve XREF-CARD-NUM</td><td>CARDNINI (screen display)</td></tr>
+        <tr><td>CARDNINI (screen input)</td><td>NUMVAL → WS-CARD-NUM-N → READ CCXREF → resolve XREF-ACCT-ID</td><td>ACTIDINI (screen display)</td></tr>
+        <tr><td>TRNAMTI (screen input)</td><td>NUMVAL-C → WS-TRAN-AMT-N → format as WS-TRAN-AMT-E (+99999999.99)</td><td>TRAN-AMT (S9(9)V99 in TRAN-RECORD)</td></tr>
+        <tr><td>TORIGDTI / TPROCDTI</td><td>Format check (YYYY-MM-DD) → CALL CSUTLDTC for calendar validation</td><td>TRAN-ORIG-TS / TRAN-PROC-TS (X(26) in TRAN-RECORD)</td></tr>
+        <tr><td>TTYPCDI</td><td>Direct move (after numeric check)</td><td>TRAN-TYPE-CD PIC X(02)</td></tr>
+        <tr><td>TCATCDI</td><td>Direct move (after numeric check)</td><td>TRAN-CAT-CD PIC 9(04)</td></tr>
+        <tr><td>TRNSRCI</td><td>Direct move</td><td>TRAN-SOURCE PIC X(10)</td></tr>
+        <tr><td>TDESCI</td><td>Direct move</td><td>TRAN-DESC PIC X(100)</td></tr>
+        <tr><td>MIDI, MNAMEI, MCITYI, MZIPI</td><td>Direct move (MID after numeric check)</td><td>TRAN-MERCHANT-ID/NAME/CITY/ZIP</td></tr>
+        <tr><td>CARDNINI</td><td>Direct move</td><td>TRAN-CARD-NUM PIC X(16)</td></tr>
+        <tr><td>Last TRAN-ID (via READPREV)</td><td>Move to WS-TRAN-ID-N → ADD 1</td><td>New TRAN-ID in TRAN-RECORD</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!--  SECTION 7 — COMMAREA and Interface Contracts                -->
+<!-- ============================================================ -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">7</span>
+    <h2>COMMAREA and Interface Contracts</h2>
+    <span class="collapse-icon"></span>
+  </div>
+  <div class="section-body">
+
+    <h3>7.1 COMMAREA Layout</h3>
+    <p>The program uses <code>CARDDEMO-COMMAREA</code> defined in <code>COCOM01Y.cpy</code>, plus a program-specific extension <code>CDEMO-CT02-INFO</code> defined inline in the source.</p>
+    <table>
+      <thead><tr><th>Field</th><th>PIC Clause</th><th>Length</th><th>Direction</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>CDEMO-FROM-TRANID</td><td>X(04)</td><td>4</td><td>IN/OUT</td><td>Originating transaction ID</td></tr>
+        <tr><td>CDEMO-FROM-PROGRAM</td><td>X(08)</td><td>8</td><td>IN/OUT</td><td>Originating program name (used for PF3 return)</td></tr>
+        <tr><td>CDEMO-TO-TRANID</td><td>X(04)</td><td>4</td><td>OUT</td><td>Target transaction ID for XCTL</td></tr>
+        <tr><td>CDEMO-TO-PROGRAM</td><td>X(08)</td><td>8</td><td>OUT</td><td>Target program for XCTL</td></tr>
+        <tr><td>CDEMO-USER-ID</td><td>X(08)</td><td>8</td><td>IN</td><td>Logged-in user ID</td></tr>
+        <tr><td>CDEMO-USER-TYPE</td><td>X(01)</td><td>1</td><td>IN</td><td>&lsquo;A&rsquo; = Admin, &lsquo;U&rsquo; = User</td></tr>
+        <tr><td>CDEMO-PGM-CONTEXT</td><td>9(01)</td><td>1</td><td>IN/OUT</td><td>0 = first entry, 1 = re-entry</td></tr>
+        <tr><td>CDEMO-CUST-ID</td><td>9(09)</td><td>9</td><td>IN</td><td>Customer ID</td></tr>
+        <tr><td>CDEMO-ACCT-ID</td><td>9(11)</td><td>11</td><td>IN</td><td>Account ID</td></tr>
+        <tr><td>CDEMO-CARD-NUM</td><td>9(16)</td><td>16</td><td>IN</td><td>Card number</td></tr>
+        <tr><td>CDEMO-LAST-MAP</td><td>X(07)</td><td>7</td><td>IN/OUT</td><td>Last map sent</td></tr>
+        <tr><td>CDEMO-LAST-MAPSET</td><td>X(07)</td><td>7</td><td>IN/OUT</td><td>Last mapset sent</td></tr>
+        <tr><td colspan="5"><strong>CT02-specific extension:</strong></td></tr>
+        <tr><td>CDEMO-CT02-TRNID-FIRST</td><td>X(16)</td><td>16</td><td>IN</td><td>First transaction ID (from list context)</td></tr>
+        <tr><td>CDEMO-CT02-TRNID-LAST</td><td>X(16)</td><td>16</td><td>IN</td><td>Last transaction ID (from list context)</td></tr>
+        <tr><td>CDEMO-CT02-PAGE-NUM</td><td>9(08)</td><td>8</td><td>IN</td><td>Current page number (from list context)</td></tr>
+        <tr><td>CDEMO-CT02-NEXT-PAGE-FLG</td><td>X(01)</td><td>1</td><td>IN</td><td>&lsquo;Y&rsquo;/&lsquo;N&rsquo; — more pages available</td></tr>
+        <tr><td>CDEMO-CT02-TRN-SEL-FLG</td><td>X(01)</td><td>1</td><td>IN</td><td>Transaction selection flag</td></tr>
+        <tr><td>CDEMO-CT02-TRN-SELECTED</td><td>X(16)</td><td>16</td><td>IN</td><td>Selected card number passed from Transaction List (CT00); pre-populates CARDNIN</td></tr>
+      </tbody>
+    </table>
+
+    <h3>7.2 Return Code Conventions</h3>
+    <table>
+      <thead><tr><th>Context</th><th>Field</th><th>Values</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>CICS Response</td><td>WS-RESP-CD</td><td>DFHRESP(NORMAL), DFHRESP(NOTFND), DFHRESP(ENDFILE), DFHRESP(DUPKEY/DUPREC)</td><td>Standard CICS RESP codes for file operations</td></tr>
+        <tr><td>Date Validation</td><td>CSUTLDTC-RESULT-SEV-CD</td><td>&lsquo;0000&rsquo; = valid, other = error</td><td>Severity code from CSUTLDTC date utility</td></tr>
+        <tr><td>Internal Error Flag</td><td>WS-ERR-FLG</td><td>&lsquo;Y&rsquo; = error, &lsquo;N&rsquo; = no error</td><td>Controls validation flow; when &lsquo;Y&rsquo;, data fields are cleared</td></tr>
+      </tbody>
+    </table>
+
+    <h3>7.3 Conversation State Management</h3>
+    <p>
+      State is preserved between pseudo-conversational iterations via <code>CARDDEMO-COMMAREA</code>. The field <code>CDEMO-PGM-CONTEXT</code> (88-level <code>CDEMO-PGM-REENTER</code>) distinguishes first entry (value 0) from re-entry (value 1). On first entry, the program sets <code>CDEMO-PGM-REENTER = TRUE</code> (value 1) and sends the blank screen. On re-entry, it receives user input and processes the AID key. The COMMAREA is passed on every <code>EXEC CICS RETURN TRANSID('CT02')</code> call to maintain context. The <code>CDEMO-CT02-TRN-SELECTED</code> field carries a card number from the Transaction List (CT00) screen for pre-population on first entry.
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!--  SECTION 8 — Error Handling and User Feedback                -->
+<!-- ============================================================ -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">8</span>
+    <h2>Error Handling and User Feedback</h2>
+    <span class="collapse-icon"></span>
+  </div>
+  <div class="section-body">
+
+    <h3>8.1 Error Flow Diagram</h3>
+<pre>
+                    ┌──────────────┐
+                    │  User Input  │
+                    └──────┬───────┘
+                           │
+                    ┌──────▼───────┐
+                    │  Validate    │
+                    │  Key Fields  │
+                    └──┬───────┬───┘
+                  OK   │       │ ERROR
+                       │       ▼
+                       │  ┌─────────────────┐
+                       │  │ Set WS-ERR-FLG  │
+                       │  │ = 'Y'           │
+                       │  │ Set WS-MESSAGE  │
+                       │  │ Set cursor pos  │
+                       │  │ SEND screen     │
+                       │  │ RETURN TRANSID  │
+                       │  └─────────────────┘
+                       ▼
+                 ┌──────────────┐
+                 │  Validate    │
+                 │  Data Fields │
+                 └──┬───────┬───┘
+               OK   │       │ ERROR
+                    │       └──► (same error pattern)
+                    ▼
+              ┌──────────────┐
+              │  Check       │
+              │  CONFIRM     │
+              └──┬──────┬────┘
+            Y    │      │ N/Other
+                 │      └──► Prompt / Error message
+                 ▼
+           ┌──────────────┐
+           │  WRITE file  │
+           └──┬───────┬───┘
+         OK   │       │ DUPKEY/OTHER
+              │       └──► Error message
+              ▼
+        ┌──────────────┐
+        │  Success msg │
+        │  Fields      │
+        │  cleared     │
+        └──────────────┘
+</pre>
+
+    <h3>8.2 Error Handling Matrix</h3>
+    <table>
+      <thead><tr><th>Error Condition</th><th>RESP Code</th><th>Program Action</th><th>User Message</th></tr></thead>
+      <tbody>
+        <tr><td>Account ID not found in CXACAIX</td><td>DFHRESP(NOTFND)</td><td>Set ERR-FLG, cursor → ACTIDIN</td><td>Account ID NOT found...</td></tr>
+        <tr><td>CXACAIX read failure</td><td>OTHER</td><td>DISPLAY RESP/REAS, set ERR-FLG</td><td>Unable to lookup Acct in XREF AIX file...</td></tr>
+        <tr><td>Card Number not found in CCXREF</td><td>DFHRESP(NOTFND)</td><td>Set ERR-FLG, cursor → CARDNIN</td><td>Card Number NOT found...</td></tr>
+        <tr><td>CCXREF read failure</td><td>OTHER</td><td>DISPLAY RESP/REAS, set ERR-FLG</td><td>Unable to lookup Card # in XREF file...</td></tr>
+        <tr><td>STARTBR TRANSACT not found</td><td>DFHRESP(NOTFND)</td><td>Set ERR-FLG, cursor → ACTIDIN</td><td>Transaction ID NOT found...</td></tr>
+        <tr><td>STARTBR TRANSACT other error</td><td>OTHER</td><td>DISPLAY RESP/REAS, set ERR-FLG</td><td>Unable to lookup Transaction...</td></tr>
+        <tr><td>READPREV end-of-file</td><td>DFHRESP(ENDFILE)</td><td>Set TRAN-ID to ZEROS (new ID will be 1)</td><td>None (handled gracefully)</td></tr>
+        <tr><td>READPREV other error</td><td>OTHER</td><td>DISPLAY RESP/REAS, set ERR-FLG</td><td>Unable to lookup Transaction...</td></tr>
+        <tr><td>WRITE duplicate key</td><td>DFHRESP(DUPKEY/DUPREC)</td><td>Set ERR-FLG, cursor → ACTIDIN</td><td>Tran ID already exist...</td></tr>
+        <tr><td>WRITE other error</td><td>OTHER</td><td>DISPLAY RESP/REAS, set ERR-FLG</td><td>Unable to Add Transaction...</td></tr>
+        <tr><td>Orig Date invalid</td><td>CSUTLDTC SEV-CD &ne; &lsquo;0000&rsquo;</td><td>Set ERR-FLG, cursor → TORIGDT</td><td>Orig Date - Not a valid date...</td></tr>
+        <tr><td>Proc Date invalid</td><td>CSUTLDTC SEV-CD &ne; &lsquo;0000&rsquo;</td><td>Set ERR-FLG, cursor → TPROCDT</td><td>Proc Date - Not a valid date...</td></tr>
+      </tbody>
+    </table>
+
+    <h3>8.3 HANDLE ABEND / HANDLE CONDITION</h3>
+    <p>
+      This program does <strong>not</strong> use <code>EXEC CICS HANDLE ABEND</code> or <code>EXEC CICS HANDLE CONDITION</code>. All error handling is performed via inline <code>RESP</code>/<code>RESP2</code> checking on each CICS command, following the modern command-level error handling pattern.
+    </p>
+
+    <h3>8.4 User Error Messages</h3>
+    <table>
+      <thead><tr><th>Message</th><th>Trigger</th><th>Field Cursor</th></tr></thead>
+      <tbody>
+        <tr><td>Account or Card Number must be entered...</td><td>Both ACTIDIN and CARDNIN are empty</td><td>ACTIDIN</td></tr>
+        <tr><td>Account ID must be Numeric...</td><td>ACTIDIN is not numeric</td><td>ACTIDIN</td></tr>
+        <tr><td>Card Number must be Numeric...</td><td>CARDNIN is not numeric</td><td>CARDNIN</td></tr>
+        <tr><td>Account ID NOT found...</td><td>CXACAIX READ returns NOTFND</td><td>ACTIDIN</td></tr>
+        <tr><td>Card Number NOT found...</td><td>CCXREF READ returns NOTFND</td><td>CARDNIN</td></tr>
+        <tr><td>Type CD can NOT be empty...</td><td>TTYPCD is empty</td><td>TTYPCD</td></tr>
+        <tr><td>Type CD must be Numeric...</td><td>TTYPCD is not numeric</td><td>TTYPCD</td></tr>
+        <tr><td>Category CD can NOT be empty...</td><td>TCATCD is empty</td><td>TCATCD</td></tr>
+        <tr><td>Category CD must be Numeric...</td><td>TCATCD is not numeric</td><td>TCATCD</td></tr>
+        <tr><td>Source can NOT be empty...</td><td>TRNSRC is empty</td><td>TRNSRC</td></tr>
+        <tr><td>Description can NOT be empty...</td><td>TDESC is empty</td><td>TDESC</td></tr>
+        <tr><td>Amount can NOT be empty...</td><td>TRNAMT is empty</td><td>TRNAMT</td></tr>
+        <tr><td>Amount should be in format -99999999.99</td><td>TRNAMT fails format validation</td><td>TRNAMT</td></tr>
+        <tr><td>Orig Date can NOT be empty...</td><td>TORIGDT is empty</td><td>TORIGDT</td></tr>
+        <tr><td>Orig Date should be in format YYYY-MM-DD</td><td>TORIGDT fails format check</td><td>TORIGDT</td></tr>
+        <tr><td>Orig Date - Not a valid date...</td><td>CSUTLDTC rejects Orig Date</td><td>TORIGDT</td></tr>
+        <tr><td>Proc Date can NOT be empty...</td><td>TPROCDT is empty</td><td>TPROCDT</td></tr>
+        <tr><td>Proc Date should be in format YYYY-MM-DD</td><td>TPROCDT fails format check</td><td>TPROCDT</td></tr>
+        <tr><td>Proc Date - Not a valid date...</td><td>CSUTLDTC rejects Proc Date</td><td>TPROCDT</td></tr>
+        <tr><td>Merchant ID must be Numeric...</td><td>MID is not numeric</td><td>MID</td></tr>
+        <tr><td>Merchant Name can NOT be empty...</td><td>MNAME is empty</td><td>MNAME</td></tr>
+        <tr><td>Merchant City can NOT be empty...</td><td>MCITY is empty</td><td>MCITY</td></tr>
+        <tr><td>Merchant Zip can NOT be empty...</td><td>MZIP is empty</td><td>MZIP</td></tr>
+        <tr><td>Confirm to add this transaction...</td><td>CONFIRM is &lsquo;N&rsquo;, SPACES, or LOW-VALUES</td><td>CONFIRM</td></tr>
+        <tr><td>Invalid value. Valid values are (Y/N)...</td><td>CONFIRM is not Y/y/N/n/SPACES</td><td>CONFIRM</td></tr>
+        <tr><td>Invalid key pressed. Please see below...</td><td>Unrecognized AID key</td><td>N/A</td></tr>
+        <tr><td>Transaction added successfully. Your Tran ID is XXXX.</td><td>Successful WRITE</td><td>N/A (fields cleared)</td></tr>
+        <tr><td>Tran ID already exist...</td><td>WRITE returns DUPKEY/DUPREC</td><td>ACTIDIN</td></tr>
+        <tr><td>Unable to Add Transaction...</td><td>WRITE returns OTHER error</td><td>ACTIDIN</td></tr>
+        <tr><td>Unable to lookup Acct in XREF AIX file...</td><td>CXACAIX READ returns OTHER</td><td>ACTIDIN</td></tr>
+        <tr><td>Unable to lookup Card # in XREF file...</td><td>CCXREF READ returns OTHER</td><td>CARDNIN</td></tr>
+        <tr><td>Unable to lookup Transaction...</td><td>STARTBR/READPREV returns OTHER</td><td>ACTIDIN</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!--  SECTION 9 — Security and Authorization                      -->
+<!-- ============================================================ -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">9</span>
+    <h2>Security and Authorization</h2>
+    <span class="collapse-icon"></span>
+  </div>
+  <div class="section-body">
+
+    <h3>9.1 Transaction Security</h3>
+    <p>
+      Transaction <code>CT02</code> does not implement its own authentication. Access is controlled at two levels:
+    </p>
+    <ul>
+      <li><strong>CICS Transaction Security:</strong> The transaction ID <code>CT02</code> can be secured via RACF or equivalent ESM (External Security Manager) to restrict which users can initiate it.</li>
+      <li><strong>Application-Level Routing:</strong> Users must first sign on via <code>CC00</code> (COSGN00C), which validates credentials and stores the user type (<code>CDEMO-USER-TYPE</code>: &lsquo;A&rsquo; for admin, &lsquo;U&rsquo; for regular user) in the COMMAREA. The main menu (<code>CM00</code>) then routes only to authorized transactions. If a user enters <code>CT02</code> directly without a valid COMMAREA (EIBCALEN = 0), the program XCTLs to the sign-on screen (<code>COSGN00C</code>).</li>
+    </ul>
+
+    <h3>9.2 Data Access Authorization</h3>
+    <p>
+      No field-level or record-level security checks are implemented within the program. Any authenticated user who can reach this transaction can add a transaction against any valid account/card combination. VSAM file-level security is controlled by the CICS region&rsquo;s FCT definitions and underlying OS/RACF dataset profiles.
+    </p>
+
+    <h3>9.3 Audit Trail</h3>
+    <p>
+      The program does not write explicit audit records. However, the transaction record itself contains <code>TRAN-ORIG-TS</code> and <code>TRAN-PROC-TS</code> (timestamp fields entered by the user). CICS journal/log facilities and SMF records would capture transaction-level audit data at the infrastructure level. Error conditions trigger <code>DISPLAY</code> statements that write RESP/REAS codes to the CICS CEEMSG/SYSOUT for operational monitoring.
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!--  SECTION 10 — Performance Characteristics                    -->
+<!-- ============================================================ -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Performance Characteristics</h2>
+    <span class="collapse-icon"></span>
+  </div>
+  <div class="section-body">
+
+    <h3>10.1 Performance Profile</h3>
+    <table>
+      <thead><tr><th>Metric</th><th>Value</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>File I/Os per add iteration</td><td>5&ndash;6</td><td>1 READ (CXACAIX or CCXREF) + STARTBR + READPREV + ENDBR + WRITE = 5 commands; 6 if both CXACAIX and CCXREF are read</td></tr>
+        <tr><td>File I/Os per PF5 (Copy Last)</td><td>4&ndash;5</td><td>1 READ (xref) + STARTBR + READPREV + ENDBR = 4; then cycles through PROCESS-ENTER-KEY for additional validation reads</td></tr>
+        <tr><td>COMMAREA Size</td><td>~300 bytes</td><td>COCOM01Y base (~170 bytes) + CT02 extension (~58 bytes)</td></tr>
+        <tr><td>BMS Map Sends per iteration</td><td>1</td><td>Single SEND MAP per pseudo-conversational iteration</td></tr>
+        <tr><td>External CALLs</td><td>2</td><td>CSUTLDTC called twice (once for each date field)</td></tr>
+        <tr><td>TRAN-RECORD Size</td><td>350 bytes</td><td>Fixed record length per CVTRA05Y</td></tr>
+      </tbody>
+    </table>
+
+    <h3>10.2 Performance Considerations</h3>
+    <ul>
+      <li><strong>Sequential ID Generation:</strong> Uses STARTBR at HIGH-VALUES + READPREV to find the last transaction ID. This browse/read is lightweight (single record) but serializes concurrent adds — two simultaneous users could generate the same ID, resulting in a DUPKEY error.</li>
+      <li><strong>No Locking:</strong> The ID generation pattern (STARTBR → READPREV → ADD 1 → WRITE) is not wrapped in a task-level lock or ENQ/DEQ. Under high concurrency, DUPKEY responses are possible and must be retried by the user.</li>
+      <li><strong>Date Validation:</strong> Two CALL statements to CSUTLDTC add a small but measurable overhead per iteration. The utility is a statically linked subroutine, so the overhead is minimal compared to file I/O.</li>
+      <li><strong>Validation Short-Circuit:</strong> The VALIDATE-INPUT-DATA-FIELDS paragraph sends the screen and returns immediately on the first validation error found, avoiding unnecessary file I/O for invalid input.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!--  SECTION 11 — Testing Approach                               -->
+<!-- ============================================================ -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Testing Approach</h2>
+    <span class="collapse-icon"></span>
+  </div>
+  <div class="section-body">
+
+    <h3>11.1 Test Scenarios</h3>
+    <table>
+      <thead><tr><th>#</th><th>Scenario</th><th>Input</th><th>Expected Result</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Happy path — add by Account ID</td><td>Valid Acct ID, all fields filled, Confirm=Y</td><td>New transaction created; success message with new Tran ID displayed</td></tr>
+        <tr><td>2</td><td>Happy path — add by Card Number</td><td>Valid Card#, all fields filled, Confirm=Y</td><td>New transaction created; Account ID auto-populated</td></tr>
+        <tr><td>3</td><td>Missing Account and Card</td><td>Both empty, press ENTER</td><td>Error: &ldquo;Account or Card Number must be entered...&rdquo;</td></tr>
+        <tr><td>4</td><td>Non-numeric Account ID</td><td>ACTIDIN = &lsquo;ABC&rsquo;</td><td>Error: &ldquo;Account ID must be Numeric...&rdquo;</td></tr>
+        <tr><td>5</td><td>Non-numeric Card Number</td><td>CARDNIN = &lsquo;XXXX&rsquo;</td><td>Error: &ldquo;Card Number must be Numeric...&rdquo;</td></tr>
+        <tr><td>6</td><td>Account ID not found</td><td>Valid numeric but non-existent Acct ID</td><td>Error: &ldquo;Account ID NOT found...&rdquo;</td></tr>
+        <tr><td>7</td><td>Card Number not found</td><td>Valid numeric but non-existent Card#</td><td>Error: &ldquo;Card Number NOT found...&rdquo;</td></tr>
+        <tr><td>8</td><td>Empty mandatory fields</td><td>Valid Acct, but Type CD empty</td><td>Error: &ldquo;Type CD can NOT be empty...&rdquo; (first empty field wins)</td></tr>
+        <tr><td>9</td><td>Non-numeric Type CD</td><td>TTYPCD = &lsquo;AB&rsquo;</td><td>Error: &ldquo;Type CD must be Numeric...&rdquo;</td></tr>
+        <tr><td>10</td><td>Invalid amount format</td><td>TRNAMT = &lsquo;ABC&rsquo;</td><td>Error: &ldquo;Amount should be in format -99999999.99&rdquo;</td></tr>
+        <tr><td>11</td><td>Invalid Orig Date format</td><td>TORIGDT = &lsquo;2024/01/15&rsquo;</td><td>Error: &ldquo;Orig Date should be in format YYYY-MM-DD&rdquo;</td></tr>
+        <tr><td>12</td><td>Invalid Orig Date value</td><td>TORIGDT = &lsquo;2024-13-45&rsquo;</td><td>Error: &ldquo;Orig Date - Not a valid date...&rdquo;</td></tr>
+        <tr><td>13</td><td>Invalid Proc Date</td><td>TPROCDT = &lsquo;2024-02-30&rsquo;</td><td>Error: &ldquo;Proc Date - Not a valid date...&rdquo;</td></tr>
+        <tr><td>14</td><td>Non-numeric Merchant ID</td><td>MID = &lsquo;ABC&rsquo;</td><td>Error: &ldquo;Merchant ID must be Numeric...&rdquo;</td></tr>
+        <tr><td>15</td><td>Confirm = N</td><td>All valid, Confirm = &lsquo;N&rsquo;</td><td>Prompt: &ldquo;Confirm to add this transaction...&rdquo;</td></tr>
+        <tr><td>16</td><td>Confirm = invalid</td><td>All valid, Confirm = &lsquo;X&rsquo;</td><td>Error: &ldquo;Invalid value. Valid values are (Y/N)...&rdquo;</td></tr>
+        <tr><td>17</td><td>PF3 — return to menu</td><td>Press PF3</td><td>XCTL to COMEN01C (or CDEMO-FROM-PROGRAM)</td></tr>
+        <tr><td>18</td><td>PF4 — clear screen</td><td>Press PF4 with data</td><td>All fields cleared</td></tr>
+        <tr><td>19</td><td>PF5 — copy last transaction</td><td>Valid Acct/Card, press PF5</td><td>Form populated with last transaction&rsquo;s data</td></tr>
+        <tr><td>20</td><td>Invalid key</td><td>Press PF7</td><td>Error: &ldquo;Invalid key pressed. Please see below...&rdquo;</td></tr>
+        <tr><td>21</td><td>Direct entry (no COMMAREA)</td><td>Type CT02 at blank screen</td><td>XCTL to COSGN00C (sign-on)</td></tr>
+        <tr><td>22</td><td>Pre-populated card from CT00</td><td>Navigate from CT00 with selected card</td><td>CARDNIN pre-filled; cross-reference resolved</td></tr>
+        <tr><td>23</td><td>Negative amount</td><td>TRNAMT = &lsquo;-00000500.00&rsquo;</td><td>Transaction added with negative amount</td></tr>
+      </tbody>
+    </table>
+
+    <h3>11.2 Test Data Requirements</h3>
+    <table>
+      <thead><tr><th>Data</th><th>Source</th><th>Requirements</th></tr></thead>
+      <tbody>
+        <tr><td>Valid Account IDs</td><td>ACCTDAT / CXACAIX VSAM files</td><td>At least 2 active accounts with linked cards</td></tr>
+        <tr><td>Valid Card Numbers</td><td>CCXREF VSAM file</td><td>At least 2 cards cross-referenced to accounts</td></tr>
+        <tr><td>Existing Transactions</td><td>TRANSACT VSAM file</td><td>At least 1 existing record (for PF5 copy and ID generation)</td></tr>
+        <tr><td>Non-existent Account/Card</td><td>N/A</td><td>Numeric values not in CXACAIX/CCXREF for negative testing</td></tr>
+        <tr><td>Signed-on User</td><td>USRSEC VSAM file</td><td>Valid user ID/password authenticated via CC00</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!--  SECTION 12 — Known Issues and Considerations                -->
+<!-- ============================================================ -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Known Issues and Considerations</h2>
+    <span class="collapse-icon"></span>
+  </div>
+  <div class="section-body">
+
+    <h3>12.1 Known Issues</h3>
+    <table>
+      <thead><tr><th>#</th><th>Issue</th><th>Severity</th><th>Details</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Race condition in ID generation</td><td>Medium</td><td>The STARTBR → READPREV → ADD 1 → WRITE pattern has no ENQ/DEQ or file-level lock. Concurrent users could read the same last TRAN-ID and attempt to WRITE with the same new ID, resulting in DUPKEY. The program handles DUPKEY but does not retry — the user must re-submit.</td></tr>
+        <tr><td>2</td><td>VALIDATE-INPUT-DATA-FIELDS clears fields on key error</td><td>Low</td><td>When <code>ERR-FLG-ON</code> is true from key field validation, all data fields (TTYPCD through MZIP) are moved to SPACES (lines 238–249). This forces the user to re-enter all data after an account/card error, even if they had already entered valid detail fields.</td></tr>
+        <tr><td>3</td><td>No user-type check</td><td>Low</td><td>Unlike some admin-only transactions (CU00–CU03), CT02 does not check <code>CDEMO-USER-TYPE</code>. Any authenticated user (admin or regular) can add transactions. This may or may not be intentional.</td></tr>
+        <tr><td>4</td><td>Hardcoded file names</td><td>Low</td><td>FCT names are hardcoded as working storage constants (<code>WS-TRANSACT-FILE = 'TRANSACT'</code>, etc.) rather than being configurable. Standard practice for CICS programs but limits flexibility.</td></tr>
+        <tr><td>5</td><td>DISPLAY statements in production code</td><td>Low</td><td>Error branches include <code>DISPLAY 'RESP:' WS-RESP-CD 'REAS:' WS-REAS-CD</code> which writes to SYSOUT. Acceptable for debugging but may produce excessive output in production under error conditions.</td></tr>
+        <tr><td>6</td><td>Date fields stored as user input</td><td>Low</td><td>TRAN-ORIG-TS and TRAN-PROC-TS in CVTRA05Y are PIC X(26) but the user enters only 10-character YYYY-MM-DD strings. The remaining 16 characters are spaces, potentially causing issues in downstream processing expecting full timestamps.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>12.2 Modernization Considerations</h3>
+    <table>
+      <thead><tr><th>Area</th><th>Current State</th><th>Target State</th></tr></thead>
+      <tbody>
+        <tr><td>Screen I/O</td><td>BMS maps (COTRN2A) with 3270 terminal protocol</td><td>REST API endpoint (POST /transactions) with JSON request/response; React/Angular web form</td></tr>
+        <tr><td>Data Access</td><td>EXEC CICS READ/WRITE/STARTBR/READPREV against VSAM KSDS</td><td>JPA/MyBatis repository with DB2/PostgreSQL; INSERT with database-generated sequence for ID</td></tr>
+        <tr><td>State Management</td><td>Pseudo-conversational via COMMAREA with RETURN TRANSID</td><td>Stateless REST API; form state managed client-side; session via JWT token</td></tr>
+        <tr><td>Validation</td><td>Inline COBOL EVALUATE/IF with PERFORM SEND on each error</td><td>Bean Validation annotations (@NotNull, @Pattern, @Min) or equivalent; batch validation with all errors returned</td></tr>
+        <tr><td>Date Handling</td><td>Manual format check + CALL CSUTLDTC utility</td><td>java.time.LocalDate.parse() or equivalent; ISO-8601 standard</td></tr>
+        <tr><td>ID Generation</td><td>STARTBR HIGH-VALUES → READPREV → ADD 1 (no locking)</td><td>Database sequence (auto-increment / IDENTITY column) with guaranteed uniqueness</td></tr>
+        <tr><td>Cross-Reference</td><td>Separate VSAM reads to CXACAIX and CCXREF</td><td>SQL JOIN on account/card tables; foreign key constraints</td></tr>
+        <tr><td>Error Handling</td><td>Per-field EVALUATE with immediate screen send</td><td>Exception-based error handling; HTTP 400/422 with structured error payload</td></tr>
+        <tr><td>Navigation</td><td>XCTL to COMEN01C / COSGN00C</td><td>Client-side routing (React Router, etc.); RESTful resource URLs</td></tr>
+        <tr><td>Copy Last Feature (PF5)</td><td>STARTBR → READPREV on TRANSACT file</td><td>API endpoint GET /transactions/latest; or client-side &ldquo;duplicate&rdquo; button</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</div><!-- /page-wrap-single -->
+
+<footer class="footer">
+  <strong>UniCredit S.p.A.</strong> &mdash; CardDemo CICS Transaction Analysis &middot; Auto-generated
+</footer>
+
+</body>
+</html>
