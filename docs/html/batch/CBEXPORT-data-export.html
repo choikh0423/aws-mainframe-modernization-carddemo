@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBEXPORT – Data Export for Branch Migration | Batch Process Analysis | UniCredit CardDemo</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   UniCredit CardDemo — Shared Theme (inlined for standalone viewing)
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --uc-red:        #E4002B;
+  --uc-red-dark:   #B8001F;
+  --uc-red-light:  #FF3354;
+  --uc-navy:       #1D2B4E;
+  --uc-navy-light: #2A3D6B;
+  --uc-gold:       #C5A44E;
+  --uc-gold-light: #E2C97A;
+  --uc-white:      #FFFFFF;
+  --uc-gray-50:    #F8F9FA;
+  --uc-gray-100:   #F0F1F3;
+  --uc-gray-200:   #E2E4E8;
+  --uc-gray-400:   #9EA3AE;
+  --uc-gray-600:   #6B7280;
+  --uc-gray-800:   #374151;
+  --uc-text:       #1F2937;
+  --uc-shadow:     0 4px 24px rgba(29,43,78,.08);
+  --uc-shadow-lg:  0 12px 48px rgba(29,43,78,.12);
+  --uc-radius:     12px;
+  --uc-radius-sm:  8px;
+  --uc-transition: .25s cubic-bezier(.4,0,.2,1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--uc-text);
+  background: var(--uc-gray-50);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+.hero {
+  background: linear-gradient(135deg, var(--uc-navy) 0%, var(--uc-navy-light) 50%, var(--uc-red-dark) 100%);
+  color: var(--uc-white);
+  padding: 3rem 2rem 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -60%; right: -20%;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(228,0,43,.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute; bottom: -30%; left: -10%;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(197,164,78,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-inner { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+.hero-brand { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.hero-logo { height: 48px; flex-shrink: 0; }
+.hero-logo img { height: 100%; width: auto; display: block; }
+.hero-brand-text { font-size: .95rem; opacity: .85; letter-spacing: .04em; text-transform: uppercase; }
+.hero h1 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; letter-spacing: -.02em; line-height: 1.15; margin-bottom: .75rem; }
+.hero h1 span { color: var(--uc-gold-light); }
+.hero-subtitle { font-size: 1.15rem; opacity: .88; max-width: 720px; }
+.hero-meta { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,.15); }
+.hero-meta dt { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin-bottom: .15rem; }
+.hero-meta dd { font-size: .95rem; font-weight: 600; }
+.breadcrumb { max-width: 1200px; margin: 1.25rem auto .5rem; padding: 0 2rem; font-size: .8rem; color: var(--uc-gray-400); }
+.breadcrumb a { color: var(--uc-red); text-decoration: none; font-weight: 600; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb .sep { margin: 0 .4rem; opacity: .5; }
+.page-wrap-single { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+.section { background: var(--uc-white); border-radius: var(--uc-radius); box-shadow: var(--uc-shadow); margin-bottom: 2rem; overflow: hidden; }
+.section-header { display: flex; align-items: center; gap: .75rem; padding: 1.25rem 1.5rem; background: linear-gradient(90deg, var(--uc-navy) 0%, var(--uc-navy-light) 100%); color: var(--uc-white); cursor: pointer; user-select: none; }
+.section-header:hover { filter: brightness(1.1); }
+.section-num { background: var(--uc-red); color: var(--uc-white); font-size: .72rem; font-weight: 700; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.section-header h2 { font-size: 1.1rem; font-weight: 700; letter-spacing: -.01em; flex: 1; }
+.section-toggle { width: 24px; height: 24px; transition: transform var(--uc-transition); opacity: .7; }
+.section.collapsed .section-toggle { transform: rotate(-90deg); }
+.section-body { padding: 1.5rem; }
+.section.collapsed .section-body { display: none; }
+.subsection { margin-bottom: 1.75rem; }
+.subsection:last-child { margin-bottom: 0; }
+.subsection h3 { font-size: .95rem; font-weight: 700; color: var(--uc-navy); margin-bottom: .75rem; padding-bottom: .4rem; border-bottom: 2px solid var(--uc-gray-200); display: flex; align-items: center; gap: .5rem; }
+.subsection h3 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--uc-red); flex-shrink: 0; }
+.subsection h4 { font-size: .88rem; font-weight: 600; color: var(--uc-gray-800); margin: 1rem 0 .5rem; }
+.subsection p, .subsection li { font-size: .88rem; color: var(--uc-gray-800); line-height: 1.7; }
+.subsection ul, .subsection ol { padding-left: 1.4rem; margin-top: .35rem; }
+.subsection li { margin-bottom: .25rem; }
+.table-wrap { overflow-x: auto; margin: .75rem 0; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .82rem; }
+thead th { background: var(--uc-navy); color: var(--uc-white); text-align: left; padding: .6rem .75rem; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
+thead th:first-child { border-radius: var(--uc-radius-sm) 0 0 0; }
+thead th:last-child  { border-radius: 0 var(--uc-radius-sm) 0 0; }
+tbody td { padding: .55rem .75rem; border-bottom: 1px solid var(--uc-gray-200); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:nth-child(even) { background: var(--uc-gray-50); }
+tbody tr:hover { background: rgba(228,0,43,.04); }
+pre { background: var(--uc-navy); color: #E2E8F0; border-radius: var(--uc-radius-sm); padding: 1rem 1.25rem; font-size: .78rem; font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; overflow-x: auto; line-height: 1.65; margin: .75rem 0; }
+code { font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; font-size: .82em; background: var(--uc-gray-100); padding: .1em .35em; border-radius: 4px; color: var(--uc-red-dark); }
+pre code { background: none; padding: 0; color: inherit; }
+.callout { border-left: 4px solid var(--uc-gold); background: rgba(197,164,78,.08); padding: .85rem 1rem; border-radius: 0 var(--uc-radius-sm) var(--uc-radius-sm) 0; margin: .75rem 0; font-size: .85rem; }
+.callout-red { border-left-color: var(--uc-red); background: rgba(228,0,43,.05); }
+.callout strong { color: var(--uc-navy); }
+.diagram-box { background: var(--uc-gray-100); border: 2px dashed var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1.5rem; text-align: center; margin: .75rem 0; }
+.diagram-box pre { text-align: left; background: var(--uc-navy); display: inline-block; max-width: 100%; }
+.badge { display: inline-block; font-size: .68rem; font-weight: 700; padding: .15em .55em; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; line-height: 1.6; }
+.badge-red    { background: var(--uc-red);   color: #fff; }
+.badge-navy   { background: var(--uc-navy);  color: #fff; }
+.badge-gold   { background: var(--uc-gold);  color: var(--uc-navy); }
+.badge-gray   { background: var(--uc-gray-200); color: var(--uc-gray-800); }
+.kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin: 1rem 0; }
+.kpi-card { background: var(--uc-gray-50); border: 1px solid var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1rem; text-align: center; transition: var(--uc-transition); }
+.kpi-card:hover { border-color: var(--uc-red); box-shadow: var(--uc-shadow); transform: translateY(-2px); }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--uc-red); line-height: 1.2; }
+.kpi-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--uc-gray-600); margin-top: .25rem; }
+.footer { background: var(--uc-navy); color: rgba(255,255,255,.6); text-align: center; padding: 2rem; font-size: .78rem; }
+.footer strong { color: var(--uc-gold-light); }
+@media print {
+  .section.collapsed .section-body { display: block; }
+  .hero { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════  HERO  ════════════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. &mdash; Milano</div>
+    </div>
+    <h1>CBEXPORT &ndash; <span>Batch Process Analysis</span></h1>
+    <p class="hero-subtitle">
+      Job <code>CBEXPORT</code> &middot; Program <code>CBEXPORT</code> &middot; Export all CardDemo VSAM master files (customers, accounts, cross-references, transactions, cards) into a single multi-record-type VSAM export file for branch migration or data transfer
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Job Name</dt><dd>CBEXPORT</dd></div>
+      <div><dt>Entry Program</dt><dd>CBEXPORT</dd></div>
+      <div><dt>Frequency</dt><dd>On-Demand</dd></div>
+      <div><dt>LOC</dt><dd>582</dd></div>
+      <div><dt>Files Touched</dt><dd>6</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ════════════════════  BREADCRUMB  ════════════════════ -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">&rsaquo;</span>
+  <a href="index.html">Batch Flows</a>
+  <span class="sep">&rsaquo;</span>
+  CBEXPORT &ndash; Data Export for Branch Migration
+</div>
+
+<!-- ════════════════════  BODY  ════════════════════ -->
+<div class="page-wrap-single">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     IDENTIFICATION
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s0">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">ID</span>
+    <h2>Identification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <tbody>
+          <tr><td><strong>Job Name</strong></td><td><code>CBEXPORT</code></td></tr>
+          <tr><td><strong>Job Stream / Schedule</strong></td><td>On-demand (not in Control-M scheduler; triggered manually for branch migration)</td></tr>
+          <tr><td><strong>Business Domain</strong></td><td>Data Migration / Branch Transfer</td></tr>
+          <tr><td><strong>Owning Team</strong></td><td>CardDemo Batch Operations</td></tr>
+          <tr><td><strong>Frequency</strong></td><td>On-demand (migration events)</td></tr>
+          <tr><td><strong>Batch Window</strong></td><td>Any maintenance window; typically after business-day close when VSAM files are not locked by CICS</td></tr>
+          <tr><td><strong>Criticality</strong></td><td><span class="badge badge-navy">Medium</span></td></tr>
+          <tr><td><strong>Elapsed Time SLA</strong></td><td>Must complete before target branch import window opens</td></tr>
+          <tr><td><strong>Primary Program</strong></td><td><code>CBEXPORT</code> (COBOL Batch, 582 LOC)</td></tr>
+          <tr><td><strong>Source Location</strong></td><td><code>app/cbl/CBEXPORT.cbl</code> &middot; JCL: <code>app/jcl/CBEXPORT.jcl</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 1 — Business Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">1</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 1.1 -->
+    <div class="subsection" id="s1-1">
+      <h3><span class="dot"></span> 1.1 Business Context</h3>
+      <ul>
+        <li><strong>What:</strong> Reads all five CardDemo VSAM master files (Customer, Account, Cross-Reference, Transaction, Card) sequentially and writes a combined multi-record-type export file (<code>EXPORT.DATA</code>) in VSAM KSDS format. Each source record is mapped into a 500-byte export record with a record-type indicator, timestamp, sequence number, branch ID, and region code.</li>
+        <li><strong>Who:</strong> Consumed by the companion <code>CBIMPORT</code> program at the target branch, or by any downstream migration tooling that reads the multi-record export format.</li>
+        <li><strong>When:</strong> Triggered on-demand when a branch migration or data transfer is required. Typically run during a maintenance window after CICS files are closed.</li>
+        <li><strong>Why:</strong> Provides a portable, self-describing export of all customer-facing data for branch-to-branch migration. Consolidates five separate VSAM files into a single transport file with record-type tags for easy parsing at the target site.</li>
+        <li><strong>Outcome:</strong> A single VSAM KSDS file (<code>EXPORT.DATA</code>) containing all customer, account, cross-reference, transaction, and card records with export metadata (timestamp, sequence, branch, region). Console statistics report counts per record type.</li>
+      </ul>
+    </div>
+
+    <!-- 1.2 -->
+    <div class="subsection" id="s1-2">
+      <h3><span class="dot"></span> 1.2 Business Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────────┐
+  │         DATA EXPORT FOR BRANCH MIGRATION FLOW                   │
+  └─────────────────────────────────────────────────────────────────┘
+
+  Migration Request
+       │
+       ▼
+  ┌──────────────────────────────────────────────────────────────┐
+  │ STEP01: IDCAMS                                                │
+  │ DELETE / DEFINE AWS.M2.CARDDEMO.EXPORT.DATA VSAM cluster     │
+  │ (Indexed, KEYS(4 28), RECSIZE(500 500))                      │
+  └──────────────────────────────┬───────────────────────────────┘
+                                 │
+                                 ▼
+  ┌──────────────────────────────────────────────────────────────┐
+  │ STEP02: CBEXPORT                                              │
+  │                                                               │
+  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+  │  │ CUSTFILE     │  │ ACCTFILE     │  │ XREFFILE     │       │
+  │  │ (Customers)  │  │ (Accounts)   │  │ (Card XRef)  │       │
+  │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘       │
+  │         │                 │                  │                │
+  │  ┌──────────────┐  ┌──────────────┐                          │
+  │  │ TRANSACT     │  │ CARDFILE     │                          │
+  │  │ (Transactions)│  │ (Cards)      │                          │
+  │  └──────┬───────┘  └──────┬───────┘                          │
+  │         │                 │                                   │
+  │         ▼                 ▼                                   │
+  │  ┌─────────────────────────────────────────────────────┐     │
+  │  │  Map each record → 500-byte EXPORT-RECORD           │     │
+  │  │  Add: REC-TYPE, TIMESTAMP, SEQ#, BRANCH, REGION     │     │
+  │  │  WRITE to EXPORT.DATA VSAM (keyed by SEQ#)          │     │
+  │  └──────────────────────────┬──────────────────────────┘     │
+  │                             │                                 │
+  │                             ▼                                 │
+  │  ┌──────────────────────────────────────┐                    │
+  │  │ EXPORT.DATA VSAM KSDS               │                    │
+  │  │ (Multi-record-type export file)      │                    │
+  │  │ 500 bytes/record, keyed by SEQ#      │                    │
+  │  └──────────────────────────────────────┘                    │
+  └──────────────────────────────────────────────────────────────┘
+       │
+       ▼
+  Transfer EXPORT.DATA to target branch → CBIMPORT
+</pre>
+      </div>
+    </div>
+
+    <!-- 1.3 -->
+    <div class="subsection" id="s1-3">
+      <h3><span class="dot"></span> 1.3 Business Rules Applied in This Process</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Rule ID</th><th>Description</th><th>Applied At</th><th>Exception Handling</th></tr></thead>
+          <tbody>
+            <tr><td>BR-001</td><td>All source files must open successfully; any open failure causes an immediate ABEND</td><td>1100-OPEN-FILES</td><td>DISPLAY error + PERFORM 9999-ABEND-PROGRAM (CALL CEE3ABD)</td></tr>
+            <tr><td>BR-002</td><td>Every source record is exported unconditionally &mdash; no filtering, validation, or transformation logic is applied</td><td>2200, 3200, 4200, 5200, 5700</td><td>N/A &mdash; all records pass through</td></tr>
+            <tr><td>BR-003</td><td>Each export record receives a record-type code: <code>C</code>=Customer, <code>A</code>=Account, <code>X</code>=Cross-Reference, <code>T</code>=Transaction, <code>D</code>=Card</td><td>Export creation paragraphs</td><td>N/A</td></tr>
+            <tr><td>BR-004</td><td>Export records are sequenced with a monotonically incrementing counter (WS-SEQUENCE-COUNTER) used as the VSAM key</td><td>All export creation paragraphs</td><td>N/A</td></tr>
+            <tr><td>BR-005</td><td>All export records are stamped with the same BRANCH-ID (<code>0001</code>) and REGION-CODE (<code>NORTH</code>) &mdash; hard-coded values</td><td>All export creation paragraphs</td><td>N/A</td></tr>
+            <tr><td>BR-006</td><td>All export records are timestamped with the export run date/time (YYYY-MM-DD HH:MM:SS.00 format)</td><td>1050-GENERATE-TIMESTAMP</td><td>N/A</td></tr>
+            <tr><td>BR-007</td><td>Any write failure to the export file causes an immediate ABEND</td><td>All export creation paragraphs</td><td>DISPLAY error + PERFORM 9999-ABEND-PROGRAM</td></tr>
+            <tr><td>BR-008</td><td>Any read failure (other than EOF) on source files causes an immediate ABEND</td><td>2100, 3100, 4100, 5100, 5600</td><td>DISPLAY error + PERFORM 9999-ABEND-PROGRAM</td></tr>
+            <tr><td>BR-009</td><td>Source files are processed in fixed order: Customers &rarr; Accounts &rarr; XRefs &rarr; Transactions &rarr; Cards</td><td>0000-MAIN-PROCESSING</td><td>N/A</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 1.4 -->
+    <div class="subsection" id="s1-4">
+      <h3><span class="dot"></span> 1.4 Business Inputs and Outputs</h3>
+      <h4>Inputs</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Input</th><th>Source System</th><th>Business Description</th><th>Timing</th></tr></thead>
+          <tbody>
+            <tr><td>Customer Master (<code>CUSTDATA.VSAM.KSDS</code>)</td><td>Account setup / CICS online</td><td>Complete customer profiles: name, address, SSN, DOB, FICO score</td><td>Static reference (read-only)</td></tr>
+            <tr><td>Account Master (<code>ACCTDATA.VSAM.KSDS</code>)</td><td>Account management / CICS online</td><td>Account balances, credit limits, cycle credits/debits, dates</td><td>Static reference (read-only)</td></tr>
+            <tr><td>Card Cross-Reference (<code>CARDXREF.VSAM.KSDS</code>)</td><td>Account setup</td><td>Maps card numbers to customer and account IDs</td><td>Static reference (read-only)</td></tr>
+            <tr><td>Transaction Master (<code>TRANSACT.VSAM.KSDS</code>)</td><td>POSTTRAN batch / CICS online</td><td>All posted credit-card transactions with merchant and amount details</td><td>Static reference (read-only)</td></tr>
+            <tr><td>Card Master (<code>CARDDATA.VSAM.KSDS</code>)</td><td>Card issuance / CICS online</td><td>Card details: number, CVV, embossed name, expiration, active status</td><td>Static reference (read-only)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h4>Outputs</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Output</th><th>Destination</th><th>Business Description</th><th>Timing</th></tr></thead>
+          <tbody>
+            <tr><td>Export Data (<code>EXPORT.DATA</code> VSAM KSDS)</td><td>CBIMPORT at target branch / migration tooling</td><td>Combined multi-record export file containing all 5 entity types with metadata envelope (type, timestamp, sequence, branch, region)</td><td>Available immediately after job completes</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 2 — Technical Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">2</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 2.1 -->
+    <div class="subsection" id="s2-1">
+      <h3><span class="dot"></span> 2.1 Technical Flow Diagram &ndash; Overview</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ JOB: CBEXPORT  (2-Step Job)                                     │
+  │                                                                 │
+  │  STEP01: PGM=IDCAMS                                             │
+  │  ┌─────────────────────────────────────────────────────────┐   │
+  │  │  DELETE AWS.M2.CARDDEMO.EXPORT.DATA CLUSTER PURGE       │   │
+  │  │  SET MAXCC = 0                                          │   │
+  │  │  DEFINE CLUSTER (NAME(..EXPORT.DATA) INDEXED            │   │
+  │  │    KEYS(4 28) RECORDSIZE(500 500) CYL(10 5))           │   │
+  │  └─────────────────────────────────────────────────────────┘   │
+  │                         │                                       │
+  │                         ▼                                       │
+  │  STEP02: PGM=CBEXPORT                                          │
+  │  ┌─────────────────────────────────────────────────────────┐   │
+  │  │                                                         │   │
+  │  │  CUSTFILE ──(Seq READ)──┐                               │   │
+  │  │  ACCTFILE ──(Seq READ)──┤                               │   │
+  │  │  XREFFILE ──(Seq READ)──┼──▶ Map to 500-byte           │   │
+  │  │  TRANSACT ──(Seq READ)──┤    EXPORT-RECORD              │   │
+  │  │  CARDFILE ──(Seq READ)──┘    + Type/TS/Seq/Branch/Rgn   │   │
+  │  │                                    │                     │   │
+  │  │                                    ▼                     │   │
+  │  │                         EXPFILE (WRITE)                  │   │
+  │  │                         EXPORT.DATA VSAM KSDS            │   │
+  │  └─────────────────────────────────────────────────────────┘   │
+  └─────────────────────────────────────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.2 -->
+    <div class="subsection" id="s2-2">
+      <h3><span class="dot"></span> 2.2 Technical Flow Diagram &ndash; Detailed (Step-by-Step)</h3>
+      <div class="diagram-box">
+<pre>
+  STEP01 - EXEC PGM=IDCAMS
+    SYSIN (inline):
+      DELETE AWS.M2.CARDDEMO.EXPORT.DATA CLUSTER PURGE
+      SET MAXCC = 0
+      DEFINE CLUSTER (NAME(AWS.M2.CARDDEMO.EXPORT.DATA)
+                      INDEXED
+                      KEYS(4 28)
+                      RECORDSIZE(500 500)
+                      CYLINDERS(10 5)
+                      FREESPACE(10 10)
+                      SHAREOPTIONS(2 3))
+             DATA  (NAME(AWS.M2.CARDDEMO.EXPORT.DATA.DATA))
+             INDEX (NAME(AWS.M2.CARDDEMO.EXPORT.DATA.INDEX))
+    RC: 0 = success (SET MAXCC=0 ensures delete failure is masked)
+
+  STEP02 - EXEC PGM=CBEXPORT
+    INPUTS (all sequential read of VSAM KSDS):
+      - CUSTFILE: AWS.M2.CARDDEMO.CUSTDATA.VSAM.KSDS   (500-byte, key=CUST-ID)
+      - ACCTFILE: AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS   (300-byte, key=ACCT-ID)
+      - XREFFILE: AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS   (50-byte, key=XREF-CARD-NUM)
+      - TRANSACT: AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS   (350-byte, key=TRAN-ID)
+      - CARDFILE: AWS.M2.CARDDEMO.CARDDATA.VSAM.KSDS   (150-byte, key=CARD-NUM)
+    OUTPUT:
+      - EXPFILE:  AWS.M2.CARDDEMO.EXPORT.DATA            (500-byte, key=SEQ# at offset 28)
+
+    PROCESSING:
+      1. 1000-INITIALIZE
+         a. 1050-GENERATE-TIMESTAMP: ACCEPT date/time, format YYYY-MM-DD HH:MM:SS.00
+         b. 1100-OPEN-FILES: Open 5 inputs + 1 output (ABEND if any fail)
+      2. 2000-EXPORT-CUSTOMERS: READ CUSTFILE until EOF
+         For each: INITIALIZE EXPORT-RECORD, set type='C', map customer fields, WRITE
+      3. 3000-EXPORT-ACCOUNTS: READ ACCTFILE until EOF
+         For each: INITIALIZE EXPORT-RECORD, set type='A', map account fields, WRITE
+      4. 4000-EXPORT-XREFS: READ XREFFILE until EOF
+         For each: INITIALIZE EXPORT-RECORD, set type='X', map xref fields, WRITE
+      5. 5000-EXPORT-TRANSACTIONS: READ TRANSACT until EOF
+         For each: INITIALIZE EXPORT-RECORD, set type='T', map transaction fields, WRITE
+      6. 5500-EXPORT-CARDS: READ CARDFILE until EOF
+         For each: INITIALIZE EXPORT-RECORD, set type='D', map card fields, WRITE
+      7. 6000-FINALIZE: CLOSE all files, DISPLAY export statistics
+      8. GOBACK (RC = 0)
+    RC: 0 = success, ABEND via CEE3ABD on any I/O failure
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.3 -->
+    <div class="subsection" id="s2-3">
+      <h3><span class="dot"></span> 2.3 Step Dependency and Condition Code Logic</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>Program</th><th>Executes If</th><th>Condition Code Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>STEP01</td><td>IDCAMS</td><td>Always</td><td>0 = VSAM cluster defined successfully (SET MAXCC=0 masks delete-not-found)</td></tr>
+            <tr><td>STEP02</td><td>CBEXPORT</td><td>Always (no COND= coded)</td><td>0 = All records exported successfully<br>ABEND via CEE3ABD = file open or I/O failure</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>Note:</strong> STEP01 uses <code>SET MAXCC = 0</code> after the DELETE command, ensuring that STEP02 always executes even if the EXPORT.DATA cluster did not previously exist.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 3 — JCL Job Stream Specification
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">3</span>
+    <h2>JCL Job Stream Specification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 3.1 -->
+    <div class="subsection" id="s3-1">
+      <h3><span class="dot"></span> 3.1 JCL Overview</h3>
+<pre><code>//CBEXPORT JOB 'Export Customer Data for Migration',CLASS=A,MSGCLASS=0,
+//   NOTIFY=&amp;SYSUID
+//*
+//* EXPORT CUSTOMER DATA FROM VSAM FILES TO MULTI-RECORD EXPORT FILE
+//* FOR BRANCH MIGRATION OR DATA TRANSFER PURPOSES
+//*
+//* STEP 1: DEFINE VSAM CLUSTER FOR EXPORT FILE
+//STEP01   EXEC PGM=IDCAMS
+//SYSPRINT DD SYSOUT=*
+//SYSIN    DD *
+  DELETE AWS.M2.CARDDEMO.EXPORT.DATA CLUSTER PURGE
+  SET MAXCC = 0
+  DEFINE CLUSTER (NAME(AWS.M2.CARDDEMO.EXPORT.DATA) -
+                  INDEXED -
+                  KEYS(4 28) -
+                  RECORDSIZE(500 500) -
+                  CYLINDERS(10 5) -
+                  FREESPACE(10 10) -
+                  SHAREOPTIONS(2 3)) -
+         DATA (NAME(AWS.M2.CARDDEMO.EXPORT.DATA.DATA)) -
+         INDEX (NAME(AWS.M2.CARDDEMO.EXPORT.DATA.INDEX))
+/*
+//* STEP 2: RUN EXPORT PROGRAM
+//STEP02 EXEC PGM=CBEXPORT
+//STEPLIB  DD DISP=SHR,DSN=AWS.M2.CARDDEMO.LOADLIB
+//CUSTFILE DD DISP=SHR,DSN=AWS.M2.CARDDEMO.CUSTDATA.VSAM.KSDS
+//ACCTFILE DD DISP=SHR,DSN=AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS
+//XREFFILE DD DISP=SHR,DSN=AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS
+//TRANSACT DD DISP=SHR,DSN=AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS
+//CARDFILE DD DISP=SHR,DSN=AWS.M2.CARDDEMO.CARDDATA.VSAM.KSDS
+//EXPFILE  DD DISP=SHR,DSN=AWS.M2.CARDDEMO.EXPORT.DATA
+//SYSOUT   DD SYSOUT=*
+//SYSPRINT DD SYSOUT=*</code></pre>
+    </div>
+
+    <!-- 3.2 -->
+    <div class="subsection" id="s3-2">
+      <h3><span class="dot"></span> 3.2 DD Statement Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>DD Name</th><th>Disposition</th><th>Dataset Name</th><th>Type</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>STEP01</td><td>SYSPRINT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>IDCAMS messages</td></tr>
+            <tr><td>STEP01</td><td>SYSIN</td><td>Inline (DD *)</td><td>&mdash;</td><td>Inline</td><td>IDCAMS control statements</td></tr>
+            <tr><td>STEP02</td><td>STEPLIB</td><td>SHR</td><td>AWS.M2.CARDDEMO.LOADLIB</td><td>PDS</td><td>Program load library</td></tr>
+            <tr><td>STEP02</td><td>CUSTFILE</td><td>SHR</td><td>AWS.M2.CARDDEMO.CUSTDATA.VSAM.KSDS</td><td>VSAM KSDS</td><td>Input: customer master (sequential READ)</td></tr>
+            <tr><td>STEP02</td><td>ACCTFILE</td><td>SHR</td><td>AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS</td><td>VSAM KSDS</td><td>Input: account master (sequential READ)</td></tr>
+            <tr><td>STEP02</td><td>XREFFILE</td><td>SHR</td><td>AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</td><td>VSAM KSDS</td><td>Input: card cross-reference (sequential READ)</td></tr>
+            <tr><td>STEP02</td><td>TRANSACT</td><td>SHR</td><td>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</td><td>VSAM KSDS</td><td>Input: transaction master (sequential READ)</td></tr>
+            <tr><td>STEP02</td><td>CARDFILE</td><td>SHR</td><td>AWS.M2.CARDDEMO.CARDDATA.VSAM.KSDS</td><td>VSAM KSDS</td><td>Input: card master (sequential READ)</td></tr>
+            <tr><td>STEP02</td><td>EXPFILE</td><td>SHR</td><td>AWS.M2.CARDDEMO.EXPORT.DATA</td><td>VSAM KSDS</td><td>Output: multi-record export file (sequential WRITE)</td></tr>
+            <tr><td>STEP02</td><td>SYSOUT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>System output</td></tr>
+            <tr><td>STEP02</td><td>SYSPRINT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>COBOL DISPLAY output</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.3 -->
+    <div class="subsection" id="s3-3">
+      <h3><span class="dot"></span> 3.3 GDG Usage</h3>
+      <div class="callout">
+        <strong>N/A:</strong> This job does not use Generation Data Groups. The output EXPORT.DATA is a standard VSAM KSDS cluster, deleted and redefined each run by STEP01 (IDCAMS).
+      </div>
+    </div>
+
+    <!-- 3.4 -->
+    <div class="subsection" id="s3-4">
+      <h3><span class="dot"></span> 3.4 Scheduler Dependencies</h3>
+      <div class="callout">
+        <strong>Note:</strong> CBEXPORT is not in the Control-M schedule. It is an on-demand migration utility. It should be run when CICS files are not locked (i.e., after CLOSEFIL or during a maintenance window) to ensure shared access to the VSAM input files.
+      </div>
+      <div class="diagram-box">
+<pre>
+  CICS Online (Normal Operations)
+  ─────────────────────────────
+        │
+        ▼
+  CLOSEFIL (Close VSAM files for batch access)
+        │
+        ▼
+  CBEXPORT (On-demand: export all data)
+        │
+        ▼
+  Transfer EXPORT.DATA to target branch
+        │
+        ▼
+  CBIMPORT (At target branch: import data)
+        │
+        ▼
+  OPENFIL (Reopen VSAM files for CICS)
+</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 4 — Program Inventory and Call Chain
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">4</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 4.1 -->
+    <div class="subsection" id="s4-1">
+      <h3><span class="dot"></span> 4.1 Program Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Program ID</th><th>Step</th><th>Purpose</th><th>Language</th><th>LOC</th><th>Source Location</th></tr></thead>
+          <tbody>
+            <tr><td><code>IDCAMS</code></td><td>STEP01</td><td>VSAM utility &mdash; delete/define EXPORT.DATA cluster</td><td>System</td><td>&mdash;</td><td>z/OS system utility</td></tr>
+            <tr><td><code>CBEXPORT</code></td><td>STEP02</td><td>Main batch driver &mdash; reads 5 VSAM files, creates multi-record export</td><td>COBOL</td><td>582</td><td><code>app/cbl/CBEXPORT.cbl</code></td></tr>
+            <tr><td><code>CEE3ABD</code></td><td>STEP02 (called)</td><td>LE abend service &mdash; invoked on fatal I/O errors</td><td>System</td><td>&mdash;</td><td>Language Environment runtime</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4.2 -->
+    <div class="subsection" id="s4-2">
+      <h3><span class="dot"></span> 4.2 Paragraph Call Hierarchy</h3>
+      <div class="diagram-box">
+<pre>
+CBEXPORT (PROCEDURE DIVISION)
+│
+├── 0000-MAIN-PROCESSING
+│   ├── 1000-INITIALIZE
+│   │   ├── 1050-GENERATE-TIMESTAMP    (ACCEPT date/time, format timestamp)
+│   │   └── 1100-OPEN-FILES            (Open 5 inputs + 1 output; ABEND on failure)
+│   │
+│   ├── 2000-EXPORT-CUSTOMERS
+│   │   ├── 2100-READ-CUSTOMER-RECORD  (READ CUSTOMER-INPUT; ABEND on error)
+│   │   └── 2200-CREATE-CUSTOMER-EXP-REC (Map customer → EXPORT-RECORD type 'C'; WRITE)
+│   │
+│   ├── 3000-EXPORT-ACCOUNTS
+│   │   ├── 3100-READ-ACCOUNT-RECORD   (READ ACCOUNT-INPUT; ABEND on error)
+│   │   └── 3200-CREATE-ACCOUNT-EXP-REC (Map account → EXPORT-RECORD type 'A'; WRITE)
+│   │
+│   ├── 4000-EXPORT-XREFS
+│   │   ├── 4100-READ-XREF-RECORD      (READ XREF-INPUT; ABEND on error)
+│   │   └── 4200-CREATE-XREF-EXPORT-RECORD (Map xref → EXPORT-RECORD type 'X'; WRITE)
+│   │
+│   ├── 5000-EXPORT-TRANSACTIONS
+│   │   ├── 5100-READ-TRANSACTION-RECORD (READ TRANSACTION-INPUT; ABEND on error)
+│   │   └── 5200-CREATE-TRAN-EXP-REC   (Map transaction → EXPORT-RECORD type 'T'; WRITE)
+│   │
+│   ├── 5500-EXPORT-CARDS
+│   │   ├── 5600-READ-CARD-RECORD       (READ CARD-INPUT; ABEND on error)
+│   │   └── 5700-CREATE-CARD-EXPORT-RECORD (Map card → EXPORT-RECORD type 'D'; WRITE)
+│   │
+│   ├── 6000-FINALIZE                   (CLOSE all files, DISPLAY statistics)
+│   │
+│   └── GOBACK
+│
+└── 9999-ABEND-PROGRAM                 (CALL 'CEE3ABD' — fatal error handler)
+</pre>
+      </div>
+    </div>
+
+    <!-- 4.3 -->
+    <div class="subsection" id="s4-3">
+      <h3><span class="dot"></span> 4.3 Copybooks Used</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Copybook</th><th>Record</th><th>LRECL</th><th>Key Fields</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>CVCUS01Y</code></td><td>CUSTOMER-RECORD</td><td>500</td><td>CUST-ID (PIC 9(09))</td><td>Customer master record layout (FD CUSTOMER-INPUT)</td></tr>
+            <tr><td><code>CVACT01Y</code></td><td>ACCOUNT-RECORD</td><td>300</td><td>ACCT-ID (PIC 9(11))</td><td>Account master record layout (FD ACCOUNT-INPUT)</td></tr>
+            <tr><td><code>CVACT03Y</code></td><td>CARD-XREF-RECORD</td><td>50</td><td>XREF-CARD-NUM (PIC X(16))</td><td>Card cross-reference record layout (FD XREF-INPUT)</td></tr>
+            <tr><td><code>CVTRA05Y</code></td><td>TRAN-RECORD</td><td>350</td><td>TRAN-ID (PIC X(16))</td><td>Transaction master record layout (FD TRANSACTION-INPUT)</td></tr>
+            <tr><td><code>CVACT02Y</code></td><td>CARD-RECORD</td><td>150</td><td>CARD-NUM (PIC X(16))</td><td>Card master record layout (FD CARD-INPUT)</td></tr>
+            <tr><td><code>CVEXPORT</code></td><td>EXPORT-RECORD</td><td>500</td><td>EXPORT-SEQUENCE-NUM (PIC 9(9) COMP)</td><td>Multi-record export layout with REDEFINES for each entity type</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 5 — File and Dataset Inventory
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">5</span>
+    <h2>File and Dataset Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 5.1 -->
+    <div class="subsection" id="s5-1">
+      <h3><span class="dot"></span> 5.1 Complete File Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File/Dataset</th><th>Type</th><th>Access</th><th>LRECL</th><th>Key</th><th>Purpose in Flow</th></tr></thead>
+          <tbody>
+            <tr><td><code>AWS.M2.CARDDEMO.CUSTDATA.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>INPUT</td><td>500</td><td>CUST-ID (9 bytes, offset 0)</td><td>Customer master &mdash; sequential read for export</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>INPUT</td><td>300</td><td>ACCT-ID (11 bytes, offset 0)</td><td>Account master &mdash; sequential read for export</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>INPUT</td><td>50</td><td>XREF-CARD-NUM (16 bytes, offset 0)</td><td>Card cross-reference &mdash; sequential read for export</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>INPUT</td><td>350</td><td>TRAN-ID (16 bytes, offset 0)</td><td>Transaction master &mdash; sequential read for export</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.CARDDATA.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>INPUT</td><td>150</td><td>CARD-NUM (16 bytes, offset 0)</td><td>Card master &mdash; sequential read for export</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.EXPORT.DATA</code></td><td>VSAM KSDS</td><td>OUTPUT</td><td>500</td><td>EXPORT-SEQUENCE-NUM (4 bytes COMP, offset 28)</td><td>Multi-record export file &mdash; all 5 entity types combined</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.2 -->
+    <div class="subsection" id="s5-2">
+      <h3><span class="dot"></span> 5.2 Key Record Layouts</h3>
+
+      <h4>EXPORT-RECORD (Copybook: CVEXPORT, 500 bytes) &mdash; Common Header</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Offset</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>EXPORT-REC-TYPE</td><td>X(1)</td><td>1</td><td>1</td><td>Record type: C=Customer, A=Account, X=XRef, T=Transaction, D=Card</td></tr>
+            <tr><td>EXPORT-TIMESTAMP</td><td>X(26)</td><td>2</td><td>26</td><td>Export timestamp (YYYY-MM-DD HH:MM:SS.00)</td></tr>
+            <tr><td>EXPORT-SEQUENCE-NUM</td><td>9(9) COMP</td><td>28</td><td>4</td><td>Monotonic sequence number (VSAM key)</td></tr>
+            <tr><td>EXPORT-BRANCH-ID</td><td>X(4)</td><td>32</td><td>4</td><td>Source branch ID (hard-coded &lsquo;0001&rsquo;)</td></tr>
+            <tr><td>EXPORT-REGION-CODE</td><td>X(5)</td><td>36</td><td>5</td><td>Source region code (hard-coded &lsquo;NORTH&rsquo;)</td></tr>
+            <tr><td>EXPORT-RECORD-DATA</td><td>X(460)</td><td>41</td><td>460</td><td>Entity-specific data (REDEFINES per record type)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>EXPORT-CUSTOMER-DATA (Type &lsquo;C&rsquo;, REDEFINES EXPORT-RECORD-DATA)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>EXP-CUST-ID</td><td>9(09) COMP</td><td>4</td><td>Customer ID (COMP packed)</td></tr>
+            <tr><td>EXP-CUST-FIRST-NAME</td><td>X(25)</td><td>25</td><td>First name</td></tr>
+            <tr><td>EXP-CUST-MIDDLE-NAME</td><td>X(25)</td><td>25</td><td>Middle name</td></tr>
+            <tr><td>EXP-CUST-LAST-NAME</td><td>X(25)</td><td>25</td><td>Last name</td></tr>
+            <tr><td>EXP-CUST-ADDR-LINE (x3)</td><td>X(50) OCCURS 3</td><td>150</td><td>Address lines 1&ndash;3</td></tr>
+            <tr><td>EXP-CUST-ADDR-STATE-CD</td><td>X(02)</td><td>2</td><td>State code</td></tr>
+            <tr><td>EXP-CUST-ADDR-COUNTRY-CD</td><td>X(03)</td><td>3</td><td>Country code</td></tr>
+            <tr><td>EXP-CUST-ADDR-ZIP</td><td>X(10)</td><td>10</td><td>Zip code</td></tr>
+            <tr><td>EXP-CUST-PHONE-NUM (x2)</td><td>X(15) OCCURS 2</td><td>30</td><td>Phone numbers</td></tr>
+            <tr><td>EXP-CUST-SSN</td><td>9(09)</td><td>9</td><td>Social Security Number</td></tr>
+            <tr><td>EXP-CUST-GOVT-ISSUED-ID</td><td>X(20)</td><td>20</td><td>Government-issued ID</td></tr>
+            <tr><td>EXP-CUST-DOB-YYYY-MM-DD</td><td>X(10)</td><td>10</td><td>Date of birth</td></tr>
+            <tr><td>EXP-CUST-EFT-ACCOUNT-ID</td><td>X(10)</td><td>10</td><td>EFT account ID</td></tr>
+            <tr><td>EXP-CUST-PRI-CARD-HOLDER-IND</td><td>X(01)</td><td>1</td><td>Primary cardholder indicator</td></tr>
+            <tr><td>EXP-CUST-FICO-CREDIT-SCORE</td><td>9(03) COMP-3</td><td>2</td><td>FICO credit score (packed decimal)</td></tr>
+            <tr><td>FILLER</td><td>X(134)</td><td>134</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>EXPORT-ACCOUNT-DATA (Type &lsquo;A&rsquo;, REDEFINES EXPORT-RECORD-DATA)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>EXP-ACCT-ID</td><td>9(11)</td><td>11</td><td>Account identifier</td></tr>
+            <tr><td>EXP-ACCT-ACTIVE-STATUS</td><td>X(01)</td><td>1</td><td>Active status flag</td></tr>
+            <tr><td>EXP-ACCT-CURR-BAL</td><td>S9(10)V99 COMP-3</td><td>7</td><td>Current balance (packed decimal)</td></tr>
+            <tr><td>EXP-ACCT-CREDIT-LIMIT</td><td>S9(10)V99</td><td>12</td><td>Credit limit</td></tr>
+            <tr><td>EXP-ACCT-CASH-CREDIT-LIMIT</td><td>S9(10)V99 COMP-3</td><td>7</td><td>Cash credit limit (packed decimal)</td></tr>
+            <tr><td>EXP-ACCT-OPEN-DATE</td><td>X(10)</td><td>10</td><td>Account open date</td></tr>
+            <tr><td>EXP-ACCT-EXPIRAION-DATE</td><td>X(10)</td><td>10</td><td>Account expiration date (note: typo in field name)</td></tr>
+            <tr><td>EXP-ACCT-REISSUE-DATE</td><td>X(10)</td><td>10</td><td>Reissue date</td></tr>
+            <tr><td>EXP-ACCT-CURR-CYC-CREDIT</td><td>S9(10)V99</td><td>12</td><td>Current cycle credit total</td></tr>
+            <tr><td>EXP-ACCT-CURR-CYC-DEBIT</td><td>S9(10)V99 COMP</td><td>8</td><td>Current cycle debit total (binary)</td></tr>
+            <tr><td>EXP-ACCT-ADDR-ZIP</td><td>X(10)</td><td>10</td><td>Account zip code</td></tr>
+            <tr><td>EXP-ACCT-GROUP-ID</td><td>X(10)</td><td>10</td><td>Account group</td></tr>
+            <tr><td>FILLER</td><td>X(352)</td><td>352</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>EXPORT-TRANSACTION-DATA (Type &lsquo;T&rsquo;, REDEFINES EXPORT-RECORD-DATA)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>EXP-TRAN-ID</td><td>X(16)</td><td>16</td><td>Transaction ID</td></tr>
+            <tr><td>EXP-TRAN-TYPE-CD</td><td>X(02)</td><td>2</td><td>Transaction type code</td></tr>
+            <tr><td>EXP-TRAN-CAT-CD</td><td>9(04)</td><td>4</td><td>Transaction category code</td></tr>
+            <tr><td>EXP-TRAN-SOURCE</td><td>X(10)</td><td>10</td><td>Transaction source</td></tr>
+            <tr><td>EXP-TRAN-DESC</td><td>X(100)</td><td>100</td><td>Transaction description</td></tr>
+            <tr><td>EXP-TRAN-AMT</td><td>S9(09)V99 COMP-3</td><td>6</td><td>Transaction amount (packed decimal)</td></tr>
+            <tr><td>EXP-TRAN-MERCHANT-ID</td><td>9(09) COMP</td><td>4</td><td>Merchant ID (binary)</td></tr>
+            <tr><td>EXP-TRAN-MERCHANT-NAME</td><td>X(50)</td><td>50</td><td>Merchant name</td></tr>
+            <tr><td>EXP-TRAN-MERCHANT-CITY</td><td>X(50)</td><td>50</td><td>Merchant city</td></tr>
+            <tr><td>EXP-TRAN-MERCHANT-ZIP</td><td>X(10)</td><td>10</td><td>Merchant zip code</td></tr>
+            <tr><td>EXP-TRAN-CARD-NUM</td><td>X(16)</td><td>16</td><td>Card number</td></tr>
+            <tr><td>EXP-TRAN-ORIG-TS</td><td>X(26)</td><td>26</td><td>Origination timestamp</td></tr>
+            <tr><td>EXP-TRAN-PROC-TS</td><td>X(26)</td><td>26</td><td>Processing timestamp</td></tr>
+            <tr><td>FILLER</td><td>X(140)</td><td>140</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>EXPORT-CARD-XREF-DATA (Type &lsquo;X&rsquo;, REDEFINES EXPORT-RECORD-DATA)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>EXP-XREF-CARD-NUM</td><td>X(16)</td><td>16</td><td>Card number</td></tr>
+            <tr><td>EXP-XREF-CUST-ID</td><td>9(09)</td><td>9</td><td>Customer ID</td></tr>
+            <tr><td>EXP-XREF-ACCT-ID</td><td>9(11) COMP</td><td>4</td><td>Account ID (binary)</td></tr>
+            <tr><td>FILLER</td><td>X(427)</td><td>427</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>EXPORT-CARD-DATA (Type &lsquo;D&rsquo;, REDEFINES EXPORT-RECORD-DATA)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>EXP-CARD-NUM</td><td>X(16)</td><td>16</td><td>Card number</td></tr>
+            <tr><td>EXP-CARD-ACCT-ID</td><td>9(11) COMP</td><td>4</td><td>Account ID (binary)</td></tr>
+            <tr><td>EXP-CARD-CVV-CD</td><td>9(03) COMP</td><td>2</td><td>CVV code (binary)</td></tr>
+            <tr><td>EXP-CARD-EMBOSSED-NAME</td><td>X(50)</td><td>50</td><td>Name embossed on card</td></tr>
+            <tr><td>EXP-CARD-EXPIRAION-DATE</td><td>X(10)</td><td>10</td><td>Card expiration date (note: typo in field name)</td></tr>
+            <tr><td>EXP-CARD-ACTIVE-STATUS</td><td>X(01)</td><td>1</td><td>Card active status</td></tr>
+            <tr><td>FILLER</td><td>X(373)</td><td>373</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>Source Record Layouts (Input Copybooks)</h4>
+
+      <h4>CUSTOMER-RECORD (Copybook: CVCUS01Y, 500 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>CUST-ID</td><td>9(09)</td><td>9</td><td>Customer identifier (key)</td></tr>
+            <tr><td>CUST-FIRST-NAME</td><td>X(25)</td><td>25</td><td>First name</td></tr>
+            <tr><td>CUST-MIDDLE-NAME</td><td>X(25)</td><td>25</td><td>Middle name</td></tr>
+            <tr><td>CUST-LAST-NAME</td><td>X(25)</td><td>25</td><td>Last name</td></tr>
+            <tr><td>CUST-ADDR-LINE-1 to -3</td><td>X(50) each</td><td>150</td><td>Address lines</td></tr>
+            <tr><td>CUST-ADDR-STATE-CD</td><td>X(02)</td><td>2</td><td>State code</td></tr>
+            <tr><td>CUST-ADDR-COUNTRY-CD</td><td>X(03)</td><td>3</td><td>Country code</td></tr>
+            <tr><td>CUST-ADDR-ZIP</td><td>X(10)</td><td>10</td><td>Zip code</td></tr>
+            <tr><td>CUST-PHONE-NUM-1, -2</td><td>X(15) each</td><td>30</td><td>Phone numbers</td></tr>
+            <tr><td>CUST-SSN</td><td>9(09)</td><td>9</td><td>Social Security Number</td></tr>
+            <tr><td>CUST-GOVT-ISSUED-ID</td><td>X(20)</td><td>20</td><td>Government-issued ID</td></tr>
+            <tr><td>CUST-DOB-YYYY-MM-DD</td><td>X(10)</td><td>10</td><td>Date of birth</td></tr>
+            <tr><td>CUST-EFT-ACCOUNT-ID</td><td>X(10)</td><td>10</td><td>EFT account ID</td></tr>
+            <tr><td>CUST-PRI-CARD-HOLDER-IND</td><td>X(01)</td><td>1</td><td>Primary cardholder indicator</td></tr>
+            <tr><td>CUST-FICO-CREDIT-SCORE</td><td>9(03)</td><td>3</td><td>FICO credit score</td></tr>
+            <tr><td>FILLER</td><td>X(168)</td><td>168</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>ACCOUNT-RECORD (Copybook: CVACT01Y, 300 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>ACCT-ID</td><td>9(11)</td><td>11</td><td>Account identifier (key)</td></tr>
+            <tr><td>ACCT-ACTIVE-STATUS</td><td>X(01)</td><td>1</td><td>Active status flag</td></tr>
+            <tr><td>ACCT-CURR-BAL</td><td>S9(10)V99</td><td>12</td><td>Current balance</td></tr>
+            <tr><td>ACCT-CREDIT-LIMIT</td><td>S9(10)V99</td><td>12</td><td>Credit limit</td></tr>
+            <tr><td>ACCT-CASH-CREDIT-LIMIT</td><td>S9(10)V99</td><td>12</td><td>Cash credit limit</td></tr>
+            <tr><td>ACCT-OPEN-DATE</td><td>X(10)</td><td>10</td><td>Account open date</td></tr>
+            <tr><td>ACCT-EXPIRAION-DATE</td><td>X(10)</td><td>10</td><td>Account expiration date</td></tr>
+            <tr><td>ACCT-REISSUE-DATE</td><td>X(10)</td><td>10</td><td>Reissue date</td></tr>
+            <tr><td>ACCT-CURR-CYC-CREDIT</td><td>S9(10)V99</td><td>12</td><td>Current cycle credit total</td></tr>
+            <tr><td>ACCT-CURR-CYC-DEBIT</td><td>S9(10)V99</td><td>12</td><td>Current cycle debit total</td></tr>
+            <tr><td>ACCT-ADDR-ZIP</td><td>X(10)</td><td>10</td><td>Account zip code</td></tr>
+            <tr><td>ACCT-GROUP-ID</td><td>X(10)</td><td>10</td><td>Account group</td></tr>
+            <tr><td>FILLER</td><td>X(178)</td><td>178</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>CARD-XREF-RECORD (Copybook: CVACT03Y, 50 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>XREF-CARD-NUM</td><td>X(16)</td><td>16</td><td>Card number (key)</td></tr>
+            <tr><td>XREF-CUST-ID</td><td>9(09)</td><td>9</td><td>Customer ID</td></tr>
+            <tr><td>XREF-ACCT-ID</td><td>9(11)</td><td>11</td><td>Account ID</td></tr>
+            <tr><td>FILLER</td><td>X(14)</td><td>14</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>TRAN-RECORD (Copybook: CVTRA05Y, 350 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>TRAN-ID</td><td>X(16)</td><td>16</td><td>Transaction ID (key)</td></tr>
+            <tr><td>TRAN-TYPE-CD</td><td>X(02)</td><td>2</td><td>Transaction type code</td></tr>
+            <tr><td>TRAN-CAT-CD</td><td>9(04)</td><td>4</td><td>Transaction category code</td></tr>
+            <tr><td>TRAN-SOURCE</td><td>X(10)</td><td>10</td><td>Transaction source</td></tr>
+            <tr><td>TRAN-DESC</td><td>X(100)</td><td>100</td><td>Transaction description</td></tr>
+            <tr><td>TRAN-AMT</td><td>S9(09)V99</td><td>11</td><td>Transaction amount</td></tr>
+            <tr><td>TRAN-MERCHANT-ID</td><td>9(09)</td><td>9</td><td>Merchant ID</td></tr>
+            <tr><td>TRAN-MERCHANT-NAME</td><td>X(50)</td><td>50</td><td>Merchant name</td></tr>
+            <tr><td>TRAN-MERCHANT-CITY</td><td>X(50)</td><td>50</td><td>Merchant city</td></tr>
+            <tr><td>TRAN-MERCHANT-ZIP</td><td>X(10)</td><td>10</td><td>Merchant zip code</td></tr>
+            <tr><td>TRAN-CARD-NUM</td><td>X(16)</td><td>16</td><td>Card number</td></tr>
+            <tr><td>TRAN-ORIG-TS</td><td>X(26)</td><td>26</td><td>Origination timestamp</td></tr>
+            <tr><td>TRAN-PROC-TS</td><td>X(26)</td><td>26</td><td>Processing timestamp</td></tr>
+            <tr><td>FILLER</td><td>X(20)</td><td>20</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>CARD-RECORD (Copybook: CVACT02Y, 150 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>CARD-NUM</td><td>X(16)</td><td>16</td><td>Card number (key)</td></tr>
+            <tr><td>CARD-ACCT-ID</td><td>9(11)</td><td>11</td><td>Account ID</td></tr>
+            <tr><td>CARD-CVV-CD</td><td>9(03)</td><td>3</td><td>CVV code</td></tr>
+            <tr><td>CARD-EMBOSSED-NAME</td><td>X(50)</td><td>50</td><td>Embossed name</td></tr>
+            <tr><td>CARD-EXPIRAION-DATE</td><td>X(10)</td><td>10</td><td>Card expiration date</td></tr>
+            <tr><td>CARD-ACTIVE-STATUS</td><td>X(01)</td><td>1</td><td>Card active status</td></tr>
+            <tr><td>FILLER</td><td>X(59)</td><td>59</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.3 -->
+    <div class="subsection" id="s5-3">
+      <h3><span class="dot"></span> 5.3 File Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+  │  CUSTDATA VSAM   │  │ ACCTDATA VSAM    │  │ CARDXREF VSAM    │
+  │  (KSDS, key=9)   │  │ (KSDS, key=11)   │  │ (KSDS, key=16)   │
+  │  LRECL=500       │  │ LRECL=300        │  │ LRECL=50         │
+  └────────┬─────────┘  └────────┬─────────┘  └────────┬─────────┘
+           │ Seq READ            │ Seq READ            │ Seq READ
+           ▼                     ▼                      ▼
+  ┌─────────────────────────────────────────────────────────────────┐
+  │  STEP02: CBEXPORT                                               │
+  │                                                                 │
+  │  For each source file (sequentially):                           │
+  │    1. Read all records until EOF                                │
+  │    2. Map to 500-byte EXPORT-RECORD                             │
+  │    3. Add type code + timestamp + sequence# + branch + region   │
+  │    4. WRITE to EXPORT.DATA VSAM                                 │
+  └─────┬───────────────────────────────────────────────────────────┘
+        │                     ▲                      ▲
+        │                     │ Seq READ             │ Seq READ
+        │           ┌─────────┴────────┐   ┌────────┴─────────┐
+        │           │ TRANSACT VSAM    │   │ CARDDATA VSAM    │
+        │           │ (KSDS, key=16)   │   │ (KSDS, key=16)   │
+        │           │ LRECL=350        │   │ LRECL=150        │
+        │           └──────────────────┘   └──────────────────┘
+        │ WRITE
+        ▼
+  ┌──────────────────────────────────────┐
+  │ EXPORT.DATA VSAM KSDS               │
+  │ LRECL=500, KEY=SEQ# (4B COMP @28)   │
+  │ Multi-record: C/A/X/T/D types       │
+  └──────────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 5.4 -->
+    <div class="subsection" id="s5-4">
+      <h3><span class="dot"></span> 5.4 File Dependency Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>Created In</th><th>Read In</th><th>Updated In</th><th>Must Exist Before Job?</th><th>Consumed Downstream?</th></tr></thead>
+          <tbody>
+            <tr><td>CUSTDATA.VSAM.KSDS</td><td>CICS online</td><td>STEP02</td><td>&mdash;</td><td>Yes</td><td>Yes (by other online/batch jobs)</td></tr>
+            <tr><td>ACCTDATA.VSAM.KSDS</td><td>CICS online</td><td>STEP02</td><td>&mdash;</td><td>Yes</td><td>Yes (by other online/batch jobs)</td></tr>
+            <tr><td>CARDXREF.VSAM.KSDS</td><td>CICS online</td><td>STEP02</td><td>&mdash;</td><td>Yes</td><td>Yes (by other online/batch jobs)</td></tr>
+            <tr><td>TRANSACT.VSAM.KSDS</td><td>POSTTRAN batch</td><td>STEP02</td><td>&mdash;</td><td>Yes</td><td>Yes (by other online/batch jobs)</td></tr>
+            <tr><td>CARDDATA.VSAM.KSDS</td><td>CICS online</td><td>STEP02</td><td>&mdash;</td><td>Yes</td><td>Yes (by other online/batch jobs)</td></tr>
+            <tr><td>EXPORT.DATA</td><td>STEP01 (IDCAMS)</td><td>&mdash;</td><td>STEP02</td><td>No (created by STEP01)</td><td>Yes (by CBIMPORT at target branch)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 6 — Data Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">6</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 6.1 -->
+    <div class="subsection" id="s6-1">
+      <h3><span class="dot"></span> 6.1 Data Transformation Map</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Source Field</th><th>Source Copybook</th><th>Target Field</th><th>Target Copybook</th><th>Transformation</th></tr></thead>
+          <tbody>
+            <tr><td>CUST-ID</td><td>CVCUS01Y</td><td>EXP-CUST-ID</td><td>CVEXPORT</td><td>PIC 9(09) &rarr; PIC 9(09) COMP (implicit conversion on MOVE)</td></tr>
+            <tr><td>CUST-FIRST-NAME</td><td>CVCUS01Y</td><td>EXP-CUST-FIRST-NAME</td><td>CVEXPORT</td><td>Direct move (X(25) &rarr; X(25))</td></tr>
+            <tr><td>CUST-FICO-CREDIT-SCORE</td><td>CVCUS01Y</td><td>EXP-CUST-FICO-CREDIT-SCORE</td><td>CVEXPORT</td><td>PIC 9(03) &rarr; PIC 9(03) COMP-3 (implicit conversion)</td></tr>
+            <tr><td>ACCT-CURR-BAL</td><td>CVACT01Y</td><td>EXP-ACCT-CURR-BAL</td><td>CVEXPORT</td><td>S9(10)V99 &rarr; S9(10)V99 COMP-3 (implicit conversion)</td></tr>
+            <tr><td>ACCT-CURR-CYC-DEBIT</td><td>CVACT01Y</td><td>EXP-ACCT-CURR-CYC-DEBIT</td><td>CVEXPORT</td><td>S9(10)V99 &rarr; S9(10)V99 COMP (implicit conversion)</td></tr>
+            <tr><td>TRAN-AMT</td><td>CVTRA05Y</td><td>EXP-TRAN-AMT</td><td>CVEXPORT</td><td>S9(09)V99 &rarr; S9(09)V99 COMP-3 (implicit conversion)</td></tr>
+            <tr><td>TRAN-MERCHANT-ID</td><td>CVTRA05Y</td><td>EXP-TRAN-MERCHANT-ID</td><td>CVEXPORT</td><td>PIC 9(09) &rarr; PIC 9(09) COMP (implicit conversion)</td></tr>
+            <tr><td>CARD-ACCT-ID</td><td>CVACT02Y</td><td>EXP-CARD-ACCT-ID</td><td>CVEXPORT</td><td>PIC 9(11) &rarr; PIC 9(11) COMP (implicit conversion)</td></tr>
+            <tr><td>CARD-CVV-CD</td><td>CVACT02Y</td><td>EXP-CARD-CVV-CD</td><td>CVEXPORT</td><td>PIC 9(03) &rarr; PIC 9(03) COMP (implicit conversion)</td></tr>
+            <tr><td>XREF-ACCT-ID</td><td>CVACT03Y</td><td>EXP-XREF-ACCT-ID</td><td>CVEXPORT</td><td>PIC 9(11) &rarr; PIC 9(11) COMP (implicit conversion)</td></tr>
+            <tr><td>(generated)</td><td>&mdash;</td><td>EXPORT-REC-TYPE</td><td>CVEXPORT</td><td>Hard-coded: C/A/X/T/D based on source file</td></tr>
+            <tr><td>(generated)</td><td>&mdash;</td><td>EXPORT-TIMESTAMP</td><td>CVEXPORT</td><td>ACCEPT DATE/TIME &rarr; formatted YYYY-MM-DD HH:MM:SS.00</td></tr>
+            <tr><td>(generated)</td><td>&mdash;</td><td>EXPORT-SEQUENCE-NUM</td><td>CVEXPORT</td><td>WS-SEQUENCE-COUNTER (monotonically incrementing)</td></tr>
+            <tr><td>(generated)</td><td>&mdash;</td><td>EXPORT-BRANCH-ID</td><td>CVEXPORT</td><td>Hard-coded &lsquo;0001&rsquo;</td></tr>
+            <tr><td>(generated)</td><td>&mdash;</td><td>EXPORT-REGION-CODE</td><td>CVEXPORT</td><td>Hard-coded &lsquo;NORTH&rsquo;</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-red">
+        <strong>Storage Optimization:</strong> The export record uses COMP and COMP-3 representations for several numeric fields that are stored as display (USAGE DISPLAY) in the source copybooks. This reduces storage but means the export file is <strong>not</strong> human-readable for these fields &mdash; a hex dump or COBOL program is required to interpret them.
+      </div>
+    </div>
+
+    <!-- 6.2 -->
+    <div class="subsection" id="s6-2">
+      <h3><span class="dot"></span> 6.2 Data Lineage Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  Source VSAM Files                    Export Record                   Target
+  ─────────────────                    ─────────────                   ──────
+  CUSTDATA.VSAM ──┐
+                   │  ┌────────────────────────────────┐
+  ACCTDATA.VSAM ──┤  │ EXPORT-RECORD (500 bytes)      │
+                   │  │ ┌────────────────────────────┐ │
+  CARDXREF.VSAM ──┼─▶│ │ Header: TYPE|TS|SEQ|BR|RGN │ │──▶ EXPORT.DATA
+                   │  │ ├────────────────────────────┤ │    VSAM KSDS
+  TRANSACT.VSAM ──┤  │ │ Body: Entity-specific data  │ │
+                   │  │ │ (REDEFINES per type)        │ │──▶ CBIMPORT
+  CARDDATA.VSAM ──┘  │ ├────────────────────────────┤ │    (at target)
+                      │ │ FILLER (padding to 500)     │ │
+                      │ └────────────────────────────┘ │
+                      └────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 6.3 -->
+    <div class="subsection" id="s6-3">
+      <h3><span class="dot"></span> 6.3 Control Totals and Statistics</h3>
+      <p>The program maintains and displays the following counters at completion (in paragraph 6000-FINALIZE):</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Counter</th><th>Variable</th><th>PIC</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>Customers Exported</td><td>WS-CUSTOMER-RECORDS-EXPORTED</td><td>9(09)</td><td>Number of type &lsquo;C&rsquo; records written</td></tr>
+            <tr><td>Accounts Exported</td><td>WS-ACCOUNT-RECORDS-EXPORTED</td><td>9(09)</td><td>Number of type &lsquo;A&rsquo; records written</td></tr>
+            <tr><td>XRefs Exported</td><td>WS-XREF-RECORDS-EXPORTED</td><td>9(09)</td><td>Number of type &lsquo;X&rsquo; records written</td></tr>
+            <tr><td>Transactions Exported</td><td>WS-TRAN-RECORDS-EXPORTED</td><td>9(09)</td><td>Number of type &lsquo;T&rsquo; records written</td></tr>
+            <tr><td>Cards Exported</td><td>WS-CARD-RECORDS-EXPORTED</td><td>9(09)</td><td>Number of type &lsquo;D&rsquo; records written</td></tr>
+            <tr><td>Total Records</td><td>WS-TOTAL-RECORDS-EXPORTED</td><td>9(09)</td><td>Sum of all record types</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>Note:</strong> There is no cross-validation between the sum of individual counters and WS-TOTAL-RECORDS-EXPORTED. Both are incremented independently in each export paragraph, so they should always agree, but there is no explicit reconciliation check.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 7 — Sort/Merge and Utility Processing
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">7</span>
+    <h2>Sort/Merge and Utility Processing</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s7-1">
+      <h3><span class="dot"></span> 7.1 Sort/Merge Specifications</h3>
+      <div class="callout">
+        <strong>N/A:</strong> This job does not use any SORT or MERGE operations. Records are written to the output VSAM in the order they are read from the source files, sequenced by the monotonically incrementing WS-SEQUENCE-COUNTER.
+      </div>
+    </div>
+
+    <div class="subsection" id="s7-2">
+      <h3><span class="dot"></span> 7.2 Utility Programs</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>Utility</th><th>Purpose</th><th>Key Parameters</th></tr></thead>
+          <tbody>
+            <tr><td>STEP01</td><td>IDCAMS</td><td>Delete and redefine EXPORT.DATA VSAM cluster</td><td>INDEXED, KEYS(4 28), RECORDSIZE(500 500), CYL(10 5), FREESPACE(10 10), SHAREOPTIONS(2 3)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 8 — Checkpoint, Restart, and Recovery
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">8</span>
+    <h2>Checkpoint, Restart, and Recovery</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s8-1">
+      <h3><span class="dot"></span> 8.1 Checkpoint Strategy</h3>
+      <div class="callout callout-red">
+        <strong>No checkpoint/restart mechanism is implemented.</strong> The program runs as a single uninterruptible unit. If a failure occurs mid-export, the EXPORT.DATA file will contain a partial dataset with no way to resume from the point of failure.
+      </div>
+    </div>
+
+    <div class="subsection" id="s8-2">
+      <h3><span class="dot"></span> 8.2 Restart Procedures</h3>
+      <ul>
+        <li><strong>STEP01 failure:</strong> Resubmit the entire job. IDCAMS will re-attempt DELETE/DEFINE.</li>
+        <li><strong>STEP02 failure (mid-export):</strong> Resubmit from STEP01. The IDCAMS DELETE/DEFINE will recreate an empty EXPORT.DATA cluster, and CBEXPORT will re-export all records from the beginning. No partial recovery is possible.</li>
+      </ul>
+    </div>
+
+    <div class="subsection" id="s8-3">
+      <h3><span class="dot"></span> 8.3 Recovery Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  Job Failure at Any Point
+       │
+       ▼
+  ┌────────────────────────────────────────┐
+  │  Resubmit entire CBEXPORT job          │
+  │  STEP01: IDCAMS DELETE/DEFINE          │
+  │    (Recreates empty EXPORT.DATA)       │
+  │  STEP02: CBEXPORT                      │
+  │    (Full re-export from all 5 files)   │
+  └────────────────────────────────────────┘
+       │
+       ▼
+  No source files are modified (read-only)
+  → Source data integrity is preserved
+  → Safe to rerun at any time
+</pre>
+      </div>
+      <div class="callout">
+        <strong>Recovery advantage:</strong> Since all 5 input files are opened INPUT (read-only), a mid-run failure does not corrupt any source data. The only file that may be in an inconsistent state is EXPORT.DATA, which is always recreated from scratch by STEP01.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 9 — Error Handling and Abend Resolution
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">9</span>
+    <h2>Error Handling and Abend Resolution</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 9.1 -->
+    <div class="subsection" id="s9-1">
+      <h3><span class="dot"></span> 9.1 Error Flow</h3>
+      <div class="diagram-box">
+<pre>
+  Any I/O Operation
+       │
+       ▼
+  ┌──────────────┐
+  │ Check File   │
+  │ Status Code  │
+  └──────┬───────┘
+         │
+    ┌────┴────┐
+    │ '00'?   │──── Yes ──▶ Continue processing
+    └────┬────┘
+         │ No
+    ┌────┴────┐
+    │ '10'?   │──── Yes ──▶ EOF: Exit read loop (source files only)
+    └────┬────┘
+         │ No
+         ▼
+  ┌──────────────────────────────────┐
+  │ DISPLAY 'ERROR: ...' + status    │
+  │ PERFORM 9999-ABEND-PROGRAM       │
+  │   → CALL 'CEE3ABD'               │
+  │   → LE abnormal termination      │
+  └──────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 9.2 -->
+    <div class="subsection" id="s9-2">
+      <h3><span class="dot"></span> 9.2 Return Codes</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>RC</th><th>Meaning</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td>STEP01</td><td>0</td><td>IDCAMS completed (SET MAXCC=0 masks DELETE errors)</td><td>Proceed to STEP02</td></tr>
+            <tr><td>STEP02</td><td>0</td><td>All records exported successfully</td><td>Job complete</td></tr>
+            <tr><td>STEP02</td><td>ABEND</td><td>Fatal I/O error (file open, read, or write failure)</td><td>Check SYSPRINT for error details; resubmit from STEP01</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 9.3 -->
+    <div class="subsection" id="s9-3">
+      <h3><span class="dot"></span> 9.3 Common Abend Scenarios</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Scenario</th><th>File Status</th><th>Cause</th><th>Resolution</th></tr></thead>
+          <tbody>
+            <tr><td>Source VSAM not found</td><td>35</td><td>VSAM cluster does not exist or catalog entry missing</td><td>Verify dataset names in JCL; check catalog</td></tr>
+            <tr><td>Source VSAM locked by CICS</td><td>93</td><td>CICS has exclusive control of the VSAM file</td><td>Run CLOSEFIL to release CICS locks before CBEXPORT</td></tr>
+            <tr><td>EXPORT.DATA write failure</td><td>22</td><td>Duplicate key (sequence counter logic error) or space exhaustion</td><td>Resubmit from STEP01 to recreate cluster with larger allocation</td></tr>
+            <tr><td>EXPORT.DATA not defined</td><td>35</td><td>STEP01 IDCAMS failed silently (e.g., insufficient DASD)</td><td>Check STEP01 SYSPRINT; resolve DASD issue; resubmit</td></tr>
+            <tr><td>Read error on source file</td><td>varies</td><td>Physical I/O error on VSAM data component</td><td>Run IDCAMS VERIFY on affected VSAM; restore from backup if needed</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 9.4 -->
+    <div class="subsection" id="s9-4">
+      <h3><span class="dot"></span> 9.4 File Status Handling Summary</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>Status Variable</th><th>OK Value</th><th>EOF Value</th><th>Error Action</th></tr></thead>
+          <tbody>
+            <tr><td>CUSTOMER-INPUT</td><td>WS-CUSTOMER-STATUS</td><td>'00'</td><td>'10'</td><td>ABEND via 9999-ABEND-PROGRAM</td></tr>
+            <tr><td>ACCOUNT-INPUT</td><td>WS-ACCOUNT-STATUS</td><td>'00'</td><td>'10'</td><td>ABEND via 9999-ABEND-PROGRAM</td></tr>
+            <tr><td>XREF-INPUT</td><td>WS-XREF-STATUS</td><td>'00'</td><td>'10'</td><td>ABEND via 9999-ABEND-PROGRAM</td></tr>
+            <tr><td>TRANSACTION-INPUT</td><td>WS-TRANSACTION-STATUS</td><td>'00'</td><td>'10'</td><td>ABEND via 9999-ABEND-PROGRAM</td></tr>
+            <tr><td>CARD-INPUT</td><td>WS-CARD-STATUS</td><td>'00'</td><td>'10'</td><td>ABEND via 9999-ABEND-PROGRAM</td></tr>
+            <tr><td>EXPORT-OUTPUT</td><td>WS-EXPORT-STATUS</td><td>'00'</td><td>&mdash;</td><td>ABEND via 9999-ABEND-PROGRAM</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 10 — Security and Authorization
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s10-1">
+      <h3><span class="dot"></span> 10.1 Dataset Access Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Dataset</th><th>Access Level</th><th>RACF/Security Consideration</th></tr></thead>
+          <tbody>
+            <tr><td>AWS.M2.CARDDEMO.CUSTDATA.VSAM.KSDS</td><td>READ</td><td>Contains PII (SSN, DOB, addresses, phone numbers). Restrict to authorized batch IDs.</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS</td><td>READ</td><td>Contains financial data (balances, credit limits). Restrict to authorized batch IDs.</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</td><td>READ</td><td>Contains card-to-account mappings.</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</td><td>READ</td><td>Contains transaction amounts and merchant data.</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.CARDDATA.VSAM.KSDS</td><td>READ</td><td>Contains card numbers and CVV codes. <strong>Highly sensitive &mdash; PCI-DSS scope.</strong></td></tr>
+            <tr><td>AWS.M2.CARDDEMO.EXPORT.DATA</td><td>ALTER (STEP01), UPDATE (STEP02)</td><td>Contains all of the above combined. Must have same or higher security classification as the most sensitive input (PCI-DSS).</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.LOADLIB</td><td>READ/EXECUTE</td><td>Program library.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-red">
+        <strong>PCI-DSS Warning:</strong> The export file contains full card numbers (CARD-NUM, XREF-CARD-NUM, TRAN-CARD-NUM) and CVV codes (CARD-CVV-CD) in clear text. The export dataset must be treated as PCI-DSS in-scope and protected accordingly during storage and transfer.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 11 — Performance and Batch Window Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Performance and Batch Window Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s11-1">
+      <h3><span class="dot"></span> 11.1 I/O Characteristics</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>Access Pattern</th><th>I/O Count (per run)</th><th>Record Size</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>CUSTFILE</td><td>Sequential read</td><td>N<sub>cust</sub> + 1 (EOF)</td><td>500 bytes</td><td>Full file scan</td></tr>
+            <tr><td>ACCTFILE</td><td>Sequential read</td><td>N<sub>acct</sub> + 1 (EOF)</td><td>300 bytes</td><td>Full file scan</td></tr>
+            <tr><td>XREFFILE</td><td>Sequential read</td><td>N<sub>xref</sub> + 1 (EOF)</td><td>50 bytes</td><td>Full file scan</td></tr>
+            <tr><td>TRANSACT</td><td>Sequential read</td><td>N<sub>tran</sub> + 1 (EOF)</td><td>350 bytes</td><td>Full file scan</td></tr>
+            <tr><td>CARDFILE</td><td>Sequential read</td><td>N<sub>card</sub> + 1 (EOF)</td><td>150 bytes</td><td>Full file scan</td></tr>
+            <tr><td>EXPFILE</td><td>Sequential write (keyed)</td><td>N<sub>total</sub></td><td>500 bytes</td><td>One write per source record</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Total I/O operations:</strong> 2 &times; N<sub>total</sub> + 5 (one read + one write per record, plus 5 EOF reads). This is a purely I/O-bound job with no CPU-intensive validation or computation.</p>
+    </div>
+
+    <div class="subsection" id="s11-2">
+      <h3><span class="dot"></span> 11.2 Batch Window Fit</h3>
+      <ul>
+        <li><strong>Processing model:</strong> Single-pass sequential read of each source file. No random I/O, no lookups, no joins.</li>
+        <li><strong>Scalability:</strong> Linear with total record count across all 5 files. For typical CardDemo volumes (thousands of records), expected elapsed time is seconds to low minutes.</li>
+        <li><strong>Bottleneck:</strong> VSAM I/O on the export file (500-byte keyed writes). FREESPACE(10 10) allocation helps with CI/CA splits.</li>
+        <li><strong>Parallelism:</strong> None. Files are processed sequentially (Customers → Accounts → XRefs → Transactions → Cards). No opportunity for intra-job parallelism.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 12 — Testing Approach
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 12.1 -->
+    <div class="subsection" id="s12-1">
+      <h3><span class="dot"></span> 12.1 Test Scenarios</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Scenario</th><th>Business Rule</th><th>Expected Result</th></tr></thead>
+          <tbody>
+            <tr><td>TC-001</td><td>Normal export with populated source files</td><td>BR-002, BR-003, BR-004, BR-009</td><td>All 5 record types present in EXPORT.DATA; counters match source file record counts; sequence numbers are contiguous starting from 1</td></tr>
+            <tr><td>TC-002</td><td>Export with one or more empty source files</td><td>BR-002, BR-009</td><td>Export completes successfully with zero records for the empty file type; other types exported normally; counter shows 0 for empty type</td></tr>
+            <tr><td>TC-003</td><td>All source files empty</td><td>BR-002</td><td>Export completes with 0 total records; empty EXPORT.DATA VSAM</td></tr>
+            <tr><td>TC-004</td><td>Source VSAM file does not exist</td><td>BR-001</td><td>ABEND on OPEN with file status displayed; job terminates in STEP02</td></tr>
+            <tr><td>TC-005</td><td>EXPORT.DATA not defined (STEP01 fails)</td><td>BR-001</td><td>ABEND on OPEN OUTPUT with status 35; EXPORT.DATA file status displayed</td></tr>
+            <tr><td>TC-006</td><td>Verify record type codes</td><td>BR-003</td><td>Customer records have type &lsquo;C&rsquo;, Accounts &lsquo;A&rsquo;, XRefs &lsquo;X&rsquo;, Transactions &lsquo;T&rsquo;, Cards &lsquo;D&rsquo;</td></tr>
+            <tr><td>TC-007</td><td>Verify timestamp consistency</td><td>BR-006</td><td>All records in a single run have the same EXPORT-TIMESTAMP value</td></tr>
+            <tr><td>TC-008</td><td>Verify sequence number ordering</td><td>BR-004</td><td>EXPORT-SEQUENCE-NUM values are contiguous: 1, 2, 3, &hellip; N</td></tr>
+            <tr><td>TC-009</td><td>Verify branch/region values</td><td>BR-005</td><td>All records have BRANCH-ID=&lsquo;0001&rsquo; and REGION-CODE=&lsquo;NORTH&rsquo;</td></tr>
+            <tr><td>TC-010</td><td>Verify data fidelity for customer records</td><td>BR-002</td><td>Field-by-field comparison of source CVCUS01Y fields to CVEXPORT customer REDEFINES (accounting for COMP/COMP-3 conversions)</td></tr>
+            <tr><td>TC-011</td><td>Verify COMP/COMP-3 conversions</td><td>BR-002</td><td>Numeric fields that change USAGE (e.g., CUST-ID display → COMP, ACCT-CURR-BAL display → COMP-3) retain correct values after conversion</td></tr>
+            <tr><td>TC-012</td><td>Rerun idempotency</td><td>&mdash;</td><td>Running CBEXPORT twice produces identical EXPORT.DATA content (STEP01 recreates the cluster)</td></tr>
+            <tr><td>TC-013</td><td>Verify statistics output</td><td>&mdash;</td><td>SYSPRINT shows correct counts for each type and total matches sum</td></tr>
+            <tr><td>TC-014</td><td>Large volume test</td><td>&mdash;</td><td>EXPORT.DATA VSAM accommodates all records within CYL(10 5) allocation; no space-related ABENDs</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 12.2 -->
+    <div class="subsection" id="s12-2">
+      <h3><span class="dot"></span> 12.2 Test Data Requirements</h3>
+      <ul>
+        <li>Populated CUSTDATA, ACCTDATA, CARDXREF, TRANSACT, and CARDDATA VSAM files with known record counts</li>
+        <li>At least one record in each source file for basic coverage</li>
+        <li>Empty VSAM files for negative/boundary testing</li>
+        <li>A VSAM catalog with sufficient DASD for EXPORT.DATA cluster allocation</li>
+        <li>Standard CardDemo EBCDIC test datasets from <code>app/data/</code> directory</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 13 — Known Issues and Modernization Considerations
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s13">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">13</span>
+    <h2>Known Issues and Modernization Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s13-1">
+      <h3><span class="dot"></span> 13.1 Known Issues</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Description</th><th>Impact</th><th>Workaround</th></tr></thead>
+          <tbody>
+            <tr><td>KI-001</td><td>No checkpoint/restart mechanism. A failure mid-export requires a full rerun from scratch.</td><td>Low &mdash; source files are read-only so no data corruption; STEP01 recreates the export cluster</td><td>Resubmit entire job</td></tr>
+            <tr><td>KI-002</td><td>Hard-coded BRANCH-ID (&lsquo;0001&rsquo;) and REGION-CODE (&lsquo;NORTH&rsquo;). Cannot export for a different branch/region without modifying source code.</td><td>Medium &mdash; limits reusability for multi-branch environments</td><td>Modify source or use SYSIN/PARM to parameterize (requires code change)</td></tr>
+            <tr><td>KI-003</td><td>Typo in <code>ACCT-EXPIRAION-DATE</code> and <code>CARD-EXPIRAION-DATE</code> field names (missing &lsquo;T&rsquo; in &ldquo;EXPIRATION&rdquo;). Propagated from source copybooks CVACT01Y and CVACT02Y into the export copybook CVEXPORT (<code>EXP-ACCT-EXPIRAION-DATE</code>, <code>EXP-CARD-EXPIRAION-DATE</code>).</td><td>Low &mdash; cosmetic; does not affect processing</td><td>None needed (consistent across all programs)</td></tr>
+            <tr><td>KI-004</td><td>CUST-ID is PIC 9(09) in CVCUS01Y (display, 9 bytes) but EXP-CUST-ID is PIC 9(09) COMP (binary, 4 bytes) in CVEXPORT. Implicit MOVE conversion may truncate values &gt; 999,999,999 on platforms where COMP is 4 bytes.</td><td>Low &mdash; CUST-ID PIC 9(09) maximum is 999,999,999 which fits in 4-byte COMP</td><td>None needed for current data ranges</td></tr>
+            <tr><td>KI-005</td><td>XREF-ACCT-ID is PIC 9(11) in CVACT03Y (display) but EXP-XREF-ACCT-ID is PIC 9(11) COMP (binary, 4 bytes) in CVEXPORT. PIC 9(11) maximum (99,999,999,999) exceeds 4-byte binary capacity (2,147,483,647), risking truncation for large account IDs.</td><td>Medium &mdash; potential data loss if ACCT-ID values exceed 2,147,483,647</td><td>Use COMP-3 or increase COMP size in CVEXPORT</td></tr>
+            <tr><td>KI-006</td><td>No header or trailer record in the export file. The import program must rely on record-type codes alone to identify data; there is no metadata record indicating source system, export date, or expected record counts.</td><td>Medium &mdash; makes it harder to validate completeness at the target</td><td>Add header (type &lsquo;H&rsquo;) and trailer (type &lsquo;Z&rsquo;) records with metadata</td></tr>
+            <tr><td>KI-007</td><td>PCI-DSS sensitive data (card numbers, CVV codes) exported without encryption or tokenization. The export file is a cleartext copy of all card data.</td><td>High &mdash; PCI-DSS compliance risk during data transfer</td><td>Encrypt export file or tokenize card numbers before export</td></tr>
+            <tr><td>KI-008</td><td>EXPORT-OUTPUT opened as OUTPUT (sequential load mode) into a VSAM KSDS keyed on EXPORT-SEQUENCE-NUM. Since the sequence counter starts at 0 and increments, keys are ascending, which is efficient for sequential load. However, if the VSAM cluster is not empty (e.g., STEP01 IDCAMS failed), duplicate key errors will occur.</td><td>Low &mdash; STEP01 always recreates the cluster</td><td>Ensure STEP01 completes successfully</td></tr>
+            <tr><td>KI-009</td><td>Misaligned comment at line 311: <code>*********</code> block starts in column 3 instead of column 7, violating COBOL Area A/B conventions. May cause warnings on strict compilers.</td><td>Low &mdash; cosmetic; most compilers tolerate this</td><td>Fix indentation</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s13-2">
+      <h3><span class="dot"></span> 13.2 Modernization Considerations</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Area</th><th>Current State</th><th>Target State</th><th>Complexity</th></tr></thead>
+          <tbody>
+            <tr><td>Export Format</td><td>Fixed-length 500-byte VSAM records with COMP/COMP-3 fields</td><td>JSON, Parquet, or CSV export for cloud-native consumption</td><td>Medium</td></tr>
+            <tr><td>Data Transfer</td><td>VSAM file copy via tape, FTP, or Connect:Direct</td><td>Cloud-native data pipeline (S3, EventBridge, or database replication)</td><td>High</td></tr>
+            <tr><td>Parameterization</td><td>Hard-coded branch ID and region code</td><td>JCL PARM or SYSIN-driven configuration</td><td>Low</td></tr>
+            <tr><td>Security</td><td>Cleartext card numbers and CVV in export file</td><td>Tokenization or field-level encryption; PCI-DSS compliant export</td><td>High</td></tr>
+            <tr><td>Incremental Export</td><td>Full export every run (all records from all files)</td><td>Change Data Capture (CDC) or timestamp-based delta export</td><td>High</td></tr>
+            <tr><td>Error Handling</td><td>Binary ABEND via CEE3ABD on any error</td><td>Structured error handling with retry logic and partial-failure recovery</td><td>Medium</td></tr>
+            <tr><td>Observability</td><td>DISPLAY statements to SYSPRINT</td><td>Structured logging, metrics, and alerting (CloudWatch, Datadog)</td><td>Low</td></tr>
+            <tr><td>Data Validation</td><td>No validation &mdash; all records exported blindly</td><td>Pre-export data quality checks, integrity constraints, referential validation</td><td>Medium</td></tr>
+            <tr><td>File Format</td><td>Single VSAM with REDEFINES for multiple record types</td><td>Separate tables/files per entity type in a relational database or data lake</td><td>Medium</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /page-wrap-single -->
+
+<!-- ════════════════════  FOOTER  ════════════════════ -->
+<footer class="footer">
+  <p><strong>UniCredit CardDemo</strong> &mdash; Batch Process Analysis &mdash; CBEXPORT / CBEXPORT</p>
+  <p>Generated from source: <code>app/jcl/CBEXPORT.jcl</code> &middot; <code>app/cbl/CBEXPORT.cbl</code> &middot; Copybooks: CVCUS01Y, CVACT01Y, CVACT03Y, CVTRA05Y, CVACT02Y, CVEXPORT</p>
+</footer>
+
+</body>
+</html>
