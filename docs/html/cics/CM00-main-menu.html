@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Main Menu (CM00) – CICS Transaction Analysis | UniCredit CardDemo</title>
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  .section-toggle svg { fill: currentColor; }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. — Milano</div>
+    </div>
+    <h1>Main Menu – <span>CICS Transaction Analysis</span></h1>
+    <p class="hero-subtitle">
+      Transaction <code>CM00</code> &middot; Program <code>COMEN01C</code> &middot; Central navigation hub for regular users — dispatches to 11 application functions via XCTL
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Transaction ID</dt><dd>CM00</dd></div>
+      <div><dt>Entry Program</dt><dd>COMEN01C</dd></div>
+      <div><dt>BMS Mapset</dt><dd>COMEN01</dd></div>
+      <div><dt>Design Pattern</dt><dd>Pseudo-conversational</dd></div>
+      <div><dt>LOC</dt><dd>308</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">&rsaquo;</span>
+  <a href="index.html">CICS Flows</a>
+  <span class="sep">&rsaquo;</span>
+  Main Menu (CM00)
+</div>
+
+<!-- Body -->
+<div class="page-wrap-single">
+
+<!-- ================================================================== -->
+<!-- SECTION 1 — Business Flow Analysis                                 -->
+<!-- ================================================================== -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">1</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 1.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 1.1 Business Context</h3>
+      <p>
+        <strong>COMEN01C</strong> is the <em>Main Menu for Regular Users</em> in the CardDemo application.
+        After a successful sign-on via <code>COSGN00C</code> (transaction <code>CC00</code>), regular users
+        are routed here. The program presents a numbered list of 11 application functions and dispatches the
+        user to the selected sub-application via <code>EXEC CICS XCTL</code>. It acts purely as a navigation
+        hub — it performs no file I/O and holds no business data of its own.
+      </p>
+      <ul>
+        <li><strong>Who uses it:</strong> Regular (non-admin) cardholders and operators</li>
+        <li><strong>When:</strong> Immediately after sign-on; also returned to via PF3 from child screens</li>
+        <li><strong>Business outcome:</strong> Routes users to the correct functional area (account view, credit card management, transactions, billing, reports)</li>
+      </ul>
+    </div>
+
+    <!-- 1.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 1.2 Business Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────┐
+  │   User Signs On (CC00)  │
+  │   via COSGN00C          │
+  └───────────┬─────────────┘
+              │ XCTL with COMMAREA
+              ▼
+  ┌─────────────────────────┐
+  │   Main Menu Displayed   │
+  │   (COMEN01C / CM00)     │
+  │   11 numbered options   │
+  └───────────┬─────────────┘
+              │
+    ┌─────────┼──────────────────────────┐
+    │         │                          │
+    ▼         ▼                          ▼
+ [ENTER]   [PF3]                    [Other Key]
+ User       Return to                Invalid key
+ enters     Sign-On                  error message
+ option #   (COSGN00C)               re-display menu
+    │
+    ▼
+ ┌──────────────────────────────────────┐
+ │  Validate option:                    │
+ │  - Numeric?                          │
+ │  - In range 1..11?                   │
+ │  - Not admin-only for regular user?  │
+ └──────────────┬───────────────────────┘
+                │
+       ┌────────┴────────┐
+       │ Valid            │ Invalid
+       ▼                 ▼
+  ┌──────────┐   ┌──────────────────┐
+  │ XCTL to  │   │ Error message    │
+  │ selected │   │ re-display menu  │
+  │ program  │   └──────────────────┘
+  └──────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 1.3 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 1.3 Business Rules</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Rule</th><th>Source</th><th>Action on Violation</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>BR-1</td><td>Option must be numeric</td><td><code>WS-OPTION IS NOT NUMERIC</code> check</td><td>Display "Please enter a valid option number..."</td></tr>
+            <tr><td>BR-2</td><td>Option must be between 1 and <code>CDEMO-MENU-OPT-COUNT</code> (11)</td><td><code>WS-OPTION &gt; CDEMO-MENU-OPT-COUNT OR WS-OPTION = ZEROS</code></td><td>Display "Please enter a valid option number..."</td></tr>
+            <tr><td>BR-3</td><td>Regular users cannot access admin-only options (<code>USRTYPE = 'A'</code>)</td><td><code>CDEMO-USRTYP-USER AND CDEMO-MENU-OPT-USRTYPE(WS-OPTION) = 'A'</code></td><td>Display "No access - Admin Only option..."</td></tr>
+            <tr><td>BR-4</td><td>Programs marked DUMMY are not yet available</td><td><code>CDEMO-MENU-OPT-PGMNAME(WS-OPTION)(1:5) = 'DUMMY'</code></td><td>Display "&lt;option&gt; is coming soon..."</td></tr>
+            <tr><td>BR-5</td><td>COPAUS0C availability is checked at runtime via INQUIRE PROGRAM</td><td><code>EXEC CICS INQUIRE PROGRAM(…) NOHANDLE</code></td><td>Display "&lt;option&gt; is not installed..." if EIBRESP &ne; NORMAL</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 1.4 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 1.4 User Interactions</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Step</th><th>User Action</th><th>System Response</th><th>Business Meaning</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>User is transferred from Sign-On (COSGN00C)</td><td>Menu screen displayed with 11 options</td><td>User has been authenticated and can now navigate</td></tr>
+            <tr><td>2</td><td>User types option number and presses ENTER</td><td>Validates option and either transfers to the selected program or shows error</td><td>User selects desired business function</td></tr>
+            <tr><td>3</td><td>User presses PF3</td><td>Returns to sign-on screen (COSGN00C)</td><td>User wants to log off / return to sign-on</td></tr>
+            <tr><td>4</td><td>User presses any other key</td><td>Displays "Invalid key pressed. Please see below..."</td><td>Only ENTER and PF3 are valid navigation keys</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- SECTION 2 — Technical Flow Analysis                                -->
+<!-- ================================================================== -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">2</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 2.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 2.1 Technical Flow Diagram — Overview</h3>
+      <div class="diagram-box">
+<pre>
+ ┌──────────┐    ┌────────────────────────────────────────────┐
+ │ TERMINAL │◄──►│           CICS REGION                      │
+ │ (3270)   │    │                                            │
+ │          │    │  CM00 ──► COMEN01C                         │
+ │  MAP:    │    │             │                              │
+ │  COMEN1A │    │             ├──► XCTL ──► COACTVWC (CAVW) │
+ │          │    │             ├──► XCTL ──► COACTUPC (CAUP) │
+ │          │    │             ├──► XCTL ──► COCRDLIC (CCLI) │
+ │          │    │             ├──► XCTL ──► COCRDSLC (CCDL) │
+ │          │    │             ├──► XCTL ──► COCRDUPC (CCUP) │
+ │          │    │             ├──► XCTL ──► COTRN00C (CT00) │
+ │          │    │             ├──► XCTL ──► COTRN01C (CT01) │
+ │          │    │             ├──► XCTL ──► COTRN02C (CT02) │
+ │          │    │             ├──► XCTL ──► CORPT00C (CR00) │
+ │          │    │             ├──► XCTL ──► COBIL00C (CB00) │
+ │          │    │             └──► XCTL ──► COPAUS0C         │
+ │          │    │                                            │
+ └──────────┘    └────────────────────────────────────────────┘
+   No direct file access — menu dispatcher only
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 2.2 Technical Flow Diagram — Detailed</h3>
+      <div class="diagram-box">
+<pre>
+ MAIN-PARA
+   │
+   ├── ERR-FLG-OFF = TRUE, clear WS-MESSAGE &amp; ERRMSGO
+   │
+   ├── IF EIBCALEN = 0  (no COMMAREA = first entry without auth)
+   │     └── RETURN-TO-SIGNON-SCREEN (XCTL to COSGN00C)
+   │
+   ├── ELSE (EIBCALEN &gt; 0 — valid COMMAREA present)
+   │     ├── MOVE DFHCOMMAREA → CARDDEMO-COMMAREA
+   │     │
+   │     ├── IF NOT CDEMO-PGM-REENTER  (first time from sign-on)
+   │     │     ├── SET CDEMO-PGM-REENTER TO TRUE
+   │     │     ├── MOVE LOW-VALUES TO COMEN1AO
+   │     │     └── SEND-MENU-SCREEN
+   │     │           ├── POPULATE-HEADER-INFO (date, time, titles)
+   │     │           ├── BUILD-MENU-OPTIONS (loop 1..11)
+   │     │           └── EXEC CICS SEND MAP('COMEN1A') MAPSET('COMEN01')
+   │     │
+   │     └── ELSE (re-entry — user submitted data)
+   │           ├── RECEIVE-MENU-SCREEN
+   │           │     └── EXEC CICS RECEIVE MAP('COMEN1A') MAPSET('COMEN01')
+   │           │
+   │           └── EVALUATE EIBAID
+   │                 ├── DFHENTER → PROCESS-ENTER-KEY
+   │                 │     ├── Parse &amp; validate option number
+   │                 │     ├── Check admin-only restriction
+   │                 │     └── EXEC CICS XCTL to target program
+   │                 ├── DFHPF3 → RETURN-TO-SIGNON-SCREEN
+   │                 │     └── XCTL to COSGN00C
+   │                 └── OTHER → set ERR-FLG-ON, SEND-MENU-SCREEN
+   │
+   └── EXEC CICS RETURN TRANSID('CM00') COMMAREA(CARDDEMO-COMMAREA)
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.3 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 2.3 Pseudo-Conversational Flow</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Iteration</th><th>EIBCALEN</th><th>CDEMO-PGM-CONTEXT</th><th>User Action</th><th>Entry Point</th><th>Screen Sent</th><th>RETURN TRANSID</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>0 (no auth)</td>
+              <td>0</td>
+              <td>N/A</td>
+              <td>Direct entry without sign-on</td>
+              <td>MAIN-PARA</td>
+              <td>None — XCTL to COSGN00C</td>
+              <td>N/A (XCTL)</td>
+            </tr>
+            <tr>
+              <td>1 (first entry)</td>
+              <td>&gt; 0</td>
+              <td>0 (CDEMO-PGM-ENTER)</td>
+              <td>XCTL from COSGN00C after sign-on</td>
+              <td>MAIN-PARA</td>
+              <td>COMEN1A (menu)</td>
+              <td>CM00</td>
+            </tr>
+            <tr>
+              <td>2+ (re-entry)</td>
+              <td>&gt; 0</td>
+              <td>1 (CDEMO-PGM-REENTER)</td>
+              <td>ENTER with option / PF3 / other key</td>
+              <td>MAIN-PARA → RECEIVE-MENU-SCREEN</td>
+              <td>COMEN1A (on error) or XCTL to target</td>
+              <td>CM00 (if error) or N/A (if XCTL)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 2.4 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 2.4 CICS Command Flow</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>CICS Command</th><th>Location</th><th>Purpose</th><th>Response Handling</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td><code>EXEC CICS SEND MAP('COMEN1A') MAPSET('COMEN01') FROM(COMEN1AO) ERASE</code></td><td>SEND-MENU-SCREEN</td><td>Send the main menu screen to the terminal</td><td>None (implicit)</td></tr>
+            <tr><td>2</td><td><code>EXEC CICS RECEIVE MAP('COMEN1A') MAPSET('COMEN01') INTO(COMEN1AI) RESP(WS-RESP-CD) RESP2(WS-REAS-CD)</code></td><td>RECEIVE-MENU-SCREEN</td><td>Receive user input from the menu screen</td><td>WS-RESP-CD / WS-REAS-CD captured</td></tr>
+            <tr><td>3</td><td><code>EXEC CICS INQUIRE PROGRAM(CDEMO-MENU-OPT-PGMNAME) NOHANDLE</code></td><td>PROCESS-ENTER-KEY</td><td>Check if COPAUS0C is installed before XCTL</td><td>EIBRESP checked against DFHRESP(NORMAL)</td></tr>
+            <tr><td>4</td><td><code>EXEC CICS XCTL PROGRAM(CDEMO-MENU-OPT-PGMNAME) COMMAREA(CARDDEMO-COMMAREA)</code></td><td>PROCESS-ENTER-KEY (COPAUS0C path)</td><td>Transfer control to Pending Authorization View</td><td>N/A — control does not return</td></tr>
+            <tr><td>5</td><td><code>EXEC CICS XCTL PROGRAM(CDEMO-MENU-OPT-PGMNAME) COMMAREA(CARDDEMO-COMMAREA)</code></td><td>PROCESS-ENTER-KEY (OTHER path)</td><td>Transfer control to selected application program</td><td>N/A — control does not return</td></tr>
+            <tr><td>6</td><td><code>EXEC CICS XCTL PROGRAM(CDEMO-TO-PROGRAM)</code></td><td>RETURN-TO-SIGNON-SCREEN</td><td>Transfer control back to sign-on (COSGN00C)</td><td>N/A — control does not return</td></tr>
+            <tr><td>7</td><td><code>EXEC CICS RETURN TRANSID(WS-TRANID) COMMAREA(CARDDEMO-COMMAREA)</code></td><td>MAIN-PARA (end)</td><td>Return to CICS with pseudo-conversational restart on CM00</td><td>N/A — ends program execution</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- SECTION 3 — Screen Flow and BMS Maps                               -->
+<!-- ================================================================== -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">3</span>
+    <h2>Screen Flow and BMS Maps</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 3.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 3.1 Screen Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌──────────────────────┐
+  │ Sign-On Screen       │
+  │ (COSGN00C / CC00)    │
+  └─────────┬────────────┘
+            │ XCTL (after auth)
+            ▼
+  ┌──────────────────────┐     PF3      ┌──────────────┐
+  │  COMEN1A             │─────────────►│ Sign-On      │
+  │  Main Menu           │              │ (COSGN00C)   │
+  │                      │              └──────────────┘
+  │  01. Account View    │
+  │  02. Account Update  │     ENTER     ┌──────────────┐
+  │  03. Credit Card List│─────(valid)──►│ Target       │
+  │  04. Credit Card View│              │ Program      │
+  │  05. Credit Card Upd │              │ via XCTL     │
+  │  06. Transaction List│              └──────────────┘
+  │  07. Transaction View│
+  │  08. Transaction Add │     ENTER     ┌──────────────┐
+  │  09. Txn Reports     │────(invalid)─►│ COMEN1A      │
+  │  10. Bill Payment    │              │ + error msg  │
+  │  11. Pending Auth    │              └──────────────┘
+  │                      │
+  │  Option: __          │     Other     ┌──────────────┐
+  │  [error message]     │─────(key)────►│ COMEN1A      │
+  └──────────────────────┘              │ + invalid key│
+                                        └──────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 3.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 3.2 BMS Map Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Map Name</th><th>Mapset</th><th>Purpose</th><th>Key Fields</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>COMEN1A</td><td>COMEN01</td><td>Main menu screen — displays application title, 12 option slots, option input field, and error message area</td><td>OPTION (input), OPTN001–OPTN012 (display), ERRMSG (output)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.3 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 3.3 Screen Field Details</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Field Name</th><th>Row,Col</th><th>Length</th><th>Attributes</th><th>Color</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>(literal "Tran:")</td><td>1,1</td><td>5</td><td>ASKIP, NORM</td><td>BLUE</td><td>Label for transaction ID</td></tr>
+            <tr><td>TRNNAME</td><td>1,7</td><td>4</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Displays current transaction ID (CM00)</td></tr>
+            <tr><td>TITLE01</td><td>1,21</td><td>40</td><td>ASKIP, FSET, NORM</td><td>YELLOW</td><td>Application title line 1 ("AWS Mainframe Modernization")</td></tr>
+            <tr><td>(literal "Date:")</td><td>1,65</td><td>5</td><td>ASKIP, NORM</td><td>BLUE</td><td>Label for date</td></tr>
+            <tr><td>CURDATE</td><td>1,71</td><td>8</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Current date (mm/dd/yy)</td></tr>
+            <tr><td>(literal "Prog:")</td><td>2,1</td><td>5</td><td>ASKIP, NORM</td><td>BLUE</td><td>Label for program name</td></tr>
+            <tr><td>PGMNAME</td><td>2,7</td><td>8</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Displays current program (COMEN01C)</td></tr>
+            <tr><td>TITLE02</td><td>2,21</td><td>40</td><td>ASKIP, FSET, NORM</td><td>YELLOW</td><td>Application title line 2 ("CardDemo")</td></tr>
+            <tr><td>(literal "Time:")</td><td>2,65</td><td>5</td><td>ASKIP, NORM</td><td>BLUE</td><td>Label for time</td></tr>
+            <tr><td>CURTIME</td><td>2,71</td><td>8</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Current time (hh:mm:ss)</td></tr>
+            <tr><td>(literal "Main Menu")</td><td>4,35</td><td>9</td><td>ASKIP, BRT</td><td>NEUTRAL</td><td>Screen title</td></tr>
+            <tr><td>OPTN001</td><td>6,20</td><td>40</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Menu option 1 text</td></tr>
+            <tr><td>OPTN002</td><td>7,20</td><td>40</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Menu option 2 text</td></tr>
+            <tr><td>OPTN003</td><td>8,20</td><td>40</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Menu option 3 text</td></tr>
+            <tr><td>OPTN004</td><td>9,20</td><td>40</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Menu option 4 text</td></tr>
+            <tr><td>OPTN005</td><td>10,20</td><td>40</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Menu option 5 text</td></tr>
+            <tr><td>OPTN006</td><td>11,20</td><td>40</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Menu option 6 text</td></tr>
+            <tr><td>OPTN007</td><td>12,20</td><td>40</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Menu option 7 text</td></tr>
+            <tr><td>OPTN008</td><td>13,20</td><td>40</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Menu option 8 text</td></tr>
+            <tr><td>OPTN009</td><td>14,20</td><td>40</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Menu option 9 text</td></tr>
+            <tr><td>OPTN010</td><td>15,20</td><td>40</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Menu option 10 text</td></tr>
+            <tr><td>OPTN011</td><td>16,20</td><td>40</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Menu option 11 text</td></tr>
+            <tr><td>OPTN012</td><td>17,20</td><td>40</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Menu option 12 text (unused slot)</td></tr>
+            <tr><td>(literal "Please select an option :")</td><td>20,15</td><td>25</td><td>ASKIP, BRT</td><td>TURQUOISE</td><td>Prompt for user input</td></tr>
+            <tr><td>OPTION</td><td>20,41</td><td>2</td><td>FSET, IC, NORM, NUM, UNPROT</td><td>—</td><td>User input: option number (UNDERLINE highlight)</td></tr>
+            <tr><td>ERRMSG</td><td>23,1</td><td>78</td><td>ASKIP, BRT, FSET</td><td>RED</td><td>Error/information message display area</td></tr>
+            <tr><td>(literal "ENTER=Continue  F3=Exit")</td><td>24,1</td><td>23</td><td>ASKIP, NORM</td><td>YELLOW</td><td>PF key legend</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.4 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 3.4 PF Key / AID Key Handling</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>AID Key</th><th>EIBAID Value</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>ENTER</td><td>DFHENTER</td><td>Invoke <code>PROCESS-ENTER-KEY</code> — validate option and XCTL to selected program</td></tr>
+            <tr><td>PF3</td><td>DFHPF3</td><td>Set <code>CDEMO-TO-PROGRAM</code> = 'COSGN00C', invoke <code>RETURN-TO-SIGNON-SCREEN</code> (XCTL)</td></tr>
+            <tr><td>Any other</td><td>(OTHER)</td><td>Set <code>ERR-FLG-ON</code>, move <code>CCDA-MSG-INVALID-KEY</code> to <code>WS-MESSAGE</code>, re-send menu screen</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- SECTION 4 — Program Inventory and Call Chain                       -->
+<!-- ================================================================== -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">4</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 4.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 4.1 Program Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Program</th><th>Trans ID</th><th>Purpose</th><th>Entry Mechanism</th><th>LOC</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>COMEN01C</td><td>CM00</td><td>Main Menu dispatcher for regular users</td><td>XCTL from COSGN00C / RETURN TRANSID</td><td>308</td></tr>
+            <tr><td>COSGN00C</td><td>CC00</td><td>Sign-On (caller &amp; PF3 target)</td><td>XCTL from COMEN01C</td><td>—</td></tr>
+            <tr><td>COACTVWC</td><td>CAVW</td><td>Account View</td><td>XCTL (option 1)</td><td>—</td></tr>
+            <tr><td>COACTUPC</td><td>CAUP</td><td>Account Update</td><td>XCTL (option 2)</td><td>—</td></tr>
+            <tr><td>COCRDLIC</td><td>CCLI</td><td>Credit Card List</td><td>XCTL (option 3)</td><td>—</td></tr>
+            <tr><td>COCRDSLC</td><td>CCDL</td><td>Credit Card View</td><td>XCTL (option 4)</td><td>—</td></tr>
+            <tr><td>COCRDUPC</td><td>CCUP</td><td>Credit Card Update</td><td>XCTL (option 5)</td><td>—</td></tr>
+            <tr><td>COTRN00C</td><td>CT00</td><td>Transaction List</td><td>XCTL (option 6)</td><td>—</td></tr>
+            <tr><td>COTRN01C</td><td>CT01</td><td>Transaction View</td><td>XCTL (option 7)</td><td>—</td></tr>
+            <tr><td>COTRN02C</td><td>CT02</td><td>Transaction Add</td><td>XCTL (option 8)</td><td>—</td></tr>
+            <tr><td>CORPT00C</td><td>CR00</td><td>Transaction Reports</td><td>XCTL (option 9)</td><td>—</td></tr>
+            <tr><td>COBIL00C</td><td>CB00</td><td>Bill Payment</td><td>XCTL (option 10)</td><td>—</td></tr>
+            <tr><td>COPAUS0C</td><td>—</td><td>Pending Authorization View</td><td>XCTL (option 11, with INQUIRE check)</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 4.2 Call Chain Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  COSGN00C (CC00 — Sign-On)
+      │
+      └── XCTL ──► COMEN01C (CM00 — Main Menu)
+                       │
+                       ├── XCTL ──► COSGN00C   [PF3 — return to sign-on]
+                       │
+                       ├── XCTL ──► COACTVWC   [Option 01 — Account View]
+                       ├── XCTL ──► COACTUPC   [Option 02 — Account Update]
+                       ├── XCTL ──► COCRDLIC   [Option 03 — Credit Card List]
+                       ├── XCTL ──► COCRDSLC   [Option 04 — Credit Card View]
+                       ├── XCTL ──► COCRDUPC   [Option 05 — Credit Card Update]
+                       ├── XCTL ──► COTRN00C   [Option 06 — Transaction List]
+                       ├── XCTL ──► COTRN01C   [Option 07 — Transaction View]
+                       ├── XCTL ──► COTRN02C   [Option 08 — Transaction Add]
+                       ├── XCTL ──► CORPT00C   [Option 09 — Txn Reports]
+                       ├── XCTL ──► COBIL00C   [Option 10 — Bill Payment]
+                       └── XCTL ──► COPAUS0C   [Option 11 — Pending Auth View]
+</pre>
+      </div>
+    </div>
+
+    <!-- 4.3 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 4.3 Call Details</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Caller</th><th>Called Program</th><th>Mechanism</th><th>Data Passed</th><th>When</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>COMEN01C</td><td>COSGN00C</td><td>XCTL</td><td>None (bare XCTL)</td><td>EIBCALEN=0 or PF3 pressed</td></tr>
+            <tr><td>COMEN01C</td><td>COPAUS0C</td><td>XCTL</td><td>CARDDEMO-COMMAREA</td><td>Option 11 selected &amp; INQUIRE returns NORMAL</td></tr>
+            <tr><td>COMEN01C</td><td>COACTVWC / COACTUPC / COCRDLIC / COCRDSLC / COCRDUPC / COTRN00C / COTRN01C / COTRN02C / CORPT00C / COBIL00C</td><td>XCTL</td><td>CARDDEMO-COMMAREA (with CDEMO-FROM-TRANID=CM00, CDEMO-FROM-PROGRAM=COMEN01C, CDEMO-PGM-CONTEXT=0)</td><td>Valid option selected (WHEN OTHER path)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- SECTION 5 — File and Data Store Inventory                          -->
+<!-- ================================================================== -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">5</span>
+    <h2>File and Data Store Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="callout">
+      <strong>N/A</strong> — This transaction is a menu dispatcher with no direct file access.
+      Although <code>WS-USRSEC-FILE</code> (value <code>'USRSEC  '</code>) is declared in WORKING-STORAGE,
+      it is never referenced in any EXEC CICS file command within this program.
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- SECTION 6 — Data Flow Analysis                                     -->
+<!-- ================================================================== -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">6</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="callout">
+      <strong>N/A</strong> — Menu dispatcher; no data transformation occurs.
+      The only data movement is: COMMAREA fields are passed through to the selected child program,
+      and the menu option text is built from the <code>COMEN02Y</code> copybook table into the BMS output map.
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- SECTION 7 — COMMAREA and Interface Contracts                       -->
+<!-- ================================================================== -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">7</span>
+    <h2>COMMAREA and Interface Contracts</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 7.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 7.1 COMMAREA Layout</h3>
+      <p>Defined in copybook <code>COCOM01Y.cpy</code> as <code>CARDDEMO-COMMAREA</code>:</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Field</th><th>PIC</th><th>Length</th><th>Direction</th><th>Purpose in COMEN01C</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>CDEMO-FROM-TRANID</td><td>X(04)</td><td>4</td><td>OUT</td><td>Set to <code>'CM00'</code> (WS-TRANID) before XCTL to child</td></tr>
+            <tr><td>CDEMO-FROM-PROGRAM</td><td>X(08)</td><td>8</td><td>OUT</td><td>Set to <code>'COMEN01C'</code> (WS-PGMNAME) before XCTL to child</td></tr>
+            <tr><td>CDEMO-TO-TRANID</td><td>X(04)</td><td>4</td><td>—</td><td>Not modified by COMEN01C</td></tr>
+            <tr><td>CDEMO-TO-PROGRAM</td><td>X(08)</td><td>8</td><td>IN/OUT</td><td>Read on PF3 to determine sign-on target; set to <code>'COSGN00C'</code> if empty</td></tr>
+            <tr><td>CDEMO-USER-ID</td><td>X(08)</td><td>8</td><td>IN</td><td>Passed through from sign-on (not modified)</td></tr>
+            <tr><td>CDEMO-USER-TYPE</td><td>X(01)</td><td>1</td><td>IN</td><td>Checked: <code>'U'</code> (regular) or <code>'A'</code> (admin) — controls option access</td></tr>
+            <tr><td>CDEMO-PGM-CONTEXT</td><td>9(01)</td><td>1</td><td>IN/OUT</td><td><code>0</code> = first entry (PGM-ENTER), <code>1</code> = re-entry (PGM-REENTER). Set to 1 on first display, reset to 0 before XCTL to child.</td></tr>
+            <tr><td>CDEMO-CUST-ID</td><td>9(09)</td><td>9</td><td>—</td><td>Passed through (not modified)</td></tr>
+            <tr><td>CDEMO-ACCT-ID</td><td>9(11)</td><td>11</td><td>—</td><td>Passed through (not modified)</td></tr>
+            <tr><td>CDEMO-CARD-NUM</td><td>9(16)</td><td>16</td><td>—</td><td>Passed through (not modified)</td></tr>
+            <tr><td>CDEMO-LAST-MAP</td><td>X(07)</td><td>7</td><td>—</td><td>Passed through (not modified)</td></tr>
+            <tr><td>CDEMO-LAST-MAPSET</td><td>X(07)</td><td>7</td><td>—</td><td>Passed through (not modified)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 7.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 7.2 Return Code Conventions</h3>
+      <p>
+        COMEN01C does not use formal return codes. The <code>WS-ERR-FLG</code> flag (<code>'Y'</code>/<code>'N'</code>)
+        with 88-levels <code>ERR-FLG-ON</code> / <code>ERR-FLG-OFF</code> controls whether an error message
+        is displayed and whether the XCTL dispatch is attempted. The <code>WS-RESP-CD</code> and
+        <code>WS-REAS-CD</code> fields capture the CICS RECEIVE response but are not explicitly evaluated
+        in the code.
+      </p>
+    </div>
+
+    <!-- 7.3 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 7.3 Conversation State Management</h3>
+      <p>
+        State is managed via <code>CDEMO-PGM-CONTEXT</code> in the COMMAREA:
+      </p>
+      <ul>
+        <li><strong>Value 0 (CDEMO-PGM-ENTER):</strong> First entry from sign-on — skip RECEIVE, initialize map output to LOW-VALUES, and SEND the menu screen.</li>
+        <li><strong>Value 1 (CDEMO-PGM-REENTER):</strong> Subsequent entries — RECEIVE user input, process AID key, and either dispatch or re-display with error.</li>
+      </ul>
+      <p>
+        On each successful <code>EXEC CICS RETURN TRANSID('CM00') COMMAREA(CARDDEMO-COMMAREA)</code>,
+        the COMMAREA is preserved by CICS and supplied back on the next invocation via <code>DFHCOMMAREA</code>.
+        Before XCTL to a child program, <code>CDEMO-PGM-CONTEXT</code> is reset to <code>ZEROS</code> so the
+        child treats it as a first entry.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- SECTION 8 — Error Handling and User Feedback                       -->
+<!-- ================================================================== -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">8</span>
+    <h2>Error Handling and User Feedback</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 8.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 8.1 Error Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  User Input (ENTER)
+       │
+       ├── Option not numeric / out of range / zero
+       │     └── WS-ERR-FLG = 'Y'
+       │         WS-MESSAGE = "Please enter a valid option number..."
+       │         └── SEND-MENU-SCREEN (re-display with error)
+       │
+       ├── Regular user selects admin-only option
+       │     └── ERR-FLG-ON
+       │         WS-MESSAGE = "No access - Admin Only option..."
+       │         └── SEND-MENU-SCREEN (re-display with error)
+       │
+       ├── COPAUS0C not installed (INQUIRE fails)
+       │     └── ERRMSGC = DFHRED
+       │         WS-MESSAGE = "This option &lt;name&gt; is not installed..."
+       │         └── SEND-MENU-SCREEN (re-display with warning)
+       │
+       ├── DUMMY program selected
+       │     └── ERRMSGC = DFHGREEN
+       │         WS-MESSAGE = "This option &lt;name&gt; is coming soon..."
+       │         └── SEND-MENU-SCREEN (re-display with info)
+       │
+       └── Valid option → XCTL to target (no error)
+
+  User Input (Other Key)
+       └── WS-ERR-FLG = 'Y'
+           WS-MESSAGE = CCDA-MSG-INVALID-KEY
+           └── SEND-MENU-SCREEN (re-display with error)
+</pre>
+      </div>
+    </div>
+
+    <!-- 8.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 8.2 Error Handling Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Condition</th><th>Detection</th><th>Program Action</th><th>User Message</th><th>Severity</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Option not numeric / out of range / zero</td>
+              <td><code>WS-OPTION IS NOT NUMERIC OR WS-OPTION &gt; CDEMO-MENU-OPT-COUNT OR WS-OPTION = ZEROS</code></td>
+              <td>Set ERR-FLG-ON, re-send menu</td>
+              <td>"Please enter a valid option number..."</td>
+              <td>User error</td>
+            </tr>
+            <tr>
+              <td>Regular user selects admin-only option</td>
+              <td><code>CDEMO-USRTYP-USER AND CDEMO-MENU-OPT-USRTYPE(WS-OPTION) = 'A'</code></td>
+              <td>Set ERR-FLG-ON, re-send menu</td>
+              <td>"No access - Admin Only option..."</td>
+              <td>Authorization</td>
+            </tr>
+            <tr>
+              <td>COPAUS0C program not installed</td>
+              <td><code>EIBRESP &ne; DFHRESP(NORMAL)</code> after INQUIRE PROGRAM</td>
+              <td>Set ERRMSGC to DFHRED, re-send menu</td>
+              <td>"This option &lt;name&gt; is not installed..."</td>
+              <td>Configuration</td>
+            </tr>
+            <tr>
+              <td>DUMMY program selected</td>
+              <td><code>CDEMO-MENU-OPT-PGMNAME(1:5) = 'DUMMY'</code></td>
+              <td>Set ERRMSGC to DFHGREEN, re-send menu</td>
+              <td>"This option &lt;name&gt; is coming soon..."</td>
+              <td>Informational</td>
+            </tr>
+            <tr>
+              <td>Invalid AID key pressed</td>
+              <td><code>EVALUATE EIBAID ... WHEN OTHER</code></td>
+              <td>Set ERR-FLG-ON, re-send menu</td>
+              <td>"Invalid key pressed. Please see below..." (from CCDA-MSG-INVALID-KEY)</td>
+              <td>User error</td>
+            </tr>
+            <tr>
+              <td>No COMMAREA on entry (EIBCALEN = 0)</td>
+              <td><code>IF EIBCALEN = 0</code></td>
+              <td>XCTL to COSGN00C</td>
+              <td>None (redirected to sign-on)</td>
+              <td>Security</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 8.3 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 8.3 HANDLE ABEND / HANDLE CONDITION</h3>
+      <p>
+        COMEN01C does not use <code>EXEC CICS HANDLE ABEND</code> or <code>EXEC CICS HANDLE CONDITION</code>.
+        The only response-aware commands are:
+      </p>
+      <ul>
+        <li><code>EXEC CICS RECEIVE ... RESP(WS-RESP-CD) RESP2(WS-REAS-CD)</code> — captures response codes but does not explicitly check them.</li>
+        <li><code>EXEC CICS INQUIRE PROGRAM(...) NOHANDLE</code> — uses NOHANDLE and checks <code>EIBRESP</code> directly.</li>
+      </ul>
+    </div>
+
+    <!-- 8.4 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 8.4 User Error Messages</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Message Text</th><th>Source</th><th>Trigger</th><th>Color</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>"Please enter a valid option number..."</td><td>Inline literal in PROCESS-ENTER-KEY</td><td>Invalid option number</td><td>Default (RED via ERRMSG field)</td></tr>
+            <tr><td>"No access - Admin Only option..."</td><td>Inline literal in PROCESS-ENTER-KEY</td><td>Regular user picks admin option</td><td>Default (RED)</td></tr>
+            <tr><td>"This option &lt;name&gt; is not installed..."</td><td>STRING built in PROCESS-ENTER-KEY</td><td>COPAUS0C INQUIRE fails</td><td>RED (ERRMSGC = DFHRED)</td></tr>
+            <tr><td>"This option &lt;name&gt; is coming soon..."</td><td>STRING built in PROCESS-ENTER-KEY</td><td>DUMMY program selected</td><td>GREEN (ERRMSGC = DFHGREEN)</td></tr>
+            <tr><td>"Invalid key pressed. Please see below..."</td><td>CCDA-MSG-INVALID-KEY (CSMSG01Y.cpy)</td><td>Any key other than ENTER or PF3</td><td>Default (RED)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- SECTION 9 — Security and Authorization                             -->
+<!-- ================================================================== -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">9</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 9.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 9.1 Transaction Security</h3>
+      <p>
+        Access to transaction <code>CM00</code> is controlled by the sign-on flow. If <code>EIBCALEN = 0</code>
+        (no COMMAREA passed, meaning no prior authentication), the program immediately transfers control
+        to <code>COSGN00C</code> — effectively redirecting unauthenticated users to the sign-on screen.
+      </p>
+      <p>
+        The user type (<code>CDEMO-USER-TYPE</code>) is set by <code>COSGN00C</code> after validating
+        credentials against the <code>USRSEC</code> VSAM file. COMEN01C reads this field to enforce
+        menu-level authorization:
+      </p>
+      <ul>
+        <li><strong>User type <code>'U'</code> (regular):</strong> Can access all options marked with USRTYPE = <code>'U'</code>. Denied options marked <code>'A'</code>.</li>
+        <li><strong>User type <code>'A'</code> (admin):</strong> Would be routed to COADM01C (admin menu) instead, not to this program.</li>
+      </ul>
+      <p>
+        In the current <code>COMEN02Y</code> configuration, all 11 options are marked <code>'U'</code>
+        (user-accessible), so no admin-only restrictions are active on the main menu. However, the
+        enforcement logic is in place should any option's USRTYPE be changed to <code>'A'</code>.
+      </p>
+    </div>
+
+    <!-- 9.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 9.2 Data Access Authorization</h3>
+      <p>
+        COMEN01C performs no file I/O and therefore has no data-level authorization requirements.
+        Data access authorization is delegated to the individual child programs invoked via XCTL.
+      </p>
+    </div>
+
+    <!-- 9.3 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 9.3 Audit Trail</h3>
+      <p>
+        COMEN01C does not implement any explicit audit logging or journaling.
+        Menu navigation events are not recorded. CICS system-level SMF records would capture
+        transaction attachment/detachment events if configured at the region level.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- SECTION 10 — Performance Characteristics                           -->
+<!-- ================================================================== -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Performance Characteristics</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 10.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 10.1 Performance Profile</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Metric</th><th>Value</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>File I/Os per iteration</td><td>0</td><td>No file access — pure menu dispatcher</td></tr>
+            <tr><td>COMMAREA size</td><td>~120 bytes</td><td>CARDDEMO-COMMAREA (all fields combined)</td></tr>
+            <tr><td>Map SENDs per iteration</td><td>1</td><td>Single SEND MAP('COMEN1A') per cycle</td></tr>
+            <tr><td>Map RECEIVEs per iteration</td><td>0 or 1</td><td>0 on first entry; 1 on re-entry</td></tr>
+            <tr><td>XCTL calls per iteration</td><td>0 or 1</td><td>1 on valid option or PF3; 0 on error (stays in menu)</td></tr>
+            <tr><td>CPU path length</td><td>Minimal</td><td>No computation, no file I/O, simple EVALUATE logic</td></tr>
+            <tr><td>Working Storage</td><td>~2 KB</td><td>Menu option table (COMEN02Y) + map I/O areas</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 10.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 10.2 Performance Considerations</h3>
+      <ul>
+        <li><strong>Lightweight:</strong> COMEN01C is one of the lightest programs in the application — no file access, no DB2, no TSQ/TDQ usage.</li>
+        <li><strong>Menu build loop:</strong> The <code>BUILD-MENU-OPTIONS</code> paragraph iterates 1–11 times using a <code>PERFORM VARYING</code> with STRING operations. This is negligible overhead.</li>
+        <li><strong>INQUIRE PROGRAM:</strong> Option 11 (COPAUS0C) triggers an <code>EXEC CICS INQUIRE PROGRAM</code> on every selection. This is a lightweight CICS system call but is only invoked when option 11 is specifically selected.</li>
+        <li><strong>Pseudo-conversational:</strong> Program is not held in memory between user interactions. COMMAREA is small (~120 bytes) and preserved by CICS efficiently.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- SECTION 11 — Testing Approach                                      -->
+<!-- ================================================================== -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 11.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 11.1 Test Scenarios</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>TC#</th><th>Scenario</th><th>Input</th><th>Expected Result</th><th>Category</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>TC-01</td><td>First entry after sign-on</td><td>XCTL from COSGN00C with valid COMMAREA</td><td>Menu screen displayed with 11 options</td><td>Happy path</td></tr>
+            <tr><td>TC-02</td><td>Select valid option (1–11)</td><td>ENTER with option = 01</td><td>XCTL to COACTVWC</td><td>Happy path</td></tr>
+            <tr><td>TC-03</td><td>Select each option 1–11</td><td>ENTER with option 01–11</td><td>XCTL to correct program per COMEN02Y table</td><td>Happy path</td></tr>
+            <tr><td>TC-04</td><td>Enter zero</td><td>ENTER with option = 00</td><td>"Please enter a valid option number..."</td><td>Validation</td></tr>
+            <tr><td>TC-05</td><td>Enter number &gt; 11</td><td>ENTER with option = 15</td><td>"Please enter a valid option number..."</td><td>Validation</td></tr>
+            <tr><td>TC-06</td><td>Enter non-numeric</td><td>ENTER with option = "AB"</td><td>"Please enter a valid option number..."</td><td>Validation</td></tr>
+            <tr><td>TC-07</td><td>Enter blank</td><td>ENTER with empty option field</td><td>"Please enter a valid option number..." (treated as 00)</td><td>Validation</td></tr>
+            <tr><td>TC-08</td><td>Regular user selects admin-only option</td><td>ENTER with option whose USRTYPE = 'A' (if configured)</td><td>"No access - Admin Only option..."</td><td>Authorization</td></tr>
+            <tr><td>TC-09</td><td>COPAUS0C not installed</td><td>ENTER with option = 11, COPAUS0C not in CICS</td><td>"This option Pending Authorization View is not installed..."</td><td>Configuration</td></tr>
+            <tr><td>TC-10</td><td>DUMMY program selected</td><td>ENTER with option whose program starts with 'DUMMY'</td><td>"This option &lt;name&gt; is coming soon..."</td><td>Informational</td></tr>
+            <tr><td>TC-11</td><td>Press PF3</td><td>PF3 key</td><td>XCTL to COSGN00C (sign-on screen)</td><td>Navigation</td></tr>
+            <tr><td>TC-12</td><td>Press invalid key (PF1, PF2, PF5, etc.)</td><td>Any key other than ENTER/PF3</td><td>"Invalid key pressed. Please see below..."</td><td>Validation</td></tr>
+            <tr><td>TC-13</td><td>Direct transaction entry without sign-on</td><td>EIBCALEN = 0</td><td>Redirected to COSGN00C</td><td>Security</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 11.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 11.2 Test Data Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Requirement</th><th>Details</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>User account (regular)</td><td>Valid user in USRSEC file with <code>SEC-USR-TYPE = 'U'</code>. Must be signed on via COSGN00C first.</td></tr>
+            <tr><td>User account (admin)</td><td>Valid user with <code>SEC-USR-TYPE = 'A'</code> — would be routed to COADM01C, not COMEN01C. Useful for negative testing.</td></tr>
+            <tr><td>CICS region configuration</td><td>All 11 target programs must be defined in the CICS program table (PPT). Remove COPAUS0C definition to test TC-09.</td></tr>
+            <tr><td>COMEN02Y table modification</td><td>To test TC-08 (admin-only restriction) and TC-10 (DUMMY), modify the copybook and recompile.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- SECTION 12 — Known Issues and Considerations                       -->
+<!-- ================================================================== -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Known Issues and Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 12.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 12.1 Known Issues</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Issue</th><th>Severity</th><th>Details</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>KI-1</td>
+              <td>RECEIVE RESP codes not checked</td>
+              <td>Low</td>
+              <td><code>WS-RESP-CD</code> and <code>WS-REAS-CD</code> are populated by <code>EXEC CICS RECEIVE</code> but never evaluated. A MAPFAIL condition would go undetected.</td>
+            </tr>
+            <tr>
+              <td>KI-2</td>
+              <td>Duplicate MOVE statement</td>
+              <td>Cosmetic</td>
+              <td>Line 180: <code>MOVE WS-PGMNAME TO CDEMO-FROM-PROGRAM</code> is executed twice in the WHEN OTHER path — redundant but harmless.</td>
+            </tr>
+            <tr>
+              <td>KI-3</td>
+              <td>Hardcoded program name for sign-on</td>
+              <td>Low</td>
+              <td><code>'COSGN00C'</code> is hardcoded in multiple places (lines 83, 97, 199). Could be externalized to a copybook constant.</td>
+            </tr>
+            <tr>
+              <td>KI-4</td>
+              <td>Menu options hardcoded in copybook</td>
+              <td>Low</td>
+              <td>The menu structure (COMEN02Y) is compiled into the program. Adding or reordering options requires recompilation of all programs that COPY this member.</td>
+            </tr>
+            <tr>
+              <td>KI-5</td>
+              <td>INQUIRE check only for COPAUS0C</td>
+              <td>Low</td>
+              <td>Only option 11 (COPAUS0C) is checked for installation via INQUIRE PROGRAM. Other programs are assumed to be installed — an XCTL to a missing program would cause an ABEND.</td>
+            </tr>
+            <tr>
+              <td>KI-6</td>
+              <td>WS-USRSEC-FILE declared but unused</td>
+              <td>Cosmetic</td>
+              <td><code>WS-USRSEC-FILE PIC X(08) VALUE 'USRSEC  '</code> is declared in WORKING-STORAGE but never referenced in any EXEC CICS command.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 12.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span> 12.2 Modernization Considerations</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Current State</th><th>Target State</th><th>Complexity</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Screen I/O</td>
+              <td>BMS MAP SEND/RECEIVE (3270 terminal)</td>
+              <td>REST API + SPA frontend (React/Angular navigation menu)</td>
+              <td>Low — menu is stateless; map directly to a route-based navigation component</td>
+            </tr>
+            <tr>
+              <td>Menu Configuration</td>
+              <td>Hardcoded in COMEN02Y copybook, compiled into program</td>
+              <td>Database-driven or JSON configuration file, dynamically loaded</td>
+              <td>Low — straightforward data extraction</td>
+            </tr>
+            <tr>
+              <td>Navigation</td>
+              <td>EXEC CICS XCTL with COMMAREA</td>
+              <td>URL routing / API gateway dispatch</td>
+              <td>Low — one-to-one mapping of options to routes/endpoints</td>
+            </tr>
+            <tr>
+              <td>State Management</td>
+              <td>COMMAREA pseudo-conversational</td>
+              <td>JWT session token / server-side session</td>
+              <td>Low — minimal state (user ID, user type)</td>
+            </tr>
+            <tr>
+              <td>Authorization</td>
+              <td>CDEMO-USER-TYPE check against USRTYPE in menu table</td>
+              <td>Role-based access control (RBAC) with middleware/interceptor</td>
+              <td>Low — two roles (user/admin) map to simple RBAC</td>
+            </tr>
+            <tr>
+              <td>Program Availability Check</td>
+              <td>EXEC CICS INQUIRE PROGRAM (for COPAUS0C)</td>
+              <td>Service health check / feature flag</td>
+              <td>Low — replace with microservice health endpoint or feature toggle</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div> <!-- /page-wrap-single -->
+
+<footer class="footer">
+  <strong>UniCredit S.p.A.</strong> — CardDemo CICS Transaction Analysis &middot; Auto-generated
+</footer>
+
+<script>
+// Collapse/expand all sections on page load (all expanded by default)
+document.querySelectorAll('.section-header').forEach(function(header) {
+  header.addEventListener('click', function() {
+    // Toggle is handled by the onclick in HTML
+  });
+});
+</script>
+
+</body>
+</html>
