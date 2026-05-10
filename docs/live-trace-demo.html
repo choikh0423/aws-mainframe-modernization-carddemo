@@ -1765,11 +1765,13 @@ function handleTraceStep(data) {
   }
   if (html) addTrace('step', html);
 
-  // Detect accept/reject from Devin's actual words — strict keyword matching
+  // Detect accept/reject from Devin's actual decision statement.
+  // Must NOT match COBOL identifiers like REJECT-RECORD, WS-REJECT-COUNT, etc.
+  // Only match "ACCEPTED"/"REJECTED" when NOT adjacent to a hyphen.
   const pgms = (data.programs || []).map(p => p.toUpperCase());
   if (phase === 'batch') {
     const text = ((data.title || '') + ' ' + (data.finding || '')).toUpperCase();
-    if (/\bACCEPT(ED)?\b/.test(text)) {
+    if (/(?<![A-Z\-])ACCEPTED(?![A-Z\-])/.test(text)) {
       activateEdge('e-acct-decision', 'el-acct-decision', 'batch');
       activateDecision('d-overlimit', 'dl-overlimit', 'active');
       activateDecision(null, 'dl-overlimit2', 'active');
@@ -1779,7 +1781,7 @@ function handleTraceStep(data) {
       activateEdge('e-accept-tcatbal', 'el-accept-tcatbal');
       activateNode('n-transact-posted');
     }
-    if (/\bREJECT(ED)?\b/.test(text)) {
+    if (/(?<![A-Z\-])REJECTED(?![A-Z\-])/.test(text)) {
       activateEdge('e-acct-decision', 'el-acct-decision', 'batch');
       activateDecision('d-overlimit', 'dl-overlimit', 'reject-active');
       activateDecision(null, 'dl-overlimit2', 'reject-active');
