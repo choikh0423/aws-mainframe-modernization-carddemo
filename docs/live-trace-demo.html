@@ -468,6 +468,127 @@
     text-anchor: middle;
   }
 
+  /* Panel tabs */
+  .panel-tabs {
+    display: flex;
+    border-bottom: 1px solid #1e3a5f;
+  }
+  .panel-tab {
+    flex: 1;
+    padding: 8px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #666;
+    font-size: 10px;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .panel-tab:hover { color: #aaa; }
+  .panel-tab.active {
+    color: #4da6ff;
+    border-bottom-color: #4da6ff;
+  }
+  .tab-content { display: none; flex: 1; overflow-y: auto; }
+  .tab-content.active { display: block; }
+
+  /* VSAM State panel */
+  #vsam-panel table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10px;
+  }
+  #vsam-panel th {
+    background: #161b22;
+    color: #4da6ff;
+    padding: 4px 6px;
+    text-align: left;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+  }
+  #vsam-panel td {
+    padding: 3px 6px;
+    border-bottom: 1px solid #111;
+    color: #c9d1d9;
+  }
+  #vsam-panel h4 {
+    color: #00ff88;
+    font-size: 11px;
+    padding: 8px 12px 4px;
+    margin: 0;
+  }
+
+  /* SQL Query Log */
+  .sql-entry {
+    padding: 6px 12px;
+    border-bottom: 1px solid #111;
+    font-size: 10px;
+    line-height: 1.5;
+    opacity: 0;
+    animation: fadeIn 0.3s forwards;
+  }
+  .sql-entry .sql-type {
+    font-weight: 700;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+  }
+  .sql-type-SELECT { color: #00ff88; }
+  .sql-type-INSERT { color: #ffa94d; }
+  .sql-type-UPDATE { color: #4da6ff; }
+  .sql-type-DECISION { color: #ff6b6b; }
+  .sql-entry .sql-text {
+    color: #8b949e;
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    word-break: break-all;
+  }
+  .sql-entry .sql-result {
+    color: #555;
+    font-size: 9px;
+    margin-top: 2px;
+  }
+
+  /* Transaction input terminal screen */
+  .txn-row {
+    display: flex;
+    align-items: center;
+    margin: 6px 0;
+  }
+  .txn-row label {
+    color: #33ff33;
+    width: 140px;
+    font-size: 12px;
+  }
+  .txn-row input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #33ff33;
+    color: #ffff33;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    width: 160px;
+    outline: none;
+    caret-color: #33ff33;
+    padding: 2px 4px;
+  }
+  .txn-confirm-btn {
+    background: #33ff33;
+    color: #000;
+    border: none;
+    padding: 6px 20px;
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 12px;
+    border-radius: 2px;
+  }
+  .txn-confirm-btn:hover { background: #22cc22; }
+
   /* No-diagram popup */
   #no-diagram-popup {
     display: none;
@@ -508,9 +629,10 @@
 <header>
   <h1><span>Devin</span> &mdash; Dynamic Call Resolution Live Trace</h1>
   <div class="controls">
-    <a href="/static" style="color:#ffa94d;text-decoration:none;font-size:11px;border:1px solid #ffa94d;padding:4px 12px;border-radius:4px;">Switch to Static Mode</a>
+    <a href="/static" style="color:#ffa94d;text-decoration:none;font-size:11px;border:1px solid #ffa94d;padding:4px 12px;border-radius:4px;">Static Mode</a>
     <button id="simulate-btn" onclick="showTerminal('simulate')">Simulate Demo</button>
     <button id="start-btn" onclick="showTerminal('live')">Start Live Trace</button>
+    <button id="reset-db-btn" onclick="apiResetDb()" style="background:transparent;border:1px solid #ff6b6b;color:#ff6b6b;">Reset DB</button>
     <button id="reset-btn" onclick="resetAll()">Reset</button>
   </div>
 </header>
@@ -735,10 +857,30 @@
   </div>
 
   <div id="event-panel">
-    <h3>Devin Trace Log</h3>
-    <div id="event-log">
-      <div style="padding: 16px; color: #555; font-size: 11px; text-align: center;">
-        Click <b>Simulate Demo</b> or <b>Start Live Trace</b> to open the CICS terminal
+    <div class="panel-tabs">
+      <button class="panel-tab active" onclick="switchTab('trace')">Trace Log</button>
+      <button class="panel-tab" onclick="switchTab('vsam')">VSAM State</button>
+      <button class="panel-tab" onclick="switchTab('sql')">SQL Queries</button>
+    </div>
+    <div id="trace-panel" class="tab-content active">
+      <div id="event-log">
+        <div style="padding: 16px; color: #555; font-size: 11px; text-align: center;">
+          Click <b>Simulate Demo</b> or <b>Start Live Trace</b> to open the CICS terminal
+        </div>
+      </div>
+    </div>
+    <div id="vsam-panel" class="tab-content">
+      <div id="vsam-content">
+        <div style="padding: 16px; color: #555; font-size: 11px; text-align: center;">
+          Loading database state...
+        </div>
+      </div>
+    </div>
+    <div id="sql-panel" class="tab-content">
+      <div id="sql-log">
+        <div style="padding: 16px; color: #555; font-size: 11px; text-align: center;">
+          SQL queries will appear here during the demo
+        </div>
       </div>
     </div>
   </div>
@@ -794,6 +936,12 @@ function showTerminal(mode) {
 
 function closeTerminal() {
   document.getElementById('terminal-overlay').classList.remove('open');
+  // Restore original terminal body if it was replaced by transaction screen
+  if (savedTerminalBody) {
+    const body = document.querySelector('#terminal-overlay .terminal-body');
+    if (body) body.innerHTML = savedTerminalBody;
+    savedTerminalBody = null;
+  }
 }
 
 function selectMenuOption(num) {
@@ -1090,15 +1238,73 @@ async function startSimulation(opt) {
   await sleep(1500);
 
   if (chosen.num === 8) {
-    // ===== OPTION 8: Full 7-step trace (left tree) =====
-    for (let i = 0; i < TRACE_STEPS.length; i++) {
+    // ===== OPTION 8: Full trace with DB integration =====
+    // Steps 0-4: trace the COBOL call chain
+    for (let i = 0; i < 5 && i < TRACE_STEPS.length; i++) {
       if (!isRunning) break;
       highlightStep(TRACE_STEPS[i]);
       addLogEntry(TRACE_STEPS[i]);
       await sleep(TRACE_STEPS[i].delay);
     }
+    if (!isRunning) { isRunning = false; enableButtons(); return; }
+
+    // Step 5: Open transaction entry terminal (DB-backed)
+    showTransactionScreen();
+    addLogEntry({
+      title: 'Transaction Entry',
+      file: 'COTRN02C — EXEC CICS RECEIVE MAP',
+      message: 'Enter transaction amount and merchant in the 3270 terminal',
+      code: ''
+    });
+
+    // Wait for user to enter transaction
+    const txnResult = await waitForTransactionInput();
+    if (!isRunning) { isRunning = false; enableButtons(); return; }
+
+    // Step 6: Run batch processing (DB-backed)
+    highlightStep(TRACE_STEPS[5]);
+    addLogEntry(TRACE_STEPS[5]);
+    await sleep(1500);
+
+    addLogEntry({
+      title: 'Batch Processing',
+      file: 'CBTRN02C — Overlimit Check',
+      message: 'Running batch processing against SQLite database...',
+      code: ''
+    });
+
+    const batchResult = await apiRunBatch();
+    const results = batchResult.results || [];
+    const decision = results.length ? results[0].decision : 'UNKNOWN';
+    const tempBal = results.length ? results[0].temp_bal : 0;
+
+    addSqlLogEntry('DECISION',
+      `temp_bal = ${tempBal} vs credit_limit`,
+      decision
+    );
+
+    // Animate based on real DB decision
+    if (decision === 'ACCEPTED') {
+      addLogEntry({
+        title: 'ACCEPTED',
+        file: 'TRANSACT → Posted',
+        message: `Transaction of $${txnResult.amount.toFixed(2)} for ${txnResult.merchant} was ACCEPTED (temp_bal=$${tempBal.toFixed(2)} ≤ limit)`,
+        code: ''
+      });
+    } else {
+      addLogEntry({
+        title: 'REJECTED',
+        file: 'DALYREJS → 102 OVERLIMIT',
+        message: `Transaction of $${txnResult.amount.toFixed(2)} for ${txnResult.merchant} was REJECTED (temp_bal=$${tempBal.toFixed(2)} > limit)`,
+        code: ''
+      });
+    }
+
+    switchTab('vsam');
+    await sleep(1500);
+
     if (isRunning) {
-      showStepIndicator('Trace Complete', 'All 6 call resolution + decision steps traced');
+      showStepIndicator('Trace Complete', `${decision} — Run again to see DB state affect routing`);
       addCompletionEntry();
     }
   } else if (chosen.num === 10) {
@@ -1190,8 +1396,52 @@ async function startLiveTrace() {
     // Pre-highlight starting nodes — every option flows through these
     highlightStartingNodes(optNum);
 
+    // Store session ID for DB relay
+    let currentSessionId = null;
+
     evtSource.onmessage = function(event) {
       const data = JSON.parse(event.data);
+
+      // Handle input_required SSE events
+      if (data.type === 'input_required') {
+        showTransactionScreen(data.session_id || currentSessionId);
+        addLogEntry({
+          title: 'Input Required',
+          file: data.file || 'COTRN02C',
+          message: data.prompt || 'Enter transaction details in the terminal',
+          code: data.code_snippet || ''
+        });
+        highlightLiveStep(data, 0);
+        return;
+      }
+
+      // Handle db_result SSE events
+      if (data.type === 'db_result') {
+        const br = data.batch_result || {};
+        const results = br.results || [];
+        const decision = results.length ? results[0].decision : 'UNKNOWN';
+        const tempBal = results.length ? results[0].temp_bal : 0;
+        const acct = data.db_state || {};
+
+        if (data.queries_executed) {
+          data.queries_executed.forEach(q => addSqlLogEntry(q.type, q.sql, q.result || ''));
+        }
+        addSqlLogEntry('DECISION',
+          `temp_bal = cyc_credit(${acct.cyc_credit||0}) - cyc_debit(${acct.cyc_debit||0}) + amount = ${tempBal}`,
+          `${decision} (limit=${acct.credit_limit||0})`
+        );
+        addLogEntry({
+          title: `Batch Result: ${decision}`,
+          file: 'SQLite → CBTRN02C logic',
+          message: `temp_bal=$${tempBal.toFixed(2)}, credit_limit=$${(acct.credit_limit||0).toFixed(2)} → ${decision}`,
+          code: ''
+        });
+        refreshDbState();
+        switchTab('sql');
+        highlightLiveStep(data, 0);
+        return;
+      }
+
       if (data.type === 'step') {
         const stepIdx = data.step_index;
 
@@ -1238,6 +1488,7 @@ async function startLiveTrace() {
         document.getElementById('simulate-btn').disabled = false;
         document.getElementById('start-btn').disabled = false;
       } else if (data.type === 'session_created') {
+        currentSessionId = data.session_id;
         addLogEntry({
           title: 'Session Created',
           file: data.session_url || '',
@@ -1694,9 +1945,14 @@ function resetAll() {
   `;
   selectedOption = null;
   liveHighlightedNodes = new Set();
+  activeSessionId = null;
+  transactionResolve = null;
+  savedTerminalBody = null;
   // Restore edge label
   const edgeLabel = document.getElementById('elabel-terminal-comen01c');
   if (edgeLabel) edgeLabel.textContent = 'option 8';
+  // Switch to trace tab
+  switchTab('trace');
 }
 
 // ============================================================
@@ -1707,6 +1963,311 @@ function sleep(ms) {
     simulationTimer = setTimeout(resolve, ms);
   });
 }
+
+// ============================================================
+//  TAB SWITCHING
+// ============================================================
+function switchTab(tab) {
+  document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  if (tab === 'trace') {
+    document.querySelector('.panel-tab:nth-child(1)').classList.add('active');
+    document.getElementById('trace-panel').classList.add('active');
+  } else if (tab === 'vsam') {
+    document.querySelector('.panel-tab:nth-child(2)').classList.add('active');
+    document.getElementById('vsam-panel').classList.add('active');
+  } else if (tab === 'sql') {
+    document.querySelector('.panel-tab:nth-child(3)').classList.add('active');
+    document.getElementById('sql-panel').classList.add('active');
+  }
+}
+
+// ============================================================
+//  DATABASE API
+// ============================================================
+async function dbFetch(path, method = 'GET', body = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const resp = await fetch(path, opts);
+  return resp.json();
+}
+
+async function refreshDbState() {
+  const state = await dbFetch('/api/db/state');
+  renderVsamPanel(state);
+  return state;
+}
+
+async function apiAddTransaction(amount, merchant, sessionId) {
+  const result = await dbFetch('/api/db/transaction', 'POST', {
+    amount, merchant, session_id: sessionId || null
+  });
+  if (result.queries_executed) {
+    result.queries_executed.forEach(q => addSqlLogEntry(q.type, q.sql, q.result || ''));
+  }
+  await refreshDbState();
+  return result;
+}
+
+async function apiRunBatch() {
+  const result = await dbFetch('/api/db/batch', 'POST');
+  if (result.queries_executed) {
+    result.queries_executed.forEach(q => addSqlLogEntry(q.type, q.sql, q.result || ''));
+  }
+  await refreshDbState();
+  return result;
+}
+
+async function apiResetDb() {
+  await dbFetch('/api/db/reset', 'POST');
+  document.getElementById('sql-log').innerHTML = '<div style="padding:16px;color:#555;font-size:11px;text-align:center;">SQL queries will appear here during the demo</div>';
+  await refreshDbState();
+  addLogEntry({ title: 'DB Reset', file: '', message: 'Database reset to initial state (50 accounts from ASCII data files)', code: '' });
+}
+
+// ============================================================
+//  VSAM STATE PANEL
+// ============================================================
+function renderVsamPanel(state) {
+  const c = document.getElementById('vsam-content');
+  const acct = state.account || {};
+  const xrefs = (state.cardxref || []).slice(0, 10);
+  const txns = state.transactions || [];
+  const rejs = state.daily_rejects || [];
+  const stats = state.stats || {};
+
+  let html = '';
+
+  // Demo account
+  html += '<h4>Demo Account (ACCTDAT)</h4>';
+  if (acct.acct_id) {
+    html += '<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody>';
+    html += `<tr><td>Acct ID</td><td>${acct.acct_id}</td></tr>`;
+    html += `<tr><td>Status</td><td>${acct.status}</td></tr>`;
+    html += `<tr><td>Balance</td><td>$${(acct.balance||0).toFixed(2)}</td></tr>`;
+    html += `<tr><td>Credit Limit</td><td>$${(acct.credit_limit||0).toFixed(2)}</td></tr>`;
+    html += `<tr><td>Cyc Credit</td><td>$${(acct.cyc_credit||0).toFixed(2)}</td></tr>`;
+    html += `<tr><td>Cyc Debit</td><td>$${(acct.cyc_debit||0).toFixed(2)}</td></tr>`;
+    html += '</tbody></table>';
+  }
+
+  // Stats
+  html += `<h4>Database Stats</h4>`;
+  html += `<table><tbody>`;
+  html += `<tr><td>Total Accounts</td><td>${stats.total_accounts || 0}</td></tr>`;
+  html += `<tr><td>Total Card XREFs</td><td>${stats.total_xrefs || 0}</td></tr>`;
+  html += `</tbody></table>`;
+
+  // Transactions
+  html += '<h4>Transactions (TRANSACT)</h4>';
+  if (txns.length === 0) {
+    html += '<div style="padding:4px 12px;color:#555;font-size:10px;">— empty —</div>';
+  } else {
+    html += '<table><thead><tr><th>ID</th><th>Amount</th><th>Merchant</th><th>Status</th></tr></thead><tbody>';
+    txns.forEach(t => {
+      const color = t.status === 'Posted' ? '#00ff88' : t.status === 'Rejected' ? '#ff6b6b' : '#ffa94d';
+      html += `<tr><td>${t.tran_id}</td><td>$${(t.amount||0).toFixed(2)}</td><td>${t.merchant||''}</td><td style="color:${color}">${t.status}</td></tr>`;
+    });
+    html += '</tbody></table>';
+  }
+
+  // Rejects
+  html += '<h4>Daily Rejects (DALYREJS)</h4>';
+  if (rejs.length === 0) {
+    html += '<div style="padding:4px 12px;color:#555;font-size:10px;">— empty —</div>';
+  } else {
+    html += '<table><thead><tr><th>Tran</th><th>Amount</th><th>Code</th><th>Reason</th></tr></thead><tbody>';
+    rejs.forEach(r => {
+      html += `<tr><td>${r.tran_id}</td><td>$${(r.amount||0).toFixed(2)}</td><td style="color:#ff6b6b">${r.reason_code}</td><td>${r.description||''}</td></tr>`;
+    });
+    html += '</tbody></table>';
+  }
+
+  c.innerHTML = html;
+}
+
+// ============================================================
+//  SQL QUERY LOG
+// ============================================================
+function addSqlLogEntry(type, sql, result) {
+  const log = document.getElementById('sql-log');
+  // Clear placeholder
+  if (log.querySelector('div[style]') && log.children.length === 1) {
+    log.innerHTML = '';
+  }
+  const entry = document.createElement('div');
+  entry.className = 'sql-entry';
+  const typeClass = 'sql-type-' + (type || 'SELECT').toUpperCase();
+  entry.innerHTML = `
+    <div class="sql-type ${typeClass}">${escHtml(type || 'QUERY')}</div>
+    <div class="sql-text">${escHtml(sql || '')}</div>
+    ${result ? `<div class="sql-result">→ ${escHtml(String(result))}</div>` : ''}
+  `;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ============================================================
+//  TRANSACTION ENTRY TERMINAL
+// ============================================================
+let activeSessionId = null;
+let transactionResolve = null;
+let savedTerminalBody = null;
+
+function showTransactionScreen(sessionId) {
+  activeSessionId = sessionId || null;
+  const overlay = document.getElementById('terminal-overlay');
+  const body = overlay.querySelector('.terminal-body');
+  // Save original terminal content so we can restore it later
+  if (!savedTerminalBody) {
+    savedTerminalBody = body.innerHTML;
+  }
+  body.innerHTML = `
+    <div class="term-title">TRANSACTION ENTRY</div>
+    <div class="term-subtitle">COTRN02C — Card: 9680294154603697</div>
+    <div class="term-divider"></div>
+    <div class="txn-row">
+      <label>CARD NUMBER:</label>
+      <span style="color:#ffff33">9680-2941-5460-3697</span>
+    </div>
+    <div class="txn-row">
+      <label>AMOUNT ($):</label>
+      <input type="number" id="txn-amount" step="0.01" min="0" placeholder="500.00" />
+    </div>
+    <div class="txn-row">
+      <label>MERCHANT:</label>
+      <input type="text" id="txn-merchant" placeholder="AMAZON" maxlength="30" />
+    </div>
+    <div class="term-divider"></div>
+    <button class="txn-confirm-btn" onclick="confirmTransaction()">CONFIRM TRANSACTION</button>
+    <div id="txn-status" class="terminal-status">Enter transaction details</div>
+  `;
+  overlay.classList.add('open');
+  setTimeout(() => {
+    const amtInput = document.getElementById('txn-amount');
+    if (amtInput) amtInput.focus();
+  }, 100);
+}
+
+async function confirmTransaction() {
+  const amountEl = document.getElementById('txn-amount');
+  const merchantEl = document.getElementById('txn-merchant');
+  const statusEl = document.getElementById('txn-status');
+  const amount = parseFloat(amountEl.value || amountEl.placeholder);
+  const merchant = (merchantEl.value || merchantEl.placeholder || 'UNKNOWN').toUpperCase();
+
+  if (!amount || amount <= 0) {
+    statusEl.textContent = 'ERROR: Enter a valid amount';
+    statusEl.className = 'terminal-status';
+    return;
+  }
+
+  statusEl.className = 'terminal-status resolving';
+  statusEl.textContent = 'Writing to TRANSACT VSAM...';
+
+  const result = await apiAddTransaction(amount, merchant, activeSessionId);
+
+  statusEl.innerHTML = `WRITTEN — Tran ID: <span class="resolved-pgm">${result.tran_id}</span>, Status: Pending`;
+
+  addLogEntry({
+    title: 'Transaction Entered',
+    file: 'SQLite → TRANSACT',
+    message: `$${amount.toFixed(2)} for ${merchant} written to database (tran_id=${result.tran_id})`,
+    code: ''
+  });
+
+  // Auto-switch to VSAM tab to show the new transaction
+  switchTab('vsam');
+
+  setTimeout(() => {
+    closeTerminal();
+    if (transactionResolve) {
+      transactionResolve({ amount, merchant, tran_id: result.tran_id });
+      transactionResolve = null;
+    }
+  }, 1500);
+}
+
+function waitForTransactionInput() {
+  return new Promise(resolve => { transactionResolve = resolve; });
+}
+
+// ============================================================
+//  ENHANCED LIVE TRACE: SSE input_required / db_result
+// ============================================================
+const origOnMessage = null;
+
+function enhanceLiveSSEHandler(evtSource, sessionId) {
+  const originalHandler = evtSource.onmessage;
+  evtSource.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+
+    if (data.type === 'input_required') {
+      // Devin is asking for terminal input
+      showTransactionScreen(data.session_id || sessionId);
+      addLogEntry({
+        title: 'Input Required',
+        file: data.file || 'COTRN02C',
+        message: data.prompt || 'Enter transaction details in the terminal',
+        code: ''
+      });
+      // Also highlight relevant nodes
+      highlightLiveStep(data, 0);
+      return;
+    }
+
+    if (data.type === 'db_result') {
+      // Server queried DB on behalf of Devin
+      const br = data.batch_result || {};
+      const results = br.results || [];
+      const decision = results.length ? results[0].decision : 'UNKNOWN';
+      const tempBal = results.length ? results[0].temp_bal : 0;
+      const acct = data.db_state || {};
+
+      // Log the SQL queries from the batch
+      if (data.queries_executed) {
+        data.queries_executed.forEach(q => addSqlLogEntry(q.type, q.sql, q.result || ''));
+      }
+
+      // Add decision entry
+      addSqlLogEntry('DECISION',
+        `temp_bal = cyc_credit(${acct.cyc_credit||0}) - cyc_debit(${acct.cyc_debit||0}) + amount = ${tempBal}`,
+        `${decision} (limit=${acct.credit_limit||0})`
+      );
+
+      addLogEntry({
+        title: `Batch Result: ${decision}`,
+        file: 'SQLite → CBTRN02C logic',
+        message: `temp_bal=$${tempBal.toFixed(2)}, credit_limit=$${(acct.credit_limit||0).toFixed(2)} → ${decision}`,
+        code: ''
+      });
+
+      // Refresh VSAM panel
+      refreshDbState();
+      switchTab('sql');
+
+      // Also forward as a step for diagram highlighting
+      highlightLiveStep(data, 0);
+      return;
+    }
+
+    // Default: pass to original handler
+    if (originalHandler) {
+      originalHandler.call(evtSource, event);
+    }
+  };
+}
+
+// ============================================================
+//  INIT: Load DB state on page load
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  refreshDbState().catch(() => {});
+});
 </script>
 </body>
 </html>
