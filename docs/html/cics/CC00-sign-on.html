@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign-On (CC00) – CICS Transaction Analysis | UniCredit CardDemo</title>
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  .section-header { position: relative; }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. — Milano</div>
+    </div>
+    <h1>Sign-On – <span>CICS Transaction Analysis</span></h1>
+    <p class="hero-subtitle">
+      Transaction <code>CC00</code> · Program <code>COSGN00C</code> · Authentication gateway for CardDemo — validates user credentials against USRSEC VSAM file and routes to admin or regular menu
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Transaction ID</dt><dd>CC00</dd></div>
+      <div><dt>Entry Program</dt><dd>COSGN00C</dd></div>
+      <div><dt>BMS Mapset</dt><dd>COSGN00</dd></div>
+      <div><dt>Design Pattern</dt><dd>Pseudo-conversational</dd></div>
+      <div><dt>LOC</dt><dd>260</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">›</span>
+  <a href="index.html">CICS Flows</a>
+  <span class="sep">›</span>
+  Sign-On (CC00)
+</div>
+
+<!-- Body -->
+<div class="page-wrap-single">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 1: Business Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">01</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 1.1 Business Context</h3>
+      <p>The <strong>Sign-On</strong> transaction (<code>CC00</code>) is the authentication gateway for the CardDemo application. It is the first transaction a user encounters and serves as the entry point to the entire system. Every user — whether a regular cardholder or an administrator — must authenticate through this screen before accessing any CardDemo functionality.</p>
+      <ul>
+        <li><strong>Who uses it:</strong> All CardDemo users (regular users and administrators)</li>
+        <li><strong>When:</strong> At system login, before any other transaction can be accessed</li>
+        <li><strong>Business outcome:</strong> Authenticated users are routed to the appropriate menu — regular users to the Main Menu (<code>COMEN01C</code> / <code>CM00</code>), administrators to the Admin Menu (<code>COADM01C</code> / <code>CA00</code>)</li>
+        <li><strong>Data accessed:</strong> The <code>USRSEC</code> VSAM KSDS file containing user credentials and role types</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 1.2 Business Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+┌─────────────────────────────────────────────────────────────────────┐
+│                     CC00 SIGN-ON BUSINESS FLOW                      │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ┌─────────┐     ┌──────────────┐     ┌─────────────────────────┐  │
+│  │ Terminal │────▶│ Display      │────▶│ User enters User ID     │  │
+│  │  Start   │     │ Sign-On Map  │     │ and Password            │  │
+│  └─────────┘     └──────────────┘     └────────────┬────────────┘  │
+│                                                     │               │
+│                                              ┌──────▼──────┐       │
+│                                              │ Press ENTER  │       │
+│                                              └──────┬──────┘       │
+│                                                     │               │
+│                                         ┌───────────▼───────────┐  │
+│                                         │ Validate User ID      │  │
+│                                         │ (not empty)           │  │
+│                                         └───────────┬───────────┘  │
+│                              ┌──── FAIL ────────────┤               │
+│                              ▼                      │ OK            │
+│                   ┌──────────────────┐    ┌─────────▼───────────┐  │
+│                   │ "Please enter    │    │ Validate Password   │  │
+│                   │  User ID ..."    │    │ (not empty)         │  │
+│                   └──────────────────┘    └─────────┬───────────┘  │
+│                                    ┌── FAIL ────────┤               │
+│                                    ▼                │ OK            │
+│                        ┌──────────────────┐  ┌──────▼───────────┐  │
+│                        │ "Please enter    │  │ READ USRSEC file │  │
+│                        │  Password ..."   │  │ by User ID       │  │
+│                        └──────────────────┘  └──────┬───────────┘  │
+│                                                     │               │
+│              ┌──────────┬───────────────────────────┤               │
+│              ▼          ▼                            ▼               │
+│     ┌──────────────┐ ┌──────────────┐  ┌────────────────────────┐  │
+│     │ RESP=13      │ │ RESP=OTHER   │  │ RESP=0 (NORMAL)        │  │
+│     │ "User not    │ │ "Unable to   │  │ Compare passwords      │  │
+│     │  found"      │ │  verify..."  │  └────────────┬───────────┘  │
+│     └──────────────┘ └──────────────┘        ┌──────┴──────┐       │
+│                                               ▼             ▼       │
+│                                        ┌──────────┐  ┌──────────┐  │
+│                                        │ Match    │  │ No Match │  │
+│                                        └────┬─────┘  └────┬─────┘  │
+│                                             │              │        │
+│                                   ┌─────────▼─────┐  ┌────▼──────┐│
+│                                   │Check User Type│  │"Wrong     ││
+│                                   │SEC-USR-TYPE   │  │ Password" ││
+│                                   └───────┬───────┘  └───────────┘│
+│                                    ┌──────┴──────┐                 │
+│                                    ▼             ▼                 │
+│                             ┌───────────┐  ┌───────────┐          │
+│                             │ Type='A'  │  │ Type='U'  │          │
+│                             │ XCTL to   │  │ XCTL to   │          │
+│                             │ COADM01C  │  │ COMEN01C  │          │
+│                             │ (Admin    │  │ (Main     │          │
+│                             │  Menu)    │  │  Menu)    │          │
+│                             └───────────┘  └───────────┘          │
+│                                                                    │
+└────────────────────────────────────────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 1.3 Business Rules</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Rule</th><th>Source</th><th>Action on Violation</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>BR-1</td><td>User ID must not be empty (SPACES or LOW-VALUES)</td><td><code>EVALUATE TRUE</code> at line 117–122</td><td>Error message: "Please enter User ID ..."</td></tr>
+            <tr><td>BR-2</td><td>Password must not be empty (SPACES or LOW-VALUES)</td><td><code>EVALUATE TRUE</code> at line 123–127</td><td>Error message: "Please enter Password ..."</td></tr>
+            <tr><td>BR-3</td><td>User ID is uppercased before lookup</td><td><code>FUNCTION UPPER-CASE</code> at line 132</td><td>N/A — automatic conversion</td></tr>
+            <tr><td>BR-4</td><td>Password is uppercased before comparison</td><td><code>FUNCTION UPPER-CASE</code> at line 135</td><td>N/A — automatic conversion</td></tr>
+            <tr><td>BR-5</td><td>User must exist in USRSEC file</td><td><code>READ-USER-SEC-FILE</code> RESP=13 check at line 247</td><td>Error message: "User not found. Try again ..."</td></tr>
+            <tr><td>BR-6</td><td>Password must match stored SEC-USR-PWD</td><td><code>IF SEC-USR-PWD = WS-USER-PWD</code> at line 223</td><td>Error message: "Wrong Password. Try again ..."</td></tr>
+            <tr><td>BR-7</td><td>Admin users (SEC-USR-TYPE = 'A') route to Admin Menu</td><td><code>IF CDEMO-USRTYP-ADMIN</code> at line 230</td><td>XCTL to COADM01C</td></tr>
+            <tr><td>BR-8</td><td>Regular users route to Main Menu</td><td><code>ELSE</code> clause at line 235</td><td>XCTL to COMEN01C</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 1.4 User Interactions</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Step</th><th>User Action</th><th>System Response</th><th>Business Meaning</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>Initiate transaction CC00</td><td>Display sign-on screen (COSGN0A) with User ID and Password fields; cursor on User ID</td><td>Authentication prompt</td></tr>
+            <tr><td>2</td><td>Enter User ID and Password, press ENTER</td><td>Validate fields, read USRSEC file, verify password</td><td>Credential verification</td></tr>
+            <tr><td>3a</td><td>—</td><td>On success: XCTL to COADM01C (admin) or COMEN01C (regular)</td><td>Role-based menu routing</td></tr>
+            <tr><td>3b</td><td>—</td><td>On failure: re-display sign-on screen with error message</td><td>Allow retry</td></tr>
+            <tr><td>Alt</td><td>Press PF3</td><td>Display "Thank you for using CardDemo application..." and RETURN (no TRANSID)</td><td>Exit application</td></tr>
+            <tr><td>Alt</td><td>Press any other key</td><td>Display "Invalid key pressed. Please see below..."</td><td>Key restriction</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 2: Technical Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">02</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 2.1 Technical Flow Diagram — Overview</h3>
+      <div class="diagram-box">
+<pre>
+┌──────────┐      ┌──────────────┐      ┌──────────────┐      ┌──────────┐
+│ 3270     │      │ CICS Region  │      │  Programs    │      │ VSAM     │
+│ Terminal │◀════▶│              │◀════▶│              │◀════▶│ Files    │
+└──────────┘      │  Trans: CC00 │      │ COSGN00C     │      │          │
+                  │              │      │   ├──COADM01C│      │ USRSEC   │
+                  │  Mapset:     │      │   └──COMEN01C│      │ (KSDS)   │
+                  │  COSGN00     │      └──────────────┘      └──────────┘
+                  └──────────────┘
+                        │
+                        ▼
+                  ┌──────────────┐
+                  │  BMS Map     │
+                  │  COSGN0A     │
+                  └──────────────┘
+</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 2.2 Technical Flow Diagram — Detailed</h3>
+      <div class="diagram-box">
+<pre>
+ENTRY (MAIN-PARA)
+  │
+  ├─ SET ERR-FLG-OFF TO TRUE
+  ├─ MOVE SPACES TO WS-MESSAGE, ERRMSGO OF COSGN0AO
+  │
+  ├─ IF EIBCALEN = 0  (First entry — no COMMAREA)
+  │    ├─ MOVE LOW-VALUES TO COSGN0AO
+  │    ├─ MOVE -1 TO USERIDL OF COSGN0AI  (cursor → User ID)
+  │    └─ PERFORM SEND-SIGNON-SCREEN
+  │         ├─ PERFORM POPULATE-HEADER-INFO
+  │         │    ├─ FUNCTION CURRENT-DATE → WS-CURDATE-DATA
+  │         │    ├─ MOVE CCDA-TITLE01 → TITLE01O
+  │         │    ├─ MOVE CCDA-TITLE02 → TITLE02O
+  │         │    ├─ MOVE WS-TRANID → TRNNAMEO
+  │         │    ├─ MOVE WS-PGMNAME → PGMNAMEO
+  │         │    ├─ Format date → CURDATEO
+  │         │    ├─ Format time → CURTIMEO
+  │         │    ├─ EXEC CICS ASSIGN APPLID(APPLIDO)
+  │         │    └─ EXEC CICS ASSIGN SYSID(SYSIDO)
+  │         ├─ MOVE WS-MESSAGE → ERRMSGO
+  │         └─ EXEC CICS SEND MAP('COSGN0A') MAPSET('COSGN00')
+  │              FROM(COSGN0AO) ERASE CURSOR
+  │
+  └─ ELSE (EIBCALEN > 0 — pseudo-conversational re-entry)
+       │
+       ├─ EVALUATE EIBAID
+       │
+       ├─ WHEN DFHENTER → PERFORM PROCESS-ENTER-KEY
+       │    ├─ EXEC CICS RECEIVE MAP('COSGN0A') MAPSET('COSGN00')
+       │    ├─ Validate USERIDI (not SPACES/LOW-VALUES)
+       │    ├─ Validate PASSWDI (not SPACES/LOW-VALUES)
+       │    ├─ UPPER-CASE(USERIDI) → WS-USER-ID, CDEMO-USER-ID
+       │    ├─ UPPER-CASE(PASSWDI) → WS-USER-PWD
+       │    └─ IF NOT ERR-FLG-ON → PERFORM READ-USER-SEC-FILE
+       │         ├─ EXEC CICS READ DATASET('USRSEC')
+       │         │    INTO(SEC-USER-DATA) RIDFLD(WS-USER-ID)
+       │         │
+       │         ├─ WHEN RESP=0:
+       │         │    ├─ IF SEC-USR-PWD = WS-USER-PWD
+       │         │    │    ├─ Populate COMMAREA fields
+       │         │    │    ├─ IF CDEMO-USRTYP-ADMIN
+       │         │    │    │    └─ EXEC CICS XCTL PROGRAM('COADM01C')
+       │         │    │    └─ ELSE
+       │         │    │         └─ EXEC CICS XCTL PROGRAM('COMEN01C')
+       │         │    └─ ELSE → "Wrong Password. Try again ..."
+       │         │
+       │         ├─ WHEN RESP=13 → "User not found. Try again ..."
+       │         └─ WHEN OTHER   → "Unable to verify the User ..."
+       │
+       ├─ WHEN DFHPF3
+       │    ├─ MOVE CCDA-MSG-THANK-YOU → WS-MESSAGE
+       │    └─ PERFORM SEND-PLAIN-TEXT
+       │         ├─ EXEC CICS SEND TEXT FROM(WS-MESSAGE) ERASE FREEKB
+       │         └─ EXEC CICS RETURN  (no TRANSID — ends conversation)
+       │
+       └─ WHEN OTHER
+            ├─ MOVE 'Y' TO WS-ERR-FLG
+            ├─ MOVE CCDA-MSG-INVALID-KEY → WS-MESSAGE
+            └─ PERFORM SEND-SIGNON-SCREEN
+  │
+  └─ EXEC CICS RETURN TRANSID('CC00')
+       COMMAREA(CARDDEMO-COMMAREA)
+</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 2.3 Pseudo-Conversational Flow</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Iteration</th><th>EIBCALEN</th><th>User Action</th><th>Entry Point</th><th>Screen Sent</th><th>RETURN TRANSID</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1 (First)</td><td>= 0</td><td>Initiate CC00</td><td>MAIN-PARA</td><td>COSGN0A (empty sign-on form)</td><td>CC00</td></tr>
+            <tr><td>2+</td><td>&gt; 0</td><td>ENTER with valid credentials</td><td>MAIN-PARA → PROCESS-ENTER-KEY</td><td>None — XCTL to COADM01C or COMEN01C</td><td>N/A (XCTL)</td></tr>
+            <tr><td>2+</td><td>&gt; 0</td><td>ENTER with invalid credentials</td><td>MAIN-PARA → PROCESS-ENTER-KEY</td><td>COSGN0A (with error message)</td><td>CC00</td></tr>
+            <tr><td>2+</td><td>&gt; 0</td><td>PF3</td><td>MAIN-PARA → SEND-PLAIN-TEXT</td><td>Plain text "Thank you..."</td><td>None (session ends)</td></tr>
+            <tr><td>2+</td><td>&gt; 0</td><td>Other key</td><td>MAIN-PARA</td><td>COSGN0A (with "Invalid key" message)</td><td>CC00</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 2.4 CICS Command Flow</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Command</th><th>Paragraph</th><th>Purpose</th><th>Response Handling</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>SEND MAP('COSGN0A') MAPSET('COSGN00')</code></td><td>SEND-SIGNON-SCREEN</td><td>Display sign-on screen with header info and error message</td><td>None explicit</td></tr>
+            <tr><td><code>RECEIVE MAP('COSGN0A') MAPSET('COSGN00')</code></td><td>PROCESS-ENTER-KEY</td><td>Read user input (User ID, Password) from terminal</td><td>RESP(WS-RESP-CD) RESP2(WS-REAS-CD)</td></tr>
+            <tr><td><code>READ DATASET('USRSEC')</code></td><td>READ-USER-SEC-FILE</td><td>Look up user record by User ID key</td><td>EVALUATE WS-RESP-CD: 0=OK, 13=Not Found, OTHER=Error</td></tr>
+            <tr><td><code>XCTL PROGRAM('COADM01C')</code></td><td>READ-USER-SEC-FILE</td><td>Transfer control to Admin Menu for admin users</td><td>None explicit</td></tr>
+            <tr><td><code>XCTL PROGRAM('COMEN01C')</code></td><td>READ-USER-SEC-FILE</td><td>Transfer control to Main Menu for regular users</td><td>None explicit</td></tr>
+            <tr><td><code>SEND TEXT FROM(WS-MESSAGE)</code></td><td>SEND-PLAIN-TEXT</td><td>Display goodbye message on PF3</td><td>None explicit</td></tr>
+            <tr><td><code>RETURN</code> (no TRANSID)</td><td>SEND-PLAIN-TEXT</td><td>End CICS task — no pseudo-conversational return</td><td>N/A</td></tr>
+            <tr><td><code>RETURN TRANSID('CC00')</code></td><td>MAIN-PARA</td><td>Return control to CICS; re-invoke CC00 on next input</td><td>N/A</td></tr>
+            <tr><td><code>ASSIGN APPLID(APPLIDO)</code></td><td>POPULATE-HEADER-INFO</td><td>Retrieve CICS application ID for screen header</td><td>None explicit</td></tr>
+            <tr><td><code>ASSIGN SYSID(SYSIDO)</code></td><td>POPULATE-HEADER-INFO</td><td>Retrieve CICS system ID for screen header</td><td>None explicit</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 3: Screen Flow and BMS Maps
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">03</span>
+    <h2>Screen Flow and BMS Maps</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 3.1 Screen Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+                 ┌──────────────────────┐
+                 │   COSGN0A            │
+                 │   Sign-On Screen     │
+                 │                      │
+                 │  User ID:  [______]  │
+                 │  Password: [______]  │
+                 │                      │
+                 │  ENTER=Sign-on       │
+                 │  F3=Exit             │
+                 └──────────┬───────────┘
+                            │
+              ┌─────────────┼──────────────┐
+              │             │              │
+              ▼             ▼              ▼
+      ┌──────────────┐ ┌────────┐  ┌────────────────┐
+      │ ENTER        │ │ PF3    │  │ Other Key      │
+      │              │ │        │  │                │
+      │ Validate &   │ │ "Thank │  │ "Invalid key"  │
+      │ Authenticate │ │  you"  │  │ Re-display     │
+      └──────┬───────┘ │ END    │  │ COSGN0A        │
+             │         └────────┘  └────────────────┘
+      ┌──────┴──────┐
+      │             │
+      ▼             ▼
+┌───────────┐ ┌───────────┐
+│ Admin     │ │ Regular   │
+│ XCTL to   │ │ XCTL to   │
+│ COADM01C  │ │ COMEN01C  │
+│ (CA00)    │ │ (CM00)    │
+└───────────┘ └───────────┘
+</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 3.2 BMS Map Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Map Name</th><th>Mapset</th><th>Purpose</th><th>Key Fields</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>COSGN0A</td><td>COSGN00</td><td>Sign-on screen — collects User ID and Password for authentication</td><td>USERID, PASSWD, ERRMSG, TRNNAME, PGMNAME, TITLE01, TITLE02, CURDATE, CURTIME, APPLID, SYSID</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 3.3 Screen Field Details — COSGN0A</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Field Name</th><th>Row,Col</th><th>Length</th><th>Attributes</th><th>Color</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>TRNNAME</td><td>1,8</td><td>4</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Transaction ID display</td></tr>
+            <tr><td>TITLE01</td><td>1,21</td><td>40</td><td>ASKIP, FSET, NORM</td><td>YELLOW</td><td>Title line 1: "AWS Mainframe Modernization"</td></tr>
+            <tr><td>CURDATE</td><td>1,71</td><td>8</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Current date (mm/dd/yy)</td></tr>
+            <tr><td>PGMNAME</td><td>2,8</td><td>8</td><td>FSET, NORM, PROT</td><td>BLUE</td><td>Program name display</td></tr>
+            <tr><td>TITLE02</td><td>2,21</td><td>40</td><td>ASKIP, FSET, NORM</td><td>YELLOW</td><td>Title line 2: "CardDemo"</td></tr>
+            <tr><td>CURTIME</td><td>2,71</td><td>9</td><td>FSET, NORM, PROT</td><td>BLUE</td><td>Current time (hh:mm:ss)</td></tr>
+            <tr><td>APPLID</td><td>3,8</td><td>8</td><td>FSET, NORM, PROT</td><td>BLUE</td><td>CICS Application ID</td></tr>
+            <tr><td>SYSID</td><td>3,71</td><td>8</td><td>FSET, NORM, PROT</td><td>BLUE</td><td>CICS System ID</td></tr>
+            <tr><td>USERID</td><td>19,43</td><td>8</td><td>FSET, IC, NORM, UNPROT</td><td>GREEN</td><td>User ID input (initial cursor)</td></tr>
+            <tr><td>PASSWD</td><td>20,43</td><td>8</td><td>DRK, FSET, UNPROT</td><td>GREEN</td><td>Password input (dark — hidden)</td></tr>
+            <tr><td>ERRMSG</td><td>23,1</td><td>78</td><td>ASKIP, BRT, FSET</td><td>RED</td><td>Error/status message line</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>Note:</strong> The PASSWD field uses the <code>DRK</code> (dark) attribute so that the password is not visible on screen during entry. The decorative "dollar bill" ASCII art occupies rows 7–15.
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 3.4 PF Key / AID Key Handling</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Key</th><th>EIBAID Constant</th><th>Action</th><th>Source Line</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>ENTER</td><td>DFHENTER</td><td>PERFORM PROCESS-ENTER-KEY — validate input and authenticate user</td><td>86–87</td></tr>
+            <tr><td>PF3</td><td>DFHPF3</td><td>Display "Thank you for using CardDemo application..." via SEND TEXT, then RETURN (end session)</td><td>88–90</td></tr>
+            <tr><td>Other</td><td>WHEN OTHER</td><td>Set error flag, display "Invalid key pressed. Please see below..." and re-show sign-on screen</td><td>91–94</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 4: Program Inventory and Call Chain
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">04</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 4.1 Program Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Program</th><th>Type</th><th>Entry Mechanism</th><th>Purpose</th><th>LOC</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>COSGN00C</td><td>CICS COBOL</td><td>Transaction CC00 (entry)</td><td>Sign-on screen display, credential validation, role-based routing</td><td>260</td></tr>
+            <tr><td>COADM01C</td><td>CICS COBOL</td><td>XCTL from COSGN00C</td><td>Admin Menu dispatcher (for SEC-USR-TYPE = 'A')</td><td>—</td></tr>
+            <tr><td>COMEN01C</td><td>CICS COBOL</td><td>XCTL from COSGN00C</td><td>Main Menu dispatcher (for SEC-USR-TYPE = 'U')</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 4.2 Call Chain Diagram</h3>
+      <div class="diagram-box">
+<pre>
+Transaction CC00
+  │
+  └─▶ COSGN00C  (entry program)
+        │
+        ├─── READ ──▶ USRSEC (VSAM KSDS)
+        │
+        ├─── XCTL ──▶ COADM01C  (Admin Menu — CA00)
+        │                │
+        │                └──▶ Admin menu options (COUSR00C, COUSR01C, etc.)
+        │
+        └─── XCTL ──▶ COMEN01C  (Main Menu — CM00)
+                         │
+                         └──▶ Main menu options (COACTVWC, COTRN00C, etc.)
+</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 4.3 Call Details</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Caller</th><th>Called Program</th><th>Mechanism</th><th>Data Passed</th><th>Condition</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>COSGN00C</td><td>COADM01C</td><td>EXEC CICS XCTL</td><td>CARDDEMO-COMMAREA (populated with CDEMO-FROM-TRANID, CDEMO-FROM-PROGRAM, CDEMO-USER-ID, CDEMO-USER-TYPE, CDEMO-PGM-CONTEXT=0)</td><td>SEC-USR-PWD matches AND CDEMO-USRTYP-ADMIN = TRUE</td></tr>
+            <tr><td>COSGN00C</td><td>COMEN01C</td><td>EXEC CICS XCTL</td><td>CARDDEMO-COMMAREA (same fields as above)</td><td>SEC-USR-PWD matches AND CDEMO-USRTYP-ADMIN = FALSE</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 5: File and Data Store Inventory
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">05</span>
+    <h2>File and Data Store Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 5.1 File Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>FCT Name</th><th>Type</th><th>Access Mode</th><th>Program</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>USRSEC</td><td>VSAM KSDS</td><td>READ</td><td>COSGN00C</td><td>User security file — stores user credentials and role type for authentication</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 5.2 File Access Details — USRSEC</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Attribute</th><th>Value</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Dataset Name (FCT)</td><td><code>USRSEC</code> (defined in <code>WS-USRSEC-FILE</code>)</td></tr>
+            <tr><td>Record Layout Copybook</td><td><code>CSUSR01Y.cpy</code> — <code>SEC-USER-DATA</code></td></tr>
+            <tr><td>Record Length</td><td>80 bytes (8 + 20 + 20 + 8 + 1 + 23)</td></tr>
+            <tr><td>Key Field</td><td><code>SEC-USR-ID</code> — PIC X(08), offset 0</td></tr>
+            <tr><td>RIDFLD</td><td><code>WS-USER-ID</code> (PIC X(08), uppercased from user input)</td></tr>
+            <tr><td>KEYLENGTH</td><td>LENGTH OF WS-USER-ID = 8</td></tr>
+            <tr><td>Access Pattern</td><td>Direct keyed READ by user ID</td></tr>
+            <tr><td>Locking</td><td>No UPDATE specified — read-only, no locking</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h4>Record Layout — SEC-USER-DATA (CSUSR01Y.cpy)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Field</th><th>PIC</th><th>Length</th><th>Offset</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>SEC-USR-ID</td><td>X(08)</td><td>8</td><td>0</td><td>User ID (key)</td></tr>
+            <tr><td>SEC-USR-FNAME</td><td>X(20)</td><td>20</td><td>8</td><td>First name</td></tr>
+            <tr><td>SEC-USR-LNAME</td><td>X(20)</td><td>20</td><td>28</td><td>Last name</td></tr>
+            <tr><td>SEC-USR-PWD</td><td>X(08)</td><td>8</td><td>48</td><td>Password (compared to input)</td></tr>
+            <tr><td>SEC-USR-TYPE</td><td>X(01)</td><td>1</td><td>56</td><td>'A' = Admin, 'U' = Regular user</td></tr>
+            <tr><td>SEC-USR-FILLER</td><td>X(23)</td><td>23</td><td>57</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 5.3 TSQ Usage</h3>
+      <p>N/A — COSGN00C does not use any Temporary Storage Queues.</p>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 5.4 TDQ Usage</h3>
+      <p>N/A — COSGN00C does not use any Transient Data Queues.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 6: Data Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">06</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 6.1 Data Flow Through Transaction</h3>
+      <div class="diagram-box">
+<pre>
+┌──────────────────┐     ┌───────────────────────┐     ┌─────────────────┐
+│  TERMINAL INPUT  │     │   WORKING STORAGE     │     │  FILE I/O       │
+│                  │     │                       │     │                 │
+│ USERIDI ─────────┼────▶│ UPPER-CASE ──▶        │     │                 │
+│ (COSGN0AI)       │     │   WS-USER-ID ─────────┼────▶│ READ USRSEC     │
+│                  │     │   CDEMO-USER-ID        │     │ RIDFLD=         │
+│ PASSWDI ─────────┼────▶│ UPPER-CASE ──▶        │     │   WS-USER-ID    │
+│ (COSGN0AI)       │     │   WS-USER-PWD         │     │                 │
+└──────────────────┘     │                       │     │ INTO ──▶        │
+                         │                       │     │  SEC-USER-DATA  │
+                         │   SEC-USR-PWD ◀───────┼─────┤                 │
+                         │   SEC-USR-TYPE ◀──────┼─────┤                 │
+                         │                       │     └─────────────────┘
+                         │  Compare:             │
+                         │  WS-USER-PWD          │
+                         │    vs SEC-USR-PWD     │
+                         │                       │
+                         │  On match ──▶         │
+                         │   CDEMO-FROM-TRANID   │     ┌─────────────────┐
+                         │   CDEMO-FROM-PROGRAM  │     │ OUTPUT          │
+                         │   CDEMO-USER-ID       │     │                 │
+                         │   CDEMO-USER-TYPE     │────▶│ CARDDEMO-       │
+                         │   CDEMO-PGM-CONTEXT   │     │ COMMAREA        │
+                         │                       │     │ (passed via     │
+                         └───────────────────────┘     │  XCTL)          │
+                                                       └─────────────────┘
+
+                         ┌───────────────────────┐     ┌─────────────────┐
+                         │ ERROR PATH            │     │ TERMINAL OUTPUT │
+                         │                       │     │                 │
+                         │ WS-MESSAGE ═══════════╪════▶│ ERRMSGO         │
+                         │ (error strings)       │     │ (COSGN0AO)      │
+                         └───────────────────────┘     └─────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 6.2 Data Transformation Map</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Source</th><th>Transformation</th><th>Target</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>USERIDI OF COSGN0AI</td><td>FUNCTION UPPER-CASE</td><td>WS-USER-ID, CDEMO-USER-ID</td></tr>
+            <tr><td>PASSWDI OF COSGN0AI</td><td>FUNCTION UPPER-CASE</td><td>WS-USER-PWD</td></tr>
+            <tr><td>WS-USER-ID</td><td>Direct key for VSAM READ</td><td>RIDFLD for USRSEC lookup</td></tr>
+            <tr><td>SEC-USR-TYPE (from USRSEC)</td><td>Direct MOVE</td><td>CDEMO-USER-TYPE (in COMMAREA)</td></tr>
+            <tr><td>WS-TRANID ('CC00')</td><td>Direct MOVE</td><td>CDEMO-FROM-TRANID</td></tr>
+            <tr><td>WS-PGMNAME ('COSGN00C')</td><td>Direct MOVE</td><td>CDEMO-FROM-PROGRAM</td></tr>
+            <tr><td>Literal ZEROS</td><td>Direct MOVE</td><td>CDEMO-PGM-CONTEXT (set to 0 = ENTER)</td></tr>
+            <tr><td>FUNCTION CURRENT-DATE</td><td>Reformat YYYYMMDD → MM/DD/YY</td><td>CURDATEO OF COSGN0AO</td></tr>
+            <tr><td>FUNCTION CURRENT-DATE</td><td>Reformat HHMMSS → HH:MM:SS</td><td>CURTIMEO OF COSGN0AO</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 7: COMMAREA and Interface Contracts
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">07</span>
+    <h2>COMMAREA and Interface Contracts</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 7.1 COMMAREA Layout (COCOM01Y.cpy)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Field</th><th>Offset</th><th>PIC</th><th>Length</th><th>Direction</th><th>Purpose in CC00</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>CDEMO-FROM-TRANID</td><td>0</td><td>X(04)</td><td>4</td><td>OUT</td><td>Set to 'CC00' on successful login</td></tr>
+            <tr><td>CDEMO-FROM-PROGRAM</td><td>4</td><td>X(08)</td><td>8</td><td>OUT</td><td>Set to 'COSGN00C' on successful login</td></tr>
+            <tr><td>CDEMO-TO-TRANID</td><td>12</td><td>X(04)</td><td>4</td><td>—</td><td>Not set by COSGN00C</td></tr>
+            <tr><td>CDEMO-TO-PROGRAM</td><td>16</td><td>X(08)</td><td>8</td><td>—</td><td>Not set by COSGN00C</td></tr>
+            <tr><td>CDEMO-USER-ID</td><td>24</td><td>X(08)</td><td>8</td><td>OUT</td><td>Authenticated user ID (uppercased)</td></tr>
+            <tr><td>CDEMO-USER-TYPE</td><td>32</td><td>X(01)</td><td>1</td><td>OUT</td><td>'A' (admin) or 'U' (regular) from SEC-USR-TYPE</td></tr>
+            <tr><td>CDEMO-PGM-CONTEXT</td><td>33</td><td>9(01)</td><td>1</td><td>OUT</td><td>Set to 0 (CDEMO-PGM-ENTER) on login</td></tr>
+            <tr><td>CDEMO-CUST-ID</td><td>34</td><td>9(09)</td><td>9</td><td>—</td><td>Not set by COSGN00C</td></tr>
+            <tr><td>CDEMO-CUST-FNAME</td><td>43</td><td>X(25)</td><td>25</td><td>—</td><td>Not set</td></tr>
+            <tr><td>CDEMO-CUST-MNAME</td><td>68</td><td>X(25)</td><td>25</td><td>—</td><td>Not set</td></tr>
+            <tr><td>CDEMO-CUST-LNAME</td><td>93</td><td>X(25)</td><td>25</td><td>—</td><td>Not set</td></tr>
+            <tr><td>CDEMO-ACCT-ID</td><td>118</td><td>9(11)</td><td>11</td><td>—</td><td>Not set</td></tr>
+            <tr><td>CDEMO-ACCT-STATUS</td><td>129</td><td>X(01)</td><td>1</td><td>—</td><td>Not set</td></tr>
+            <tr><td>CDEMO-CARD-NUM</td><td>130</td><td>9(16)</td><td>16</td><td>—</td><td>Not set</td></tr>
+            <tr><td>CDEMO-LAST-MAP</td><td>146</td><td>X(7)</td><td>7</td><td>—</td><td>Not set by COSGN00C</td></tr>
+            <tr><td>CDEMO-LAST-MAPSET</td><td>153</td><td>X(7)</td><td>7</td><td>—</td><td>Not set by COSGN00C</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>Total COMMAREA size:</strong> 160 bytes. COSGN00C populates only the general-info fields (CDEMO-FROM-TRANID through CDEMO-PGM-CONTEXT) before XCTL to the menu program.
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 7.2 Return Code Conventions</h3>
+      <p>COSGN00C uses the <code>WS-RESP-CD</code> variable (PIC S9(09) COMP) to capture CICS RESP codes from the <code>READ</code> and <code>RECEIVE</code> commands. The program evaluates these as follows:</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>RESP Code</th><th>Meaning</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>0 (NORMAL)</td><td>Record found successfully</td><td>Proceed with password comparison</td></tr>
+            <tr><td>13 (NOTFND)</td><td>User ID not found in USRSEC</td><td>Display "User not found. Try again ..."</td></tr>
+            <tr><td>OTHER</td><td>Any other CICS error</td><td>Display "Unable to verify the User ..."</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 7.3 Conversation State Management</h3>
+      <p>State is preserved between pseudo-conversational iterations via the <code>CARDDEMO-COMMAREA</code>:</p>
+      <ul>
+        <li><strong>First entry (EIBCALEN = 0):</strong> No COMMAREA exists — the program displays the empty sign-on screen and issues <code>RETURN TRANSID('CC00') COMMAREA(CARDDEMO-COMMAREA)</code>.</li>
+        <li><strong>Subsequent entries (EIBCALEN &gt; 0):</strong> The COMMAREA is available via <code>DFHCOMMAREA</code>. The program evaluates EIBAID and processes user input. On failed login, it returns again with <code>TRANSID('CC00')</code>, preserving the COMMAREA for the next iteration.</li>
+        <li><strong>Successful login:</strong> State transitions via <code>XCTL</code> — control passes entirely to COADM01C or COMEN01C with the populated COMMAREA. No RETURN is issued.</li>
+        <li><strong>PF3 exit:</strong> <code>RETURN</code> is issued with no TRANSID, ending the pseudo-conversational loop.</li>
+      </ul>
+      <div class="callout">
+        <strong>Key observation:</strong> COSGN00C does not reference the incoming DFHCOMMAREA data (beyond checking EIBCALEN). It relies entirely on fresh terminal input each iteration rather than storing partial state. The COMMAREA serves only as an outbound contract for XCTL targets.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 8: Error Handling and User Feedback
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">08</span>
+    <h2>Error Handling and User Feedback</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 8.1 Error Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+                    ┌─────────────────┐
+                    │  PROCESS-ENTER  │
+                    └────────┬────────┘
+                             │
+              ┌──────────────┼──────────────────┐
+              ▼              ▼                   ▼
+     ┌────────────────┐ ┌───────────────┐ ┌──────────────┐
+     │ User ID empty  │ │ Password empty│ │ Both present │
+     │                │ │               │ │              │
+     │ ERR-FLG = 'Y'  │ │ ERR-FLG = 'Y' │ │ Continue     │
+     │ Cursor → USERID│ │ Cursor → PWD  │ │              │
+     │ Msg: "Please   │ │ Msg: "Please  │ └──────┬───────┘
+     │  enter User ID"│ │  enter Pwd"   │        │
+     └───────┬────────┘ └──────┬────────┘        ▼
+             │                 │        ┌──────────────────┐
+             │                 │        │ READ-USER-SEC    │
+             ▼                 ▼        └────────┬─────────┘
+     ┌──────────────────────────┐      ┌─────────┼─────────┐
+     │  SEND-SIGNON-SCREEN      │      ▼         ▼         ▼
+     │  (re-display with error) │   RESP=0    RESP=13   OTHER
+     └──────────────────────────┘      │         │         │
+                                       ▼         ▼         ▼
+                                  ┌─────────┐ ┌───────┐ ┌────────┐
+                                  │ Compare │ │"User  │ │"Unable │
+                                  │ password│ │ not   │ │ to     │
+                                  └────┬────┘ │ found"│ │verify" │
+                                  ┌────┴────┐ └───┬───┘ └───┬────┘
+                                  ▼         ▼     │         │
+                             ┌────────┐ ┌──────┐  │         │
+                             │ Match  │ │"Wrong│  │         │
+                             │→ XCTL  │ │ Pwd" │  │         │
+                             └────────┘ └──┬───┘  │         │
+                                           ▼      ▼         ▼
+                                    ┌──────────────────────────┐
+                                    │ SEND-SIGNON-SCREEN       │
+                                    │ (re-display with error)  │
+                                    └──────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 8.2 Error Handling Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Condition</th><th>RESP Code</th><th>Program Action</th><th>User Message</th><th>Cursor Position</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>User ID empty</td><td>N/A (input validation)</td><td>Set ERR-FLG='Y', skip file read</td><td>"Please enter User ID ..."</td><td>USERID field (USERIDL = -1)</td></tr>
+            <tr><td>Password empty</td><td>N/A (input validation)</td><td>Set ERR-FLG='Y', skip file read</td><td>"Please enter Password ..."</td><td>PASSWD field (PASSWDL = -1)</td></tr>
+            <tr><td>User not found</td><td>13 (NOTFND)</td><td>Set ERR-FLG='Y'</td><td>"User not found. Try again ..."</td><td>USERID field (USERIDL = -1)</td></tr>
+            <tr><td>Wrong password</td><td>0 (NORMAL)</td><td>Re-display sign-on</td><td>"Wrong Password. Try again ..."</td><td>PASSWD field (PASSWDL = -1)</td></tr>
+            <tr><td>File I/O error</td><td>OTHER</td><td>Set ERR-FLG='Y'</td><td>"Unable to verify the User ..."</td><td>USERID field (USERIDL = -1)</td></tr>
+            <tr><td>Invalid AID key</td><td>N/A</td><td>Set ERR-FLG='Y'</td><td>"Invalid key pressed. Please see below..."</td><td>Default (no explicit cursor set)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 8.3 HANDLE ABEND / HANDLE CONDITION</h3>
+      <p>COSGN00C does <strong>not</strong> issue any <code>EXEC CICS HANDLE ABEND</code> or <code>EXEC CICS HANDLE CONDITION</code> commands. All error handling is performed via <code>RESP</code> / <code>RESP2</code> options on CICS commands with subsequent <code>EVALUATE</code> blocks.</p>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 8.4 User Error Messages</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Message Text</th><th>Source</th><th>Trigger</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>"Please enter User ID ..."</td><td>Literal at line 120</td><td>USERIDI is SPACES or LOW-VALUES</td></tr>
+            <tr><td>"Please enter Password ..."</td><td>Literal at line 125</td><td>PASSWDI is SPACES or LOW-VALUES</td></tr>
+            <tr><td>"Wrong Password. Try again ..."</td><td>Literal at line 242</td><td>SEC-USR-PWD ≠ WS-USER-PWD</td></tr>
+            <tr><td>"User not found. Try again ..."</td><td>Literal at line 249</td><td>READ USRSEC returns RESP=13</td></tr>
+            <tr><td>"Unable to verify the User ..."</td><td>Literal at line 254</td><td>READ USRSEC returns unexpected RESP</td></tr>
+            <tr><td>"Invalid key pressed. Please see below..."</td><td>CCDA-MSG-INVALID-KEY (CSMSG01Y.cpy)</td><td>EIBAID is not ENTER or PF3</td></tr>
+            <tr><td>"Thank you for using CardDemo application..."</td><td>CCDA-MSG-THANK-YOU (CSMSG01Y.cpy)</td><td>PF3 pressed — graceful exit</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 9: Security and Authorization
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">09</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 9.1 Transaction Security</h3>
+      <p>CC00/COSGN00C <strong>is</strong> the authentication mechanism for the CardDemo application. It implements application-level security as follows:</p>
+      <ul>
+        <li><strong>Authentication flow:</strong> User enters an 8-character User ID and 8-character Password. Both are uppercased via <code>FUNCTION UPPER-CASE</code>. The User ID is used as the key to read the <code>USRSEC</code> VSAM file. The stored <code>SEC-USR-PWD</code> is compared directly with the input password.</li>
+        <li><strong>Password handling:</strong> The Password field on the BMS map uses the <code>DRK</code> (dark) attribute to prevent screen echo. However, passwords are stored and compared in <strong>clear text</strong> — no hashing or encryption is applied.</li>
+        <li><strong>Role-based routing:</strong> The <code>SEC-USR-TYPE</code> field determines post-login routing:
+          <ul>
+            <li><code>'A'</code> (CDEMO-USRTYP-ADMIN) → XCTL to <code>COADM01C</code> (Admin Menu)</li>
+            <li><code>'U'</code> (CDEMO-USRTYP-USER, or any non-A value) → XCTL to <code>COMEN01C</code> (Main Menu)</li>
+          </ul>
+        </li>
+        <li><strong>Session identity:</strong> The authenticated <code>CDEMO-USER-ID</code> and <code>CDEMO-USER-TYPE</code> are carried in the COMMAREA through all subsequent transactions, establishing the user session context.</li>
+        <li><strong>RACF/External security:</strong> No explicit RACF or CICS security manager calls are made. Transaction-level security (e.g., RACF transaction authorization for CC00) would be configured at the CICS region level, external to the program.</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 9.2 Data Access Authorization</h3>
+      <p>The program performs a read-only access to the <code>USRSEC</code> file. There are no explicit data-level authorization checks beyond the file's FCT definition. The USRSEC file's access permissions would be controlled by the CICS FCT and underlying VSAM security (RACF dataset profiles).</p>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 9.3 Audit Trail</h3>
+      <p>COSGN00C does <strong>not</strong> implement any explicit audit logging. There is no write to an audit file or TDQ on login success or failure. Audit capabilities would rely on:</p>
+      <ul>
+        <li>CICS SMF records (Type 110) for transaction-level logging</li>
+        <li>RACF audit events if external security is configured</li>
+        <li>CICS journal records if journaling is enabled at the region level</li>
+      </ul>
+      <div class="callout callout-red">
+        <strong>Security observation:</strong> Passwords are stored and compared in plain text. There is no login attempt throttling, account lockout, or failed-login auditing within the application code.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 10: Performance Characteristics
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Performance Characteristics</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 10.1 Performance Profile</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Metric</th><th>Value</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>File I/O per iteration</td><td>0–1 READ</td><td>0 on first display or validation error; 1 READ of USRSEC on credential check</td></tr>
+            <tr><td>MAP sends per iteration</td><td>1</td><td>Either SEND MAP (sign-on screen) or SEND TEXT (goodbye)</td></tr>
+            <tr><td>MAP receives per iteration</td><td>0–1</td><td>1 RECEIVE MAP on ENTER; 0 on first display, PF3, or invalid key</td></tr>
+            <tr><td>COMMAREA size</td><td>160 bytes</td><td>CARDDEMO-COMMAREA — small, no performance concern</td></tr>
+            <tr><td>XCTL transfers</td><td>0–1</td><td>1 XCTL on successful authentication; 0 otherwise</td></tr>
+            <tr><td>ASSIGN calls</td><td>2</td><td>APPLID and SYSID — lightweight CICS system calls</td></tr>
+            <tr><td>Program size</td><td>260 LOC</td><td>Small program — minimal load time</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 10.2 Performance Considerations</h3>
+      <ul>
+        <li><strong>Lightweight transaction:</strong> CC00 is one of the simplest transactions in the system. A single direct keyed VSAM READ is the only file I/O. No browse operations, no multi-file joins.</li>
+        <li><strong>No locking contention:</strong> The READ does not specify UPDATE, so no record-level locking occurs. Multiple concurrent sign-on attempts will not contend.</li>
+        <li><strong>XCTL vs LINK:</strong> The use of XCTL (rather than LINK) to transfer to the menu programs means COSGN00C's storage is released immediately, keeping memory footprint minimal.</li>
+        <li><strong>FUNCTION CURRENT-DATE:</strong> Called once per SEND-SIGNON-SCREEN. This is a lightweight intrinsic function with negligible overhead.</li>
+        <li><strong>Potential concern:</strong> If the USRSEC file is very large, the KSDS direct-read performance depends on CI/CA split configuration and buffer allocation. For a typical user base (hundreds to low thousands), this is not a concern.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 11: Testing Approach
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 11.1 Test Scenarios</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>TC#</th><th>Scenario</th><th>Input</th><th>Expected Result</th><th>Coverage</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>TC-01</td><td>First screen display</td><td>Initiate CC00 from CICS</td><td>Sign-on screen displayed, cursor on USERID, no error message</td><td>EIBCALEN=0 path</td></tr>
+            <tr><td>TC-02</td><td>Successful regular user login</td><td>Valid User ID + valid Password (type 'U')</td><td>XCTL to COMEN01C with populated COMMAREA</td><td>Normal path — regular user</td></tr>
+            <tr><td>TC-03</td><td>Successful admin user login</td><td>Valid admin User ID + valid Password (type 'A')</td><td>XCTL to COADM01C with populated COMMAREA</td><td>Normal path — admin user</td></tr>
+            <tr><td>TC-04</td><td>Empty User ID</td><td>Leave User ID blank, enter Password, press ENTER</td><td>"Please enter User ID ..." — cursor on USERID</td><td>BR-1 validation</td></tr>
+            <tr><td>TC-05</td><td>Empty Password</td><td>Enter User ID, leave Password blank, press ENTER</td><td>"Please enter Password ..." — cursor on PASSWD</td><td>BR-2 validation</td></tr>
+            <tr><td>TC-06</td><td>User not found</td><td>Non-existent User ID + any Password</td><td>"User not found. Try again ..." — cursor on USERID</td><td>RESP=13 path</td></tr>
+            <tr><td>TC-07</td><td>Wrong password</td><td>Valid User ID + incorrect Password</td><td>"Wrong Password. Try again ..." — cursor on PASSWD</td><td>Password mismatch</td></tr>
+            <tr><td>TC-08</td><td>Case insensitivity</td><td>Lowercase user ID and password</td><td>Same result as uppercase — FUNCTION UPPER-CASE applied</td><td>BR-3, BR-4</td></tr>
+            <tr><td>TC-09</td><td>PF3 exit</td><td>Press PF3</td><td>"Thank you for using CardDemo application..." — session ends</td><td>PF3 path</td></tr>
+            <tr><td>TC-10</td><td>Invalid key (e.g. PF1)</td><td>Press PF1</td><td>"Invalid key pressed. Please see below..." — re-display</td><td>WHEN OTHER path</td></tr>
+            <tr><td>TC-11</td><td>VSAM I/O error</td><td>Simulate file unavailable or VSAM error</td><td>"Unable to verify the User ..." — cursor on USERID</td><td>RESP=OTHER path</td></tr>
+            <tr><td>TC-12</td><td>Retry after failure</td><td>Fail login, then enter correct credentials</td><td>Successful login on second attempt</td><td>Pseudo-conversational loop</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 11.2 Test Data Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Data</th><th>Requirements</th><th>Source</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Regular user record</td><td>SEC-USR-ID with known password and SEC-USR-TYPE = 'U'</td><td>USRSEC VSAM file</td></tr>
+            <tr><td>Admin user record</td><td>SEC-USR-ID with known password and SEC-USR-TYPE = 'A'</td><td>USRSEC VSAM file</td></tr>
+            <tr><td>Non-existent user</td><td>A user ID that does not exist in USRSEC</td><td>Negative test — no record needed</td></tr>
+            <tr><td>CICS region</td><td>CC00 transaction defined, COSGN00C program defined, USRSEC file opened</td><td>CICS CSD</td></tr>
+            <tr><td>BMS mapset</td><td>COSGN00 mapset installed</td><td>CICS CSD</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 12: Known Issues and Considerations
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Known Issues and Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 12.1 Known Issues</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Issue</th><th>Severity</th><th>Details</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>KI-1</td><td>Plain-text password storage and comparison</td><td>High</td><td><code>SEC-USR-PWD</code> is stored in clear text in the USRSEC VSAM file. Password comparison is a direct string match with no hashing.</td></tr>
+            <tr><td>KI-2</td><td>No account lockout or brute-force protection</td><td>Medium</td><td>There is no failed-login counter or lockout mechanism. A user can retry indefinitely.</td></tr>
+            <tr><td>KI-3</td><td>No audit logging for login attempts</td><td>Medium</td><td>Neither successful nor failed login attempts are written to any application-level audit log.</td></tr>
+            <tr><td>KI-4</td><td>Case-insensitive credentials</td><td>Low</td><td>Both User ID and Password are uppercased before use, reducing password entropy. An 8-character mixed-case password has fewer effective combinations.</td></tr>
+            <tr><td>KI-5</td><td>No HANDLE ABEND</td><td>Low</td><td>If an unexpected CICS abend occurs (e.g., ASRA), there is no HANDLE ABEND to provide a graceful error screen. Default CICS abend handling applies.</td></tr>
+            <tr><td>KI-6</td><td>Hardcoded file name</td><td>Low</td><td><code>WS-USRSEC-FILE</code> is hardcoded to <code>'USRSEC  '</code>. No externalized configuration for file name.</td></tr>
+            <tr><td>KI-7</td><td>No RECEIVE MAP error handling</td><td>Low</td><td>The RESP/RESP2 on the RECEIVE MAP command is captured but never checked. If the RECEIVE fails (e.g., MAPFAIL), the program continues with unpredictable data.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 12.2 Modernization Considerations</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Area</th><th>Current State (Mainframe)</th><th>Target State (Modern)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Authentication</td><td>Application-level plain-text password comparison against VSAM file</td><td>OAuth 2.0 / OpenID Connect with hashed/salted passwords or SSO integration</td></tr>
+            <tr><td>Screen I/O</td><td>BMS maps (COSGN0A) via 3270 terminal</td><td>REST API + HTML/CSS/JS login form or SPA authentication page</td></tr>
+            <tr><td>Data Access</td><td>EXEC CICS READ on VSAM KSDS (USRSEC)</td><td>SQL query against relational database (e.g., PostgreSQL, AWS RDS)</td></tr>
+            <tr><td>State Management</td><td>CICS pseudo-conversational with COMMAREA</td><td>Stateless JWT tokens or server-side session management</td></tr>
+            <tr><td>Role-Based Routing</td><td>XCTL to different programs based on SEC-USR-TYPE</td><td>Role-based access control (RBAC) with middleware/guards</td></tr>
+            <tr><td>Password Storage</td><td>Clear text in VSAM record (SEC-USR-PWD)</td><td>bcrypt/scrypt/Argon2 hash with salt</td></tr>
+            <tr><td>Audit Logging</td><td>None (application level)</td><td>Structured login event logging with timestamp, IP, user agent</td></tr>
+            <tr><td>Brute-Force Protection</td><td>None</td><td>Rate limiting, account lockout after N failed attempts, CAPTCHA</td></tr>
+            <tr><td>Error Handling</td><td>RESP code evaluation with inline messages</td><td>Centralized exception handling with error codes and i18n messages</td></tr>
+            <tr><td>Inter-Program Communication</td><td>XCTL with COMMAREA</td><td>HTTP redirects, API calls, or event-driven routing</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /page-wrap-single -->
+
+<footer class="footer">
+  <strong>UniCredit S.p.A.</strong> — CardDemo CICS Transaction Analysis · Auto-generated
+</footer>
+
+<script>
+/* Collapse/expand all sections on page load — start expanded */
+document.querySelectorAll('.section-header').forEach(h => {
+  h.addEventListener('click', () => h.parentElement.classList.toggle('collapsed'));
+});
+</script>
+
+</body>
+</html>
