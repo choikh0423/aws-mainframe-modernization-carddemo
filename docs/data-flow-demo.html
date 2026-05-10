@@ -425,6 +425,40 @@
     color: #ffff33;
     font-weight: 700;
   }
+  .term-field-editable {
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed #33ff33;
+    color: #ffff33;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    outline: none;
+    padding: 2px 4px;
+    width: 120px;
+  }
+  .term-field-editable::placeholder {
+    color: #337733;
+    font-weight: 400;
+  }
+  .term-field-editable:focus {
+    border-bottom-color: #ffff33;
+  }
+  .kbd-hint {
+    font-size: 10px;
+    color: #557;
+    margin-left: 12px;
+    letter-spacing: 0.5px;
+  }
+  .kbd-hint kbd {
+    background: #1e2a3a;
+    border: 1px solid #334;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 10px;
+    color: #8af;
+    font-family: inherit;
+  }
   .term-confirm-btn {
     background: transparent;
     border: 1px solid #33ff33;
@@ -619,6 +653,7 @@
     <span id="phase-label" class="phase-indicator"></span>
     <button id="run-btn" onclick="startDemo()">Start Demo</button>
     <button id="reset-btn" onclick="resetAll()">Reset</button>
+    <span class="kbd-hint"><kbd>Ctrl</kbd>+<kbd>I</kbd> toggle terminal</span>
   </div>
 </header>
 
@@ -962,6 +997,8 @@ let acctCycCr = 0.00;
 let acctCycDb = 0.00;
 const CREDIT_LIMIT = 1000.00;
 let tranIdCounter = 1;
+let phase1Amount = 500;
+let phase3Amount = 1000;
 
 // ============================================================
 //  ZOOM / PAN
@@ -1141,9 +1178,9 @@ function selectMenuOption(num) {
     showStep('Phase 1.1', 'Menu dispatch: COMEN01C → XCTL → COTRN02C');
 
     setTimeout(() => {
-      showTransactionScreen(500, 1); // $500, first transaction
-    }, 1200);
-  }, 800);
+      showTransactionScreen(0, 1); // empty amount, first transaction
+    }, 1800);
+  }, 1200);
 }
 
 let _termResolve = null;
@@ -1152,6 +1189,7 @@ function showTransactionScreen(amount, txnNum) {
   document.getElementById('term-screen-id').textContent = 'COTRN02C — ADD TRANSACTION';
   document.getElementById('terminal-overlay').classList.add('open');
   const body = document.getElementById('terminal-body');
+  const suggestedAmt = amount > 0 ? amount.toFixed(2) : '';
   body.innerHTML = `
     <div class="term-title">ADD TRANSACTION</div>
     <div class="term-subtitle">COTRN02C — Enter transaction details</div>
@@ -1169,12 +1207,12 @@ function showTransactionScreen(amount, txnNum) {
       <span class="term-value">PR (Purchase)</span>
     </div>
     <div class="term-form-row">
-      <span class="term-label">AMOUNT :</span>
-      <span class="term-value" style="color:#ffff33;font-size:16px">$${amount.toFixed(2)}</span>
+      <span class="term-label">AMOUNT ($) :</span>
+      <input type="number" id="txn-amount" class="term-field-editable" placeholder="Enter amount" value="${suggestedAmt}" step="0.01" min="0" style="font-size:16px;width:140px" />
     </div>
     <div class="term-form-row">
       <span class="term-label">MERCHANT :</span>
-      <span class="term-value">AMAZON.COM</span>
+      <input type="text" id="txn-merchant" class="term-field-editable" placeholder="Enter merchant" value="" maxlength="30" style="width:180px" />
     </div>
     <div class="term-form-row">
       <span class="term-label">TRANSACTION DATE :</span>
@@ -1182,20 +1220,43 @@ function showTransactionScreen(amount, txnNum) {
     </div>
     <div class="term-divider"></div>
     <div id="terminal-status" class="terminal-status" style="text-align:center">
-      Review and confirm transaction
+      Enter amount and merchant, then confirm
     </div>
     <div style="text-align:center;margin-top:8px">
-      <button class="term-confirm-btn" onclick="confirmTransaction(${amount}, ${txnNum})">CONFIRM (Y)</button>
+      <button class="term-confirm-btn" onclick="confirmTransactionFromForm(${txnNum})">CONFIRM (Y)</button>
     </div>
   `;
+  setTimeout(() => { const el = document.getElementById('txn-amount'); if (el && !el.value) el.focus(); }, 100);
 }
 
+function confirmTransactionFromForm(txnNum) {
+  const amtEl = document.getElementById('txn-amount');
+  const merchEl = document.getElementById('txn-merchant');
+  const amount = parseFloat(amtEl ? amtEl.value : 0);
+  const merchant = (merchEl && merchEl.value.trim()) ? merchEl.value.trim().toUpperCase() : 'UNSPECIFIED';
+  if (!amount || amount <= 0) {
+    const status = document.getElementById('terminal-status');
+    status.textContent = 'Please enter a valid amount';
+    status.style.color = '#ff4444';
+    if (amtEl) amtEl.focus();
+    return;
+  }
+  _lastMerchant = merchant;
+  if (txnNum === 1) phase1Amount = amount;
+  else phase3Amount = amount;
+  confirmTransaction(amount, txnNum);
+}
+
+let _lastMerchant = 'UNSPECIFIED';
+
 function confirmTransaction(amount, txnNum) {
+  const merchant = _lastMerchant || 'UNSPECIFIED';
   const status = document.getElementById('terminal-status');
   status.className = 'terminal-status resolving';
+  status.style.color = '';
   status.innerHTML = 'Processing... EXEC CICS WRITE DATASET(TRANSACT-FILE)';
 
-  addTrace('step', `User enters: Card# <span class="highlight">9680294154603697</span>, Amount: <span class="highlight">$${amount.toFixed(2)}</span>, Merchant: AMAZON.COM`);
+  addTrace('step', `User enters: Card# <span class="highlight">9680294154603697</span>, Amount: <span class="highlight">$${amount.toFixed(2)}</span>, Merchant: ${merchant}`);
 
   setTimeout(() => {
     status.innerHTML = '<span class="resolved-pgm">TRANSACTION RECORDED — PENDING BATCH</span>';
@@ -1234,9 +1295,9 @@ function confirmTransaction(amount, txnNum) {
           _termResolve();
           _termResolve = null;
         }
-      }, 1500);
-    }, 1200);
-  }, 800);
+      }, 2200);
+    }, 1800);
+  }, 1200);
 }
 
 function closeTerminal() {
@@ -1256,20 +1317,20 @@ async function startDemo() {
   document.getElementById('run-btn').disabled = true;
   document.getElementById('trace-log').innerHTML = '';
 
-  // Phase 1: Show terminal for $500 transaction
-  setPhase('Phase 1 of 3 — CICS Online: $500 Transaction Entry');
+  // Phase 1: Show terminal for transaction
+  setPhase('Phase 1 of 3 — CICS Online: Transaction Entry');
   showTerminalMenu();
   await waitForTerminalClose();
-  await sleep(500);
+  await sleep(800);
 
   // Phase 2: Batch processing
   await runPhase2();
 
-  // Phase 3: $1000 transaction
+  // Phase 3: second transaction
   clearDiagramState();
-  setPhase('Phase 3 of 3 — CICS Online: $1000 Transaction Entry');
-  addTrace('phase', '═══ PHASE 3: New Transaction $1,000.00 → OVERLIMIT REJECTION ═══');
-  await sleep(500);
+  setPhase('Phase 3 of 3 — CICS Online: Second Transaction Entry');
+  addTrace('phase', '═══ PHASE 3: New Transaction → Enter Amount ═══');
+  await sleep(800);
 
   // Quickly light up online nodes
   activateNode('n-terminal');
@@ -1277,12 +1338,12 @@ async function startDemo() {
   activateEdge('e-term-menu', 'el-term-menu');
   activateEdge('e-menu-cotrn', 'el-menu-cotrn');
   activateNode('n-cotrn02c');
-  showStep('Phase 3.1', 'User enters $1,000 transaction');
+  showStep('Phase 3.1', 'User enters second transaction');
 
-  // Show terminal for $1000
-  showTransactionScreen(1000, 2);
+  // Show terminal for second transaction
+  showTransactionScreen(0, 2);
   await waitForTerminalClose();
-  await sleep(500);
+  await sleep(800);
 
   // Phase 3 batch: REJECTED
   await runPhase3Batch();
@@ -1298,64 +1359,67 @@ async function startDemo() {
 //  PHASE 2: Batch Processing — $500 ACCEPTED
 // ============================================================
 async function runPhase2() {
-  setPhase('Phase 2 of 3 — Batch: Process $500 (Trigger + Validate + Post)');
-  addTrace('phase', '═══ PHASE 2: Batch Processing — CBTRN02C ($500.00) ═══');
+  const amt = phase1Amount;
+  const prevBal = acctBal;
+  const prevCr = acctCycCr;
+  setPhase(`Phase 2 of 3 — Batch: Process $${amt.toFixed(0)} (Trigger + Validate + Post)`);
+  addTrace('phase', `═══ PHASE 2: Batch Processing — CBTRN02C ($${amt.toFixed(2)}) ═══`);
 
   showStep('Phase 2.1', 'CICS START triggers batch CBTRN02C');
   activateEdge('e-trigger', 'el-trigger', 'batch');
   activateNode('n-cbtrn02c', 'batch');
   addTrace('step', 'CICS START → CBTRN02C batch engine initiated');
   addTrace('step', '<span class="code">EXEC CICS START TRANSID(\'CBTR\') → CBTRN02C.cbl 1000-DALYTRAN-GET-NEXT</span>');
-  await sleep(1800);
+  await sleep(2500);
 
   showStep('Phase 2.2', 'Read daily transaction from DALYTRAN file');
   activateNode('n-dalytran', 'batch');
   activateEdge('e-cbtrn-daly', 'el-cbtrn-daly', 'batch');
-  addTrace('data', 'READ DALYTRAN: Tran#1, Card 9680294154603697, Amount $500.00');
+  addTrace('data', `READ DALYTRAN: Tran#1, Card 9680294154603697, Amount $${amt.toFixed(2)}`);
   addTrace('step', '<span class="code">READ DALYTRAN-FILE INTO DALYTRAN-RECORD  (CBTRN02C.cbl:346)</span>');
-  await sleep(1500);
+  await sleep(2200);
 
   showStep('Phase 2.3', 'XREF lookup in batch: Card → Account');
   activateNode('n-xref-batch', 'batch');
   activateEdge('e-cbtrn-xref', 'el-cbtrn-xref', 'batch');
   addTrace('data', '1500-A-LOOKUP-XREF: Card 9680294154603697 → Acct 00001');
   addTrace('step', '<span class="code">MOVE DALYTRAN-CARD-NUM TO FD-XREF-CARD-NUM / READ XREF-FILE  (CBTRN02C.cbl:383)</span>');
-  await sleep(1500);
+  await sleep(2200);
 
   showStep('Phase 2.4', 'Read Account Master + overlimit check');
   activateNode('n-acct-read', 'batch');
   activateEdge('e-cbtrn-acct', 'el-cbtrn-acct', 'batch');
   showBadge('vb-acct', null, [`Bal: $${acctBal.toFixed(0)} / Lim: $${CREDIT_LIMIT.toFixed(0)}`, `CycCr: $${acctCycCr.toFixed(0)} / CycDb: $${acctCycDb.toFixed(0)}`]);
-  addTrace('data', '1500-B-LOOKUP-ACCT: READ ACCOUNT-FILE → Bal=$400.00, Limit=$1,000.00');
+  addTrace('data', `1500-B-LOOKUP-ACCT: READ ACCOUNT-FILE → Bal=$${prevBal.toFixed(2)}, Limit=$${CREDIT_LIMIT.toFixed(2)}`);
   addTrace('step', '<span class="code">READ ACCOUNT-FILE INTO ACCOUNT-RECORD  (CBTRN02C.cbl:395)</span>');
-  await sleep(2000);
+  await sleep(2800);
 
   showStep('Phase 2.5', 'Overlimit validation: CycCr - CycDb + Amt ≤ Limit?');
   activateEdge('e-acct-decision', 'el-acct-decision', 'batch');
-  const tempBal = acctCycCr - acctCycDb + 500;
-  showBadge('vb-calc', `$${acctCycCr} - $${acctCycDb} + $500 = $${tempBal}`);
+  const tempBal = acctCycCr - acctCycDb + amt;
+  showBadge('vb-calc', `$${acctCycCr} - $${acctCycDb} + $${amt.toFixed(0)} = $${tempBal}`);
   addTrace('step', '<span class="code">COMPUTE WS-TEMP-BAL = ACCT-CURR-CYC-CREDIT - ACCT-CURR-CYC-DEBIT + DALYTRAN-AMT</span>');
-  addTrace('data', `WS-TEMP-BAL = $${acctCycCr.toFixed(2)} - $${acctCycDb.toFixed(2)} + $500.00 = <span class="highlight">$${tempBal.toFixed(2)}</span>`);
+  addTrace('data', `WS-TEMP-BAL = $${acctCycCr.toFixed(2)} - $${acctCycDb.toFixed(2)} + $${amt.toFixed(2)} = <span class="highlight">$${tempBal.toFixed(2)}</span>`);
   addTrace('step', `<span class="code">IF ACCT-CREDIT-LIMIT ($${CREDIT_LIMIT.toFixed(2)}) >= WS-TEMP-BAL ($${tempBal.toFixed(2)})  (CBTRN02C.cbl:407)</span>`);
-  await sleep(1500);
+  await sleep(2200);
 
   activateDecision('d-overlimit', 'dl-overlimit', 'active');
   activateDecision(null, 'dl-overlimit2', 'active');
   addTrace('accept', `→ $${CREDIT_LIMIT.toFixed(2)} >= $${tempBal.toFixed(2)} → <span class="highlight">CONDITION MET — ACCEPTED</span>`);
-  await sleep(1500);
+  await sleep(2200);
 
   showStep('Phase 2.6', 'ACCEPT: Update Account Master + write TRANSACT');
   activateEdge('e-decision-accept', 'el-decision-accept');
   activateNode('n-accept');
-  acctBal += 500;
-  acctCycCr += 500;
+  acctBal += amt;
+  acctCycCr += amt;
   updateAcctDisplay(true);
   showBadge('vb-result', `REWRITE bal → $${acctBal.toFixed(0)}`);
   addTrace('step', '<span class="code">ADD DALYTRAN-AMT TO ACCT-CURR-BAL  (CBTRN02C.cbl:547)</span>');
   addTrace('step', '<span class="code">ADD DALYTRAN-AMT TO ACCT-CURR-CYC-CREDIT  (CBTRN02C.cbl:549)</span>');
-  addTrace('data', `REWRITE ACCOUNT: Bal $400→<span class="highlight">$${acctBal.toFixed(0)}</span>, CycCredit $0→<span class="highlight">$${acctCycCr.toFixed(0)}</span>`);
+  addTrace('data', `REWRITE ACCOUNT: Bal $${prevBal.toFixed(0)}→<span class="highlight">$${acctBal.toFixed(0)}</span>, CycCredit $${prevCr.toFixed(0)}→<span class="highlight">$${acctCycCr.toFixed(0)}</span>`);
   addTrace('step', '<span class="code">REWRITE FD-ACCTFILE-REC FROM ACCOUNT-RECORD  (CBTRN02C.cbl:554)</span>');
-  await sleep(1500);
+  await sleep(2200);
 
   activateEdge('e-accept-transact', 'el-accept-transact');
   activateEdge('e-accept-tcatbal', 'el-accept-tcatbal');
@@ -1364,14 +1428,15 @@ async function runPhase2() {
   updateTransactStatus(1, 'Posted');
   addTrace('accept', '→ WRITE TRANSACT (posted) + UPDATE TCATBAL');
   addTrace('accept', '→ Transaction #1: <span class="highlight">ACCEPTED & POSTED</span>');
-  await sleep(2500);
+  await sleep(3500);
 }
 
 // ============================================================
 //  PHASE 3 BATCH: $1000 REJECTED
 // ============================================================
 async function runPhase3Batch() {
-  setPhase('Phase 3 of 3 — Batch: $1000 → REJECTED (Overlimit)');
+  const amt = phase3Amount;
+  setPhase(`Phase 3 of 3 — Batch: $${amt.toFixed(0)} → REJECTED (Overlimit)`);
 
   showStep('Phase 3.3', 'Batch CBTRN02C processes transaction #2');
   activateEdge('e-trigger', 'el-trigger', 'batch');
@@ -1380,9 +1445,9 @@ async function runPhase3Batch() {
   activateEdge('e-cbtrn-daly', 'el-cbtrn-daly', 'batch');
   activateNode('n-xref-batch', 'batch');
   activateEdge('e-cbtrn-xref', 'el-cbtrn-xref', 'batch');
-  addTrace('step', 'CBTRN02C reads DALYTRAN → Tran#2, $1,000.00');
+  addTrace('step', `CBTRN02C reads DALYTRAN → Tran#2, $${amt.toFixed(2)}`);
   addTrace('data', 'XREF lookup → Acct 00001');
-  await sleep(1500);
+  await sleep(2200);
 
   showStep('Phase 3.4', 'Account read — balance CHANGED by Phase 2!');
   activateNode('n-acct-read', 'batch');
@@ -1390,21 +1455,21 @@ async function runPhase3Batch() {
   showBadge('vb-acct', null, [`Bal: $${acctBal.toFixed(0)} / Lim: $${CREDIT_LIMIT.toFixed(0)}`, `CycCr: $${acctCycCr.toFixed(0)} / CycDb: $${acctCycDb.toFixed(0)}`]);
   addTrace('data', `READ ACCOUNT: Bal=<span class="warn">$${acctBal.toFixed(2)}</span> (was $400), CycCredit=<span class="warn">$${acctCycCr.toFixed(2)}</span> (was $0)`);
   addTrace('step', '↑ <span class="warn">These values were altered by Phase 2 — this changes the routing decision</span>');
-  await sleep(2500);
+  await sleep(3200);
 
-  showStep('Phase 3.5', 'Overlimit check: $500 + $1000 = $1500 > $1000!');
+  showStep('Phase 3.5', `Overlimit check: $${acctCycCr.toFixed(0)} + $${amt.toFixed(0)} = $${(acctCycCr + amt).toFixed(0)} > $${CREDIT_LIMIT.toFixed(0)}!`);
   activateEdge('e-acct-decision', 'el-acct-decision', 'batch');
-  const tempBal = acctCycCr - acctCycDb + 1000;
-  showBadge('vb-calc', `$${acctCycCr.toFixed(0)} - $${acctCycDb.toFixed(0)} + $1000 = $${tempBal.toFixed(0)}`, 'reject');
-  addTrace('step', `<span class="code">COMPUTE WS-TEMP-BAL = $${acctCycCr.toFixed(2)} - $${acctCycDb.toFixed(2)} + $1,000.00 = <span class="warn">$${tempBal.toFixed(2)}</span></span>`);
+  const tempBal = acctCycCr - acctCycDb + amt;
+  showBadge('vb-calc', `$${acctCycCr.toFixed(0)} - $${acctCycDb.toFixed(0)} + $${amt.toFixed(0)} = $${tempBal.toFixed(0)}`, 'reject');
+  addTrace('step', `<span class="code">COMPUTE WS-TEMP-BAL = $${acctCycCr.toFixed(2)} - $${acctCycDb.toFixed(2)} + $${amt.toFixed(2)} = <span class="warn">$${tempBal.toFixed(2)}</span></span>`);
   addTrace('step', `<span class="code">IF ACCT-CREDIT-LIMIT ($${CREDIT_LIMIT.toFixed(2)}) >= WS-TEMP-BAL ($${tempBal.toFixed(2)})</span>`);
-  await sleep(1800);
+  await sleep(2500);
 
   activateDecision('d-overlimit', 'dl-overlimit', 'reject-active');
   activateDecision(null, 'dl-overlimit2', 'reject-active');
   addTrace('reject', `→ $${CREDIT_LIMIT.toFixed(2)} < $${tempBal.toFixed(2)} → <span class="warn">CONDITION FAILED — REJECTED</span>`);
   addTrace('step', '<span class="code">MOVE 102 TO WS-VALIDATION-FAIL-REASON  (CBTRN02C.cbl:409)</span>');
-  await sleep(1500);
+  await sleep(2200);
 
   showStep('Phase 3.6', 'REJECT: Write to DALYREJS with reason code 102');
   activateEdge('e-decision-reject', 'el-decision-reject', 'reject');
@@ -1413,17 +1478,17 @@ async function runPhase3Batch() {
   activateNode('n-dalyrejs', 'reject');
   showBadge('vb-reject-reason', 'Code 102: OVERLIMIT');
   updateTransactStatus(2, 'Rejected');
-  addRejectRow(2, 1000.00, '102', 'OVERLIMIT TRANSACTION');
-  addTrace('reject', '→ WRITE DALYREJS: Tran#2, $1,000.00, Reason=102 "OVERLIMIT TRANSACTION"');
+  addRejectRow(2, amt, '102', 'OVERLIMIT TRANSACTION');
+  addTrace('reject', `→ WRITE DALYREJS: Tran#2, $${amt.toFixed(2)}, Reason=102 "OVERLIMIT TRANSACTION"`);
   addTrace('step', '<span class="code">WRITE FD-REJS-RECORD FROM REJECT-RECORD  (CBTRN02C.cbl:451)</span>');
-  addTrace('reject', '→ Account balance <span class="highlight">unchanged at $900.00</span> — transaction not posted');
-  await sleep(2000);
+  addTrace('reject', `→ Account balance <span class="highlight">unchanged at $${acctBal.toFixed(2)}</span> — transaction not posted`);
+  await sleep(2800);
 
   addTrace('phase', '═══ SUMMARY ═══');
-  addTrace('step', 'Phase 2 altered Account Master (bal $400→$900, CycCredit $0→$500)');
+  addTrace('step', `Phase 2 altered Account Master (bal $400→$${acctBal.toFixed(0)}, CycCredit $0→$${acctCycCr.toFixed(0)})`);
   addTrace('step', 'Phase 3 read the SAME account — the altered data caused the overlimit check to FAIL');
-  addTrace('accept', 'Transaction 1 ($500): ACCEPTED — route → 2000-POST-TRANSACTION');
-  addTrace('reject', 'Transaction 2 ($1000): REJECTED — route → 2500-WRITE-REJECT-REC');
+  addTrace('accept', `Transaction 1 ($${phase1Amount.toFixed(0)}): ACCEPTED — route → 2000-POST-TRANSACTION`);
+  addTrace('reject', `Transaction 2 ($${phase3Amount.toFixed(0)}): REJECTED — route → 2500-WRITE-REJECT-REC`);
   addTrace('data', '<span class="highlight">The data alteration in Phase 2 directly changed the program\'s routing in Phase 3</span>');
 }
 
@@ -1616,6 +1681,9 @@ function resetAll() {
   acctCycCr = 0.00;
   acctCycDb = 0.00;
   tranIdCounter = 1;
+  phase1Amount = 500;
+  phase3Amount = 1000;
+  _lastMerchant = 'UNSPECIFIED';
   document.getElementById('td-bal').textContent = '$400.00';
   document.getElementById('td-bal').className = '';
   document.getElementById('td-cyc-cr').textContent = '$0.00';
@@ -1629,6 +1697,15 @@ function resetAll() {
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+// Ctrl+I to toggle terminal overlay
+document.addEventListener('keydown', function(e) {
+  if (e.ctrlKey && (e.key === 'i' || e.key === 'I')) {
+    e.preventDefault();
+    const overlay = document.getElementById('terminal-overlay');
+    overlay.classList.toggle('open');
+  }
+});
 </script>
 </body>
 </html>
