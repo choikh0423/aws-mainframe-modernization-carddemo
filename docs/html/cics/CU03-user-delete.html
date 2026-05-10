@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Delete (CU03) – CICS Transaction Analysis | UniCredit CardDemo</title>
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  .section-header { gap: .75rem; }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.section-header').forEach(h => {
+    h.addEventListener('click', () => h.parentElement.classList.toggle('collapsed'));
+  });
+});
+</script>
+</head>
+<body>
+
+<!-- Hero -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. — Milano</div>
+    </div>
+    <h1>User Delete – <span>CICS Transaction Analysis</span></h1>
+    <p class="hero-subtitle">
+      Transaction <code>CU03</code> · Program <code>COUSR03C</code> · Admin-only security user deletion from the USRSEC VSAM file
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Transaction ID</dt><dd>CU03</dd></div>
+      <div><dt>Entry Program</dt><dd>COUSR03C</dd></div>
+      <div><dt>BMS Mapset</dt><dd>COUSR03</dd></div>
+      <div><dt>Design Pattern</dt><dd>Pseudo-conversational</dd></div>
+      <div><dt>LOC</dt><dd>359</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">›</span>
+  <a href="index.html">CICS Flows</a>
+  <span class="sep">›</span>
+  User Delete (CU03)
+</div>
+
+<!-- Body -->
+<div class="page-wrap-single">
+
+<!-- ================================================================== -->
+<!-- SECTION 1 — Business Flow Analysis                                 -->
+<!-- ================================================================== -->
+<section class="section" id="s1">
+  <div class="section-header">
+    <span class="section-num">1</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span>1.1 Business Context</h3>
+      <p>
+        The <strong>User Delete</strong> transaction (<code>CU03</code>) allows an administrator to permanently remove a security user record from the CardDemo system. It is accessed exclusively from the <em>Admin Menu</em> (<code>COADM01C</code>, option 4 — "User Delete (Security)"). The administrator enters a User ID, the system retrieves and displays the user's details (first name, last name, user type), and upon confirmation via <kbd>PF5</kbd>, the record is deleted from the <code>USRSEC</code> VSAM KSDS file. This transaction enforces administrative control over system access by ensuring only authorized admin-type users can remove credentials.
+      </p>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>1.2 Business Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+┌────────────────────┐
+│  Admin Menu (CA00)  │
+│  Option 4 selected │
+└────────┬───────────┘
+         ▼
+┌────────────────────┐
+│  Delete User Screen │ ← COUSR3A map displayed
+│  (Blank form)       │
+└────────┬───────────┘
+         ▼
+┌────────────────────┐     ┌──────────────────┐
+│  Admin enters       │────▶│  ENTER pressed    │
+│  User ID            │     └────────┬─────────┘
+└────────────────────┘              ▼
+                           ┌──────────────────┐
+                           │  Validate User ID │
+                           │  (not empty?)      │
+                           └────────┬─────────┘
+                          ┌────────┴────────┐
+                     EMPTY │                 │ NOT EMPTY
+                          ▼                 ▼
+                   ┌──────────┐    ┌──────────────────┐
+                   │  Error:   │    │  READ USRSEC     │
+                   │  "User ID │    │  file for user   │
+                   │  can NOT  │    └────────┬─────────┘
+                   │  be empty"│         ┌───┴───┐
+                   └──────────┘     FOUND│       │NOT FOUND
+                                        ▼       ▼
+                                 ┌────────┐  ┌──────────┐
+                                 │ Display │  │ Error:    │
+                                 │ Name,   │  │ "User ID  │
+                                 │ Type    │  │ NOT found"│
+                                 │ + "Press│  └──────────┘
+                                 │ PF5 to  │
+                                 │ delete" │
+                                 └────┬───┘
+                                      ▼
+                              ┌──────────────────┐
+                              │  Admin presses    │
+                              │  PF5 = Delete     │
+                              └────────┬─────────┘
+                                       ▼
+                              ┌──────────────────┐
+                              │  DELETE record    │
+                              │  from USRSEC      │
+                              └────────┬─────────┘
+                                       ▼
+                              ┌──────────────────┐
+                              │  Success:         │
+                              │  "User xxx has    │
+                              │  been deleted"    │
+                              └──────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>1.3 Business Rules</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Rule</th><th>Source</th><th>Enforcement</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>BR-1</td><td>User ID must not be empty or low-values</td><td>PROCESS-ENTER-KEY, DELETE-USER-INFO paragraphs</td><td>Error message "User ID can NOT be empty…" displayed; cursor repositioned to USRIDIN field</td></tr>
+            <tr><td>BR-2</td><td>User ID must exist in USRSEC file before deletion</td><td>READ-USER-SEC-FILE paragraph (DFHRESP NOTFND check)</td><td>Error message "User ID NOT found…" displayed</td></tr>
+            <tr><td>BR-3</td><td>Deletion requires explicit PF5 confirmation</td><td>EVALUATE EIBAID (DFHPF5 → DELETE-USER-INFO)</td><td>ENTER only fetches and displays; PF5 performs actual delete</td></tr>
+            <tr><td>BR-4</td><td>Only admin users can access this transaction</td><td>Admin Menu routing (COADM01C option 4 → COUSR03C)</td><td>Transaction is only reachable from the Admin Menu</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>1.4 User Interactions</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Step</th><th>User Action</th><th>System Response</th><th>Business Meaning</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>Selects option 4 from Admin Menu or arrives via user list selection</td><td>Displays COUSR3A map with empty User ID field (or pre-filled if selected from list)</td><td>Administrator initiates user deletion workflow</td></tr>
+            <tr><td>2</td><td>Enters a User ID and presses ENTER</td><td>Reads USRSEC file; displays first name, last name, user type; prompts "Press PF5 key to delete this user …"</td><td>Administrator reviews user details before committing to deletion</td></tr>
+            <tr><td>3</td><td>Presses PF5 to confirm deletion</td><td>Deletes record from USRSEC; displays success message "User xxx has been deleted …"</td><td>User account permanently removed from security file</td></tr>
+            <tr><td>Alt-A</td><td>Presses PF3</td><td>Returns to calling program (COADM01C or previous program)</td><td>Cancel and return to Admin Menu</td></tr>
+            <tr><td>Alt-B</td><td>Presses PF4</td><td>Clears all fields on screen</td><td>Reset form to start over</td></tr>
+            <tr><td>Alt-C</td><td>Presses PF12</td><td>Returns to Admin Menu (COADM01C)</td><td>Exit back to Admin Menu</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- SECTION 2 — Technical Flow Analysis                                -->
+<!-- ================================================================== -->
+<section class="section" id="s2">
+  <div class="section-header">
+    <span class="section-num">2</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span>2.1 Technical Flow Diagram — Overview</h3>
+      <div class="diagram-box">
+<pre>
+┌──────────┐      ┌───────────────────────────────────────┐
+│ 3270     │      │            CICS Region                │
+│ Terminal │◄────▶│                                       │
+│          │      │  COUSR03C  ─── MAP: COUSR3A           │
+│          │      │     │          MAPSET: COUSR03         │
+│          │      │     │                                  │
+│          │      │     ▼                                  │
+│          │      │  USRSEC (VSAM KSDS)                   │
+│          │      │                                       │
+│          │      │  XCTL ──▶ COADM01C / COSGN00C        │
+│          │      └───────────────────────────────────────┘
+└──────────┘
+</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>2.2 Technical Flow Diagram — Detailed</h3>
+      <div class="diagram-box">
+<pre>
+CICS starts COUSR03C with TRANSID 'CU03'
+  │
+  ├─ EIBCALEN = 0?
+  │    YES ──▶ MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM
+  │            XCTL to COSGN00C (sign-on screen)
+  │
+  │    NO  ──▶ MOVE DFHCOMMAREA → CARDDEMO-COMMAREA
+  │            ├─ First entry (CDEMO-PGM-ENTER)?
+  │            │    YES ──▶ SET CDEMO-PGM-REENTER TO TRUE
+  │            │            MOVE LOW-VALUES TO COUSR3AO
+  │            │            If CDEMO-CU03-USR-SELECTED ≠ SPACES
+  │            │               MOVE to USRIDINI, PERFORM PROCESS-ENTER-KEY
+  │            │            SEND MAP('COUSR3A') MAPSET('COUSR03')
+  │            │
+  │            │    NO  ──▶ RECEIVE MAP('COUSR3A') MAPSET('COUSR03')
+  │            │            EVALUATE EIBAID:
+  │            │              DFHENTER  → PROCESS-ENTER-KEY
+  │            │              DFHPF3    → XCTL to from-program / COADM01C
+  │            │              DFHPF4    → CLEAR-CURRENT-SCREEN
+  │            │              DFHPF5    → DELETE-USER-INFO
+  │            │              DFHPF12   → XCTL to COADM01C
+  │            │              OTHER     → Error "Invalid key pressed"
+  │            │
+  │            RETURN TRANSID('CU03') COMMAREA(CARDDEMO-COMMAREA)
+</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>2.3 Pseudo-Conversational Flow</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Iteration</th><th>EIBCALEN</th><th>User Action</th><th>Entry Point</th><th>Screen Sent</th><th>Next TRANSID</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>0</td><td>=0</td><td>N/A (direct start)</td><td>MAIN-PARA</td><td>XCTL → COSGN00C</td><td>N/A</td></tr>
+            <tr><td>1</td><td>&gt;0</td><td>XCTL from Admin Menu / User List</td><td>MAIN-PARA (first entry)</td><td>COUSR3A (blank or pre-filled)</td><td>CU03</td></tr>
+            <tr><td>2</td><td>&gt;0</td><td>ENTER with User ID</td><td>PROCESS-ENTER-KEY</td><td>COUSR3A (user details + "Press PF5")</td><td>CU03</td></tr>
+            <tr><td>3</td><td>&gt;0</td><td>PF5 (confirm delete)</td><td>DELETE-USER-INFO</td><td>COUSR3A (success message)</td><td>CU03</td></tr>
+            <tr><td>Alt</td><td>&gt;0</td><td>PF3 / PF12</td><td>RETURN-TO-PREV-SCREEN</td><td>N/A (XCTL)</td><td>N/A</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>2.4 CICS Command Flow</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>CICS Command</th><th>Paragraph</th><th>Purpose</th><th>RESP Handling</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td><code>SEND MAP('COUSR3A') MAPSET('COUSR03') FROM(COUSR3AO) ERASE CURSOR</code></td><td>SEND-USRDEL-SCREEN</td><td>Display or refresh the delete user screen</td><td>N/A</td></tr>
+            <tr><td>2</td><td><code>RECEIVE MAP('COUSR3A') MAPSET('COUSR03') INTO(COUSR3AI)</code></td><td>RECEIVE-USRDEL-SCREEN</td><td>Read terminal input from user</td><td>WS-RESP-CD, WS-REAS-CD</td></tr>
+            <tr><td>3</td><td><code>READ DATASET(WS-USRSEC-FILE) INTO(SEC-USER-DATA) RIDFLD(SEC-USR-ID) UPDATE</code></td><td>READ-USER-SEC-FILE</td><td>Read user record with update lock for subsequent delete</td><td>NORMAL, NOTFND, OTHER</td></tr>
+            <tr><td>4</td><td><code>DELETE DATASET(WS-USRSEC-FILE)</code></td><td>DELETE-USER-SEC-FILE</td><td>Delete the currently locked USRSEC record</td><td>NORMAL, NOTFND, OTHER</td></tr>
+            <tr><td>5</td><td><code>RETURN TRANSID(WS-TRANID) COMMAREA(CARDDEMO-COMMAREA)</code></td><td>MAIN-PARA</td><td>Pseudo-conversational return with state preserved</td><td>N/A</td></tr>
+            <tr><td>6</td><td><code>XCTL PROGRAM(CDEMO-TO-PROGRAM) COMMAREA(CARDDEMO-COMMAREA)</code></td><td>RETURN-TO-PREV-SCREEN</td><td>Transfer control to Admin Menu or Sign-On</td><td>N/A</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- SECTION 3 — Screen Flow and BMS Maps                               -->
+<!-- ================================================================== -->
+<section class="section" id="s3">
+  <div class="section-header">
+    <span class="section-num">3</span>
+    <h2>Screen Flow and BMS Maps</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span>3.1 Screen Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+              ┌──────────────┐
+              │  Admin Menu   │
+              │  (COADM01C)  │
+              └──────┬───────┘
+                     │ XCTL (option 4)
+                     ▼
+              ┌──────────────┐
+              │   COUSR3A     │  ← Delete User screen
+              │   (COUSR03)   │
+              └──────┬───────┘
+                     │
+         ┌───────┬───┴───┬───────┐
+         │       │       │       │
+    ENTER│  PF3  │  PF4  │  PF5  │  PF12
+         │       │       │       │
+         ▼       ▼       ▼       ▼       ▼
+     Fetch   Back to  Clear   Delete  Back to
+     User    Prev     Screen  User    Admin
+     Info    Screen           Record  Menu
+</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>3.2 BMS Map Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Map Name</th><th>Mapset</th><th>Purpose</th><th>Key Fields</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>COUSR3A</td><td>COUSR03</td><td>Delete User — data entry and display form</td><td>USRIDIN, FNAME, LNAME, USRTYPE, ERRMSG</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>3.3 Screen Field Details</h3>
+      <h4>Map COUSR3A (24×80)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Field</th><th>Position</th><th>Length</th><th>Attribute</th><th>Color</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>TRNNAME</td><td>(1,7)</td><td>4</td><td>ASKIP, FSET, NORM</td><td>Blue</td><td>Transaction ID display</td></tr>
+            <tr><td>TITLE01</td><td>(1,21)</td><td>40</td><td>ASKIP, FSET, NORM</td><td>Yellow</td><td>Application title line 1</td></tr>
+            <tr><td>CURDATE</td><td>(1,71)</td><td>8</td><td>ASKIP, FSET, NORM</td><td>Blue</td><td>Current date (mm/dd/yy)</td></tr>
+            <tr><td>PGMNAME</td><td>(2,7)</td><td>8</td><td>ASKIP, FSET, NORM</td><td>Blue</td><td>Program name display</td></tr>
+            <tr><td>TITLE02</td><td>(2,21)</td><td>40</td><td>ASKIP, FSET, NORM</td><td>Yellow</td><td>Application title line 2</td></tr>
+            <tr><td>CURTIME</td><td>(2,71)</td><td>8</td><td>ASKIP, FSET, NORM</td><td>Blue</td><td>Current time (hh:mm:ss)</td></tr>
+            <tr><td><em>(literal)</em></td><td>(4,35)</td><td>11</td><td>ASKIP, BRT</td><td>Neutral</td><td>"Delete User" heading</td></tr>
+            <tr><td>USRIDIN</td><td>(6,21)</td><td>8</td><td>FSET, IC, NORM, UNPROT</td><td>Green</td><td>User ID input (initial cursor)</td></tr>
+            <tr><td>FNAME</td><td>(11,18)</td><td>20</td><td>ASKIP, FSET, NORM</td><td>Blue</td><td>First name display (read-only)</td></tr>
+            <tr><td>LNAME</td><td>(13,18)</td><td>20</td><td>ASKIP, FSET, NORM</td><td>Blue</td><td>Last name display (read-only)</td></tr>
+            <tr><td>USRTYPE</td><td>(15,17)</td><td>1</td><td>ASKIP, FSET, NORM</td><td>Blue</td><td>User type display (A=Admin, U=User)</td></tr>
+            <tr><td>ERRMSG</td><td>(23,1)</td><td>78</td><td>ASKIP, BRT, FSET</td><td>Red</td><td>Error / status message line</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>3.4 PF Key / AID Key Handling</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>AID Key</th><th>EIBAID Value</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>ENTER</td><td>DFHENTER</td><td>PROCESS-ENTER-KEY — Validate User ID, READ USRSEC, display user details</td></tr>
+            <tr><td>PF3</td><td>DFHPF3</td><td>Return to calling program (CDEMO-FROM-PROGRAM) or COADM01C</td></tr>
+            <tr><td>PF4</td><td>DFHPF4</td><td>CLEAR-CURRENT-SCREEN — Reset all fields to spaces</td></tr>
+            <tr><td>PF5</td><td>DFHPF5</td><td>DELETE-USER-INFO — Validate, READ for update, DELETE from USRSEC</td></tr>
+            <tr><td>PF12</td><td>DFHPF12</td><td>Return to Admin Menu (COADM01C)</td></tr>
+            <tr><td>OTHER</td><td>Any other key</td><td>Error: "Invalid key pressed. Please see below…" (CCDA-MSG-INVALID-KEY)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- SECTION 4 — Program Inventory and Call Chain                        -->
+<!-- ================================================================== -->
+<section class="section" id="s4">
+  <div class="section-header">
+    <span class="section-num">4</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span>4.1 Program Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Program</th><th>Type</th><th>Purpose</th><th>Entry Mechanism</th><th>LOC</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>COUSR03C</td><td>CICS COBOL</td><td>Delete user — main entry program for CU03 transaction</td><td>CICS TRANSID CU03 / XCTL</td><td>359</td></tr>
+            <tr><td>COADM01C</td><td>CICS COBOL</td><td>Admin Menu — navigation hub for admin functions</td><td>XCTL from COUSR03C (PF3/PF12)</td><td>—</td></tr>
+            <tr><td>COSGN00C</td><td>CICS COBOL</td><td>Sign-On — authentication entry point</td><td>XCTL from COUSR03C (EIBCALEN=0)</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>4.2 Call Chain Diagram</h3>
+      <div class="diagram-box">
+<pre>
+TRANSID CU03
+  │
+  ▼
+COUSR03C (Entry Program)
+  ├── MAP I/O: COUSR3A / COUSR03
+  ├── FILE I/O: USRSEC (READ UPDATE, DELETE)
+  ├── XCTL ──▶ COADM01C  (PF3 / PF12 — return to Admin Menu)
+  └── XCTL ──▶ COSGN00C  (EIBCALEN=0 — redirect to sign-on)
+</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>4.3 Call Details</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Caller</th><th>Called</th><th>Mechanism</th><th>Data Passed</th><th>When</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>COUSR03C</td><td>COADM01C</td><td>XCTL</td><td>CARDDEMO-COMMAREA</td><td>PF3 (if CDEMO-FROM-PROGRAM is empty) or PF12</td></tr>
+            <tr><td>COUSR03C</td><td>CDEMO-FROM-PROGRAM</td><td>XCTL</td><td>CARDDEMO-COMMAREA</td><td>PF3 (if CDEMO-FROM-PROGRAM is set, e.g. COUSR00C)</td></tr>
+            <tr><td>COUSR03C</td><td>COSGN00C</td><td>XCTL</td><td>CARDDEMO-COMMAREA</td><td>EIBCALEN = 0 (no COMMAREA — security redirect)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- SECTION 5 — File and Data Store Inventory                          -->
+<!-- ================================================================== -->
+<section class="section" id="s5">
+  <div class="section-header">
+    <span class="section-num">5</span>
+    <h2>File and Data Store Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span>5.1 File Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>FCT Name</th><th>Type</th><th>Access Modes</th><th>Program</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>USRSEC</td><td>VSAM KSDS</td><td>READ (UPDATE), DELETE</td><td>COUSR03C</td><td>Security user credential store — user IDs, names, passwords, types</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>5.2 File Access Details</h3>
+      <h4>USRSEC — User Security File</h4>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Attribute</th><th>Value</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Dataset Name (FCT)</td><td>USRSEC</td></tr>
+            <tr><td>Record Layout Copybook</td><td>CSUSR01Y.cpy</td></tr>
+            <tr><td>Record Length</td><td>80 bytes</td></tr>
+            <tr><td>Key Field</td><td>SEC-USR-ID (PIC X(08), offset 0)</td></tr>
+            <tr><td>Key Length</td><td>8 bytes (LENGTH OF SEC-USR-ID)</td></tr>
+            <tr><td>Access Modes Used</td><td>READ with UPDATE lock, DELETE (current record)</td></tr>
+            <tr><td>Locking</td><td>UPDATE lock acquired on READ; released after DELETE or on transaction end</td></tr>
+            <tr><td>Access Pattern</td><td>Direct keyed read by User ID → display details → delete on PF5 confirmation</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h4>Record Layout (CSUSR01Y)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Field</th><th>PIC Clause</th><th>Length</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>SEC-USR-ID</td><td>PIC X(08)</td><td>8</td><td>User ID (primary key)</td></tr>
+            <tr><td>SEC-USR-FNAME</td><td>PIC X(20)</td><td>20</td><td>First name</td></tr>
+            <tr><td>SEC-USR-LNAME</td><td>PIC X(20)</td><td>20</td><td>Last name</td></tr>
+            <tr><td>SEC-USR-PWD</td><td>PIC X(08)</td><td>8</td><td>Password</td></tr>
+            <tr><td>SEC-USR-TYPE</td><td>PIC X(01)</td><td>1</td><td>User type (A=Admin, U=User)</td></tr>
+            <tr><td>SEC-USR-FILLER</td><td>PIC X(23)</td><td>23</td><td>Reserved filler</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>5.3 TSQ Usage</h3>
+      <p>N/A — No Temporary Storage Queues are used by this transaction.</p>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>5.4 TDQ Usage</h3>
+      <p>N/A — No Transient Data Queues are used by this transaction.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- SECTION 6 — Data Flow Analysis                                     -->
+<!-- ================================================================== -->
+<section class="section" id="s6">
+  <div class="section-header">
+    <span class="section-num">6</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span>6.1 Data Flow Through Transaction</h3>
+      <div class="diagram-box">
+<pre>
+┌─────────────┐         ┌──────────────────┐        ┌───────────────┐
+│  Terminal    │         │  Working Storage │        │  USRSEC File  │
+│  Input      │         │                  │        │  (VSAM KSDS)  │
+│             │         │                  │        │               │
+│  USRIDIN ───┼────────▶│  COUSR3AI        │        │               │
+│  (User ID)  │         │    .USRIDINI ────┼───────▶│  SEC-USR-ID   │
+│             │         │                  │  READ  │  (key lookup) │
+│             │         │                  │◀───────┤               │
+│             │         │  SEC-USER-DATA   │        │  SEC-USR-ID   │
+│             │         │    .SEC-USR-FNAME│        │  SEC-USR-FNAME│
+│             │         │    .SEC-USR-LNAME│        │  SEC-USR-LNAME│
+│             │         │    .SEC-USR-TYPE │        │  SEC-USR-TYPE │
+│             │         │        │         │        │               │
+│             │         │        ▼         │ DELETE  │               │
+│  FNAME   ◀──┼─────────┤  COUSR3AO       │───────▶│  (record      │
+│  LNAME   ◀──┼─────────┤    .FNAMEI      │        │   removed)    │
+│  USRTYPE ◀──┼─────────┤    .LNAMEI      │        │               │
+│  ERRMSG  ◀──┼─────────┤    .USRTYPEI    │        │               │
+│             │         │    .ERRMSGO      │        │               │
+└─────────────┘         └──────────────────┘        └───────────────┘
+</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>6.2 Data Transformation Map</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Source</th><th>Transformation</th><th>Target</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>USRIDINI OF COUSR3AI (terminal input)</td><td>Direct move</td><td>SEC-USR-ID (VSAM key)</td></tr>
+            <tr><td>SEC-USR-FNAME (VSAM record)</td><td>Direct move</td><td>FNAMEI OF COUSR3AI (screen output)</td></tr>
+            <tr><td>SEC-USR-LNAME (VSAM record)</td><td>Direct move</td><td>LNAMEI OF COUSR3AI (screen output)</td></tr>
+            <tr><td>SEC-USR-TYPE (VSAM record)</td><td>Direct move</td><td>USRTYPEI OF COUSR3AI (screen output)</td></tr>
+            <tr><td>WS-MESSAGE (working storage)</td><td>Direct move</td><td>ERRMSGO OF COUSR3AO (screen message)</td></tr>
+            <tr><td>SEC-USR-ID (VSAM key)</td><td>STRING concatenation ("User " + ID + " has been deleted …")</td><td>WS-MESSAGE → ERRMSGO</td></tr>
+            <tr><td>FUNCTION CURRENT-DATE</td><td>Reformatted via CSDAT01Y fields (MM/DD/YY, HH:MM:SS)</td><td>CURDATEO / CURTIMEO OF COUSR3AO</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- SECTION 7 — COMMAREA and Interface Contracts                       -->
+<!-- ================================================================== -->
+<section class="section" id="s7">
+  <div class="section-header">
+    <span class="section-num">7</span>
+    <h2>COMMAREA and Interface Contracts</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span>7.1 COMMAREA Layout</h3>
+      <p>COUSR03C uses the shared <code>CARDDEMO-COMMAREA</code> (defined in <code>COCOM01Y.cpy</code>) plus a program-specific extension <code>CDEMO-CU03-INFO</code> defined inline.</p>
+      <h4>Shared COMMAREA (COCOM01Y)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Field</th><th>PIC</th><th>Length</th><th>Direction</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>CDEMO-FROM-TRANID</td><td>X(04)</td><td>4</td><td>IN/OUT</td><td>Originating transaction ID</td></tr>
+            <tr><td>CDEMO-FROM-PROGRAM</td><td>X(08)</td><td>8</td><td>IN/OUT</td><td>Originating program name (used by PF3 to return)</td></tr>
+            <tr><td>CDEMO-TO-TRANID</td><td>X(04)</td><td>4</td><td>OUT</td><td>Target transaction ID</td></tr>
+            <tr><td>CDEMO-TO-PROGRAM</td><td>X(08)</td><td>8</td><td>OUT</td><td>Target program for XCTL</td></tr>
+            <tr><td>CDEMO-USER-ID</td><td>X(08)</td><td>8</td><td>IN</td><td>Logged-in user ID</td></tr>
+            <tr><td>CDEMO-USER-TYPE</td><td>X(01)</td><td>1</td><td>IN</td><td>User type (A=Admin, U=User)</td></tr>
+            <tr><td>CDEMO-PGM-CONTEXT</td><td>9(01)</td><td>1</td><td>IN/OUT</td><td>0=first entry, 1=reenter</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h4>Program-Specific Extension (CDEMO-CU03-INFO)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Field</th><th>PIC</th><th>Length</th><th>Direction</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>CDEMO-CU03-USRID-FIRST</td><td>X(08)</td><td>8</td><td>IN</td><td>First user ID (for list paging context)</td></tr>
+            <tr><td>CDEMO-CU03-USRID-LAST</td><td>X(08)</td><td>8</td><td>IN</td><td>Last user ID (for list paging context)</td></tr>
+            <tr><td>CDEMO-CU03-PAGE-NUM</td><td>9(08)</td><td>8</td><td>IN</td><td>Current page number</td></tr>
+            <tr><td>CDEMO-CU03-NEXT-PAGE-FLG</td><td>X(01)</td><td>1</td><td>IN</td><td>Next page available flag (Y/N)</td></tr>
+            <tr><td>CDEMO-CU03-USR-SEL-FLG</td><td>X(01)</td><td>1</td><td>IN</td><td>User selection flag</td></tr>
+            <tr><td>CDEMO-CU03-USR-SELECTED</td><td>X(08)</td><td>8</td><td>IN</td><td>Pre-selected User ID (from user list)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>7.2 Return Code Conventions</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Variable</th><th>Type</th><th>Values Used</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>WS-RESP-CD</td><td>S9(09) COMP</td><td>DFHRESP(NORMAL), DFHRESP(NOTFND), OTHER</td><td>CICS RESP code from file operations</td></tr>
+            <tr><td>WS-REAS-CD</td><td>S9(09) COMP</td><td>System-assigned</td><td>CICS RESP2 reason code for diagnostics</td></tr>
+            <tr><td>WS-ERR-FLG</td><td>X(01)</td><td>'Y' (error), 'N' (no error)</td><td>Controls flow: if 'Y', subsequent processing is skipped</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>7.3 Conversation State Management</h3>
+      <p>
+        State is preserved between pseudo-conversational iterations via the <code>CARDDEMO-COMMAREA</code> passed on <code>EXEC CICS RETURN TRANSID('CU03') COMMAREA(CARDDEMO-COMMAREA)</code>. On reentry, <code>DFHCOMMAREA</code> is moved back into <code>CARDDEMO-COMMAREA</code>.
+      </p>
+      <ul>
+        <li><strong>CDEMO-PGM-CONTEXT</strong>: Distinguishes first entry (<code>0</code>) from reentry (<code>1</code>). Set to <code>1</code> after first map send.</li>
+        <li><strong>CDEMO-CU03-USR-SELECTED</strong>: Carries pre-selected User ID from the User List screen (COUSR00C) so the delete screen can auto-populate and fetch on first entry.</li>
+        <li><strong>CDEMO-FROM-PROGRAM</strong>: Remembers the calling program so PF3 can return to the correct screen.</li>
+        <li>On XCTL to another program, <code>CDEMO-PGM-CONTEXT</code> is reset to <code>ZEROS</code> and <code>CDEMO-FROM-TRANID</code>/<code>CDEMO-FROM-PROGRAM</code> are set to this program's identity.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- SECTION 8 — Error Handling and User Feedback                       -->
+<!-- ================================================================== -->
+<section class="section" id="s8">
+  <div class="section-header">
+    <span class="section-num">8</span>
+    <h2>Error Handling and User Feedback</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span>8.1 Error Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+                   ┌─────────────┐
+                   │  User Input  │
+                   └──────┬──────┘
+                          ▼
+                   ┌─────────────┐    Empty?
+                   │  Validate   │──── YES ──▶ "User ID can NOT be empty…"
+                   │  User ID    │
+                   └──────┬──────┘
+                     NOT EMPTY
+                          ▼
+                   ┌─────────────┐    NOTFND?
+                   │  READ       │──── YES ──▶ "User ID NOT found…"
+                   │  USRSEC     │
+                   └──────┬──────┘    OTHER?
+                     NORMAL│     └─── YES ──▶ "Unable to lookup User…"
+                          ▼                    + DISPLAY RESP/REAS
+                   ┌─────────────┐
+                   │  Display    │
+                   │  Details +  │
+                   │  "Press PF5"│
+                   └──────┬──────┘
+                    PF5   │
+                          ▼
+                   ┌─────────────┐    NOTFND?
+                   │  DELETE     │──── YES ──▶ "User ID NOT found…"
+                   │  USRSEC     │
+                   └──────┬──────┘    OTHER?
+                     NORMAL│     └─── YES ──▶ "Unable to Update User…"
+                          ▼                    + DISPLAY RESP/REAS
+                   ┌─────────────┐
+                   │  SUCCESS    │
+                   │  "User xxx  │
+                   │  deleted"   │
+                   └─────────────┘
+</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>8.2 Error Handling Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Condition</th><th>RESP Code</th><th>Paragraph</th><th>Program Action</th><th>User Message</th><th>Logging</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>User ID empty</td><td>N/A (validation)</td><td>PROCESS-ENTER-KEY / DELETE-USER-INFO</td><td>Set WS-ERR-FLG='Y', cursor to USRIDIN</td><td>"User ID can NOT be empty…"</td><td>None</td></tr>
+            <tr><td>User ID not found on READ</td><td>DFHRESP(NOTFND)</td><td>READ-USER-SEC-FILE</td><td>Set WS-ERR-FLG='Y', cursor to USRIDIN</td><td>"User ID NOT found…"</td><td>None</td></tr>
+            <tr><td>Unexpected READ error</td><td>OTHER</td><td>READ-USER-SEC-FILE</td><td>Set WS-ERR-FLG='Y', cursor to FNAME</td><td>"Unable to lookup User…"</td><td>DISPLAY 'RESP:' WS-RESP-CD 'REAS:' WS-REAS-CD</td></tr>
+            <tr><td>User ID not found on DELETE</td><td>DFHRESP(NOTFND)</td><td>DELETE-USER-SEC-FILE</td><td>Set WS-ERR-FLG='Y', cursor to USRIDIN</td><td>"User ID NOT found…"</td><td>None</td></tr>
+            <tr><td>Unexpected DELETE error</td><td>OTHER</td><td>DELETE-USER-SEC-FILE</td><td>Set WS-ERR-FLG='Y', cursor to FNAME</td><td>"Unable to Update User…"</td><td>DISPLAY 'RESP:' WS-RESP-CD 'REAS:' WS-REAS-CD</td></tr>
+            <tr><td>Invalid AID key</td><td>N/A</td><td>MAIN-PARA (EVALUATE EIBAID OTHER)</td><td>Set WS-ERR-FLG='Y'</td><td>"Invalid key pressed. Please see below…" (CCDA-MSG-INVALID-KEY)</td><td>None</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>8.3 HANDLE ABEND / HANDLE CONDITION</h3>
+      <p>No <code>EXEC CICS HANDLE ABEND</code> or <code>HANDLE CONDITION</code> statements are present in COUSR03C. All error handling is performed via inline <code>RESP</code>/<code>RESP2</code> checking with <code>EVALUATE WS-RESP-CD</code>.</p>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>8.4 User Error Messages</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Message Text</th><th>Color</th><th>Trigger</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>"User ID can NOT be empty…"</td><td>Red (default ERRMSG attribute)</td><td>ENTER or PF5 with blank User ID</td></tr>
+            <tr><td>2</td><td>"User ID NOT found…"</td><td>Red</td><td>READ or DELETE returns DFHRESP(NOTFND)</td></tr>
+            <tr><td>3</td><td>"Unable to lookup User…"</td><td>Red</td><td>READ returns unexpected RESP code</td></tr>
+            <tr><td>4</td><td>"Unable to Update User…"</td><td>Red</td><td>DELETE returns unexpected RESP code</td></tr>
+            <tr><td>5</td><td>"Press PF5 key to delete this user …"</td><td>Neutral (DFHNEUTR)</td><td>Successful READ — user details displayed</td></tr>
+            <tr><td>6</td><td>"User <em>xxx</em> has been deleted …"</td><td>Green (DFHGREEN)</td><td>Successful DELETE</td></tr>
+            <tr><td>7</td><td>"Invalid key pressed. Please see below…"</td><td>Red</td><td>Any unrecognized AID key (CCDA-MSG-INVALID-KEY)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- SECTION 9 — Security and Authorization                             -->
+<!-- ================================================================== -->
+<section class="section" id="s9">
+  <div class="section-header">
+    <span class="section-num">9</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span>9.1 Transaction Security</h3>
+      <p>
+        Access to CU03 is restricted to administrator users through the application's menu routing architecture:
+      </p>
+      <ul>
+        <li>The sign-on program (<code>COSGN00C</code>) authenticates the user and sets <code>CDEMO-USER-TYPE</code> in the COMMAREA.</li>
+        <li>Admin users (type <code>'A'</code>) are routed to the Admin Menu (<code>COADM01C</code>), which presents "User Delete (Security)" as option 4.</li>
+        <li>Regular users (type <code>'U'</code>) are routed to the Main Menu (<code>COMEN01C</code>), which does not include user management options.</li>
+        <li>If COUSR03C is started without a COMMAREA (<code>EIBCALEN = 0</code>), it immediately transfers control to <code>COSGN00C</code>, preventing unauthorized direct invocation.</li>
+      </ul>
+      <div class="callout">
+        <strong>Note:</strong> COUSR03C itself does not perform an explicit <code>CDEMO-USER-TYPE</code> check. Security is enforced by the menu routing layer — only admin users can reach this program through normal navigation.
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>9.2 Data Access Authorization</h3>
+      <p>
+        No additional data-level authorization checks are performed within COUSR03C. Any user who reaches this program (i.e., an admin) can delete any user record from the <code>USRSEC</code> file, including other admin accounts. There is no self-deletion prevention (an admin could delete their own user ID).
+      </p>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>9.3 Audit Trail</h3>
+      <p>
+        COUSR03C does not implement explicit audit logging. The only diagnostic output is the <code>DISPLAY</code> statement for unexpected RESP codes, which writes to the CICS CEEMSG/CESE log. No record of <em>which</em> admin deleted <em>which</em> user is captured.
+      </p>
+      <div class="callout callout-red">
+        <strong>Gap:</strong> The absence of audit logging for user deletion is a significant security concern. In a production environment, deletion of security credentials should be logged with the admin's identity, timestamp, and the deleted user ID.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- SECTION 10 — Performance Characteristics                           -->
+<!-- ================================================================== -->
+<section class="section" id="s10">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <h2>Performance Characteristics</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span>10.1 Performance Profile</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Metric</th><th>Value</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>File I/Os per fetch iteration</td><td>1 READ (UPDATE)</td><td>Single keyed read on USRSEC by SEC-USR-ID</td></tr>
+            <tr><td>File I/Os per delete iteration</td><td>1 READ (UPDATE) + 1 DELETE</td><td>Read-for-update followed by delete of current record</td></tr>
+            <tr><td>Map sends per iteration</td><td>1</td><td>Single SEND MAP per pseudo-conversational cycle</td></tr>
+            <tr><td>COMMAREA size</td><td>~300 bytes</td><td>Shared CARDDEMO-COMMAREA + CU03-specific extension</td></tr>
+            <tr><td>Program size</td><td>359 LOC</td><td>Compact program — minimal working storage</td></tr>
+            <tr><td>Inter-program calls</td><td>0 LINKs</td><td>Only XCTL on exit — no subroutine calls</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>10.2 Performance Considerations</h3>
+      <ul>
+        <li><strong>UPDATE lock duration:</strong> The READ with UPDATE acquires a record-level lock on the USRSEC file. If the user delays pressing PF5 after the fetch, this lock is held across the pseudo-conversational boundary (CICS releases locks at task end, but the DELETE expects the lock from the same task — the program re-reads with UPDATE on PF5). In practice, the lock is released between iterations, and PF5 re-acquires it via DELETE-USER-INFO calling READ-USER-SEC-FILE again.</li>
+        <li><strong>No browse operations:</strong> This program uses only direct keyed access — no STARTBR/READNEXT loops that could cause performance concerns.</li>
+        <li><strong>Minimal CPU:</strong> No complex data transformations, calculations, or string processing beyond the simple STRING for the success message.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- SECTION 11 — Testing Approach                                      -->
+<!-- ================================================================== -->
+<section class="section" id="s11">
+  <div class="section-header">
+    <span class="section-num">11</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span>11.1 Test Scenarios</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Scenario</th><th>Precondition</th><th>Steps</th><th>Expected Result</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>TC-01</td><td>Successful user deletion</td><td>User "TESTDEL1" exists in USRSEC</td><td>Enter "TESTDEL1", press ENTER to fetch, press PF5 to delete</td><td>User details displayed, then "User TESTDEL1 has been deleted …" in green</td></tr>
+            <tr><td>TC-02</td><td>Fetch non-existent user</td><td>User "NOUSER99" does not exist</td><td>Enter "NOUSER99", press ENTER</td><td>"User ID NOT found…" in red</td></tr>
+            <tr><td>TC-03</td><td>Empty User ID on ENTER</td><td>Screen displayed</td><td>Leave User ID blank, press ENTER</td><td>"User ID can NOT be empty…" in red</td></tr>
+            <tr><td>TC-04</td><td>Empty User ID on PF5</td><td>Screen displayed</td><td>Leave User ID blank, press PF5</td><td>"User ID can NOT be empty…" in red</td></tr>
+            <tr><td>TC-05</td><td>PF3 return to previous screen</td><td>Navigated from Admin Menu</td><td>Press PF3</td><td>Returns to Admin Menu (COADM01C)</td></tr>
+            <tr><td>TC-06</td><td>PF3 return to user list</td><td>Navigated from User List (COUSR00C)</td><td>Press PF3</td><td>Returns to User List (CDEMO-FROM-PROGRAM = COUSR00C)</td></tr>
+            <tr><td>TC-07</td><td>PF4 clear screen</td><td>User details displayed</td><td>Press PF4</td><td>All fields cleared, cursor on User ID</td></tr>
+            <tr><td>TC-08</td><td>PF12 return to Admin Menu</td><td>Any state</td><td>Press PF12</td><td>Returns to Admin Menu (COADM01C)</td></tr>
+            <tr><td>TC-09</td><td>Invalid key pressed</td><td>Screen displayed</td><td>Press PF7</td><td>"Invalid key pressed. Please see below…"</td></tr>
+            <tr><td>TC-10</td><td>Pre-selected user from list</td><td>CDEMO-CU03-USR-SELECTED = "ADMIN001"</td><td>XCTL from COUSR00C with user selected</td><td>Screen shows with user details auto-fetched</td></tr>
+            <tr><td>TC-11</td><td>Direct start without COMMAREA</td><td>EIBCALEN = 0</td><td>Start CU03 directly from CEMT</td><td>XCTL to COSGN00C (sign-on redirect)</td></tr>
+            <tr><td>TC-12</td><td>Delete already-deleted user</td><td>User fetched, then another session deletes it</td><td>Press PF5</td><td>"User ID NOT found…" on DELETE NOTFND</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>11.2 Test Data Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Data Type</th><th>Requirement</th><th>Details</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>USRSEC records</td><td>At least 3 test user records</td><td>One admin type (SEC-USR-TYPE='A'), two regular users (SEC-USR-TYPE='U')</td></tr>
+            <tr><td>Admin login</td><td>Admin user credentials in USRSEC</td><td>Needed to access Admin Menu and reach CU03</td></tr>
+            <tr><td>Non-existent user ID</td><td>A user ID not present in USRSEC</td><td>For testing NOTFND path</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!-- SECTION 12 — Known Issues and Considerations                       -->
+<!-- ================================================================== -->
+<section class="section" id="s12">
+  <div class="section-header">
+    <span class="section-num">12</span>
+    <h2>Known Issues and Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span>12.1 Known Issues</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Issue</th><th>Severity</th><th>Details</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>KI-1</td><td>No audit logging for deletions</td><td>High</td><td>No record is kept of which admin deleted which user. Only DISPLAY for unexpected errors is present.</td></tr>
+            <tr><td>KI-2</td><td>No self-deletion prevention</td><td>Medium</td><td>An admin can delete their own user ID, potentially locking themselves out of the system.</td></tr>
+            <tr><td>KI-3</td><td>Misleading error message on DELETE failure</td><td>Low</td><td>DELETE-USER-SEC-FILE OTHER branch says "Unable to Update User…" instead of "Unable to Delete User…" — copy-paste artifact.</td></tr>
+            <tr><td>KI-4</td><td>No confirmation dialog beyond PF5</td><td>Low</td><td>Deletion is immediate upon PF5 — there is no "Are you sure?" secondary confirmation. The two-step fetch-then-delete provides some protection.</td></tr>
+            <tr><td>KI-5</td><td>Hardcoded file name</td><td>Low</td><td><code>WS-USRSEC-FILE</code> is hardcoded to <code>'USRSEC  '</code> in WORKING-STORAGE rather than being externally configurable.</td></tr>
+            <tr><td>KI-6</td><td>No cascading delete</td><td>Medium</td><td>Deleting a user from USRSEC does not remove any related data from other files (e.g., no check if the user has active sessions or associated records).</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span>12.2 Modernization Considerations</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Current State</th><th>Target State</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Screen I/O</td><td>BMS maps (COUSR3A) via 3270 terminal</td><td>REST API endpoint (DELETE /api/users/{id}) + web UI with confirmation modal</td></tr>
+            <tr><td>Data Access</td><td>EXEC CICS READ/DELETE on VSAM KSDS (USRSEC)</td><td>JPA/SQL DELETE from relational user table with soft-delete option</td></tr>
+            <tr><td>State Management</td><td>Pseudo-conversational COMMAREA</td><td>Stateless REST — single DELETE request with auth token</td></tr>
+            <tr><td>Security</td><td>Menu routing restriction (admin-only navigation)</td><td>Role-based access control (RBAC) with JWT claims</td></tr>
+            <tr><td>Audit</td><td>None (DISPLAY for errors only)</td><td>Structured audit log with admin ID, action, timestamp, deleted user ID</td></tr>
+            <tr><td>Validation</td><td>Inline COBOL EVALUATE/IF checks</td><td>Bean validation annotations / service-layer validation</td></tr>
+            <tr><td>Error Handling</td><td>WS-ERR-FLG flag + screen messages</td><td>HTTP status codes (404 Not Found, 403 Forbidden) + JSON error responses</td></tr>
+            <tr><td>Cascading</td><td>No referential integrity enforcement</td><td>Database foreign keys with CASCADE or RESTRICT policies</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- .page-wrap-single -->
+
+<footer class="footer">
+  <strong>UniCredit S.p.A.</strong> — CardDemo CICS Transaction Analysis · Auto-generated
+</footer>
+
+</body>
+</html>
