@@ -1632,12 +1632,14 @@ function highlightPrograms(programs, phase) {
   const nodeIds = [];
 
   for (const pgm of programs) {
-    const nodeId = PROGRAM_NODE_MAP[pgm.toUpperCase()];
-    if (nodeId) {
-      activateNode(nodeId, style);
-      _activeNodes.add(nodeId);
-      nodeIds.push(nodeId);
-    }
+    const upper = pgm.toUpperCase();
+    const nodeId = PROGRAM_NODE_MAP[upper];
+    if (!nodeId) continue;
+    // ACCOUNT/ACCTDAT should only light up after CBTRN02C is active (batch phase)
+    if ((upper === 'ACCOUNT' || upper === 'ACCTDAT') && !_activeNodes.has('n-cbtrn02c')) continue;
+    activateNode(nodeId, style);
+    _activeNodes.add(nodeId);
+    nodeIds.push(nodeId);
   }
 
   // Infer edges: check every pair of active nodes
