@@ -79,6 +79,14 @@ STRUCTURED_OUTPUT_SCHEMA = {
                     "code_snippet": {
                         "type": "string",
                         "description": "Key COBOL source lines (3-8 lines, from actual source)"
+                    },
+                    "requires_input": {
+                        "type": "string",
+                        "description": "Set to 'transaction_amount' when the program expects user input (EXEC CICS RECEIVE MAP). The server will pause and open a terminal overlay."
+                    },
+                    "db_query": {
+                        "type": "string",
+                        "description": "Set to 'check_overlimit' at the overlimit decision point. The server will query SQLite and return real account values."
                     }
                 },
                 "required": ["phase", "title", "programs", "finding"]
@@ -471,8 +479,12 @@ class TraceHandler(SimpleHTTPRequestHandler):
             "code_snippet": step_data.get("code_snippet", ""),
         }
 
-        # Check for requires_input directive
+        # Check for requires_input directive (explicit field or fallback: detect RECEIVE MAP in text)
         requires_input = step_data.get("requires_input")
+        if not requires_input:
+            text = (step_data.get("title", "") + " " + step_data.get("finding", "") + " " + step_data.get("code_snippet", "")).upper()
+            if "RECEIVE MAP" in text:
+                requires_input = "transaction_amount"
         if requires_input:
             global _waiting_for_input
             event["type"] = "input_required"
@@ -483,8 +495,12 @@ class TraceHandler(SimpleHTTPRequestHandler):
             _input_event.clear()
             _waiting_for_input = True
 
-        # Check for db_query directive
+        # Check for db_query directive (explicit field or fallback: detect overlimit check in text)
         db_query = step_data.get("db_query")
+        if not db_query:
+            text = (step_data.get("title", "") + " " + step_data.get("finding", "") + " " + step_data.get("code_snippet", "")).upper()
+            if ("OVERLIMIT" in text or "WS-TEMP-BAL" in text or "CREDIT-LIMIT" in text) and phase == "batch":
+                db_query = "check_overlimit"
         if db_query:
             # Server queries the DB on behalf of Devin
             if db_query == "check_overlimit":
