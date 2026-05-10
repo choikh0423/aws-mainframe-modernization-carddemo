@@ -46,7 +46,12 @@
 <!-- SECTION 1: Business Flow Analysis -->
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <section class="section" id="s1">
-<h2>1. Business Flow Analysis</h2>
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">01</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>1.1 Business Context</h3>
 <p>The Account Update transaction (<code>CAUP</code>) provides customer service representatives with the ability to modify account master data and associated customer demographic information for a given credit card account. The operator enters an 11-digit account number; the system retrieves and displays the current account details (balances, limits, dates) together with the linked customer record (name, address, phone, SSN, FICO score). The operator makes changes and the system validates all fields before persisting updates to both the ACCTDAT and CUSTDAT VSAM files in a single logical unit of work.</p>
@@ -142,13 +147,19 @@
 <tr><td>5</td><td>Press F3 (Exit)</td><td>XCTL back to calling program or Main Menu (CM00)</td><td>Leave the transaction</td></tr>
 </tbody>
 </table>
+  </div>
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <!-- SECTION 2: Technical Flow Analysis -->
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <section class="section" id="s2">
-<h2>2. Technical Flow Analysis</h2>
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">02</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>2.1 Technical Flow Diagram &mdash; Overview</h3>
 <pre>
@@ -266,13 +277,19 @@ EVALUATE TRUE
 <tr><td>ABEND ABCODE('9999')</td><td>ABEND-ROUTINE</td><td>Force abend</td><td>&mdash;</td></tr>
 </tbody>
 </table>
+  </div>
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <!-- SECTION 3: Screen Flow and BMS Maps -->
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <section class="section" id="s3">
-<h2>3. Screen Flow and BMS Maps</h2>
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">03</span>
+    <h2>Screen Flow and BMS Maps</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>3.1 Screen Flow Diagram</h3>
 <pre>
@@ -362,13 +379,19 @@ EVALUATE TRUE
 <tr><td>Any other</td><td>&mdash;</td><td>Treated as ENTER (PFK-INVALID forces CCARD-AID-ENTER)</td></tr>
 </tbody>
 </table>
+  </div>
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <!-- SECTION 4: Program Inventory and Call Chain -->
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <section class="section" id="s4">
-<h2>4. Program Inventory and Call Chain</h2>
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">04</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>4.1 Program Inventory</h3>
 <table>
@@ -408,13 +431,19 @@ CAUP (Transaction)
 <tr><td>COACTUPC</td><td>CDEMO-FROM-PROGRAM</td><td>XCTL</td><td>CARDDEMO-COMMAREA</td><td>PF03 exit when FROM-PROGRAM is set (return to caller)</td></tr>
 </tbody>
 </table>
+  </div>
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <!-- SECTION 5: File and Data Store Inventory -->
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <section class="section" id="s5">
-<h2>5. File and Data Store Inventory</h2>
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">05</span>
+    <h2>File and Data Store Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>5.1 File Inventory</h3>
 <table>
@@ -441,13 +470,19 @@ CAUP (Transaction)
 
 <h3>5.4 TDQ Usage</h3>
 <p>N/A &mdash; This transaction does not use Transient Data Queues.</p>
+  </div>
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <!-- SECTION 6: Data Flow Analysis -->
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <section class="section" id="s6">
-<h2>6. Data Flow Analysis</h2>
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">06</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>6.1 Data Flow Through Transaction</h3>
 <pre>
@@ -495,13 +530,19 @@ CAUP (Transaction)
 <tr><td>ACUP-NEW-CUST-FICO-SCORE</td><td>Range check 300-850</td><td>CUST-UPDATE-FICO-CREDIT-SCORE</td></tr>
 </tbody>
 </table>
+  </div>
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <!-- SECTION 7: COMMAREA and Interface Contracts -->
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <section class="section" id="s7">
-<h2>7. COMMAREA and Interface Contracts</h2>
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">07</span>
+    <h2>COMMAREA and Interface Contracts</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>7.1 COMMAREA Layout</h3>
 <p>The transaction uses a two-part COMMAREA structure passed in DFHCOMMAREA:</p>
@@ -562,13 +603,19 @@ CAUP (Transaction)
 
 <h3>7.3 Conversation State Management</h3>
 <p>State is preserved between pseudo-conversational iterations via the combined COMMAREA (CARDDEMO-COMMAREA + WS-THIS-PROGCOMMAREA) passed on <code>EXEC CICS RETURN TRANSID('CAUP') COMMAREA(WS-COMMAREA)</code>. The total COMMAREA is defined as <code>WS-COMMAREA PIC X(2000)</code>. On re-entry, the program splits DFHCOMMAREA back into the two structures using offset arithmetic based on <code>LENGTH OF CARDDEMO-COMMAREA</code>.</p>
+  </div>
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <!-- SECTION 8: Error Handling and User Feedback -->
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <section class="section" id="s8">
-<h2>8. Error Handling and User Feedback</h2>
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">08</span>
+    <h2>Error Handling and User Feedback</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>8.1 Error Flow Diagram</h3>
 <pre>
@@ -648,13 +695,19 @@ CAUP (Transaction)
 <tr><td>INFORM-FAILURE</td><td>Changes unsuccessful. Please try again</td></tr>
 </tbody>
 </table>
+  </div>
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <!-- SECTION 9: Security and Authorization -->
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <section class="section" id="s9">
-<h2>9. Security and Authorization</h2>
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">09</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>9.1 Transaction Security</h3>
 <p>The CAUP transaction is accessible to regular users (CDEMO-USRTYP-USER = 'U') via the Main Menu (CM00). Access control is enforced at the menu level by COSGN00C which routes users to the appropriate menu based on their user type. COACTUPC itself does not perform an explicit security check &mdash; it relies on the sign-on (CC00) having authenticated the user and the menu (CM00) only presenting this option to authorized users.</p>
@@ -665,13 +718,19 @@ CAUP (Transaction)
 
 <h3>9.3 Audit Trail</h3>
 <p>The program does not explicitly write audit records. Changes are persisted directly to the VSAM files without a separate audit log. In a modernized environment, this would be a candidate for adding audit trail functionality (change history with user ID, timestamp, before/after values).</p>
+  </div>
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <!-- SECTION 10: Performance Characteristics -->
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <section class="section" id="s10">
-<h2>10. Performance Characteristics</h2>
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Performance Characteristics</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>10.1 Performance Profile</h3>
 <table>
@@ -699,13 +758,19 @@ CAUP (Transaction)
 <tr><td>STRING operations for date formatting</td><td>Low: minimal CPU cost</td><td>No concern</td></tr>
 </tbody>
 </table>
+  </div>
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <!-- SECTION 11: Testing Approach -->
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <section class="section" id="s11">
-<h2>11. Testing Approach</h2>
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>11.1 Test Scenarios</h3>
 <table>
@@ -743,13 +808,19 @@ CAUP (Transaction)
 <tr><td>Concurrent test setup</td><td>Two terminal sessions accessing the same account simultaneously</td></tr>
 </tbody>
 </table>
+  </div>
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <!-- SECTION 12: Known Issues and Considerations -->
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <section class="section" id="s12">
-<h2>12. Known Issues and Considerations</h2>
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Known Issues and Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>12.1 Known Issues</h3>
 <table>
@@ -781,6 +852,7 @@ CAUP (Transaction)
 <tr><td>Phone/SSN/Date Formatting</td><td>Manual STRING/INSPECT operations</td><td>Standard library formatters and validators</td></tr>
 </tbody>
 </table>
+  </div>
 </section>
 
 </div><!-- /page-wrap-single -->

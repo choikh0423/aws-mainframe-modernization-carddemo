@@ -45,8 +45,13 @@
 <!-- ════════════════════════════════════════════════════════════════════
      SECTION 1: Business Flow Analysis
      ════════════════════════════════════════════════════════════════════ -->
-<section class="section">
-  <h2>1. Business Flow Analysis</h2>
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">01</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
   <h3>1.1 Business Context</h3>
   <p>
@@ -165,13 +170,19 @@
       </tr>
     </tbody>
   </table>
+  </div>
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════════
      SECTION 2: Technical Flow Analysis
      ════════════════════════════════════════════════════════════════════ -->
-<section class="section">
-  <h2>2. Technical Flow Analysis</h2>
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">02</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
   <h3>2.1 Technical Flow Diagram — Overview</h3>
 <pre>
@@ -308,13 +319,19 @@ MAIN-PARA:
       </tr>
     </tbody>
   </table>
+  </div>
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════════
      SECTION 3: Screen Flow and BMS Maps
      ════════════════════════════════════════════════════════════════════ -->
-<section class="section">
-  <h2>3. Screen Flow and BMS Maps</h2>
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">03</span>
+    <h2>Screen Flow and BMS Maps</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
   <h3>3.1 Screen Flow Diagram</h3>
 <pre>
@@ -404,13 +421,19 @@ MAIN-PARA:
       <tr><td>Other</td><td>Any other AID</td><td>Display invalid key message</td><td>SEND-TRNVIEW-SCREEN with CCDA-MSG-INVALID-KEY</td></tr>
     </tbody>
   </table>
+  </div>
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════════
      SECTION 4: Program Inventory and Call Chain
      ════════════════════════════════════════════════════════════════════ -->
-<section class="section">
-  <h2>4. Program Inventory and Call Chain</h2>
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">04</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
   <h3>4.1 Program Inventory</h3>
   <table>
@@ -458,13 +481,19 @@ CICS Transaction CT01
       <tr><td>COTRN01C</td><td>CDEMO-FROM-PROGRAM</td><td>XCTL</td><td>CARDDEMO-COMMAREA</td><td>PF3 pressed with FROM-PROGRAM set</td></tr>
     </tbody>
   </table>
+  </div>
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════════
      SECTION 5: File and Data Store Inventory
      ════════════════════════════════════════════════════════════════════ -->
-<section class="section">
-  <h2>5. File and Data Store Inventory</h2>
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">05</span>
+    <h2>File and Data Store Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
   <h3>5.1 File Inventory</h3>
   <table>
@@ -497,13 +526,19 @@ CICS Transaction CT01
 
   <h3>5.4 TDQ Usage</h3>
   <p><em>N/A — This transaction does not use Transient Data Queues.</em></p>
+  </div>
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════════
      SECTION 6: Data Flow Analysis
      ════════════════════════════════════════════════════════════════════ -->
-<section class="section">
-  <h2>6. Data Flow Analysis</h2>
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">06</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
   <h3>6.1 Data Flow Through Transaction</h3>
 <pre>
@@ -559,13 +594,19 @@ CICS Transaction CT01
       <tr><td>TRAN-MERCHANT-ZIP</td><td>Direct move</td><td>MZIPI OF COTRN1AI</td></tr>
     </tbody>
   </table>
+  </div>
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════════
      SECTION 7: COMMAREA and Interface Contracts
      ════════════════════════════════════════════════════════════════════ -->
-<section class="section">
-  <h2>7. COMMAREA and Interface Contracts</h2>
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">07</span>
+    <h2>COMMAREA and Interface Contracts</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
   <h3>7.1 COMMAREA Layout</h3>
   <p>This transaction uses the shared <code>CARDDEMO-COMMAREA</code> defined in <code>COCOM01Y.cpy</code>,
@@ -612,13 +653,19 @@ CICS Transaction CT01
     <li><strong>CDEMO-FROM-PROGRAM / CDEMO-FROM-TRANID</strong>: Stored before XCTL to track navigation history for PF3 return.</li>
     <li>The entire COMMAREA is passed on every RETURN TRANSID and XCTL call, preserving context across all program boundaries.</li>
   </ul>
+  </div>
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════════
      SECTION 8: Error Handling and User Feedback
      ════════════════════════════════════════════════════════════════════ -->
-<section class="section">
-  <h2>8. Error Handling and User Feedback</h2>
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">08</span>
+    <h2>Error Handling and User Feedback</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
   <h3>8.1 Error Flow Diagram</h3>
 <pre>
@@ -708,13 +755,19 @@ CICS Transaction CT01
       <tr><td>"Invalid key pressed. Please see below..."</td><td>Unrecognized AID key pressed</td><td>N/A</td></tr>
     </tbody>
   </table>
+  </div>
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════════
      SECTION 9: Security and Authorization
      ════════════════════════════════════════════════════════════════════ -->
-<section class="section">
-  <h2>9. Security and Authorization</h2>
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">09</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
   <h3>9.1 Transaction Security</h3>
   <ul>
@@ -732,13 +785,19 @@ CICS Transaction CT01
   <p>This program does not write explicit audit records. The only logging is the DISPLAY statement
      for unexpected RESP codes, which writes to the CICS SYSOUT/CEEMSG destination. CICS journal/SMF
      records would capture transaction-level activity externally.</p>
+  </div>
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════════
      SECTION 10: Performance Characteristics
      ════════════════════════════════════════════════════════════════════ -->
-<section class="section">
-  <h2>10. Performance Characteristics</h2>
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Performance Characteristics</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
   <h3>10.1 Performance Profile</h3>
   <table>
@@ -762,13 +821,19 @@ CICS Transaction CT01
     <li><strong>Small COMMAREA</strong>: Minimal storage overhead for pseudo-conversational state.</li>
     <li><strong>No GETMAIN/FREEMAIN</strong>: All storage is working-storage based, minimizing dynamic storage acquisition overhead.</li>
   </ul>
+  </div>
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════════
      SECTION 11: Testing Approach
      ════════════════════════════════════════════════════════════════════ -->
-<section class="section">
-  <h2>11. Testing Approach</h2>
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
   <h3>11.1 Test Scenarios</h3>
   <table>
@@ -802,13 +867,19 @@ CICS Transaction CT01
       <tr><td>Edge case records</td><td>Records with maximum-length fields, zero amounts, long merchant names</td></tr>
     </tbody>
   </table>
+  </div>
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════════
      SECTION 12: Known Issues and Considerations
      ════════════════════════════════════════════════════════════════════ -->
-<section class="section">
-  <h2>12. Known Issues and Considerations</h2>
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Known Issues and Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
   <h3>12.1 Known Issues</h3>
   <table>
@@ -882,6 +953,7 @@ CICS Transaction CT01
       </tr>
     </tbody>
   </table>
+  </div>
 </section>
 
 </div><!-- /page-wrap-single -->

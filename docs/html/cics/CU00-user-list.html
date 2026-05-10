@@ -45,8 +45,13 @@
 <!-- ================================================================== -->
 <!--  SECTION 1 — BUSINESS FLOW ANALYSIS                               -->
 <!-- ================================================================== -->
-<section class="section">
-<h2>1 &mdash; Business Flow Analysis</h2>
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">01</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>1.1 Business Context</h3>
 <p>
@@ -121,13 +126,19 @@
 <tr><td>7</td><td>Press PF3</td><td>XCTL back to COADM01C (Admin Menu)</td><td>Return to admin menu</td></tr>
 </tbody>
 </table>
+  </div>
 </section>
 
 <!-- ================================================================== -->
 <!--  SECTION 2 — TECHNICAL FLOW ANALYSIS                              -->
 <!-- ================================================================== -->
-<section class="section">
-<h2>2 &mdash; Technical Flow Analysis</h2>
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">02</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>2.1 Technical Flow Diagram — Overview</h3>
 <pre>
@@ -218,13 +229,19 @@
 <tr><td><code>XCTL PROGRAM('COADM01C') COMMAREA</code></td><td>RETURN-TO-PREV-SCREEN</td><td>Return to Admin Menu</td><td>None</td></tr>
 </tbody>
 </table>
+  </div>
 </section>
 
 <!-- ================================================================== -->
 <!--  SECTION 3 — SCREEN FLOW AND BMS MAPS                             -->
 <!-- ================================================================== -->
-<section class="section">
-<h2>3 &mdash; Screen Flow and BMS Maps</h2>
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">03</span>
+    <h2>Screen Flow and BMS Maps</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>3.1 Screen Flow Diagram</h3>
 <pre>
@@ -307,13 +324,19 @@
 <tr><td>Other</td><td>Any other AID</td><td>Error message: "Invalid key pressed. Please see below..."</td><td>Inline in EVALUATE EIBAID</td></tr>
 </tbody>
 </table>
+  </div>
 </section>
 
 <!-- ================================================================== -->
 <!--  SECTION 4 — PROGRAM INVENTORY AND CALL CHAIN                     -->
 <!-- ================================================================== -->
-<section class="section">
-<h2>4 &mdash; Program Inventory and Call Chain</h2>
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">04</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>4.1 Program Inventory</h3>
 <table>
@@ -352,13 +375,19 @@
 <tr><td>COUSR00C</td><td>COUSR03C</td><td>XCTL</td><td>CARDDEMO-COMMAREA (CDEMO-CU00-USR-SELECTED populated)</td><td>ENTER with selection code 'D' or 'd'</td></tr>
 </tbody>
 </table>
+  </div>
 </section>
 
 <!-- ================================================================== -->
 <!--  SECTION 5 — FILE AND DATA STORE INVENTORY                        -->
 <!-- ================================================================== -->
-<section class="section">
-<h2>5 &mdash; File and Data Store Inventory</h2>
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">05</span>
+    <h2>File and Data Store Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>5.1 File Inventory</h3>
 <table>
@@ -400,13 +429,19 @@
 
 <h3>5.4 TDQ Usage</h3>
 <p><em>N/A — This transaction does not use Transient Data Queues.</em></p>
+  </div>
 </section>
 
 <!-- ================================================================== -->
 <!--  SECTION 6 — DATA FLOW ANALYSIS                                   -->
 <!-- ================================================================== -->
-<section class="section">
-<h2>6 &mdash; Data Flow Analysis</h2>
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">06</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>6.1 Data Flow Through Transaction</h3>
 <pre>
@@ -469,13 +504,19 @@
 <tr><td>SEC-USR-ID (last record)</td><td>Direct copy</td><td>CDEMO-CU00-USRID-LAST (COMMAREA)</td></tr>
 </tbody>
 </table>
+  </div>
 </section>
 
 <!-- ================================================================== -->
 <!--  SECTION 7 — COMMAREA AND INTERFACE CONTRACTS                     -->
 <!-- ================================================================== -->
-<section class="section">
-<h2>7 &mdash; COMMAREA and Interface Contracts</h2>
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">07</span>
+    <h2>COMMAREA and Interface Contracts</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>7.1 COMMAREA Layout</h3>
 <p>The transaction uses the shared <code>CARDDEMO-COMMAREA</code> defined in <code>COCOM01Y.cpy</code>,
@@ -527,13 +568,19 @@ plus a transaction-specific extension <code>CDEMO-CU00-INFO</code> defined inlin
   <li><strong>CDEMO-CU00-NEXT-PAGE-FLG</strong>: Lookahead flag — 'Y' if at least one more record exists beyond the current page.</li>
   <li>The entire COMMAREA is passed on <code>RETURN TRANSID('CU00')</code> and restored from <code>DFHCOMMAREA</code> at re-entry.</li>
 </ul>
+  </div>
 </section>
 
 <!-- ================================================================== -->
 <!--  SECTION 8 — ERROR HANDLING AND USER FEEDBACK                     -->
 <!-- ================================================================== -->
-<section class="section">
-<h2>8 &mdash; Error Handling and User Feedback</h2>
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">08</span>
+    <h2>Error Handling and User Feedback</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>8.1 Error Flow Diagram</h3>
 <pre>
@@ -596,13 +643,19 @@ via inline RESP/RESP2 checking on each EXEC CICS command.</em></p>
 <tr><td>8</td><td>"You are already at the bottom of the page..."</td><td>PF8 pressed on last page</td><td>Inline literal (line 273)</td></tr>
 </tbody>
 </table>
+  </div>
 </section>
 
 <!-- ================================================================== -->
 <!--  SECTION 9 — SECURITY AND AUTHORIZATION                           -->
 <!-- ================================================================== -->
-<section class="section">
-<h2>9 &mdash; Security and Authorization</h2>
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">09</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>9.1 Transaction Security</h3>
 <p>Access to <code>CU00</code> is controlled at multiple levels:</p>
@@ -626,13 +679,19 @@ Last Name, and User Type are shown.</p>
 <p>No explicit application-level audit logging is implemented. Error conditions trigger
 <code>DISPLAY</code> statements that write RESP/REAS codes to the CICS system log (CEEMSG/CEEOUT),
 but no business-level audit trail (e.g., "Admin X viewed user list") is recorded.</p>
+  </div>
 </section>
 
 <!-- ================================================================== -->
 <!--  SECTION 10 — PERFORMANCE CHARACTERISTICS                         -->
 <!-- ================================================================== -->
-<section class="section">
-<h2>10 &mdash; Performance Characteristics</h2>
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Performance Characteristics</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>10.1 Performance Profile</h3>
 <table>
@@ -664,13 +723,19 @@ but no business-level audit trail (e.g., "Admin X viewed user list") is recorded
       the anchor key, then reads 10 records in reverse. This is slightly more expensive than
       forward paging due to the additional repositioning logic.</li>
 </ul>
+  </div>
 </section>
 
 <!-- ================================================================== -->
 <!--  SECTION 11 — TESTING APPROACH                                    -->
 <!-- ================================================================== -->
-<section class="section">
-<h2>11 &mdash; Testing Approach</h2>
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>11.1 Test Scenarios</h3>
 <table>
@@ -706,13 +771,19 @@ but no business-level audit trail (e.g., "Admin X viewed user list") is recorded
 <tr><td>Edge-case key values</td><td>Users with IDs at extremes (e.g., "AAAAAAAA", "ZZZZZZZZ")</td><td>Test data script</td></tr>
 </tbody>
 </table>
+  </div>
 </section>
 
 <!-- ================================================================== -->
 <!--  SECTION 12 — KNOWN ISSUES AND CONSIDERATIONS                     -->
 <!-- ================================================================== -->
-<section class="section">
-<h2>12 &mdash; Known Issues and Considerations</h2>
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Known Issues and Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
 
 <h3>12.1 Known Issues</h3>
 <table>
@@ -743,6 +814,7 @@ but no business-level audit trail (e.g., "Admin X viewed user list") is recorded
 <tr><td>Audit</td><td>No application-level audit trail</td><td>Audit log table recording admin actions (who viewed/searched user list, when)</td></tr>
 </tbody>
 </table>
+  </div>
 </section>
 
 </div>
