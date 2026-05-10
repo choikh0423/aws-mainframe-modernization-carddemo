@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """
-Devin Live Trace Server
-=======================
+Devin Live Trace Server — SQLite-Backed
+=========================================
 A lightweight Python server that:
-1. Serves the live-trace-demo.html frontend
-2. Creates a Devin session using the "Live COBOL Flow Trace" playbook
-3. Polls session messages for structured JSON trace_step blocks
-4. Streams trace events to the frontend via SSE in real-time
+1. Serves the live-trace-demo.html and data-flow-demo.html (SQLite-backed) frontends
+2. Manages a SQLite database mirroring VSAM datasets (ACCTDAT, TRANSACT, etc.)
+3. Exposes REST API endpoints for DB operations
+4. Creates Devin sessions using the "Live COBOL Flow Trace" playbook
+5. Acts as intermediary: detects when Devin needs terminal input,
+   relays DB query results back to the Devin session
+6. Streams trace events + SQL query log to the frontend via SSE
 
 Usage:
     export DEVIN_API_KEY="cog_your_key_here"  # org-scoped service user key
@@ -26,6 +29,8 @@ import urllib.error
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
+
+import carddemo_db as db
 
 API_BASE = "https://api.devin.ai/v3"
 REPO = "choikh0423/aws-mainframe-modernization-carddemo"
@@ -63,6 +68,14 @@ STRUCTURED_OUTPUT_SCHEMA = {
                     "code_snippet": {
                         "type": "string",
                         "description": "Key COBOL source lines"
+                    },
+                    "requires_input": {
+                        "type": "string",
+                        "description": "Set to 'transaction_amount' when user input is needed"
+                    },
+                    "db_query": {
+                        "type": "string",
+                        "description": "Set to 'check_overlimit' when Devin needs DB state"
                     }
                 },
                 "required": ["step_index", "title", "finding"]
@@ -133,6 +146,15 @@ def get_session_messages(api_key, org_id, session_id, after=None):
     return devin_api_request("GET", path, api_key)
 
 
+def send_session_message(api_key, org_id, session_id, message):
+    """Send a message to a Devin session (to resume after input pause)."""
+    data = {"message": message}
+    return devin_api_request(
+        "POST", f"/organizations/{org_id}/sessions/{session_id}/messages",
+        api_key, data
+    )
+
+
 def extract_trace_steps_from_message(text):
     """Extract any {"trace_step": {...}} JSON blocks from a message."""
     steps = []
@@ -158,29 +180,105 @@ def extract_trace_steps_from_message(text):
 
 
 class TraceHandler(SimpleHTTPRequestHandler):
-    """HTTP handler that serves the frontend and handles SSE events."""
+    """HTTP handler that serves the frontend and handles API + SSE."""
 
     def do_GET(self):
-        if self.path == "/":
+        parsed = urlparse(self.path)
+        path = parsed.path
+
+        if path == "/":
             self.serve_landing()
-        elif self.path == "/live" or self.path == "/live/":
+        elif path in ("/live", "/live/", "/dataflow", "/dataflow/"):
+            self.serve_file("data-flow-demo.html")
+        elif path in ("/trace", "/trace/"):
             self.serve_file("live-trace-demo.html")
-        elif self.path == "/static" or self.path == "/static/":
-            self.serve_file("data-flow-demo.html")
-        elif self.path == "/dataflow" or self.path == "/dataflow/":
-            self.serve_file("data-flow-demo.html")
-        elif self.path.startswith("/events"):
+        elif path in ("/api/db/state",):
+            self.handle_db_state()
+        elif path in ("/api/db/querylog",):
+            self.handle_db_querylog()
+        elif path.startswith("/events"):
             self.handle_sse()
-        elif self.path == "/health":
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps({"status": "ok"}).encode())
+        elif path == "/health":
+            self.send_json({"status": "ok"})
         else:
             super().do_GET()
 
+    def do_POST(self):
+        parsed = urlparse(self.path)
+        path = parsed.path
+
+        if path in ("/api/db/reset",):
+            self.handle_db_reset()
+        elif path in ("/api/db/transaction",):
+            self.handle_db_transaction()
+        elif path in ("/api/db/batch",):
+            self.handle_db_batch()
+        else:
+            self.send_error(404, "Not found")
+
+    def read_body(self):
+        length = int(self.headers.get("Content-Length", 0))
+        if length == 0:
+            return {}
+        return json.loads(self.rfile.read(length).decode())
+
+    def send_json(self, data, status=200):
+        body = json.dumps(data, indent=2).encode()
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Cache-Control", "no-cache")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.end_headers()
+
+    # ── DB API endpoints ────────────────────────────────────────
+
+    def handle_db_state(self):
+        """GET /api/db/state — return full database state."""
+        state = db.get_state()
+        self.send_json(state)
+
+    def handle_db_querylog(self):
+        """GET /api/db/querylog?since=<timestamp> — return query log."""
+        params = parse_qs(urlparse(self.path).query)
+        since = float(params["since"][0]) if "since" in params else None
+        logs = db.get_query_log(since)
+        self.send_json({"query_log": logs})
+
+    def handle_db_reset(self):
+        """POST /api/db/reset — reset database to initial state."""
+        result = db.reset_db()
+        self.send_json(result)
+
+    def handle_db_transaction(self):
+        """POST /api/db/transaction — add a pending transaction."""
+        body = self.read_body()
+        amount = body.get("amount", 0)
+        merchant = body.get("merchant", "UNSPECIFIED")
+        card_num = body.get("card_num", "9680294154603697")
+
+        if not amount or amount <= 0:
+            self.send_json({"error": "Invalid amount"}, 400)
+            return
+
+        result = db.add_transaction(amount, merchant, card_num)
+        self.send_json(result)
+
+    def handle_db_batch(self):
+        """POST /api/db/batch — run batch processing (overlimit check)."""
+        result = db.run_batch()
+        self.send_json(result)
+
+    # ── File serving ────────────────────────────────────────────
+
     def serve_landing(self):
-        """Serve a landing page with links to /live and /static."""
         html = LANDING_HTML
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -189,7 +287,6 @@ class TraceHandler(SimpleHTTPRequestHandler):
         self.wfile.write(html.encode())
 
     def serve_file(self, filename):
-        """Serve an HTML file from the docs directory."""
         html_path = Path(__file__).parent / filename
         if html_path.exists():
             self.send_response(200)
@@ -200,8 +297,20 @@ class TraceHandler(SimpleHTTPRequestHandler):
         else:
             self.send_error(404, f"{filename} not found")
 
+    # ── SSE for live Devin trace ────────────────────────────────
+
     def handle_sse(self):
-        """Handle SSE connection for live trace events."""
+        """Handle SSE connection for live trace events.
+
+        When a trace_step contains requires_input='transaction_amount',
+        the server pauses polling, sends an 'input_required' SSE event,
+        and waits for the frontend to POST the transaction to /api/db/transaction.
+        Then the server sends the DB state back to the Devin session and resumes.
+
+        When a trace_step contains db_query='check_overlimit', the server
+        queries the DB, sends the result to the Devin session, and forwards
+        the response as an SSE event.
+        """
         parsed = urlparse(self.path)
         params = parse_qs(parsed.query)
 
@@ -214,15 +323,19 @@ class TraceHandler(SimpleHTTPRequestHandler):
             self.send_error(500, "Server not configured — restart with DEVIN_API_KEY set")
             return
 
-        # Build the user question based on the selected menu option
         user_question = (
             f"I'm looking at the CardDemo mainframe application. "
             f"I selected menu option {option_num} ({option_name}). "
             f"What does this flow do? Trace through the COBOL source code "
-            f"and show me each program call, data access, and how the pieces connect."
+            f"and show me each program call, data access, and how the pieces connect. "
+            f"The server has a SQLite database mirroring VSAM datasets. "
+            f"When you reach the transaction entry step, output a trace_step with "
+            f'requires_input="transaction_amount" so the user can enter the amount. '
+            f"When you reach the overlimit check, output a trace_step with "
+            f'db_query="check_overlimit" so the server can query the database '
+            f"and send you the actual account state for your decision."
         )
 
-        # Set up SSE headers
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream")
         self.send_header("Cache-Control", "no-cache")
@@ -236,7 +349,6 @@ class TraceHandler(SimpleHTTPRequestHandler):
                 "message": f"Creating Devin session to trace option {option_num}..."
             })
 
-            # Create session with playbook + structured output
             session = create_trace_session(api_key, org_id, user_question)
             session_id = session.get("session_id", "")
             session_url = session.get("url", "")
@@ -247,11 +359,10 @@ class TraceHandler(SimpleHTTPRequestHandler):
                 "session_url": session_url,
             })
 
-            # Poll for messages and extract trace_step JSON blocks
             triggered_steps = set()
             cursor = None
             prev_structured_count = 0
-            max_polls = 180  # 15 minutes max
+            max_polls = 180
             poll_count = 0
 
             while poll_count < max_polls:
@@ -259,17 +370,95 @@ class TraceHandler(SimpleHTTPRequestHandler):
                 poll_count += 1
 
                 try:
-                    # Check session status + structured output
                     status_resp = get_session_status(api_key, org_id, session_id)
                     status = status_resp.get("status", "unknown")
 
-                    # Check structured_output for trace steps
                     structured = status_resp.get("structured_output", {})
                     if structured and isinstance(structured, dict):
                         steps_list = structured.get("trace_steps", [])
                         if len(steps_list) > prev_structured_count:
                             for step_data in steps_list[prev_structured_count:]:
                                 idx = step_data.get("step_index", -99)
+
+                                # Check for special directives
+                                requires_input = step_data.get("requires_input")
+                                db_query = step_data.get("db_query")
+
+                                if requires_input == "transaction_amount":
+                                    self.send_sse_event({
+                                        "type": "input_required",
+                                        "input_type": "transaction_amount",
+                                        "step_index": idx,
+                                        "title": step_data.get("title", ""),
+                                        "finding": step_data.get("finding", ""),
+                                        "prompt": "Enter the transaction amount in the terminal",
+                                    })
+                                    # Wait for frontend to POST /api/db/transaction
+                                    # The frontend will send a message to resume
+                                    input_poll = 0
+                                    while input_poll < 120:  # 10 min max wait
+                                        time.sleep(5)
+                                        input_poll += 1
+                                        # Check if a new pending transaction exists
+                                        state = db.get_state()
+                                        pending = [t for t in state["transactions"]
+                                                   if t["status"] == "Pending"]
+                                        if pending:
+                                            latest = pending[-1]
+                                            # Send DB state to Devin
+                                            msg = (
+                                                f"The user entered a transaction: "
+                                                f"amount=${latest['amount']:.2f}, "
+                                                f"merchant={latest['merchant']}, "
+                                                f"card={latest['card_num']}. "
+                                                f"Transaction ID: {latest['tran_id']}. "
+                                                f"Status: Pending. "
+                                                f"The transaction has been written to the "
+                                                f"SQLite database. Continue tracing the "
+                                                f"batch processing flow."
+                                            )
+                                            try:
+                                                send_session_message(
+                                                    api_key, org_id, session_id, msg
+                                                )
+                                            except Exception as e:
+                                                print(f"Failed to send message to Devin: {e}")
+                                            self.send_sse_event({
+                                                "type": "input_received",
+                                                "transaction": latest,
+                                            })
+                                            break
+                                    continue
+
+                                if db_query == "check_overlimit":
+                                    # Server queries DB and sends result to Devin
+                                    state = db.get_state()
+                                    acct = state["account"]
+                                    msg = (
+                                        f"Database query result — current account state:\n"
+                                        f"  acct_id: {acct['acct_id']}\n"
+                                        f"  balance: ${acct['balance']:.2f}\n"
+                                        f"  credit_limit: ${acct['credit_limit']:.2f}\n"
+                                        f"  cyc_credit: ${acct['cyc_credit']:.2f}\n"
+                                        f"  cyc_debit: ${acct['cyc_debit']:.2f}\n\n"
+                                        f"Use these values to compute WS-TEMP-BAL and "
+                                        f"determine if the transaction should be accepted "
+                                        f"or rejected. Then call the batch processing "
+                                        f"endpoint to execute the decision."
+                                    )
+                                    try:
+                                        send_session_message(
+                                            api_key, org_id, session_id, msg
+                                        )
+                                    except Exception as e:
+                                        print(f"Failed to send DB state to Devin: {e}")
+                                    self.send_sse_event({
+                                        "type": "db_query_result",
+                                        "step_index": idx,
+                                        "account_state": acct,
+                                    })
+                                    continue
+
                                 if idx not in triggered_steps:
                                     triggered_steps.add(idx)
                                     self.send_sse_event({
@@ -310,7 +499,6 @@ class TraceHandler(SimpleHTTPRequestHandler):
                     if new_cursor:
                         cursor = new_cursor
 
-                    # Check if complete
                     if -1 in triggered_steps:
                         break
                     if status in ("exit", "error"):
@@ -320,7 +508,6 @@ class TraceHandler(SimpleHTTPRequestHandler):
                     print(f"Poll error: {e}")
                     continue
 
-            # Send completion
             self.send_sse_event({
                 "type": "complete",
                 "steps_resolved": len([s for s in triggered_steps if s >= 0]),
@@ -331,7 +518,6 @@ class TraceHandler(SimpleHTTPRequestHandler):
             self.send_sse_event({"type": "error", "message": str(e)})
 
     def send_sse_event(self, data):
-        """Send a Server-Sent Event."""
         try:
             msg = f"data: {json.dumps(data)}\n\n"
             self.wfile.write(msg.encode())
@@ -340,7 +526,6 @@ class TraceHandler(SimpleHTTPRequestHandler):
             pass
 
     def log_message(self, format, *args):
-        """Suppress default request logging for SSE polling."""
         if "/events" not in (args[0] if args else ""):
             super().log_message(format, *args)
 
@@ -383,6 +568,7 @@ LANDING_HTML = """
     display: flex;
     gap: 24px;
     justify-content: center;
+    flex-wrap: wrap;
   }
   .card {
     background: #0d1117;
@@ -405,6 +591,7 @@ LANDING_HTML = """
   }
   .card.static h2 { color: #ffa94d; }
   .card.live h2 { color: #00ff88; }
+  .card.db h2 { color: #4da6ff; }
   .card p {
     color: #888;
     font-size: 11px;
@@ -429,6 +616,11 @@ LANDING_HTML = """
     color: #00ff88;
     border: 1px solid rgba(0,255,136,0.3);
   }
+  .card.db .badge {
+    background: rgba(77,166,255,0.1);
+    color: #4da6ff;
+    border: 1px solid rgba(77,166,255,0.3);
+  }
   .footer {
     margin-top: 40px;
     color: #555;
@@ -446,32 +638,24 @@ LANDING_HTML = """
     &ldquo;What does this flow do?&rdquo;
   </p>
   <div class="cards">
-    <a href="/static" class="card static">
-      <div class="badge">NO API KEY NEEDED</div>
-      <h2>/static</h2>
+    <a href="/live" class="card db">
+      <div class="badge">SQLITE-BACKED &mdash; NO API KEY NEEDED</div>
+      <h2>/live</h2>
       <p>
-        Combined demo: Option 3 (COCRDLIC read-only trace) &amp; Option 8
-        (full 3-phase data flow with batch processing, overlimit detection,
-        and live VSAM updates). Devin analysis + interactive simulation.
+        Live database-driven demo. Transactions write to SQLite,
+        batch processing queries real DB state for overlimit decisions.
+        Run it twice to see data alteration change the routing.
+        Shows actual SQL queries in real-time.
       </p>
     </a>
-    <a href="/live" class="card live">
+    <a href="/trace" class="card live">
       <div class="badge">REQUIRES SERVER ENV VARS</div>
-      <h2>/live</h2>
+      <h2>/trace</h2>
       <p>
         Ask Devin &ldquo;what does this flow do?&rdquo; and watch the call
         tree light up in real-time as Devin reads through the COBOL source
         and discovers each dynamic call. Powered by the Live COBOL Flow
         Trace playbook.
-      </p>
-    </a>
-    <a href="/dataflow" class="card static" style="border-color:#ff6b9d;">
-      <div class="badge" style="background:rgba(255,107,157,0.15);color:#ff6b9d;border-color:rgba(255,107,157,0.3);">NO API KEY NEEDED</div>
-      <h2 style="color:#ff6b9d;">/dataflow</h2>
-      <p>
-        End-to-end data flow demo: enter a $500 transaction (accepted),
-        watch batch processing update the account, then enter $1,000
-        (rejected &mdash; overlimit). Shows real VSAM data changing live.
       </p>
     </a>
   </div>
@@ -490,35 +674,43 @@ def main():
     global _ORG_ID
     port = int(os.environ.get("PORT", 8765))
 
-    api_key = os.environ.get("DEVIN_API_KEY", "")
-    if not api_key:
-        print("ERROR: DEVIN_API_KEY environment variable is not set.")
-        print("       Use an org-scoped service user key (starts with cog_).")
-        return
+    # Initialize SQLite database
+    print("Initializing SQLite database...")
+    db.init_db()
+    print(f"  Database: {db.DB_PATH}")
 
-    print("Resolving org ID from API key...")
-    try:
-        _ORG_ID = resolve_org_id(api_key)
-        print(f"  Org ID: {_ORG_ID}")
-    except Exception as e:
-        print(f"ERROR: Could not resolve org ID: {e}")
-        return
+    api_key = os.environ.get("DEVIN_API_KEY", "")
+    if api_key:
+        print("Resolving org ID from API key...")
+        try:
+            _ORG_ID = resolve_org_id(api_key)
+            print(f"  Org ID: {_ORG_ID}")
+        except Exception as e:
+            print(f"WARNING: Could not resolve org ID: {e}")
+            print("  /trace route will not work, but /live will.")
+    else:
+        print("NOTE: DEVIN_API_KEY not set. /trace route disabled.")
+        print("      /live route works without an API key.")
 
     server = HTTPServer(("0.0.0.0", port), TraceHandler)
     print(f"""
 +==============================================================+
-|  Devin Live COBOL Flow Trace Server                          |
+|  Devin Live COBOL Flow Trace Server (SQLite-Backed)          |
 |  ----------------------------------------------------------- |
 |                                                              |
 |  Routes:                                                     |
 |    http://localhost:{port}          Landing page               |
-|    http://localhost:{port}/static   Pre-recorded replay        |
-|    http://localhost:{port}/live     Live trace (asks Devin)    |
+|    http://localhost:{port}/live     SQLite-backed live demo    |
+|    http://localhost:{port}/trace    Live trace (asks Devin)    |
 |                                                              |
-|  Playbook: Live COBOL Flow Trace                             |
-|    {PLAYBOOK_ID}                                             |
+|  API Endpoints:                                              |
+|    GET  /api/db/state       Full database state              |
+|    POST /api/db/reset       Reset DB to initial state        |
+|    POST /api/db/transaction Add a pending transaction        |
+|    POST /api/db/batch       Run batch processing             |
+|    GET  /api/db/querylog    SQL query audit log              |
 |                                                              |
-|  Org ID (auto-detected): {_ORG_ID}                           |
+|  Database: {str(db.DB_PATH):<45}|
 |                                                              |
 |  Press Ctrl+C to stop                                        |
 +==============================================================+
