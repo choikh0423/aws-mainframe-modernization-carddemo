@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBIMPORT – Data Import from Export File | Batch Process Analysis | UniCredit CardDemo</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   UniCredit CardDemo — Shared Theme (inlined for standalone viewing)
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --uc-red:        #E4002B;
+  --uc-red-dark:   #B8001F;
+  --uc-red-light:  #FF3354;
+  --uc-navy:       #1D2B4E;
+  --uc-navy-light: #2A3D6B;
+  --uc-gold:       #C5A44E;
+  --uc-gold-light: #E2C97A;
+  --uc-white:      #FFFFFF;
+  --uc-gray-50:    #F8F9FA;
+  --uc-gray-100:   #F0F1F3;
+  --uc-gray-200:   #E2E4E8;
+  --uc-gray-400:   #9EA3AE;
+  --uc-gray-600:   #6B7280;
+  --uc-gray-800:   #374151;
+  --uc-text:       #1F2937;
+  --uc-shadow:     0 4px 24px rgba(29,43,78,.08);
+  --uc-shadow-lg:  0 12px 48px rgba(29,43,78,.12);
+  --uc-radius:     12px;
+  --uc-radius-sm:  8px;
+  --uc-transition: .25s cubic-bezier(.4,0,.2,1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--uc-text);
+  background: var(--uc-gray-50);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+.hero {
+  background: linear-gradient(135deg, var(--uc-navy) 0%, var(--uc-navy-light) 50%, var(--uc-red-dark) 100%);
+  color: var(--uc-white);
+  padding: 3rem 2rem 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -60%; right: -20%;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(228,0,43,.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute; bottom: -30%; left: -10%;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(197,164,78,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-inner { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+.hero-brand { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.hero-logo { height: 48px; flex-shrink: 0; }
+.hero-logo img { height: 100%; width: auto; display: block; }
+.hero-brand-text { font-size: .95rem; opacity: .85; letter-spacing: .04em; text-transform: uppercase; }
+.hero h1 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; letter-spacing: -.02em; line-height: 1.15; margin-bottom: .75rem; }
+.hero h1 span { color: var(--uc-gold-light); }
+.hero-subtitle { font-size: 1.15rem; opacity: .88; max-width: 720px; }
+.hero-meta { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,.15); }
+.hero-meta dt { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin-bottom: .15rem; }
+.hero-meta dd { font-size: .95rem; font-weight: 600; }
+.breadcrumb { max-width: 1200px; margin: 1.25rem auto .5rem; padding: 0 2rem; font-size: .8rem; color: var(--uc-gray-400); }
+.breadcrumb a { color: var(--uc-red); text-decoration: none; font-weight: 600; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb .sep { margin: 0 .4rem; opacity: .5; }
+.page-wrap-single { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+.section { background: var(--uc-white); border-radius: var(--uc-radius); box-shadow: var(--uc-shadow); margin-bottom: 2rem; overflow: hidden; }
+.section-header { display: flex; align-items: center; gap: .75rem; padding: 1.25rem 1.5rem; background: linear-gradient(90deg, var(--uc-navy) 0%, var(--uc-navy-light) 100%); color: var(--uc-white); cursor: pointer; user-select: none; }
+.section-header:hover { filter: brightness(1.1); }
+.section-num { background: var(--uc-red); color: var(--uc-white); font-size: .72rem; font-weight: 700; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.section-header h2 { font-size: 1.1rem; font-weight: 700; letter-spacing: -.01em; flex: 1; }
+.section-toggle { width: 24px; height: 24px; transition: transform var(--uc-transition); opacity: .7; }
+.section.collapsed .section-toggle { transform: rotate(-90deg); }
+.section-body { padding: 1.5rem; }
+.section.collapsed .section-body { display: none; }
+.subsection { margin-bottom: 1.75rem; }
+.subsection:last-child { margin-bottom: 0; }
+.subsection h3 { font-size: .95rem; font-weight: 700; color: var(--uc-navy); margin-bottom: .75rem; padding-bottom: .4rem; border-bottom: 2px solid var(--uc-gray-200); display: flex; align-items: center; gap: .5rem; }
+.subsection h3 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--uc-red); flex-shrink: 0; }
+.subsection h4 { font-size: .88rem; font-weight: 600; color: var(--uc-gray-800); margin: 1rem 0 .5rem; }
+.subsection p, .subsection li { font-size: .88rem; color: var(--uc-gray-800); line-height: 1.7; }
+.subsection ul, .subsection ol { padding-left: 1.4rem; margin-top: .35rem; }
+.subsection li { margin-bottom: .25rem; }
+.table-wrap { overflow-x: auto; margin: .75rem 0; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .82rem; }
+thead th { background: var(--uc-navy); color: var(--uc-white); text-align: left; padding: .6rem .75rem; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
+thead th:first-child { border-radius: var(--uc-radius-sm) 0 0 0; }
+thead th:last-child  { border-radius: 0 var(--uc-radius-sm) 0 0; }
+tbody td { padding: .55rem .75rem; border-bottom: 1px solid var(--uc-gray-200); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:nth-child(even) { background: var(--uc-gray-50); }
+tbody tr:hover { background: rgba(228,0,43,.04); }
+pre { background: var(--uc-navy); color: #E2E8F0; border-radius: var(--uc-radius-sm); padding: 1rem 1.25rem; font-size: .78rem; font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; overflow-x: auto; line-height: 1.65; margin: .75rem 0; }
+code { font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; font-size: .82em; background: var(--uc-gray-100); padding: .1em .35em; border-radius: 4px; color: var(--uc-red-dark); }
+pre code { background: none; padding: 0; color: inherit; }
+.callout { border-left: 4px solid var(--uc-gold); background: rgba(197,164,78,.08); padding: .85rem 1rem; border-radius: 0 var(--uc-radius-sm) var(--uc-radius-sm) 0; margin: .75rem 0; font-size: .85rem; }
+.callout-red { border-left-color: var(--uc-red); background: rgba(228,0,43,.05); }
+.callout strong { color: var(--uc-navy); }
+.diagram-box { background: var(--uc-gray-100); border: 2px dashed var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1.5rem; text-align: center; margin: .75rem 0; }
+.diagram-box pre { text-align: left; background: var(--uc-navy); display: inline-block; max-width: 100%; }
+.badge { display: inline-block; font-size: .68rem; font-weight: 700; padding: .15em .55em; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; line-height: 1.6; }
+.badge-red    { background: var(--uc-red);   color: #fff; }
+.badge-navy   { background: var(--uc-navy);  color: #fff; }
+.badge-gold   { background: var(--uc-gold);  color: var(--uc-navy); }
+.badge-gray   { background: var(--uc-gray-200); color: var(--uc-gray-800); }
+.kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin: 1rem 0; }
+.kpi-card { background: var(--uc-gray-50); border: 1px solid var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1rem; text-align: center; transition: var(--uc-transition); }
+.kpi-card:hover { border-color: var(--uc-red); box-shadow: var(--uc-shadow); transform: translateY(-2px); }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--uc-red); line-height: 1.2; }
+.kpi-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--uc-gray-600); margin-top: .25rem; }
+.footer { background: var(--uc-navy); color: rgba(255,255,255,.6); text-align: center; padding: 2rem; font-size: .78rem; }
+.footer strong { color: var(--uc-gold-light); }
+@media print {
+  .section.collapsed .section-body { display: block; }
+  .hero { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════  HERO  ════════════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. &mdash; Milano</div>
+    </div>
+    <h1>CBIMPORT &ndash; <span>Batch Process Analysis</span></h1>
+    <p class="hero-subtitle">
+      Job <code>CBIMPORT</code> &middot; Program <code>CBIMPORT</code> &middot; Import customer data from a multi-record branch migration export file, split by record type into normalized sequential output files (Customer, Account, Card XREF, Transaction, Card), and route unknown record types to an error file
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Job Name</dt><dd>CBIMPORT</dd></div>
+      <div><dt>Entry Program</dt><dd>CBIMPORT</dd></div>
+      <div><dt>Frequency</dt><dd>On-demand</dd></div>
+      <div><dt>LOC</dt><dd>487</dd></div>
+      <div><dt>Files Touched</dt><dd>7</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ════════════════════  BREADCRUMB  ════════════════════ -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">&rsaquo;</span>
+  <a href="index.html">Batch Flows</a>
+  <span class="sep">&rsaquo;</span>
+  CBIMPORT &ndash; Data Import from Export File
+</div>
+
+<!-- ════════════════════  BODY  ════════════════════ -->
+<div class="page-wrap-single">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     IDENTIFICATION
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s0">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">ID</span>
+    <h2>Identification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <tbody>
+          <tr><td><strong>Job Name</strong></td><td><code>CBIMPORT</code></td></tr>
+          <tr><td><strong>Job Stream / Schedule</strong></td><td>On-demand (not in Control-M scheduler; triggered manually for branch migration)</td></tr>
+          <tr><td><strong>Business Domain</strong></td><td>Branch Migration / Data Import</td></tr>
+          <tr><td><strong>Owning Team</strong></td><td>CardDemo Batch Operations</td></tr>
+          <tr><td><strong>Frequency</strong></td><td>On-demand (data migration)</td></tr>
+          <tr><td><strong>Batch Window</strong></td><td>Any available window; typically during off-hours migration events</td></tr>
+          <tr><td><strong>Criticality</strong></td><td><span class="badge badge-navy">Medium</span></td></tr>
+          <tr><td><strong>Elapsed Time SLA</strong></td><td>No formal SLA; must complete before target system ingestion begins</td></tr>
+          <tr><td><strong>Primary Program</strong></td><td><code>CBIMPORT</code> (COBOL Batch, 487 LOC)</td></tr>
+          <tr><td><strong>Source Location</strong></td><td><code>app/cbl/CBIMPORT.cbl</code> &middot; JCL: <code>app/jcl/CBIMPORT.jcl</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 1 — Business Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">1</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 1.1 -->
+    <div class="subsection" id="s1-1">
+      <h3><span class="dot"></span> 1.1 Business Context</h3>
+      <ul>
+        <li><strong>What:</strong> Reads a multi-record indexed VSAM export file (produced by <code>CBEXPORT</code>) containing interleaved customer, account, card cross-reference, transaction, and card records. Splits the export file by record type into five separate normalized sequential files, routing any unrecognized record types to an error file with timestamps and diagnostic messages.</li>
+        <li><strong>Who:</strong> Downstream consumers include the target-system data loading jobs that ingest each normalized file independently (CUSTDATA.IMPORT, ACCTDATA.IMPORT, CARDXREF.IMPORT, TRANSACT.IMPORT, CARDDATA.IMPORT). Operations teams review the IMPORT.ERRORS file for data quality issues.</li>
+        <li><strong>When:</strong> Runs on-demand during branch migration events. Typically executed after <code>CBEXPORT</code> has produced the consolidated export file from the source branch.</li>
+        <li><strong>Why:</strong> Branch migrations require moving complete customer portfolios (customers, accounts, cards, cross-references, and transaction history) from one system to another. The export file is a single consolidated dataset; the target system requires separate, normalized files per entity type.</li>
+        <li><strong>Outcome:</strong> Five normalized sequential output files ready for target-system ingestion, plus an error file capturing any unknown or malformed records with diagnostic details.</li>
+      </ul>
+    </div>
+
+    <!-- 1.2 -->
+    <div class="subsection" id="s1-2">
+      <h3><span class="dot"></span> 1.2 Business Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────────┐
+  │               DATA IMPORT FROM EXPORT FILE FLOW                 │
+  └─────────────────────────────────────────────────────────────────┘
+
+  Source Branch
+       │
+       ▼
+  ┌──────────────────────┐
+  │ CBEXPORT             │  (Export job produces consolidated file)
+  │ Consolidated export  │
+  │ VSAM indexed file    │
+  └──────────┬───────────┘
+             │
+             ▼
+  ┌──────────────────────┐
+  │ CBIMPORT             │
+  │ Read export records  │
+  │ sequentially by key  │
+  │ Split by REC-TYPE:   │
+  │   'C' → Customer     │
+  │   'A' → Account      │
+  │   'X' → Card XREF    │
+  │   'T' → Transaction  │
+  │   'D' → Card         │
+  │   Other → Error      │
+  └──┬───┬───┬───┬───┬───┬──┘
+     │   │   │   │   │   │
+     ▼   ▼   ▼   ▼   ▼   ▼
+  ┌─────┐┌─────┐┌─────┐┌─────┐┌─────┐┌─────────┐
+  │CUST ││ACCT ││XREF ││TRAN ││CARD ││ ERRORS  │
+  │DATA ││DATA ││DATA ││DATA ││DATA ││ (diag)  │
+  │.IMP ││.IMP ││.IMP ││.IMP ││.IMP ││         │
+  └─────┘└─────┘└─────┘└─────┘└─────┘└─────────┘
+     │       │       │       │       │
+     ▼       ▼       ▼       ▼       ▼
+  Target System Ingestion Jobs
+</pre>
+      </div>
+    </div>
+
+    <!-- 1.3 -->
+    <div class="subsection" id="s1-3">
+      <h3><span class="dot"></span> 1.3 Business Rules Applied in This Process</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Rule ID</th><th>Description</th><th>Applied At</th><th>Exception Handling</th></tr></thead>
+          <tbody>
+            <tr><td>BR-001</td><td>Record type &lsquo;C&rsquo; routes to Customer output file (CUSTOUT)</td><td>2200-PROCESS-RECORD-BY-TYPE</td><td>N/A &mdash; deterministic routing</td></tr>
+            <tr><td>BR-002</td><td>Record type &lsquo;A&rsquo; routes to Account output file (ACCTOUT)</td><td>2200-PROCESS-RECORD-BY-TYPE</td><td>N/A &mdash; deterministic routing</td></tr>
+            <tr><td>BR-003</td><td>Record type &lsquo;X&rsquo; routes to Card Cross-Reference output file (XREFOUT)</td><td>2200-PROCESS-RECORD-BY-TYPE</td><td>N/A &mdash; deterministic routing</td></tr>
+            <tr><td>BR-004</td><td>Record type &lsquo;T&rsquo; routes to Transaction output file (TRNXOUT)</td><td>2200-PROCESS-RECORD-BY-TYPE</td><td>N/A &mdash; deterministic routing</td></tr>
+            <tr><td>BR-005</td><td>Record type &lsquo;D&rsquo; routes to Card output file (CARDOUT)</td><td>2200-PROCESS-RECORD-BY-TYPE</td><td>N/A &mdash; deterministic routing</td></tr>
+            <tr><td>BR-006</td><td>Any unrecognized record type is written to the error file with timestamp, record type, sequence number, and diagnostic message</td><td>2700-PROCESS-UNKNOWN-RECORD</td><td>Error record written; processing continues (non-fatal)</td></tr>
+            <tr><td>BR-007</td><td>Field mapping from export layout (CVEXPORT) to target layout uses direct MOVE with automatic COBOL numeric conversion (COMP/COMP-3 &rarr; display numeric)</td><td>2300&ndash;2650 paragraphs</td><td>WRITE failure &rarr; ABEND via 9999-ABEND-PROGRAM</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 1.4 -->
+    <div class="subsection" id="s1-4">
+      <h3><span class="dot"></span> 1.4 Business Inputs and Outputs</h3>
+      <h4>Inputs</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Input</th><th>Source System</th><th>Business Description</th><th>Timing</th></tr></thead>
+          <tbody>
+            <tr><td>Export File (<code>EXPORT.DATA</code>)</td><td>CBEXPORT (branch migration)</td><td>Consolidated multi-record VSAM KSDS containing interleaved customer, account, card XREF, transaction, and card records from the source branch</td><td>Available after CBEXPORT completes</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h4>Outputs</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Output</th><th>Destination</th><th>Business Description</th><th>Timing</th></tr></thead>
+          <tbody>
+            <tr><td>Customer Data (<code>CUSTDATA.IMPORT</code>)</td><td>Target system customer loader</td><td>Normalized customer records (LRECL=500)</td><td>Available immediately after job</td></tr>
+            <tr><td>Account Data (<code>ACCTDATA.IMPORT</code>)</td><td>Target system account loader</td><td>Normalized account records (LRECL=300)</td><td>Available immediately after job</td></tr>
+            <tr><td>Card XREF (<code>CARDXREF.IMPORT</code>)</td><td>Target system XREF loader</td><td>Normalized card-to-account cross-reference records (LRECL=50)</td><td>Available immediately after job</td></tr>
+            <tr><td>Transaction Data (<code>TRANSACT.IMPORT</code>)</td><td>Target system transaction loader</td><td>Normalized transaction records (LRECL=350)</td><td>Available immediately after job</td></tr>
+            <tr><td>Card Data (CARDOUT &mdash; <em>no JCL DD</em>)</td><td>Target system card loader</td><td>Normalized card records (LRECL=150). <strong>Note:</strong> COBOL references CARDOUT but JCL is missing this DD &mdash; see Known Issues.</td><td>N/A &mdash; job will ABEND</td></tr>
+            <tr><td>Import Errors (<code>IMPORT.ERRORS</code>)</td><td>Operations / data quality review</td><td>Error records with timestamp, record type, sequence number, and diagnostic message (LRECL=132)</td><td>Available immediately after job</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 2 — Technical Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">2</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 2.1 -->
+    <div class="subsection" id="s2-1">
+      <h3><span class="dot"></span> 2.1 Technical Flow Diagram &ndash; Overview</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ JOB: CBIMPORT                                                   │
+  │                                                                 │
+  │  STEP01: PGM=CBIMPORT (Single-step job)                        │
+  │  ┌─────────────────────────────────────────────────────────┐   │
+  │  │                                                         │   │
+  │  │  EXPORT.DATA ──(Indexed Sequential READ)──┐             │   │
+  │  │                                            │             │   │
+  │  │                               EVALUATE REC-TYPE          │   │
+  │  │                               ┌────┬────┬────┬────┬───┐ │   │
+  │  │                               │ C  │ A  │ X  │ T  │ D │ │   │
+  │  │                               └─┬──┴─┬──┴─┬──┴─┬──┴─┬─┘ │   │
+  │  │                                 │    │    │    │    │    │   │
+  │  │                                 ▼    ▼    ▼    ▼    ▼    │   │
+  │  │  CUSTDATA.IMPORT (WRITE)        │    │    │    │    │    │   │
+  │  │  ACCTDATA.IMPORT (WRITE)        │    │    │    │    │    │   │
+  │  │  CARDXREF.IMPORT (WRITE)        │    │    │    │    │    │   │
+  │  │  TRANSACT.IMPORT (WRITE)        │    │    │    │    │    │   │
+  │  │  CARDDATA (WRITE) *missing DD*  │    │    │    │    │    │   │
+  │  │                                                         │   │
+  │  │  Unknown type → IMPORT.ERRORS (WRITE error record)      │   │
+  │  └─────────────────────────────────────────────────────────┘   │
+  └─────────────────────────────────────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.2 -->
+    <div class="subsection" id="s2-2">
+      <h3><span class="dot"></span> 2.2 Technical Flow Diagram &ndash; Detailed (Step-by-Step)</h3>
+      <div class="diagram-box">
+<pre>
+  STEP01 - EXEC PGM=CBIMPORT
+    INPUTS:
+      - EXPFILE: AWS.M2.CARDDEMO.EXPORT.DATA  (VSAM KSDS, sequential read)
+    OUTPUTS:
+      - CUSTOUT: AWS.M2.CARDDEMO.CUSTDATA.IMPORT  (Sequential FB, LRECL=500)
+      - ACCTOUT: AWS.M2.CARDDEMO.ACCTDATA.IMPORT  (Sequential FB, LRECL=300)
+      - XREFOUT: AWS.M2.CARDDEMO.CARDXREF.IMPORT  (Sequential FB, LRECL=50)
+      - TRNXOUT: AWS.M2.CARDDEMO.TRANSACT.IMPORT  (Sequential FB, LRECL=350)
+      - CARDOUT: *NOT IN JCL* (Sequential FB, LRECL=150)
+      - ERROUT:  AWS.M2.CARDDEMO.IMPORT.ERRORS     (Sequential FB, LRECL=132)
+
+    PROCESSING:
+      1. 1000-INITIALIZE:
+         a. Capture current date and time (WS-IMPORT-DATE, WS-IMPORT-TIME)
+         b. 1100-OPEN-FILES: Open EXPORT-INPUT (INPUT), all 5 output files
+            (OUTPUT), and ERROR-OUTPUT (OUTPUT). ABEND if any OPEN fails.
+      2. 2000-PROCESS-EXPORT-FILE:
+         a. 2100-READ-EXPORT-RECORD: READ EXPORT-INPUT INTO EXPORT-RECORD
+         b. PERFORM UNTIL WS-EXPORT-EOF:
+            i.   ADD 1 TO WS-TOTAL-RECORDS-READ
+            ii.  2200-PROCESS-RECORD-BY-TYPE:
+                 EVALUATE EXPORT-REC-TYPE:
+                   'C' → 2300-PROCESS-CUSTOMER-RECORD
+                   'A' → 2400-PROCESS-ACCOUNT-RECORD
+                   'X' → 2500-PROCESS-XREF-RECORD
+                   'T' → 2600-PROCESS-TRAN-RECORD
+                   'D' → 2650-PROCESS-CARD-RECORD
+                   OTHER → 2700-PROCESS-UNKNOWN-RECORD
+            iii. 2100-READ-EXPORT-RECORD (next record)
+      3. 3000-VALIDATE-IMPORT:
+         Display "validation completed" (stub &mdash; no actual validation)
+      4. 4000-FINALIZE:
+         a. CLOSE all 7 files
+         b. DISPLAY import statistics (totals by record type)
+      5. GOBACK
+
+    RC: 0 = Normal completion, ABEND via CEE3ABD = file I/O error
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.3 -->
+    <div class="subsection" id="s2-3">
+      <h3><span class="dot"></span> 2.3 Step Dependency and Condition Code Logic</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>Program</th><th>Executes If</th><th>Condition Code Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>STEP01</td><td>CBIMPORT</td><td>Always (single-step job)</td><td>0 = All records processed and split successfully<br>ABEND (U0xxx) = Fatal file I/O error via CEE3ABD</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>Note:</strong> CBIMPORT does not set a non-zero return code for unknown record types. Unknown records are silently written to the error file and processing continues. The only failure mode is an ABEND on file I/O errors.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 3 — JCL Job Stream Specification
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">3</span>
+    <h2>JCL Job Stream Specification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 3.1 -->
+    <div class="subsection" id="s3-1">
+      <h3><span class="dot"></span> 3.1 JCL Overview</h3>
+<pre><code>//CBIMPORT JOB 'Import CARDDEMO Data',CLASS=A,MSGCLASS=0,
+//   NOTIFY=&amp;SYSUID
+//*
+//* IMPORT CUSTOMER DATA FROM MULTI-RECORD EXPORT FILE AND SPLIT
+//* INTO SEPARATE NORMALIZED FILES FOR TARGET SYSTEM
+//*
+//STEP01   EXEC PGM=CBIMPORT
+//STEPLIB  DD DISP=SHR,DSN=AWS.M2.CARDDEMO.LOADLIB
+//EXPFILE  DD DISP=SHR,DSN=AWS.M2.CARDDEMO.EXPORT.DATA
+//CUSTOUT  DD DISP=(NEW,CATLG,DELETE),
+//            DSN=AWS.M2.CARDDEMO.CUSTDATA.IMPORT,
+//            UNIT=SYSDA,SPACE=(TRK,(50,25),RLSE),
+//            DCB=(RECFM=FB,LRECL=500,BLKSIZE=0)
+//ACCTOUT  DD DISP=(NEW,CATLG,DELETE),
+//            DSN=AWS.M2.CARDDEMO.ACCTDATA.IMPORT,
+//            UNIT=SYSDA,SPACE=(TRK,(50,25),RLSE),
+//            DCB=(RECFM=FB,LRECL=300,BLKSIZE=0)
+//XREFOUT  DD DISP=(NEW,CATLG,DELETE),
+//            DSN=AWS.M2.CARDDEMO.CARDXREF.IMPORT,
+//            UNIT=SYSDA,SPACE=(TRK,(25,10),RLSE),
+//            DCB=(RECFM=FB,LRECL=50,BLKSIZE=0)
+//TRNXOUT  DD DISP=(NEW,CATLG,DELETE),
+//            DSN=AWS.M2.CARDDEMO.TRANSACT.IMPORT,
+//            UNIT=SYSDA,SPACE=(TRK,(100,50),RLSE),
+//            DCB=(RECFM=FB,LRECL=350,BLKSIZE=0)
+//ERROUT   DD DISP=(NEW,CATLG,DELETE),
+//            DSN=AWS.M2.CARDDEMO.IMPORT.ERRORS,
+//            UNIT=SYSDA,SPACE=(TRK,(10,5),RLSE),
+//            DCB=(RECFM=FB,LRECL=132,BLKSIZE=0)
+//SYSOUT   DD SYSOUT=*
+//SYSPRINT DD SYSOUT=*</code></pre>
+    </div>
+
+    <!-- 3.2 -->
+    <div class="subsection" id="s3-2">
+      <h3><span class="dot"></span> 3.2 DD Statement Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>DD Name</th><th>Disposition</th><th>Dataset Name</th><th>Type</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>STEP01</td><td>STEPLIB</td><td>SHR</td><td>AWS.M2.CARDDEMO.LOADLIB</td><td>PDS</td><td>Program load library</td></tr>
+            <tr><td>STEP01</td><td>EXPFILE</td><td>SHR</td><td>AWS.M2.CARDDEMO.EXPORT.DATA</td><td>VSAM KSDS</td><td>Input: multi-record export file (sequential read by key)</td></tr>
+            <tr><td>STEP01</td><td>CUSTOUT</td><td>(NEW,CATLG,DELETE)</td><td>AWS.M2.CARDDEMO.CUSTDATA.IMPORT</td><td>Sequential (FB)</td><td>Output: normalized customer records</td></tr>
+            <tr><td>STEP01</td><td>ACCTOUT</td><td>(NEW,CATLG,DELETE)</td><td>AWS.M2.CARDDEMO.ACCTDATA.IMPORT</td><td>Sequential (FB)</td><td>Output: normalized account records</td></tr>
+            <tr><td>STEP01</td><td>XREFOUT</td><td>(NEW,CATLG,DELETE)</td><td>AWS.M2.CARDDEMO.CARDXREF.IMPORT</td><td>Sequential (FB)</td><td>Output: normalized card XREF records</td></tr>
+            <tr><td>STEP01</td><td>TRNXOUT</td><td>(NEW,CATLG,DELETE)</td><td>AWS.M2.CARDDEMO.TRANSACT.IMPORT</td><td>Sequential (FB)</td><td>Output: normalized transaction records</td></tr>
+            <tr><td>STEP01</td><td>ERROUT</td><td>(NEW,CATLG,DELETE)</td><td>AWS.M2.CARDDEMO.IMPORT.ERRORS</td><td>Sequential (FB)</td><td>Output: error/diagnostic records</td></tr>
+            <tr><td>STEP01</td><td>SYSOUT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>System output</td></tr>
+            <tr><td>STEP01</td><td>SYSPRINT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>COBOL DISPLAY output</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-red">
+        <strong>Missing DD:</strong> The COBOL program defines <code>CARD-OUTPUT ASSIGN TO CARDOUT</code> (for record type &lsquo;D&rsquo;), but the JCL does not include a <code>CARDOUT</code> DD statement. The program will ABEND when attempting to OPEN CARD-OUTPUT. See Known Issues KI-001.
+      </div>
+    </div>
+
+    <!-- 3.3 -->
+    <div class="subsection" id="s3-3">
+      <h3><span class="dot"></span> 3.3 GDG Usage</h3>
+      <div class="callout">
+        <strong>Not applicable.</strong> CBIMPORT does not use Generation Data Groups. All output datasets are created with <code>DISP=(NEW,CATLG,DELETE)</code> &mdash; simple cataloged sequential files.
+      </div>
+    </div>
+
+    <!-- 3.4 -->
+    <div class="subsection" id="s3-4">
+      <h3><span class="dot"></span> 3.4 Scheduler Dependencies</h3>
+      <div class="callout">
+        <strong>Note:</strong> CBIMPORT is not in the Control-M schedule (<code>app/scheduler/CardDemo.controlm</code>). It is an on-demand data migration utility, logically positioned after <code>CBEXPORT</code> produces the consolidated export file. There are no automated predecessor or successor dependencies.
+      </div>
+      <div class="diagram-box">
+<pre>
+  Source Branch                CBIMPORT                 Target System
+  ─────────────               ──────────               ─────────────
+  CBEXPORT ──▶ EXPORT.DATA ──▶ CBIMPORT ──▶ Normalized Files ──▶ Loaders
+                 (VSAM KSDS)     (split)     (5 sequential)
+</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 4 — Program Inventory and Call Chain
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">4</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 4.1 -->
+    <div class="subsection" id="s4-1">
+      <h3><span class="dot"></span> 4.1 Program Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Program ID</th><th>Step</th><th>Purpose</th><th>Language</th><th>LOC</th><th>Source Location</th></tr></thead>
+          <tbody>
+            <tr><td><code>CBIMPORT</code></td><td>STEP01</td><td>Main batch driver &mdash; reads export file, splits by record type into normalized sequential files</td><td>COBOL</td><td>487</td><td><code>app/cbl/CBIMPORT.cbl</code></td></tr>
+            <tr><td><code>CEE3ABD</code></td><td>STEP01 (called)</td><td>LE abend service &mdash; invoked on fatal I/O errors</td><td>System</td><td>&mdash;</td><td>Language Environment runtime</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4.2 -->
+    <div class="subsection" id="s4-2">
+      <h3><span class="dot"></span> 4.2 Paragraph Call Hierarchy</h3>
+      <div class="diagram-box">
+<pre>
+CBIMPORT (PROCEDURE DIVISION)
+│
+├── 0000-MAIN-PROCESSING
+│   ├── 1000-INITIALIZE
+│   │   ├── (Capture CURRENT-DATE → WS-IMPORT-DATE, WS-IMPORT-TIME)
+│   │   └── 1100-OPEN-FILES
+│   │       ├── OPEN INPUT EXPORT-INPUT
+│   │       ├── OPEN OUTPUT CUSTOMER-OUTPUT
+│   │       ├── OPEN OUTPUT ACCOUNT-OUTPUT
+│   │       ├── OPEN OUTPUT XREF-OUTPUT
+│   │       ├── OPEN OUTPUT TRANSACTION-OUTPUT
+│   │       ├── OPEN OUTPUT CARD-OUTPUT
+│   │       └── OPEN OUTPUT ERROR-OUTPUT
+│   │       (Any OPEN failure → 9999-ABEND-PROGRAM)
+│   │
+│   ├── 2000-PROCESS-EXPORT-FILE
+│   │   ├── 2100-READ-EXPORT-RECORD (priming read)
+│   │   └── [LOOP: PERFORM UNTIL WS-EXPORT-EOF]
+│   │       ├── ADD 1 TO WS-TOTAL-RECORDS-READ
+│   │       ├── 2200-PROCESS-RECORD-BY-TYPE
+│   │       │   ├── 'C' → 2300-PROCESS-CUSTOMER-RECORD
+│   │       │   │         (INITIALIZE, MOVE fields, WRITE, count++)
+│   │       │   ├── 'A' → 2400-PROCESS-ACCOUNT-RECORD
+│   │       │   │         (INITIALIZE, MOVE fields, WRITE, count++)
+│   │       │   ├── 'X' → 2500-PROCESS-XREF-RECORD
+│   │       │   │         (INITIALIZE, MOVE fields, WRITE, count++)
+│   │       │   ├── 'T' → 2600-PROCESS-TRAN-RECORD
+│   │       │   │         (INITIALIZE, MOVE fields, WRITE, count++)
+│   │       │   ├── 'D' → 2650-PROCESS-CARD-RECORD
+│   │       │   │         (INITIALIZE, MOVE fields, WRITE, count++)
+│   │       │   └── OTHER → 2700-PROCESS-UNKNOWN-RECORD
+│   │       │               (Build error record, 2750-WRITE-ERROR)
+│   │       └── 2100-READ-EXPORT-RECORD (next record)
+│   │
+│   ├── 3000-VALIDATE-IMPORT
+│   │   └── (Stub: DISPLAY "validation completed" only)
+│   │
+│   ├── 4000-FINALIZE
+│   │   ├── CLOSE all 7 files
+│   │   └── DISPLAY import statistics
+│   │
+│   └── GOBACK
+│
+└── 9999-ABEND-PROGRAM
+    └── CALL 'CEE3ABD'
+</pre>
+      </div>
+    </div>
+
+    <!-- 4.3 -->
+    <div class="subsection" id="s4-3">
+      <h3><span class="dot"></span> 4.3 Copybooks Used</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Copybook</th><th>Record</th><th>LRECL</th><th>Key Fields</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>CVEXPORT</code></td><td>EXPORT-RECORD</td><td>500</td><td>EXPORT-SEQUENCE-NUM (PIC 9(9) COMP)</td><td>Multi-record export file layout with REDEFINES for each record type (C/A/X/T/D)</td></tr>
+            <tr><td><code>CVCUS01Y</code></td><td>CUSTOMER-RECORD</td><td>500</td><td>CUST-ID (PIC 9(09))</td><td>Customer entity output record layout</td></tr>
+            <tr><td><code>CVACT01Y</code></td><td>ACCOUNT-RECORD</td><td>300</td><td>ACCT-ID (PIC 9(11))</td><td>Account entity output record layout</td></tr>
+            <tr><td><code>CVACT03Y</code></td><td>CARD-XREF-RECORD</td><td>50</td><td>XREF-CARD-NUM (PIC X(16))</td><td>Card cross-reference output record layout</td></tr>
+            <tr><td><code>CVTRA05Y</code></td><td>TRAN-RECORD</td><td>350</td><td>TRAN-ID (PIC X(16))</td><td>Transaction output record layout</td></tr>
+            <tr><td><code>CVACT02Y</code></td><td>CARD-RECORD</td><td>150</td><td>CARD-NUM (PIC X(16))</td><td>Card entity output record layout</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 5 — File and Dataset Inventory
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">5</span>
+    <h2>File and Dataset Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 5.1 -->
+    <div class="subsection" id="s5-1">
+      <h3><span class="dot"></span> 5.1 Complete File Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File/Dataset</th><th>Type</th><th>Access</th><th>LRECL</th><th>Key</th><th>Purpose in Flow</th></tr></thead>
+          <tbody>
+            <tr><td><code>AWS.M2.CARDDEMO.EXPORT.DATA</code></td><td>VSAM KSDS</td><td>INPUT</td><td>500</td><td>EXPORT-SEQUENCE-NUM (4 bytes COMP, offset 27)</td><td>Multi-record export file &mdash; source of all import data</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.CUSTDATA.IMPORT</code></td><td>Sequential (FB)</td><td>OUTPUT</td><td>500</td><td>&mdash;</td><td>Normalized customer records</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.ACCTDATA.IMPORT</code></td><td>Sequential (FB)</td><td>OUTPUT</td><td>300</td><td>&mdash;</td><td>Normalized account records</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.CARDXREF.IMPORT</code></td><td>Sequential (FB)</td><td>OUTPUT</td><td>50</td><td>&mdash;</td><td>Normalized card cross-reference records</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANSACT.IMPORT</code></td><td>Sequential (FB)</td><td>OUTPUT</td><td>350</td><td>&mdash;</td><td>Normalized transaction records</td></tr>
+            <tr><td>CARDOUT (<em>no JCL DD</em>)</td><td>Sequential (FB)</td><td>OUTPUT</td><td>150</td><td>&mdash;</td><td>Normalized card records &mdash; <strong>missing from JCL</strong></td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.IMPORT.ERRORS</code></td><td>Sequential (FB)</td><td>OUTPUT</td><td>132</td><td>&mdash;</td><td>Error/diagnostic records for unknown record types</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.2 -->
+    <div class="subsection" id="s5-2">
+      <h3><span class="dot"></span> 5.2 Key Record Layouts</h3>
+
+      <h4>EXPORT-RECORD (Copybook: CVEXPORT, 500 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Offset</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>EXPORT-REC-TYPE</td><td>X(1)</td><td>1</td><td>1</td><td>Record type discriminator (C/A/X/T/D)</td></tr>
+            <tr><td>EXPORT-TIMESTAMP</td><td>X(26)</td><td>2</td><td>26</td><td>Export timestamp (REDEFINES into DATE + TIME)</td></tr>
+            <tr><td>EXPORT-SEQUENCE-NUM</td><td>9(9) COMP</td><td>28</td><td>4</td><td>Sequence number (VSAM primary key)</td></tr>
+            <tr><td>EXPORT-BRANCH-ID</td><td>X(4)</td><td>32</td><td>4</td><td>Source branch identifier</td></tr>
+            <tr><td>EXPORT-REGION-CODE</td><td>X(5)</td><td>36</td><td>5</td><td>Source region code</td></tr>
+            <tr><td>EXPORT-RECORD-DATA</td><td>X(460)</td><td>41</td><td>460</td><td>Record-type-specific data (REDEFINES per type)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>CUSTOMER-RECORD (Copybook: CVCUS01Y, 500 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>CUST-ID</td><td>9(09)</td><td>9</td><td>Customer identifier (key)</td></tr>
+            <tr><td>CUST-FIRST-NAME</td><td>X(25)</td><td>25</td><td>First name</td></tr>
+            <tr><td>CUST-MIDDLE-NAME</td><td>X(25)</td><td>25</td><td>Middle name</td></tr>
+            <tr><td>CUST-LAST-NAME</td><td>X(25)</td><td>25</td><td>Last name</td></tr>
+            <tr><td>CUST-ADDR-LINE-1</td><td>X(50)</td><td>50</td><td>Address line 1</td></tr>
+            <tr><td>CUST-ADDR-LINE-2</td><td>X(50)</td><td>50</td><td>Address line 2</td></tr>
+            <tr><td>CUST-ADDR-LINE-3</td><td>X(50)</td><td>50</td><td>Address line 3</td></tr>
+            <tr><td>CUST-ADDR-STATE-CD</td><td>X(02)</td><td>2</td><td>State code</td></tr>
+            <tr><td>CUST-ADDR-COUNTRY-CD</td><td>X(03)</td><td>3</td><td>Country code</td></tr>
+            <tr><td>CUST-ADDR-ZIP</td><td>X(10)</td><td>10</td><td>Zip/postal code</td></tr>
+            <tr><td>CUST-PHONE-NUM-1</td><td>X(15)</td><td>15</td><td>Primary phone</td></tr>
+            <tr><td>CUST-PHONE-NUM-2</td><td>X(15)</td><td>15</td><td>Secondary phone</td></tr>
+            <tr><td>CUST-SSN</td><td>9(09)</td><td>9</td><td>Social Security Number</td></tr>
+            <tr><td>CUST-GOVT-ISSUED-ID</td><td>X(20)</td><td>20</td><td>Government-issued ID</td></tr>
+            <tr><td>CUST-DOB-YYYY-MM-DD</td><td>X(10)</td><td>10</td><td>Date of birth</td></tr>
+            <tr><td>CUST-EFT-ACCOUNT-ID</td><td>X(10)</td><td>10</td><td>EFT account identifier</td></tr>
+            <tr><td>CUST-PRI-CARD-HOLDER-IND</td><td>X(01)</td><td>1</td><td>Primary cardholder indicator</td></tr>
+            <tr><td>CUST-FICO-CREDIT-SCORE</td><td>9(03)</td><td>3</td><td>FICO credit score</td></tr>
+            <tr><td>FILLER</td><td>X(168)</td><td>168</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>ACCOUNT-RECORD (Copybook: CVACT01Y, 300 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>ACCT-ID</td><td>9(11)</td><td>11</td><td>Account identifier (key)</td></tr>
+            <tr><td>ACCT-ACTIVE-STATUS</td><td>X(01)</td><td>1</td><td>Active status flag</td></tr>
+            <tr><td>ACCT-CURR-BAL</td><td>S9(10)V99</td><td>12</td><td>Current balance</td></tr>
+            <tr><td>ACCT-CREDIT-LIMIT</td><td>S9(10)V99</td><td>12</td><td>Credit limit</td></tr>
+            <tr><td>ACCT-CASH-CREDIT-LIMIT</td><td>S9(10)V99</td><td>12</td><td>Cash credit limit</td></tr>
+            <tr><td>ACCT-OPEN-DATE</td><td>X(10)</td><td>10</td><td>Account open date</td></tr>
+            <tr><td>ACCT-EXPIRAION-DATE</td><td>X(10)</td><td>10</td><td>Account expiration date (note: typo in copybook)</td></tr>
+            <tr><td>ACCT-REISSUE-DATE</td><td>X(10)</td><td>10</td><td>Reissue date</td></tr>
+            <tr><td>ACCT-CURR-CYC-CREDIT</td><td>S9(10)V99</td><td>12</td><td>Current cycle credit total</td></tr>
+            <tr><td>ACCT-CURR-CYC-DEBIT</td><td>S9(10)V99</td><td>12</td><td>Current cycle debit total</td></tr>
+            <tr><td>ACCT-ADDR-ZIP</td><td>X(10)</td><td>10</td><td>Account zip code</td></tr>
+            <tr><td>ACCT-GROUP-ID</td><td>X(10)</td><td>10</td><td>Account group</td></tr>
+            <tr><td>FILLER</td><td>X(178)</td><td>178</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>CARD-XREF-RECORD (Copybook: CVACT03Y, 50 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>XREF-CARD-NUM</td><td>X(16)</td><td>16</td><td>Card number (key)</td></tr>
+            <tr><td>XREF-CUST-ID</td><td>9(09)</td><td>9</td><td>Customer identifier</td></tr>
+            <tr><td>XREF-ACCT-ID</td><td>9(11)</td><td>11</td><td>Account identifier</td></tr>
+            <tr><td>FILLER</td><td>X(14)</td><td>14</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>TRAN-RECORD (Copybook: CVTRA05Y, 350 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>TRAN-ID</td><td>X(16)</td><td>16</td><td>Transaction identifier</td></tr>
+            <tr><td>TRAN-TYPE-CD</td><td>X(02)</td><td>2</td><td>Transaction type code</td></tr>
+            <tr><td>TRAN-CAT-CD</td><td>9(04)</td><td>4</td><td>Transaction category code</td></tr>
+            <tr><td>TRAN-SOURCE</td><td>X(10)</td><td>10</td><td>Transaction source</td></tr>
+            <tr><td>TRAN-DESC</td><td>X(100)</td><td>100</td><td>Transaction description</td></tr>
+            <tr><td>TRAN-AMT</td><td>S9(09)V99</td><td>11</td><td>Transaction amount (signed decimal)</td></tr>
+            <tr><td>TRAN-MERCHANT-ID</td><td>9(09)</td><td>9</td><td>Merchant identifier</td></tr>
+            <tr><td>TRAN-MERCHANT-NAME</td><td>X(50)</td><td>50</td><td>Merchant name</td></tr>
+            <tr><td>TRAN-MERCHANT-CITY</td><td>X(50)</td><td>50</td><td>Merchant city</td></tr>
+            <tr><td>TRAN-MERCHANT-ZIP</td><td>X(10)</td><td>10</td><td>Merchant zip code</td></tr>
+            <tr><td>TRAN-CARD-NUM</td><td>X(16)</td><td>16</td><td>Card number</td></tr>
+            <tr><td>TRAN-ORIG-TS</td><td>X(26)</td><td>26</td><td>Origination timestamp</td></tr>
+            <tr><td>TRAN-PROC-TS</td><td>X(26)</td><td>26</td><td>Processing timestamp</td></tr>
+            <tr><td>FILLER</td><td>X(20)</td><td>20</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>CARD-RECORD (Copybook: CVACT02Y, 150 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>CARD-NUM</td><td>X(16)</td><td>16</td><td>Card number (key)</td></tr>
+            <tr><td>CARD-ACCT-ID</td><td>9(11)</td><td>11</td><td>Associated account ID</td></tr>
+            <tr><td>CARD-CVV-CD</td><td>9(03)</td><td>3</td><td>CVV code</td></tr>
+            <tr><td>CARD-EMBOSSED-NAME</td><td>X(50)</td><td>50</td><td>Name embossed on card</td></tr>
+            <tr><td>CARD-EXPIRAION-DATE</td><td>X(10)</td><td>10</td><td>Card expiration date (note: typo in copybook)</td></tr>
+            <tr><td>CARD-ACTIVE-STATUS</td><td>X(01)</td><td>1</td><td>Active status flag</td></tr>
+            <tr><td>FILLER</td><td>X(59)</td><td>59</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>WS-ERROR-RECORD (Working-Storage, 132 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>ERR-TIMESTAMP</td><td>X(26)</td><td>26</td><td>Current date/time when error occurred</td></tr>
+            <tr><td>FILLER</td><td>X(01)</td><td>1</td><td>Pipe separator &lsquo;|&rsquo;</td></tr>
+            <tr><td>ERR-RECORD-TYPE</td><td>X(01)</td><td>1</td><td>Unrecognized record type value</td></tr>
+            <tr><td>FILLER</td><td>X(01)</td><td>1</td><td>Pipe separator &lsquo;|&rsquo;</td></tr>
+            <tr><td>ERR-SEQUENCE</td><td>9(07)</td><td>7</td><td>Export file sequence number</td></tr>
+            <tr><td>FILLER</td><td>X(01)</td><td>1</td><td>Pipe separator &lsquo;|&rsquo;</td></tr>
+            <tr><td>ERR-MESSAGE</td><td>X(50)</td><td>50</td><td>Diagnostic message text</td></tr>
+            <tr><td>FILLER</td><td>X(43)</td><td>43</td><td>Pad to 132-byte LRECL (SPACES)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.3 -->
+    <div class="subsection" id="s5-3">
+      <h3><span class="dot"></span> 5.3 File Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌──────────────────────────────────────────────────┐
+  │  EXPORT.DATA (VSAM KSDS)                         │
+  │  LRECL=500, Key=EXPORT-SEQUENCE-NUM               │
+  │  Multi-record: C/A/X/T/D + header fields          │
+  └──────────────────────┬───────────────────────────┘
+                         │ READ (sequential by key)
+                         ▼
+  ┌──────────────────────────────────────────────────┐
+  │  STEP01: CBIMPORT                                 │
+  │                                                   │
+  │  For each EXPORT-RECORD:                          │
+  │    1. Check EXPORT-REC-TYPE                       │
+  │    2. Map EXPORT fields → target record           │
+  │    3. WRITE to appropriate output file            │
+  │    4. Unknown types → error file                  │
+  └──┬─────┬─────┬─────┬─────┬─────┬─────────────────┘
+     │     │     │     │     │     │
+     ▼     ▼     ▼     ▼     ▼     ▼
+  ┌─────┐┌─────┐┌─────┐┌─────┐┌─────┐┌──────────────┐
+  │CUST ││ACCT ││XREF ││TRAN ││CARD ││ IMPORT       │
+  │DATA ││DATA ││DATA ││DATA ││DATA ││ .ERRORS      │
+  │.IMP ││.IMP ││.IMP ││.IMP ││*N/A*││ LRECL=132    │
+  │500  ││300  ││ 50  ││350  ││150  ││              │
+  └─────┘└─────┘└─────┘└─────┘└─────┘└──────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 5.4 -->
+    <div class="subsection" id="s5-4">
+      <h3><span class="dot"></span> 5.4 File Dependency Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>Created In</th><th>Read In</th><th>Updated In</th><th>Must Exist Before Job?</th><th>Consumed Downstream?</th></tr></thead>
+          <tbody>
+            <tr><td>EXPORT.DATA</td><td>CBEXPORT</td><td>STEP01</td><td>&mdash;</td><td>Yes</td><td>No (consumed here)</td></tr>
+            <tr><td>CUSTDATA.IMPORT</td><td>STEP01</td><td>&mdash;</td><td>&mdash;</td><td>No (NEW)</td><td>Yes &mdash; target system customer loader</td></tr>
+            <tr><td>ACCTDATA.IMPORT</td><td>STEP01</td><td>&mdash;</td><td>&mdash;</td><td>No (NEW)</td><td>Yes &mdash; target system account loader</td></tr>
+            <tr><td>CARDXREF.IMPORT</td><td>STEP01</td><td>&mdash;</td><td>&mdash;</td><td>No (NEW)</td><td>Yes &mdash; target system XREF loader</td></tr>
+            <tr><td>TRANSACT.IMPORT</td><td>STEP01</td><td>&mdash;</td><td>&mdash;</td><td>No (NEW)</td><td>Yes &mdash; target system transaction loader</td></tr>
+            <tr><td>CARDOUT (no DD)</td><td>STEP01</td><td>&mdash;</td><td>&mdash;</td><td>No (NEW)</td><td>Yes &mdash; target system card loader</td></tr>
+            <tr><td>IMPORT.ERRORS</td><td>STEP01</td><td>&mdash;</td><td>&mdash;</td><td>No (NEW)</td><td>Operations review</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 6 — Data Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">6</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 6.1 -->
+    <div class="subsection" id="s6-1">
+      <h3><span class="dot"></span> 6.1 Data Transformation Map</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Source Field</th><th>Source File</th><th>Transformation</th><th>Target Field</th><th>Target File</th></tr></thead>
+          <tbody>
+            <tr><td>EXP-CUST-ID</td><td>EXPORT.DATA (type C)</td><td>MOVE (COMP &rarr; display numeric)</td><td>CUST-ID</td><td>CUSTDATA.IMPORT</td></tr>
+            <tr><td>EXP-CUST-FIRST-NAME</td><td>EXPORT.DATA (type C)</td><td>Direct MOVE</td><td>CUST-FIRST-NAME</td><td>CUSTDATA.IMPORT</td></tr>
+            <tr><td>EXP-CUST-FICO-CREDIT-SCORE</td><td>EXPORT.DATA (type C)</td><td>MOVE (COMP-3 &rarr; display numeric)</td><td>CUST-FICO-CREDIT-SCORE</td><td>CUSTDATA.IMPORT</td></tr>
+            <tr><td>EXP-ACCT-ID</td><td>EXPORT.DATA (type A)</td><td>Direct MOVE</td><td>ACCT-ID</td><td>ACCTDATA.IMPORT</td></tr>
+            <tr><td>EXP-ACCT-CURR-BAL</td><td>EXPORT.DATA (type A)</td><td>MOVE (COMP-3 &rarr; display signed)</td><td>ACCT-CURR-BAL</td><td>ACCTDATA.IMPORT</td></tr>
+            <tr><td>EXP-ACCT-CURR-CYC-DEBIT</td><td>EXPORT.DATA (type A)</td><td>MOVE (COMP &rarr; display signed)</td><td>ACCT-CURR-CYC-DEBIT</td><td>ACCTDATA.IMPORT</td></tr>
+            <tr><td>EXP-XREF-CARD-NUM</td><td>EXPORT.DATA (type X)</td><td>Direct MOVE</td><td>XREF-CARD-NUM</td><td>CARDXREF.IMPORT</td></tr>
+            <tr><td>EXP-XREF-ACCT-ID</td><td>EXPORT.DATA (type X)</td><td>MOVE (COMP &rarr; display numeric)</td><td>XREF-ACCT-ID</td><td>CARDXREF.IMPORT</td></tr>
+            <tr><td>EXP-TRAN-AMT</td><td>EXPORT.DATA (type T)</td><td>MOVE (COMP-3 &rarr; display signed)</td><td>TRAN-AMT</td><td>TRANSACT.IMPORT</td></tr>
+            <tr><td>EXP-TRAN-MERCHANT-ID</td><td>EXPORT.DATA (type T)</td><td>MOVE (COMP &rarr; display numeric)</td><td>TRAN-MERCHANT-ID</td><td>TRANSACT.IMPORT</td></tr>
+            <tr><td>EXP-CARD-NUM</td><td>EXPORT.DATA (type D)</td><td>Direct MOVE</td><td>CARD-NUM</td><td>CARDOUT (missing DD)</td></tr>
+            <tr><td>EXP-CARD-ACCT-ID</td><td>EXPORT.DATA (type D)</td><td>MOVE (COMP &rarr; display numeric)</td><td>CARD-ACCT-ID</td><td>CARDOUT (missing DD)</td></tr>
+            <tr><td>EXP-CARD-CVV-CD</td><td>EXPORT.DATA (type D)</td><td>MOVE (COMP &rarr; display numeric)</td><td>CARD-CVV-CD</td><td>CARDOUT (missing DD)</td></tr>
+            <tr><td>FUNCTION CURRENT-DATE</td><td>System</td><td>Formatted to ERR-TIMESTAMP (26 chars)</td><td>ERR-TIMESTAMP</td><td>IMPORT.ERRORS</td></tr>
+            <tr><td>EXPORT-REC-TYPE</td><td>EXPORT.DATA</td><td>Direct MOVE</td><td>ERR-RECORD-TYPE</td><td>IMPORT.ERRORS</td></tr>
+            <tr><td>EXPORT-SEQUENCE-NUM</td><td>EXPORT.DATA</td><td>Direct MOVE</td><td>ERR-SEQUENCE</td><td>IMPORT.ERRORS</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 6.2 -->
+    <div class="subsection" id="s6-2">
+      <h3><span class="dot"></span> 6.2 Data Lineage Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  EXPORT.DATA (source: CBEXPORT branch migration)
+       │
+       │ READ sequentially by EXPORT-SEQUENCE-NUM
+       ▼
+  ┌─────────────────────────────────────────────────────────┐
+  │ 2200-PROCESS-RECORD-BY-TYPE                             │
+  │                                                         │
+  │ EVALUATE EXPORT-REC-TYPE:                               │
+  │                                                         │
+  │   'C': EXPORT-CUSTOMER-DATA ──MOVE──▶ CUSTOMER-RECORD   │
+  │        (17 fields mapped, COMP/COMP-3 → display)        │
+  │                                                         │
+  │   'A': EXPORT-ACCOUNT-DATA  ──MOVE──▶ ACCOUNT-RECORD    │
+  │        (12 fields mapped, COMP-3/COMP → display)        │
+  │                                                         │
+  │   'X': EXPORT-CARD-XREF-DATA──MOVE──▶ CARD-XREF-RECORD │
+  │        (3 fields mapped, COMP → display)                │
+  │                                                         │
+  │   'T': EXPORT-TRANSACTION-DATA──MOVE──▶ TRAN-RECORD     │
+  │        (13 fields mapped, COMP-3/COMP → display)        │
+  │                                                         │
+  │   'D': EXPORT-CARD-DATA ──MOVE──▶ CARD-RECORD           │
+  │        (6 fields mapped, COMP → display)                │
+  │                                                         │
+  │   OTHER: Build WS-ERROR-RECORD (timestamp|type|seq|msg) │
+  └─────┬──────┬──────┬──────┬──────┬──────┬────────────────┘
+        │      │      │      │      │      │
+        ▼      ▼      ▼      ▼      ▼      ▼
+     CUST   ACCT   XREF   TRAN   CARD   ERRORS
+     .IMP   .IMP   .IMP   .IMP  (N/A)   .IMP
+</pre>
+      </div>
+    </div>
+
+    <!-- 6.3 -->
+    <div class="subsection" id="s6-3">
+      <h3><span class="dot"></span> 6.3 Control Totals and Reconciliation</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Control Point</th><th>What&rsquo;s Counted</th><th>Where Stored</th><th>Reconciled Against</th></tr></thead>
+          <tbody>
+            <tr><td>WS-TOTAL-RECORDS-READ</td><td>Total records read from EXPORT.DATA</td><td>SYSPRINT (DISPLAY)</td><td>CBEXPORT export count</td></tr>
+            <tr><td>WS-CUSTOMER-RECORDS-IMPORTED</td><td>Customer records written to CUSTOUT</td><td>SYSPRINT (DISPLAY)</td><td>CUSTDATA.IMPORT record count</td></tr>
+            <tr><td>WS-ACCOUNT-RECORDS-IMPORTED</td><td>Account records written to ACCTOUT</td><td>SYSPRINT (DISPLAY)</td><td>ACCTDATA.IMPORT record count</td></tr>
+            <tr><td>WS-XREF-RECORDS-IMPORTED</td><td>XREF records written to XREFOUT</td><td>SYSPRINT (DISPLAY)</td><td>CARDXREF.IMPORT record count</td></tr>
+            <tr><td>WS-TRAN-RECORDS-IMPORTED</td><td>Transaction records written to TRNXOUT</td><td>SYSPRINT (DISPLAY)</td><td>TRANSACT.IMPORT record count</td></tr>
+            <tr><td>WS-CARD-RECORDS-IMPORTED</td><td>Card records written to CARDOUT</td><td>SYSPRINT (DISPLAY)</td><td>Card output record count</td></tr>
+            <tr><td>WS-ERROR-RECORDS-WRITTEN</td><td>Error records written to ERROUT</td><td>SYSPRINT (DISPLAY)</td><td>IMPORT.ERRORS record count</td></tr>
+            <tr><td>WS-UNKNOWN-RECORD-TYPE-COUNT</td><td>Unknown record type occurrences</td><td>SYSPRINT (DISPLAY)</td><td>Should equal WS-ERROR-RECORDS-WRITTEN</td></tr>
+            <tr><td>Implied: Sum check</td><td>CUST + ACCT + XREF + TRAN + CARD + ERROR = TOTAL</td><td>Computed</td><td>All output counts must sum to total read</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 7 — Sort/Merge and Utility Processing
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">7</span>
+    <h2>Sort/Merge and Utility Processing</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="callout">
+      <strong>Not applicable.</strong> CBIMPORT is a single-step COBOL program with no SORT, MERGE, or IDCAMS utility steps. The export file is read sequentially by its VSAM key order (EXPORT-SEQUENCE-NUM); no pre-sorting or post-sorting is required. Records are routed to output files in the order they appear in the input.
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 8 — Checkpoint, Restart, and Recovery
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">8</span>
+    <h2>Checkpoint, Restart, and Recovery</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s8-1">
+      <h3><span class="dot"></span> 8.1 Checkpoint Strategy</h3>
+      <div class="callout callout-red">
+        <strong>Warning:</strong> CBIMPORT does <em>not</em> implement application-level checkpointing. In the event of an abend mid-processing, output files will contain partially written data. Recovery requires deleting all output files and resubmitting the job.
+      </div>
+    </div>
+
+    <div class="subsection" id="s8-2">
+      <h3><span class="dot"></span> 8.2 Restart Procedures</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Failure Scenario</th><th>Restart Step</th><th>Prerequisites</th><th>Data Reset Required</th></tr></thead>
+          <tbody>
+            <tr><td>Abend in STEP01 (mid-processing)</td><td>STEP01 (resubmit entire job)</td><td>1. Delete all partially created output datasets (CUSTDATA.IMPORT, ACCTDATA.IMPORT, CARDXREF.IMPORT, TRANSACT.IMPORT, IMPORT.ERRORS)<br>2. Verify EXPORT.DATA is intact</td><td>Yes &mdash; delete all output files</td></tr>
+            <tr><td>JCL error (before program starts)</td><td>Resubmit</td><td>Fix JCL (e.g., add missing CARDOUT DD)</td><td>None</td></tr>
+            <tr><td>Input file missing (EXPORT.DATA status &ne; &lsquo;00&rsquo;)</td><td>Resubmit</td><td>Ensure EXPORT.DATA VSAM is available and populated</td><td>None</td></tr>
+            <tr><td>Output dataset already exists</td><td>Resubmit</td><td>Delete existing output datasets (DISP=(NEW,...) will fail if they exist)</td><td>Delete conflicting datasets</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s8-3">
+      <h3><span class="dot"></span> 8.3 Recovery Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  Normal:  CBEXPORT → EXPORT.DATA → CBIMPORT → Normalized Files → Done
+
+  Failure at STEP01 (mid-processing):
+    1. Identify abend cause (SYSPRINT, SYSUDUMP)
+    2. Output files are partially written
+       ├── DELETE CUSTDATA.IMPORT (if partially created)
+       ├── DELETE ACCTDATA.IMPORT (if partially created)
+       ├── DELETE CARDXREF.IMPORT (if partially created)
+       ├── DELETE TRANSACT.IMPORT (if partially created)
+       └── DELETE IMPORT.ERRORS   (if partially created)
+    3. Fix root cause (e.g., add missing CARDOUT DD)
+    4. Resubmit CBIMPORT
+</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 9 — Error Handling and Abend Resolution
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">9</span>
+    <h2>Error Handling and Abend Resolution</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 9.1 -->
+    <div class="subsection" id="s9-1">
+      <h3><span class="dot"></span> 9.1 Error Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  Record-Level Errors (non-fatal, continue processing):
+  ──────────────────────────────────────────────────────
+    Unknown record type  → Build WS-ERROR-RECORD
+                         → 2750-WRITE-ERROR (WRITE to ERROUT)
+                         → Increment WS-ERROR-RECORDS-WRITTEN
+                         → Continue to next record
+
+  File I/O Errors (fatal, ABEND immediately):
+  ──────────────────────────────────────────────
+    EXPORT-INPUT OPEN failure   → DISPLAY error + status → 9999-ABEND-PROGRAM
+    CUSTOMER-OUTPUT OPEN fail   → DISPLAY error + status → 9999-ABEND-PROGRAM
+    ACCOUNT-OUTPUT OPEN fail    → DISPLAY error + status → 9999-ABEND-PROGRAM
+    XREF-OUTPUT OPEN failure    → DISPLAY error + status → 9999-ABEND-PROGRAM
+    TRANSACTION-OUTPUT OPEN fail→ DISPLAY error + status → 9999-ABEND-PROGRAM
+    CARD-OUTPUT OPEN failure    → DISPLAY error + status → 9999-ABEND-PROGRAM
+    ERROR-OUTPUT OPEN failure   → DISPLAY error + status → 9999-ABEND-PROGRAM
+    EXPORT-INPUT READ error     → DISPLAY error + status → 9999-ABEND-PROGRAM
+    Any output WRITE error      → DISPLAY error + status → 9999-ABEND-PROGRAM
+
+  Note: 2750-WRITE-ERROR failure only DISPLAYs error;
+        it does NOT call 9999-ABEND-PROGRAM (non-fatal)
+</pre>
+      </div>
+    </div>
+
+    <!-- 9.2 -->
+    <div class="subsection" id="s9-2">
+      <h3><span class="dot"></span> 9.2 Return Code Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>RC=0</th><th>RC=ABEND (U0xxx)</th></tr></thead>
+          <tbody>
+            <tr><td>STEP01</td><td>All records processed and split; unknown types written to error file. No distinction between &ldquo;clean&rdquo; and &ldquo;with errors&rdquo; &mdash; both return RC=0.</td><td>Fatal file I/O error. Program calls CEE3ABD. System produces SYSUDUMP.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-red">
+        <strong>Design gap:</strong> CBIMPORT does not set a non-zero return code when unknown record types are encountered. A run with 100% unknown records still returns RC=0. Downstream jobs have no programmatic way to detect import quality issues from the return code alone.
+      </div>
+    </div>
+
+    <!-- 9.3 -->
+    <div class="subsection" id="s9-3">
+      <h3><span class="dot"></span> 9.3 Common Abend Codes and Resolution</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Abend</th><th>Likely Cause</th><th>Resolution</th></tr></thead>
+          <tbody>
+            <tr><td>U0xxx (CEE3ABD)</td><td>File I/O error detected by CBIMPORT (file status &ne; &lsquo;00&rsquo;)</td><td>Check SYSPRINT for the error message with file status code. Common: VSAM not found (35), dataset not allocated (JCL error)</td></tr>
+            <tr><td>S013-18</td><td>DD statement missing for CARDOUT (COBOL OPEN fails)</td><td>Add <code>//CARDOUT DD ...</code> to JCL with LRECL=150, RECFM=FB</td></tr>
+            <tr><td>S213-04</td><td>VSAM EXPORT.DATA dataset not found</td><td>Verify EXPORT.DATA VSAM cluster exists; run IDCAMS LISTCAT</td></tr>
+            <tr><td>S0C7</td><td>Non-numeric data in PIC 9 / COMP / COMP-3 field in export file</td><td>Validate export file data quality; check CBEXPORT output</td></tr>
+            <tr><td>S0C4</td><td>Invalid storage reference (corrupted export record)</td><td>Check SYSUDUMP; verify EXPORT.DATA record alignment</td></tr>
+            <tr><td>SB37/SE37</td><td>Output dataset out of space</td><td>Increase SPACE allocation in JCL for the affected output DD</td></tr>
+            <tr><td>S913</td><td>RACF security violation on dataset access</td><td>Check job userid authority for all datasets</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 9.4 -->
+    <div class="subsection" id="s9-4">
+      <h3><span class="dot"></span> 9.4 File Status Handling</h3>
+      <p>CBIMPORT checks file status after every I/O operation using 88-level condition names:</p>
+      <ul>
+        <li><code>WS-EXPORT-OK</code> (value &lsquo;00&rsquo;): Successful read from EXPORT-INPUT</li>
+        <li><code>WS-EXPORT-EOF</code> (value &lsquo;10&rsquo;): End-of-file on EXPORT-INPUT &mdash; normal loop termination</li>
+        <li><code>WS-CUSTOMER-OK</code>, <code>WS-ACCOUNT-OK</code>, <code>WS-XREF-OK</code>, <code>WS-TRANSACTION-OK</code>, <code>WS-CARD-OK</code>: Successful WRITE to respective output</li>
+        <li><code>WS-ERROR-OK</code>: Successful WRITE to ERROR-OUTPUT</li>
+        <li>Any non-OK status on OPEN or WRITE (except error file) triggers <code>9999-ABEND-PROGRAM</code> &rarr; <code>CALL 'CEE3ABD'</code></li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 10 — Security and Authorization
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="subsection" id="s10-1">
+      <h3><span class="dot"></span> 10.1 Dataset Security Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Dataset Pattern</th><th>Access Required</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr><td>AWS.M2.CARDDEMO.EXPORT.DATA</td><td>READ</td><td>Input VSAM export file</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.CUSTDATA.IMPORT</td><td>ALTER (create new)</td><td>Output customer file</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.ACCTDATA.IMPORT</td><td>ALTER (create new)</td><td>Output account file</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.CARDXREF.IMPORT</td><td>ALTER (create new)</td><td>Output cross-reference file</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.TRANSACT.IMPORT</td><td>ALTER (create new)</td><td>Output transaction file</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.IMPORT.ERRORS</td><td>ALTER (create new)</td><td>Output error file</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.LOADLIB</td><td>READ (FETCH)</td><td>Program load library</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>Note:</strong> Because all output datasets use <code>DISP=(NEW,CATLG,DELETE)</code>, the job userid needs ALTER authority on the high-level qualifier to create new catalog entries. This is a broader requirement than typical batch jobs that use existing datasets.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 11 — Performance and Batch Window Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Performance and Batch Window Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s11-1">
+      <h3><span class="dot"></span> 11.1 Performance Characteristics</h3>
+      <p>CBIMPORT is I/O-bound with a simple processing pattern: <strong>1 VSAM READ + 1 sequential WRITE per record</strong>.</p>
+      <ol>
+        <li>READ EXPORT-INPUT (sequential by VSAM key &mdash; optimal CI/CA buffer usage)</li>
+        <li>EVALUATE record type (in-memory, negligible CPU)</li>
+        <li>INITIALIZE target record + MOVE fields (in-memory)</li>
+        <li>WRITE to one of 6 output files (sequential &mdash; efficient buffering)</li>
+      </ol>
+      <div class="callout">
+        <strong>Performance note:</strong> The I/O pattern is highly efficient: one sequential VSAM read plus one sequential write per record. No random access, no lookups, no REWRITE operations. Throughput is limited primarily by DASD bandwidth. For large export files, increasing BLKSIZE on output DDs (currently BLKSIZE=0, system-determined) and adding BUFNI/BUFND on the VSAM input can improve throughput.
+      </div>
+    </div>
+
+    <div class="subsection" id="s11-2">
+      <h3><span class="dot"></span> 11.2 Batch Window Fit</h3>
+      <div class="table-wrap">
+        <table>
+          <tbody>
+            <tr><td><strong>Window Opens</strong></td><td>On-demand (no fixed schedule)</td></tr>
+            <tr><td><strong>Window Closes</strong></td><td>Before target system ingestion begins</td></tr>
+            <tr><td><strong>Predecessor</strong></td><td>CBEXPORT (must produce EXPORT.DATA first)</td></tr>
+            <tr><td><strong>Successor</strong></td><td>Target system data loaders (consume normalized files)</td></tr>
+            <tr><td><strong>Critical Path</strong></td><td>No &mdash; on-demand utility, does not block daily CICS operations</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 12 — Testing Approach
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s12-1">
+      <h3><span class="dot"></span> 12.1 Test Scenarios</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Scenario</th><th>Input Setup</th><th>Expected Output</th><th>Verify Method</th></tr></thead>
+          <tbody>
+            <tr><td>TC-001</td><td>Normal run (all 5 record types)</td><td>EXPORT.DATA with C, A, X, T, D records</td><td>RC=0; 5 output files populated; ERRORS empty; sum of all output counts = total read</td><td>Compare SYSPRINT statistics; record count each output file</td></tr>
+            <tr><td>TC-002</td><td>Customer-only export</td><td>EXPORT.DATA with only type &lsquo;C&rsquo; records</td><td>RC=0; CUSTDATA.IMPORT populated; all other outputs empty</td><td>Check WS-CUSTOMER-RECORDS-IMPORTED = WS-TOTAL-RECORDS-READ</td></tr>
+            <tr><td>TC-003</td><td>Unknown record types</td><td>EXPORT.DATA with type &lsquo;Z&rsquo; records</td><td>RC=0; IMPORT.ERRORS populated with pipe-delimited error records; WS-UNKNOWN-RECORD-TYPE-COUNT &gt; 0</td><td>Check IMPORT.ERRORS content format; verify timestamp, type, sequence</td></tr>
+            <tr><td>TC-004</td><td>Mixed valid and unknown types</td><td>EXPORT.DATA with C, A, X, T, D, and &lsquo;Z&rsquo; records</td><td>RC=0; valid records routed correctly; unknown to ERRORS</td><td>Verify: valid counts + error count = total read</td></tr>
+            <tr><td>TC-005</td><td>Empty input file</td><td>EXPORT.DATA VSAM defined but empty</td><td>RC=0; WS-TOTAL-RECORDS-READ = 0; all outputs empty</td><td>Check SYSPRINT for zero counts</td></tr>
+            <tr><td>TC-006</td><td>COMP/COMP-3 to display conversion</td><td>EXPORT.DATA with known numeric values in COMP and COMP-3 fields</td><td>Output files contain correct display-format numeric values</td><td>IDCAMS PRINT output files; verify numeric field values match expected</td></tr>
+            <tr><td>TC-007</td><td>Large volume stress test</td><td>EXPORT.DATA with 100,000+ records across all types</td><td>RC=0; all records processed; space allocations sufficient</td><td>Check SYSPRINT totals; verify no SB37/SE37 abends</td></tr>
+            <tr><td>TC-008</td><td>Missing CARDOUT DD</td><td>JCL as-is (no CARDOUT DD); EXPORT.DATA with type &lsquo;D&rsquo; records</td><td>ABEND at OPEN (S013 or equivalent)</td><td>Verify job ABENDs; confirm error message in SYSPRINT</td></tr>
+            <tr><td>TC-009</td><td>Pre-existing output datasets</td><td>Output datasets already cataloged from previous run</td><td>JCL ABEND (DISP=(NEW,...) fails with &ldquo;duplicate dataset&rdquo;)</td><td>Verify S813 or IEF283I error</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s12-2">
+      <h3><span class="dot"></span> 12.2 Test Data Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>Records Needed</th><th>Setup Method</th></tr></thead>
+          <tbody>
+            <tr><td>EXPORT.DATA (VSAM KSDS)</td><td>Variable (10&ndash;100,000+); must contain mix of C/A/X/T/D types</td><td>Run CBEXPORT against source branch data, or IDCAMS REPRO from test file</td></tr>
+            <tr><td>Output datasets</td><td>Must NOT exist (DISP=NEW)</td><td>Delete any prior run output: IEFBR14 with DISP=(OLD,DELETE) or IDCAMS DELETE</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 13 — Known Issues and Considerations
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s13">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">13</span>
+    <h2>Known Issues and Modernization Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s13-1">
+      <h3><span class="dot"></span> 13.1 Known Issues</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Description</th><th>Impact</th><th>Workaround</th></tr></thead>
+          <tbody>
+            <tr><td>KI-001</td><td><strong>Missing CARDOUT DD in JCL.</strong> The COBOL program defines <code>CARD-OUTPUT ASSIGN TO CARDOUT</code> and opens it in 1100-OPEN-FILES, but the JCL (<code>CBIMPORT.jcl</code>) does not include a <code>//CARDOUT DD</code> statement. The job will ABEND when attempting to OPEN CARD-OUTPUT.</td><td><span class="badge badge-red">High</span> &mdash; job cannot process type &lsquo;D&rsquo; (card) records; ABEND before any processing begins</td><td>Add <code>//CARDOUT DD DISP=(NEW,CATLG,DELETE),DSN=AWS.M2.CARDDEMO.CARDDATA.IMPORT,UNIT=SYSDA,SPACE=(TRK,(25,10),RLSE),DCB=(RECFM=FB,LRECL=150,BLKSIZE=0)</code> to the JCL</td></tr>
+            <tr><td>KI-002</td><td><strong>No checkpoint/restart.</strong> Mid-job failure leaves partially written output files. Recovery requires deleting all output and resubmitting.</td><td><span class="badge badge-navy">Medium</span> &mdash; acceptable for on-demand migration; problematic for very large exports</td><td>Take backup of input VSAM before running; use IDCAMS DELETE to clean up partial outputs</td></tr>
+            <tr><td>KI-003</td><td><strong>3000-VALIDATE-IMPORT is a stub.</strong> The paragraph only DISPLAYs &ldquo;Import validation completed&rdquo; and &ldquo;No validation errors detected&rdquo; &mdash; no actual checksum, record count, or cross-entity validation is performed despite the program comments mentioning &ldquo;Validate data integrity using checksums.&rdquo;</td><td><span class="badge badge-navy">Medium</span> &mdash; no automated detection of incomplete or corrupted imports</td><td>Manually reconcile CBEXPORT output counts with CBIMPORT SYSPRINT statistics</td></tr>
+            <tr><td>KI-004</td><td><strong>No non-zero return code for errors.</strong> Unknown record types are written to the error file but the job always returns RC=0. Downstream automation cannot distinguish a clean import from one with errors.</td><td><span class="badge badge-navy">Medium</span> &mdash; error records may go unnoticed without manual SYSPRINT review</td><td>Add a post-processing step to check IMPORT.ERRORS record count; or set RETURN-CODE = 4 when WS-ERROR-RECORDS-WRITTEN &gt; 0</td></tr>
+            <tr><td>KI-005</td><td><strong>Typo in ACCT-EXPIRAION-DATE</strong> (missing &lsquo;T&rsquo;) in copybooks CVACT01Y and CVACT02Y (<code>CARD-EXPIRAION-DATE</code>). Also propagated to CVEXPORT (<code>EXP-ACCT-EXPIRAION-DATE</code>, <code>EXP-CARD-EXPIRAION-DATE</code>).</td><td><span class="badge badge-gray">Low</span> &mdash; cosmetic, does not affect processing</td><td>None needed; consistent across all programs</td></tr>
+            <tr><td>KI-006</td><td><strong>COMP/COMP-3 to display numeric type mismatches.</strong> Several export fields use packed (COMP-3) or binary (COMP) storage, but target copybook fields use display numeric. COBOL handles the conversion automatically via MOVE, but precision edge cases (e.g., very large COMP values exceeding display field size) could cause truncation.</td><td><span class="badge badge-gray">Low</span> &mdash; COBOL MOVE handles conversion; truncation unlikely with current field sizes</td><td>Add explicit validation of converted numeric ranges</td></tr>
+            <tr><td>KI-007</td><td><strong>Error file WRITE failure is non-fatal.</strong> In 2750-WRITE-ERROR, if the WRITE to ERROR-OUTPUT fails, the program only DISPLAYs the error but does not ABEND. Error records could be silently lost.</td><td><span class="badge badge-gray">Low</span> &mdash; only affects diagnostics, not data integrity</td><td>Add ABEND logic for error file WRITE failures, or at minimum set a warning return code</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s13-2">
+      <h3><span class="dot"></span> 13.2 Modernization Considerations</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Area</th><th>Current State</th><th>Target State</th><th>Complexity</th></tr></thead>
+          <tbody>
+            <tr><td>Data Migration</td><td>Batch COBOL file splitting (VSAM &rarr; sequential)</td><td>ETL pipeline (e.g., AWS Glue, Spark) with schema validation</td><td>Medium</td></tr>
+            <tr><td>Input Format</td><td>Fixed-length VSAM KSDS with REDEFINES for multi-record types</td><td>JSON/Parquet with explicit type discriminator and schema registry</td><td>Medium</td></tr>
+            <tr><td>Output Format</td><td>Fixed-length sequential files (FB) per entity type</td><td>Relational database tables (PostgreSQL/Aurora) or S3 data lake</td><td>Medium</td></tr>
+            <tr><td>Validation</td><td>None (stub paragraph; no checksum or integrity checks)</td><td>Schema validation, referential integrity checks, checksum verification</td><td>Low</td></tr>
+            <tr><td>Error Handling</td><td>ABEND via CEE3ABD; no granular return codes</td><td>Structured error reporting, dead-letter queue, retry logic</td><td>Medium</td></tr>
+            <tr><td>Type Conversion</td><td>Implicit COBOL MOVE (COMP/COMP-3 &rarr; display)</td><td>Explicit type mapping with overflow detection and logging</td><td>Low</td></tr>
+            <tr><td>Observability</td><td>DISPLAY statements to SYSPRINT</td><td>Structured logging (CloudWatch, ELK), metrics dashboard</td><td>Low</td></tr>
+            <tr><td>Idempotency</td><td>Not idempotent (DISP=NEW fails on re-run)</td><td>Idempotent with upsert semantics or version-controlled outputs</td><td>Medium</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /page-wrap-single -->
+
+<!-- ════════════════════  FOOTER  ════════════════════ -->
+<footer class="footer">
+  <p><strong>UniCredit CardDemo</strong> &mdash; Batch Process Analysis &mdash; CBIMPORT / CBIMPORT</p>
+  <p>Generated from source: <code>app/jcl/CBIMPORT.jcl</code> &middot; <code>app/cbl/CBIMPORT.cbl</code> &middot; Copybooks: CVEXPORT, CVCUS01Y, CVACT01Y, CVACT03Y, CVTRA05Y, CVACT02Y</p>
+</footer>
+
+</body>
+</html>
