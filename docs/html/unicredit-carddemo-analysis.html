@@ -4,388 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CardDemo – Mainframe Analysis | UniCredit</title>
+<link rel="stylesheet" href="shared/theme.css">
 <style>
-  /* ── UniCredit Brand Palette ─────────────────────────────────── */
-  :root {
-    --uc-red:        #E4002B;
-    --uc-red-dark:   #B8001F;
-    --uc-red-light:  #FF3354;
-    --uc-navy:       #1D2B4E;
-    --uc-navy-light: #2A3D6B;
-    --uc-gold:       #C5A44E;
-    --uc-gold-light: #E2C97A;
-    --uc-white:      #FFFFFF;
-    --uc-gray-50:    #F8F9FA;
-    --uc-gray-100:   #F0F1F3;
-    --uc-gray-200:   #E2E4E8;
-    --uc-gray-400:   #9EA3AE;
-    --uc-gray-600:   #6B7280;
-    --uc-gray-800:   #374151;
-    --uc-text:       #1F2937;
-    --uc-shadow:     0 4px 24px rgba(29,43,78,.08);
-    --uc-shadow-lg:  0 12px 48px rgba(29,43,78,.12);
-    --uc-radius:     12px;
-    --uc-radius-sm:  8px;
-    --uc-transition: .25s cubic-bezier(.4,0,.2,1);
-  }
+  /* Page-specific overrides (if any) */
 
-  /* ── Reset & Base ───────────────────────────────────────────── */
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body {
-    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
-    color: var(--uc-text);
-    background: var(--uc-gray-50);
-    line-height: 1.65;
-    -webkit-font-smoothing: antialiased;
-  }
 
-  /* ── Hero / Header ──────────────────────────────────────────── */
-  .hero {
-    background: linear-gradient(135deg, var(--uc-navy) 0%, var(--uc-navy-light) 50%, var(--uc-red-dark) 100%);
-    color: var(--uc-white);
-    padding: 3rem 2rem 2.5rem;
-    position: relative;
-    overflow: hidden;
-  }
-  .hero::before {
-    content: '';
-    position: absolute;
-    top: -60%;
-    right: -20%;
-    width: 700px;
-    height: 700px;
-    background: radial-gradient(circle, rgba(228,0,43,.18) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .hero::after {
-    content: '';
-    position: absolute;
-    bottom: -30%;
-    left: -10%;
-    width: 500px;
-    height: 500px;
-    background: radial-gradient(circle, rgba(197,164,78,.12) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .hero-inner {
-    max-width: 1200px;
-    margin: 0 auto;
-    position: relative;
-    z-index: 1;
-  }
-  .hero-brand {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-  }
-  .hero-logo {
-    height: 48px;
-    flex-shrink: 0;
-  }
-  .hero-logo img {
-    height: 100%;
-    width: auto;
-    display: block;
-  }
-  .hero-brand-text { font-size: .95rem; opacity: .85; letter-spacing: .04em; text-transform: uppercase; }
-  .hero h1 {
-    font-size: clamp(2rem, 4vw, 3rem);
-    font-weight: 800;
-    letter-spacing: -.02em;
-    line-height: 1.15;
-    margin-bottom: .75rem;
-  }
-  .hero h1 span { color: var(--uc-gold-light); }
-  .hero-subtitle { font-size: 1.15rem; opacity: .88; max-width: 720px; }
-  .hero-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2rem;
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid rgba(255,255,255,.15);
-  }
-  .hero-meta dt { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin-bottom: .15rem; }
-  .hero-meta dd { font-size: .95rem; font-weight: 600; }
-
-  /* ── Layout ─────────────────────────────────────────────────── */
-  .page-wrap {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: 260px 1fr;
-    gap: 2rem;
-    padding: 2rem;
-  }
-  @media (max-width: 900px) {
-    .page-wrap { grid-template-columns: 1fr; }
-    .sidebar { display: none; }
-  }
-
-  /* ── Sidebar / TOC ──────────────────────────────────────────── */
-  .sidebar {
-    position: sticky;
-    top: 2rem;
-    align-self: start;
-    max-height: calc(100vh - 4rem);
-    overflow-y: auto;
-  }
-  .toc {
-    background: var(--uc-white);
-    border-radius: var(--uc-radius);
-    box-shadow: var(--uc-shadow);
-    padding: 1.25rem 1rem;
-  }
-  .toc-title {
-    font-size: .7rem;
-    text-transform: uppercase;
-    letter-spacing: .1em;
-    color: var(--uc-gray-400);
-    margin-bottom: .75rem;
-    padding-bottom: .5rem;
-    border-bottom: 2px solid var(--uc-red);
-  }
-  .toc ol { list-style: none; counter-reset: toc-counter; }
-  .toc li { counter-increment: toc-counter; }
-  .toc a {
-    display: flex;
-    align-items: baseline;
-    gap: .5rem;
-    text-decoration: none;
-    color: var(--uc-gray-600);
-    font-size: .82rem;
-    padding: .35rem .5rem;
-    border-radius: var(--uc-radius-sm);
-    transition: var(--uc-transition);
-  }
-  .toc a::before {
-    content: counter(toc-counter, decimal-leading-zero);
-    font-weight: 700;
-    font-size: .7rem;
-    color: var(--uc-red);
-    min-width: 1.4em;
-  }
-  .toc a:hover { background: var(--uc-gray-100); color: var(--uc-navy); }
-
-  /* ── Main content ───────────────────────────────────────────── */
-  .content { min-width: 0; }
-
-  /* ── Section card ───────────────────────────────────────────── */
-  .section {
-    background: var(--uc-white);
-    border-radius: var(--uc-radius);
-    box-shadow: var(--uc-shadow);
-    margin-bottom: 2rem;
-    overflow: hidden;
-  }
-  .section-header {
-    display: flex;
-    align-items: center;
-    gap: .75rem;
-    padding: 1.25rem 1.5rem;
-    background: linear-gradient(90deg, var(--uc-navy) 0%, var(--uc-navy-light) 100%);
-    color: var(--uc-white);
-    cursor: pointer;
-    user-select: none;
-  }
-  .section-header:hover { filter: brightness(1.1); }
-  .section-num {
-    background: var(--uc-red);
-    color: var(--uc-white);
-    font-size: .72rem;
-    font-weight: 700;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-  .section-header h2 { font-size: 1.1rem; font-weight: 700; letter-spacing: -.01em; flex: 1; }
-  .section-toggle {
-    width: 24px;
-    height: 24px;
-    transition: transform var(--uc-transition);
-    opacity: .7;
-  }
-  .section.collapsed .section-toggle { transform: rotate(-90deg); }
-  .section-body { padding: 1.5rem; }
-  .section.collapsed .section-body { display: none; }
-
-  /* ── Sub-sections ───────────────────────────────────────────── */
-  .subsection { margin-bottom: 1.75rem; }
-  .subsection:last-child { margin-bottom: 0; }
-  .subsection h3 {
-    font-size: .95rem;
-    font-weight: 700;
-    color: var(--uc-navy);
-    margin-bottom: .75rem;
-    padding-bottom: .4rem;
-    border-bottom: 2px solid var(--uc-gray-200);
-    display: flex;
-    align-items: center;
-    gap: .5rem;
-  }
-  .subsection h3 .dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--uc-red);
-    flex-shrink: 0;
-  }
-  .subsection h4 {
-    font-size: .88rem;
-    font-weight: 600;
-    color: var(--uc-gray-800);
-    margin: 1rem 0 .5rem;
-  }
-  .subsection p, .subsection li {
-    font-size: .88rem;
-    color: var(--uc-gray-800);
-    line-height: 1.7;
-  }
-  .subsection ul, .subsection ol {
-    padding-left: 1.4rem;
-    margin-top: .35rem;
-  }
-  .subsection li { margin-bottom: .25rem; }
-
-  /* ── Tables ─────────────────────────────────────────────────── */
-  .table-wrap { overflow-x: auto; margin: .75rem 0; }
-  table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: .82rem;
-  }
-  thead th {
-    background: var(--uc-navy);
-    color: var(--uc-white);
-    text-align: left;
-    padding: .6rem .75rem;
-    font-weight: 600;
-    letter-spacing: .02em;
-    white-space: nowrap;
-  }
-  thead th:first-child { border-radius: var(--uc-radius-sm) 0 0 0; }
-  thead th:last-child  { border-radius: 0 var(--uc-radius-sm) 0 0; }
-  tbody td {
-    padding: .55rem .75rem;
-    border-bottom: 1px solid var(--uc-gray-200);
-    vertical-align: top;
-  }
-  tbody tr:last-child td { border-bottom: none; }
-  tbody tr:nth-child(even) { background: var(--uc-gray-50); }
-  tbody tr:hover { background: rgba(228,0,43,.04); }
-
-  /* ── Code blocks ────────────────────────────────────────────── */
-  pre {
-    background: var(--uc-navy);
-    color: #E2E8F0;
-    border-radius: var(--uc-radius-sm);
-    padding: 1rem 1.25rem;
-    font-size: .78rem;
-    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
-    overflow-x: auto;
-    line-height: 1.65;
-    margin: .75rem 0;
-  }
-  code {
-    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
-    font-size: .82em;
-    background: var(--uc-gray-100);
-    padding: .1em .35em;
-    border-radius: 4px;
-    color: var(--uc-red-dark);
-  }
-  pre code { background: none; padding: 0; color: inherit; }
-
-  /* ── Callout boxes ──────────────────────────────────────────── */
-  .callout {
-    border-left: 4px solid var(--uc-gold);
-    background: rgba(197,164,78,.08);
-    padding: .85rem 1rem;
-    border-radius: 0 var(--uc-radius-sm) var(--uc-radius-sm) 0;
-    margin: .75rem 0;
-    font-size: .85rem;
-  }
-  .callout-red {
-    border-left-color: var(--uc-red);
-    background: rgba(228,0,43,.05);
-  }
-  .callout strong { color: var(--uc-navy); }
-
-  /* ── Diagram boxes ──────────────────────────────────────────── */
-  .diagram-box {
-    background: var(--uc-gray-100);
-    border: 2px dashed var(--uc-gray-200);
-    border-radius: var(--uc-radius-sm);
-    padding: 1.5rem;
-    text-align: center;
-    margin: .75rem 0;
-  }
-  .diagram-box pre {
-    text-align: left;
-    background: var(--uc-navy);
-    display: inline-block;
-    max-width: 100%;
-  }
-
-  /* ── Badges ─────────────────────────────────────────────────── */
-  .badge {
-    display: inline-block;
-    font-size: .68rem;
-    font-weight: 700;
-    padding: .15em .55em;
-    border-radius: 999px;
-    text-transform: uppercase;
-    letter-spacing: .04em;
-    line-height: 1.6;
-  }
-  .badge-red    { background: var(--uc-red);   color: #fff; }
-  .badge-navy   { background: var(--uc-navy);  color: #fff; }
-  .badge-gold   { background: var(--uc-gold);  color: var(--uc-navy); }
-  .badge-gray   { background: var(--uc-gray-200); color: var(--uc-gray-800); }
-
-  /* ── KPI strip ──────────────────────────────────────────────── */
-  .kpi-strip {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 1rem;
-    margin: 1rem 0;
-  }
-  .kpi-card {
-    background: var(--uc-gray-50);
-    border: 1px solid var(--uc-gray-200);
-    border-radius: var(--uc-radius-sm);
-    padding: 1rem;
-    text-align: center;
-    transition: var(--uc-transition);
-  }
-  .kpi-card:hover { border-color: var(--uc-red); box-shadow: var(--uc-shadow); transform: translateY(-2px); }
-  .kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--uc-red); line-height: 1.2; }
-  .kpi-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--uc-gray-600); margin-top: .25rem; }
-
-  /* ── Footer ─────────────────────────────────────────────────── */
-  .footer {
-    background: var(--uc-navy);
-    color: rgba(255,255,255,.6);
-    text-align: center;
-    padding: 2rem;
-    font-size: .78rem;
-  }
-  .footer strong { color: var(--uc-gold-light); }
-
-  /* ── Print ──────────────────────────────────────────────────── */
-  @media print {
-    .sidebar { display: none; }
-    .page-wrap { grid-template-columns: 1fr; }
-    .section.collapsed .section-body { display: block; }
-    .hero { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-  }
 </style>
 </head>
 <body>
@@ -419,6 +42,7 @@
   <nav class="toc">
     <div class="toc-title">Table of Contents</div>
     <ol>
+      <li><a href="#flow-docs" style="color:var(--uc-gold);font-weight:700;">Flow Documentation &#9654;</a></li>
       <li><a href="#s1">System Overview &amp; Processing Architecture</a></li>
       <li><a href="#s2">Program Design &amp; Call Structure</a></li>
       <li><a href="#s3">Data Structures &amp; File Layouts</a></li>
@@ -449,6 +73,134 @@
   <div class="kpi-card"><div class="kpi-value">14</div><div class="kpi-label">VSAM Files</div></div>
   <div class="kpi-card"><div class="kpi-value">34</div><div class="kpi-label">Batch JCL Jobs</div></div>
 </div>
+
+<!-- ── Flow Documentation Navigation ─────────────────────── -->
+<section class="section" id="flow-docs">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num" style="background:var(--uc-gold);color:var(--uc-navy)">&#9654;</span>
+    <h2>Flow Documentation</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+    <p style="font-size:.88rem;color:var(--uc-gray-600);margin-bottom:1rem;">Detailed flow documentation for each subsystem. Click a card to view the full analysis.</p>
+
+    <h4 style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--uc-gray-400);margin-bottom:.75rem;">&#9881; Batch Flows</h4>
+    <div class="flow-nav">
+      <a class="flow-nav-card" href="batch/daily-cycle.html">
+        <div class="flow-nav-icon batch">&#9881;</div>
+        <div class="flow-nav-body">
+          <h4>Daily Batch Cycle</h4>
+          <p>End-to-end nightly sequence: CLOSEFIL through OPENFIL</p>
+          <span class="flow-nav-badge scaffold">Scaffold</span>
+        </div>
+      </a>
+      <a class="flow-nav-card" href="batch/posttran.html">
+        <div class="flow-nav-icon batch">&#128179;</div>
+        <div class="flow-nav-body">
+          <h4>Transaction Posting</h4>
+          <p>CBTRN02C deep-dive &mdash; daily transaction processing engine</p>
+          <span class="flow-nav-badge scaffold">Scaffold</span>
+        </div>
+      </a>
+      <a class="flow-nav-card" href="batch/intcalc.html">
+        <div class="flow-nav-icon batch">&#128200;</div>
+        <div class="flow-nav-body">
+          <h4>Interest Calculation</h4>
+          <p>CBACT04C interest engine &mdash; rate computation &amp; balance updates</p>
+          <span class="flow-nav-badge scaffold">Scaffold</span>
+        </div>
+      </a>
+      <a class="flow-nav-card" href="batch/creastmt.html">
+        <div class="flow-nav-icon batch">&#128196;</div>
+        <div class="flow-nav-body">
+          <h4>Statement Generation</h4>
+          <p>CBSTM03A/B &mdash; transaction aggregation &amp; report output</p>
+          <span class="flow-nav-badge scaffold">Scaffold</span>
+        </div>
+      </a>
+      <a class="flow-nav-card" href="batch/file-maintenance.html">
+        <div class="flow-nav-icon batch">&#128451;</div>
+        <div class="flow-nav-body">
+          <h4>File Maintenance &amp; Data Loads</h4>
+          <p>IDCAMS loads, GDG management, CBEXPORT/CBIMPORT utilities</p>
+          <span class="flow-nav-badge scaffold">Scaffold</span>
+        </div>
+      </a>
+    </div>
+
+    <h4 style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--uc-gray-400);margin:1.5rem 0 .75rem;">&#128274; CICS Online Flows</h4>
+    <div class="flow-nav">
+      <a class="flow-nav-card" href="cics/signon-flow.html">
+        <div class="flow-nav-icon cics">&#128274;</div>
+        <div class="flow-nav-body">
+          <h4>Sign-On Flow (CC00)</h4>
+          <p>COSGN00C authentication &amp; session initialization</p>
+          <span class="flow-nav-badge scaffold">Scaffold</span>
+        </div>
+      </a>
+      <a class="flow-nav-card" href="cics/account-management.html">
+        <div class="flow-nav-icon cics">&#127974;</div>
+        <div class="flow-nav-body">
+          <h4>Account Management</h4>
+          <p>CAVW / CAUP &mdash; view &amp; update account details</p>
+          <span class="flow-nav-badge scaffold">Scaffold</span>
+        </div>
+      </a>
+      <a class="flow-nav-card" href="cics/card-management.html">
+        <div class="flow-nav-icon cics">&#128179;</div>
+        <div class="flow-nav-body">
+          <h4>Card Management</h4>
+          <p>CCLI / CCDL / CCUP &mdash; list, view, update cards</p>
+          <span class="flow-nav-badge scaffold">Scaffold</span>
+        </div>
+      </a>
+      <a class="flow-nav-card" href="cics/transaction-processing.html">
+        <div class="flow-nav-icon cics">&#128260;</div>
+        <div class="flow-nav-body">
+          <h4>Transaction Processing</h4>
+          <p>CT00 / CT01 / CT02 &mdash; list, view, add transactions</p>
+          <span class="flow-nav-badge scaffold">Scaffold</span>
+        </div>
+      </a>
+      <a class="flow-nav-card" href="cics/billing-reports.html">
+        <div class="flow-nav-icon cics">&#128176;</div>
+        <div class="flow-nav-body">
+          <h4>Billing &amp; Reports</h4>
+          <p>CB00 bill payment &amp; CR00 report submission</p>
+          <span class="flow-nav-badge scaffold">Scaffold</span>
+        </div>
+      </a>
+      <a class="flow-nav-card" href="cics/admin-user-management.html">
+        <div class="flow-nav-icon cics">&#128101;</div>
+        <div class="flow-nav-body">
+          <h4>Admin &amp; User Management</h4>
+          <p>CA00 / CU00&ndash;03 &mdash; admin menu &amp; user CRUD</p>
+          <span class="flow-nav-badge scaffold">Scaffold</span>
+        </div>
+      </a>
+    </div>
+
+    <h4 style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--uc-gray-400);margin:1.5rem 0 .75rem;">&#128450; Data Flows</h4>
+    <div class="flow-nav">
+      <a class="flow-nav-card" href="data/vsam-file-flows.html">
+        <div class="flow-nav-icon data">&#128450;</div>
+        <div class="flow-nav-body">
+          <h4>VSAM File Flow Maps</h4>
+          <p>Per-file read/write/update maps across all programs</p>
+          <span class="flow-nav-badge scaffold">Scaffold</span>
+        </div>
+      </a>
+      <a class="flow-nav-card" href="data/db2-ims-integration.html">
+        <div class="flow-nav-icon data">&#128278;</div>
+        <div class="flow-nav-body">
+          <h4>DB2 &amp; IMS Integration</h4>
+          <p>Optional module data flows &mdash; DB2, IMS DB, MQ patterns</p>
+          <span class="flow-nav-badge scaffold">Scaffold</span>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
 
 <!-- ────────────────────────────────────────────────────────────
      SECTION 1 — System Overview
