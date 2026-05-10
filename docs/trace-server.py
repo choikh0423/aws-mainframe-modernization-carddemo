@@ -166,7 +166,7 @@ class TraceHandler(SimpleHTTPRequestHandler):
         elif self.path == "/live" or self.path == "/live/":
             self.serve_file("live-trace-demo.html")
         elif self.path == "/static" or self.path == "/static/":
-            self.serve_file("static-trace-demo.html")
+            self.serve_file("data-flow-demo.html")
         elif self.path == "/dataflow" or self.path == "/dataflow/":
             self.serve_file("data-flow-demo.html")
         elif self.path.startswith("/events"):
@@ -450,9 +450,9 @@ LANDING_HTML = """
       <div class="badge">NO API KEY NEEDED</div>
       <h2>/static</h2>
       <p>
-        Pre-recorded replay of Devin's analysis. Shows the full call tree
-        lighting up step-by-step with Devin's actual response text, COBOL
-        code snippets, and parameter mappings. Works offline.
+        Combined demo: Option 3 (COCRDLIC read-only trace) &amp; Option 8
+        (full 3-phase data flow with batch processing, overlimit detection,
+        and live VSAM updates). Devin analysis + interactive simulation.
       </p>
     </a>
     <a href="/live" class="card live">
