@@ -1765,11 +1765,32 @@ function handleTraceStep(data) {
   }
   if (html) addTrace('step', html);
 
-  // Accept/reject paths are handled exclusively by handleDBResult (based on actual DB decision).
-  // Do NOT infer accept/reject from programs array — it causes false positives.
+  // Detect accept/reject from Devin's actual words — strict keyword matching
+  const pgms = (data.programs || []).map(p => p.toUpperCase());
+  if (phase === 'batch') {
+    const text = ((data.title || '') + ' ' + (data.finding || '')).toUpperCase();
+    if (/\bACCEPT(ED)?\b/.test(text)) {
+      activateEdge('e-acct-decision', 'el-acct-decision', 'batch');
+      activateDecision('d-overlimit', 'dl-overlimit', 'active');
+      activateDecision(null, 'dl-overlimit2', 'active');
+      activateEdge('e-decision-accept', 'el-decision-accept');
+      activateNode('n-accept');
+      activateEdge('e-accept-transact', 'el-accept-transact');
+      activateEdge('e-accept-tcatbal', 'el-accept-tcatbal');
+      activateNode('n-transact-posted');
+    }
+    if (/\bREJECT(ED)?\b/.test(text)) {
+      activateEdge('e-acct-decision', 'el-acct-decision', 'batch');
+      activateDecision('d-overlimit', 'dl-overlimit', 'reject-active');
+      activateDecision(null, 'dl-overlimit2', 'reject-active');
+      activateEdge('e-decision-reject', 'el-decision-reject', 'reject');
+      activateNode('n-reject', 'reject');
+      activateEdge('e-reject-rejs', 'el-reject-rejs', 'reject');
+      showBadge('vb-reject-reason', 'Code 102: OVERLIMIT');
+    }
+  }
 
   // Refresh DB state when touching data-access programs or when transaction was committed
-  const pgms = (data.programs || []).map(p => p.toUpperCase());
   if (data.db_committed || pgms.some(p => ['CCXREF', 'TRANSACT', 'ACCOUNT', 'ACCTDAT', 'DALYTRAN', 'CARDDAT', 'TCATBAL', 'DALYREJS'].includes(p))) {
     refreshDbState();
     if (data.db_committed) {
