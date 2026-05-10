@@ -1753,11 +1753,8 @@ function handleTraceStep(data) {
 
   showStep(data.title || 'Tracing...', data.finding ? data.finding.substring(0, 80) : '');
 
-  // Highlight programs from the programs array
+  // Highlight programs from the explicit programs array only
   highlightPrograms(data.programs, phase);
-
-  // Fallback: scan text for program names
-  highlightMentionedPrograms(data);
 
   // Build trace entry
   const finding = data.finding || '';
@@ -1771,9 +1768,34 @@ function handleTraceStep(data) {
   }
   if (html) addTrace('step', html);
 
-  // Refresh DB state when touching data-access programs
+  // Detect accept/reject path from programs array
   const pgms = (data.programs || []).map(p => p.toUpperCase());
-  if (pgms.some(p => ['CCXREF', 'TRANSACT', 'ACCOUNT', 'ACCTDAT', 'DALYTRAN', 'CARDDAT'].includes(p))) {
+  if (phase === 'batch') {
+    // ACCEPT path: Devin mentions TCATBAL or TRANSACT after overlimit check
+    if (pgms.includes('TCATBAL') || (pgms.includes('TRANSACT') && _activeNodes.has('n-acct-read'))) {
+      activateEdge('e-acct-decision', 'el-acct-decision', 'batch');
+      activateDecision('d-overlimit', 'dl-overlimit', 'active');
+      activateDecision(null, 'dl-overlimit2', 'active');
+      activateEdge('e-decision-accept', 'el-decision-accept');
+      activateNode('n-accept');
+      activateEdge('e-accept-transact', 'el-accept-transact');
+      activateEdge('e-accept-tcatbal', 'el-accept-tcatbal');
+      activateNode('n-transact-posted');
+    }
+    // REJECT path: Devin mentions DALYREJS
+    if (pgms.includes('DALYREJS')) {
+      activateEdge('e-acct-decision', 'el-acct-decision', 'batch');
+      activateDecision('d-overlimit', 'dl-overlimit', 'reject-active');
+      activateDecision(null, 'dl-overlimit2', 'reject-active');
+      activateEdge('e-decision-reject', 'el-decision-reject', 'reject');
+      activateNode('n-reject', 'reject');
+      activateEdge('e-reject-rejs', 'el-reject-rejs', 'reject');
+      showBadge('vb-reject-reason', 'Code 102: OVERLIMIT');
+    }
+  }
+
+  // Refresh DB state when touching data-access programs
+  if (pgms.some(p => ['CCXREF', 'TRANSACT', 'ACCOUNT', 'ACCTDAT', 'DALYTRAN', 'CARDDAT', 'TCATBAL', 'DALYREJS'].includes(p))) {
     refreshDbState();
   }
 }
@@ -1864,17 +1886,6 @@ function handleComplete(data) {
   if (_evtSource) { _evtSource.close(); _evtSource = null; }
   isRunning = false;
   document.getElementById('run-btn').disabled = false;
-}
-
-function highlightMentionedPrograms(data) {
-  const text = [data.title, data.file, data.finding, data.code_snippet].filter(Boolean).join(' ').toUpperCase();
-  const phase = data.phase || 'online';
-  for (const [pgm, nodeId] of Object.entries(PROGRAM_NODE_MAP)) {
-    if (text.includes(pgm)) {
-      activateNode(nodeId, phase === 'batch' ? 'batch' : undefined);
-      _activeNodes.add(nodeId);
-    }
-  }
 }
 
 function escCode(s) {
