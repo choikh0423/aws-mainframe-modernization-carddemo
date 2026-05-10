@@ -1547,13 +1547,9 @@ async function confirmTransaction(amount, txnNum) {
 
   try {
     const result = await apiPost('/api/input', { amount, merchant, session_id: _activeSessionId });
-    logQueries(result.queries_executed);
-    switchTab('sql');
-    await refreshDbState();
-    switchTab('vsam');
 
-    status.innerHTML = '<span class="resolved-pgm">TRANSACTION RECORDED — PENDING BATCH</span>';
-    addSqlEntry('insert', `INSERT INTO transactions (tran_type, amount, card_num, merchant, status) VALUES ('PR', ${amount.toFixed(2)}, '9680...3697', '${merchant}', 'Pending')`, `tran_id=${result.tran_id}`);
+    status.innerHTML = '<span class="resolved-pgm">INPUT RECEIVED — DEVIN WILL TRACE WRITE TRANSACT</span>';
+    addTrace('step', `Input sent to Devin: $${amount.toFixed(2)} @ ${merchant}. DB write deferred until Devin traces EXEC CICS WRITE TRANSACT.`);
 
     _inputTxnNum++;
     setTimeout(() => {
@@ -1796,9 +1792,12 @@ function handleTraceStep(data) {
     }
   }
 
-  // Refresh DB state when touching data-access programs
-  if (pgms.some(p => ['CCXREF', 'TRANSACT', 'ACCOUNT', 'ACCTDAT', 'DALYTRAN', 'CARDDAT', 'TCATBAL', 'DALYREJS'].includes(p))) {
+  // Refresh DB state when touching data-access programs or when transaction was committed
+  if (data.db_committed || pgms.some(p => ['CCXREF', 'TRANSACT', 'ACCOUNT', 'ACCTDAT', 'DALYTRAN', 'CARDDAT', 'TCATBAL', 'DALYREJS'].includes(p))) {
     refreshDbState();
+    if (data.db_committed) {
+      addSqlEntry('insert', `INSERT INTO transactions (amount, merchant, status) — committed when Devin traced WRITE TRANSACT`, `tran_id=${data.tran_id || '?'}`);
+    }
   }
 }
 
