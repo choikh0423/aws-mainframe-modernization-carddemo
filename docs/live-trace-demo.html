@@ -1765,32 +1765,10 @@ function handleTraceStep(data) {
   }
   if (html) addTrace('step', html);
 
-  // Detect accept/reject from Devin's actual decision statement.
-  // Must NOT match COBOL identifiers like REJECT-RECORD, WS-REJECT-COUNT, etc.
-  // Only match "ACCEPTED"/"REJECTED" when NOT adjacent to a hyphen.
+  // Accept/reject paths are controlled exclusively by handleDBResult (actual DB decision).
+  // Do NOT scan Devin's text for accept/reject — COBOL code contains REJECT-RECORD,
+  // WS-REJECT-COUNT, etc. and Devin's descriptions use "rejected" in non-decision contexts.
   const pgms = (data.programs || []).map(p => p.toUpperCase());
-  if (phase === 'batch') {
-    const text = ((data.title || '') + ' ' + (data.finding || '')).toUpperCase();
-    if (/(?<![A-Z\-])ACCEPTED(?![A-Z\-])/.test(text)) {
-      activateEdge('e-acct-decision', 'el-acct-decision', 'batch');
-      activateDecision('d-overlimit', 'dl-overlimit', 'active');
-      activateDecision(null, 'dl-overlimit2', 'active');
-      activateEdge('e-decision-accept', 'el-decision-accept');
-      activateNode('n-accept');
-      activateEdge('e-accept-transact', 'el-accept-transact');
-      activateEdge('e-accept-tcatbal', 'el-accept-tcatbal');
-      activateNode('n-transact-posted');
-    }
-    if (/(?<![A-Z\-])REJECTED(?![A-Z\-])/.test(text)) {
-      activateEdge('e-acct-decision', 'el-acct-decision', 'batch');
-      activateDecision('d-overlimit', 'dl-overlimit', 'reject-active');
-      activateDecision(null, 'dl-overlimit2', 'reject-active');
-      activateEdge('e-decision-reject', 'el-decision-reject', 'reject');
-      activateNode('n-reject', 'reject');
-      activateEdge('e-reject-rejs', 'el-reject-rejs', 'reject');
-      showBadge('vb-reject-reason', 'Code 102: OVERLIMIT');
-    }
-  }
 
   // Refresh DB state when touching data-access programs or when transaction was committed
   if (data.db_committed || pgms.some(p => ['CCXREF', 'TRANSACT', 'ACCOUNT', 'ACCTDAT', 'DALYTRAN', 'CARDDAT', 'TCATBAL', 'DALYREJS'].includes(p))) {
@@ -1824,9 +1802,8 @@ function handleInputRequired(data) {
 }
 
 async function handleDBResult(data) {
-  // handleDBResult only updates the DB sidebar and logs queries.
-  // Accept/reject path highlighting is handled by handleTraceStep
-  // based on Devin's actual words (ACCEPTED/REJECTED in title/finding).
+  // Accept/reject path is controlled HERE — based on the actual DB batch decision.
+  // Strict equality checks: only 'ACCEPTED' or 'REJECTED'. UNKNOWN triggers nothing.
   const batchResult = data.batch_result || {};
   const queries = data.queries_executed || batchResult.queries_executed || [];
   const results = batchResult.results || [];
@@ -1837,6 +1814,9 @@ async function handleDBResult(data) {
   showStep(data.title || 'Overlimit Check', data.finding ? data.finding.substring(0, 80) : '');
   highlightPrograms(data.programs, 'batch');
 
+  // Light the decision edge
+  activateEdge('e-acct-decision', 'el-acct-decision', 'batch');
+
   logQueries(queries);
   switchTab('sql');
   addSqlEntry('decision', `-- OVERLIMIT CHECK: credit_limit(${creditLimit}) >= temp_bal(${tempBal}) ?`, decision);
@@ -1844,14 +1824,33 @@ async function handleDBResult(data) {
   await refreshDbState();
   switchTab('vsam');
 
-  // Log the result but do NOT activate accept/reject paths here.
-  // Devin will output a follow-up trace_step saying ACCEPTED or REJECTED,
-  // and handleTraceStep's text matching will light the correct path.
   if (decision === 'ACCEPTED') {
+    activateDecision('d-overlimit', 'dl-overlimit', 'active');
+    activateDecision(null, 'dl-overlimit2', 'active');
+    activateEdge('e-decision-accept', 'el-decision-accept');
+    activateNode('n-accept');
+    activateEdge('e-accept-transact', 'el-accept-transact');
+    activateEdge('e-accept-tcatbal', 'el-accept-tcatbal');
+    activateNode('n-transact-posted');
+    activateNode('n-tcatbal');
+    showBadge('vb-result', `REWRITE bal → $${acctBal.toFixed(0)}`);
+    const balTd = document.getElementById('td-bal');
+    const cycCrTd = document.getElementById('td-cyc-cr');
+    balTd.classList.add('changed', 'flash-green');
+    cycCrTd.classList.add('changed', 'flash-green');
+    setTimeout(() => { balTd.classList.remove('flash-green'); cycCrTd.classList.remove('flash-green'); }, 1200);
     addTrace('accept', `→ credit_limit($${creditLimit.toFixed(2)}) >= temp_bal($${typeof tempBal === 'number' ? tempBal.toFixed(2) : tempBal}) → <span class="highlight">ACCEPTED</span>`);
   } else if (decision === 'REJECTED') {
+    activateDecision('d-overlimit', 'dl-overlimit', 'reject-active');
+    activateDecision(null, 'dl-overlimit2', 'reject-active');
+    activateEdge('e-decision-reject', 'el-decision-reject', 'reject');
+    activateNode('n-reject', 'reject');
+    activateEdge('e-reject-rejs', 'el-reject-rejs', 'reject');
+    activateNode('n-dalyrejs', 'reject');
+    showBadge('vb-reject-reason', 'Code 102: OVERLIMIT');
     addTrace('reject', `→ credit_limit($${creditLimit.toFixed(2)}) < temp_bal($${typeof tempBal === 'number' ? tempBal.toFixed(2) : tempBal}) → <span class="warn">REJECTED</span>`);
   }
+  // UNKNOWN decision → no path activated, just log
 
   if (data.finding) {
     addTrace('step', '<div class="devin-response"><div class="devin-label">Devin Analysis</div>' + data.finding + '</div>');
