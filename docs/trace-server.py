@@ -379,8 +379,7 @@ class TraceHandler(SimpleHTTPRequestHandler):
             _pending_transaction = None
             _batch_ran_this_cycle = False
             _input_event.set()
-            db.reset_db()
-            print("New trace session — server state and DB reset")
+            print("New trace session — server state reset (DB preserved)")
 
             self.send_sse_event({
                 "type": "status",
