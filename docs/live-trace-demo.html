@@ -1656,6 +1656,10 @@ function startLiveTrace() {
   _activeSessionId = null;
   _lastPhase = null;
   _activeNodes = new Set();
+
+  // Reset all diagram highlights from previous session
+  clearDiagramState();
+
   document.getElementById('run-btn').disabled = true;
   document.getElementById('trace-log').innerHTML = '';
   document.getElementById('sql-log').innerHTML = '';

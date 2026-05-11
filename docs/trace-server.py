@@ -373,6 +373,15 @@ class TraceHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
         try:
+            # Reset server state for new trace session
+            global _waiting_for_input, _pending_transaction, _batch_ran_this_cycle
+            _waiting_for_input = False
+            _pending_transaction = None
+            _batch_ran_this_cycle = False
+            _input_event.set()
+            db.reset_db()
+            print("New trace session — server state and DB reset")
+
             self.send_sse_event({
                 "type": "status",
                 "message": f"Creating Devin session to trace option {option_num}..."
