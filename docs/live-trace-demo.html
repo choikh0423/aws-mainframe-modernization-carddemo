@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Devin Live Trace: Dynamic Call Resolution</title>
+<title>CardDemo Live Trace — Devin-Driven COBOL Flow</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -19,13 +19,13 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 24px;
+    padding: 10px 24px;
     background: linear-gradient(90deg, #0d1b2a 0%, #1b2838 100%);
     border-bottom: 1px solid #1e3a5f;
-    height: 56px;
+    height: 50px;
   }
   header h1 {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     color: #4da6ff;
     letter-spacing: 0.5px;
@@ -35,20 +35,6 @@
     display: flex;
     gap: 10px;
     align-items: center;
-  }
-  .controls label {
-    font-size: 11px;
-    color: #888;
-  }
-  .controls input {
-    background: #1a1a2e;
-    border: 1px solid #333;
-    color: #e0e0e0;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-family: inherit;
-    font-size: 12px;
-    width: 180px;
   }
   button {
     padding: 6px 16px;
@@ -60,243 +46,323 @@
     cursor: pointer;
     transition: all 0.2s;
   }
-  #start-btn {
+  #run-btn {
     background: #00ff88;
     color: #0a0a1a;
   }
-  #start-btn:hover { background: #00cc6a; }
-  #start-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
-  #simulate-btn {
-    background: transparent;
-    border: 1px solid #4da6ff;
-    color: #4da6ff;
-  }
-  #simulate-btn:hover { background: rgba(77,166,255,0.1); }
-  #simulate-btn:disabled { border-color: #333; color: #555; cursor: not-allowed; }
+  #run-btn:hover { background: #00cc6a; }
+  #run-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
   #reset-btn {
     background: transparent;
     border: 1px solid #555;
     color: #888;
   }
   #reset-btn:hover { background: rgba(255,255,255,0.05); }
+  .phase-indicator {
+    font-size: 12px;
+    color: #ffa94d;
+    font-weight: 600;
+  }
 
   /* Main layout */
   main {
-    display: flex;
-    height: calc(100vh - 56px);
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    grid-template-rows: 1fr 250px;
+    height: calc(100vh - 50px);
   }
 
   /* Diagram panel */
   #diagram-panel {
-    flex: 1;
-    padding: 16px;
+    grid-row: 1;
+    grid-column: 1;
+    position: relative;
+    overflow: hidden;
+    cursor: grab;
+  }
+  #diagram-panel:active { cursor: grabbing; }
+  #diagram-panel svg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Zoom controls */
+  .zoom-controls {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    display: flex;
+    gap: 4px;
+    z-index: 15;
+  }
+  .zoom-btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    background: rgba(13,17,23,0.9);
+    border: 1px solid #333;
+    color: #888;
+    font-size: 16px;
+    border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
+    cursor: pointer;
   }
-  #call-tree {
-    width: 100%;
-    height: 100%;
-    max-width: 900px;
-    max-height: 800px;
-  }
+  .zoom-btn:hover { border-color: #4da6ff; color: #4da6ff; }
 
-  /* Step indicator overlay */
   #step-indicator {
     position: absolute;
-    top: 20px;
+    top: 12px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(0,0,0,0.85);
+    background: rgba(0,0,0,0.9);
     border: 1px solid #4da6ff;
     border-radius: 8px;
-    padding: 10px 24px;
-    font-size: 14px;
+    padding: 8px 20px;
+    font-size: 13px;
     color: #4da6ff;
     text-align: center;
     opacity: 0;
     transition: opacity 0.5s;
     z-index: 10;
     pointer-events: none;
+    white-space: nowrap;
   }
   #step-indicator.visible { opacity: 1; }
-  #step-indicator .step-num {
-    color: #00ff88;
-    font-weight: 700;
-  }
+  #step-indicator .step-num { color: #00ff88; font-weight: 700; }
 
-  /* Event panel (right sidebar) */
-  #event-panel {
-    width: 380px;
+  /* Sidebar (tabbed) */
+  #sidebar {
+    grid-row: 1;
+    grid-column: 2;
     background: #0d1117;
     border-left: 1px solid #1e3a5f;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
-  #event-panel h3 {
-    padding: 12px 16px;
-    font-size: 13px;
-    color: #4da6ff;
+  .sidebar-tabs {
+    display: flex;
     border-bottom: 1px solid #1e3a5f;
-    font-weight: 600;
+    flex-shrink: 0;
   }
-  #event-log {
+  .sidebar-tab {
+    flex: 1;
+    padding: 8px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    text-align: center;
+    color: #555;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .sidebar-tab:hover { color: #888; }
+  .sidebar-tab.active {
+    color: #4da6ff;
+    border-bottom-color: #4da6ff;
+    background: rgba(77,166,255,0.05);
+  }
+  .sidebar-content {
     flex: 1;
     overflow-y: auto;
-    padding: 8px 0;
+    padding: 8px 12px;
+    display: none;
   }
-  .log-entry {
-    padding: 8px 16px;
-    border-bottom: 1px solid #111;
-    font-size: 11px;
-    line-height: 1.5;
-    opacity: 0;
-    animation: fadeIn 0.5s forwards;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .log-entry .log-step {
-    color: #00ff88;
-    font-weight: 700;
+  .sidebar-content.active { display: block; }
+
+  /* SQL Query Log */
+  .sql-entry {
     font-size: 10px;
+    line-height: 1.5;
+    padding: 4px 8px;
+    margin-bottom: 3px;
+    border-radius: 3px;
+    border-left: 3px solid #333;
+    background: rgba(255,255,255,0.02);
+    opacity: 0;
+    animation: fadeIn 0.4s forwards;
+  }
+  .sql-entry.select { border-left-color: #00ff88; }
+  .sql-entry.select .sql-type { color: #00ff88; }
+  .sql-entry.insert { border-left-color: #ffa94d; }
+  .sql-entry.insert .sql-type { color: #ffa94d; }
+  .sql-entry.update { border-left-color: #4da6ff; }
+  .sql-entry.update .sql-type { color: #4da6ff; }
+  .sql-entry.decision { border-left-color: #ff6b6b; background: rgba(255,107,107,0.05); }
+  .sql-entry.decision .sql-type { color: #ff6b6b; }
+  .sql-type {
+    font-weight: 700;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .sql-query { color: #8b949e; font-family: 'SF Mono', monospace; }
+  .sql-result { color: #c9d1d9; margin-top: 2px; }
+
+  /* Trace log */
+  #trace-panel {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    background: #0d1117;
+    border-top: 1px solid #1e3a5f;
+    display: flex;
+    flex-direction: column;
+  }
+  #trace-panel h3 {
+    padding: 8px 14px;
+    font-size: 12px;
+    color: #ffa94d;
+    border-bottom: 1px solid #1e3a5f;
+    font-weight: 600;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+  }
+  #trace-log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .trace-entry {
+    font-size: 11px;
+    line-height: 1.6;
+    padding: 3px 8px;
+    border-radius: 3px;
+    opacity: 0;
+    animation: fadeIn 0.4s forwards;
+  }
+  .trace-entry.phase { background: #1a1a2e; color: #ffa94d; font-weight: 700; font-size: 12px; }
+  .trace-entry.step { color: #c9d1d9; }
+  .trace-entry.accept { color: #00ff88; }
+  .trace-entry.reject { color: #ff6b6b; }
+  .trace-entry.data { color: #4da6ff; }
+  .trace-entry .code { color: #8b949e; font-size: 10px; }
+  .trace-entry .highlight { color: #00ff88; font-weight: 700; }
+  .trace-entry .warn { color: #ff6b6b; font-weight: 700; }
+  .trace-entry .devin-response {
+    background: #161b22;
+    border: 1px solid #1e3a5f;
+    border-left: 3px solid #4da6ff;
+    border-radius: 4px;
+    padding: 8px 10px;
+    margin-top: 6px;
+    font-size: 10px;
+    color: #8b949e;
+    line-height: 1.6;
+  }
+  .trace-entry .devin-response .devin-label {
+    color: #4da6ff;
+    font-weight: 700;
+    font-size: 9px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
   }
-  .log-entry .log-file {
-    color: #ffa94d;
+  .trace-entry .devin-response code {
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 3px;
+    padding: 2px 4px;
     font-size: 10px;
+    color: #e0e0e0;
   }
-  .log-entry .log-msg {
-    color: #c9d1d9;
-    margin-top: 2px;
-  }
-  .log-entry .log-code {
-    background: #161b22;
+  .trace-entry .devin-response .cobol-block {
+    background: #0d1117;
     border: 1px solid #21262d;
     border-radius: 4px;
     padding: 6px 8px;
-    margin-top: 4px;
+    margin: 6px 0;
     font-size: 10px;
-    color: #8b949e;
     white-space: pre;
     overflow-x: auto;
+    color: #8b949e;
   }
-  .log-entry .log-code .kw { color: #ff7b72; }
-  .log-entry .log-code .str { color: #a5d6ff; }
-  .log-entry .log-code .resolved { color: #00ff88; font-weight: 700; }
+  .trace-entry .devin-response .cobol-block .kw { color: #ff7b72; }
+  .trace-entry .devin-response .cobol-block .str { color: #a5d6ff; }
+  .trace-entry .devin-response .cobol-block .resolved { color: #00ff88; font-weight: 700; }
+  .trace-entry .devin-response .cobol-block .cmt { color: #555; font-style: italic; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-3px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 
-  /* SVG styles */
-  .node-rect {
-    fill: #1a1a2e;
-    stroke: #333;
-    stroke-width: 2;
-    rx: 8;
-    transition: all 0.8s ease;
+  /* Data tables */
+  .data-section { margin-bottom: 12px; }
+  .data-section h4 {
+    font-size: 11px;
+    color: #ffa94d;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
-  .node-rect.active {
-    fill: #0a2e1a;
-    stroke: #00ff88;
-    stroke-width: 2.5;
-    filter: drop-shadow(0 0 8px rgba(0,255,136,0.4));
-  }
-  .node-label {
-    fill: #555;
-    font-family: 'SF Mono', monospace;
-    font-size: 13px;
-    font-weight: 700;
-    text-anchor: middle;
-    transition: fill 0.8s ease;
-    pointer-events: none;
-  }
-  .node-label.active { fill: #00ff88; }
-  .node-sublabel {
-    fill: #444;
-    font-family: 'SF Mono', monospace;
+  .data-section h4 .file-icon {
+    color: #4da6ff;
     font-size: 9px;
-    text-anchor: middle;
-    transition: fill 0.8s ease;
-    pointer-events: none;
+    padding: 1px 5px;
+    border: 1px solid #333;
+    border-radius: 3px;
   }
-  .node-sublabel.active { fill: #88ffbb; }
-  .edge-line {
-    stroke: #2a2a3e;
-    stroke-width: 2;
-    fill: none;
-    transition: all 0.8s ease;
-    marker-end: url(#arrow-gray);
-  }
-  .edge-line.active {
-    stroke: #00ff88;
-    stroke-width: 2.5;
-    marker-end: url(#arrow-green);
-    filter: drop-shadow(0 0 4px rgba(0,255,136,0.3));
-  }
-  .edge-label {
-    fill: #333;
-    font-family: 'SF Mono', monospace;
-    font-size: 9px;
-    text-anchor: middle;
-    transition: fill 0.8s ease;
-    pointer-events: none;
-  }
-  .edge-label.active { fill: #00ff88; }
-
-  /* Decision diamond nodes */
-  .decision-node polygon {
-    fill: #1a1a2e;
-    stroke: #4da6ff;
-    stroke-width: 2;
-    transition: all 0.8s ease;
-  }
-  .decision-node polygon.active {
-    fill: #0a1a2e;
-    stroke: #00ff88;
-    stroke-width: 2.5;
-    filter: drop-shadow(0 0 8px rgba(0,255,136,0.4));
-  }
-  .decision-node text {
-    fill: #4da6ff;
-    font-family: 'SF Mono', monospace;
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
     font-size: 10px;
+  }
+  .data-table th {
+    text-align: left;
+    color: #666;
+    padding: 3px 6px;
+    border-bottom: 1px solid #222;
+    font-weight: 600;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .data-table td {
+    padding: 3px 6px;
+    border-bottom: 1px solid #111;
+    color: #c9d1d9;
+    transition: all 0.5s;
+    position: relative;
+  }
+  .data-table td.changed {
+    background: rgba(0,255,136,0.15);
+    color: #00ff88;
     font-weight: 700;
-    text-anchor: middle;
-    pointer-events: none;
-    transition: fill 0.8s ease;
   }
-  .decision-node text.active { fill: #00ff88; }
-  .decision-label {
-    fill: #555;
-    font-family: 'SF Mono', monospace;
-    font-size: 8px;
-    text-anchor: middle;
-    pointer-events: none;
-    transition: fill 0.8s ease;
+  .data-table td.rejected {
+    background: rgba(255,107,107,0.15);
+    color: #ff6b6b;
+    font-weight: 700;
   }
-  .decision-label.active { fill: #00ff88; }
-  .edge-line.dashed {
-    stroke-dasharray: 6 3;
+  .data-table td.flash-green { animation: flashGreen 1s ease; }
+  .data-table td.flash-red { animation: flashRed 1s ease; }
+  @keyframes flashGreen {
+    0% { background: rgba(0,255,136,0.5); }
+    100% { background: rgba(0,255,136,0.15); }
   }
-
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: #0d1117; }
-  ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #555; }
-
-  /* Pulse animation for active node */
-  @keyframes pulse {
-    0%, 100% { filter: drop-shadow(0 0 8px rgba(0,255,136,0.4)); }
-    50% { filter: drop-shadow(0 0 16px rgba(0,255,136,0.7)); }
+  @keyframes flashRed {
+    0% { background: rgba(255,107,107,0.5); }
+    100% { background: rgba(255,107,107,0.15); }
   }
-  .node-rect.active-pulse {
-    animation: pulse 1.5s ease-in-out infinite;
+  .new-row { animation: slideIn 0.5s ease; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
   }
 
-  /* 3270 Terminal Overlay */
+  /* ========== 3270 TERMINAL OVERLAY ========== */
   #terminal-overlay {
     display: none;
     position: fixed;
@@ -330,12 +396,6 @@
     font-size: 11px;
     letter-spacing: 1px;
   }
-  .terminal-header .terminal-close {
-    color: #666;
-    cursor: pointer;
-    font-size: 14px;
-  }
-  .terminal-header .terminal-close:hover { color: #ff6b6b; }
   .terminal-body {
     padding: 16px 20px;
     color: #33ff33;
@@ -408,14 +468,13 @@
   .terminal-input-row span {
     color: #33ff33;
   }
-  #term-input {
+  .term-field-input {
     background: transparent;
     border: none;
     border-bottom: 1px solid #33ff33;
     color: #ffff33;
     font-family: 'Courier New', monospace;
     font-size: 14px;
-    width: 40px;
     text-align: center;
     outline: none;
     caret-color: #33ff33;
@@ -441,316 +500,880 @@
     animation: termBlink 0.6s step-end infinite;
     vertical-align: middle;
   }
-  /* Subtree labels & separator */
-  .subtree-label {
-    fill: #4a4a6a;
-    font-family: 'JetBrains Mono', monospace;
+  /* Transaction entry form fields */
+  .term-form-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0;
+  }
+  .term-form-row .term-label {
+    color: #22aa22;
+    width: 160px;
+    text-align: right;
+  }
+  .term-form-row .term-value {
+    color: #ffff33;
+    font-weight: 700;
+  }
+  .term-field-editable {
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed #33ff33;
+    color: #ffff33;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    outline: none;
+    padding: 2px 4px;
+    width: 120px;
+  }
+  .term-field-editable::placeholder {
+    color: #337733;
+    font-weight: 400;
+  }
+  .term-field-editable:focus {
+    border-bottom-color: #ffff33;
+  }
+  .kbd-hint {
+    font-size: 10px;
+    color: #557;
+    margin-left: 12px;
+    letter-spacing: 0.5px;
+  }
+  .kbd-hint kbd {
+    background: #1e2a3a;
+    border: 1px solid #334;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 10px;
+    color: #8af;
+    font-family: inherit;
+  }
+  .pause-indicator {
+    display: none;
     font-size: 11px;
+    color: #ffcc00;
+    background: rgba(255, 204, 0, 0.1);
+    border: 1px solid #ffcc0044;
+    border-radius: 4px;
+    padding: 2px 10px;
+    margin-left: 10px;
+    letter-spacing: 1px;
+    font-weight: 700;
+    animation: pulse-pause 1s ease-in-out infinite;
+  }
+  .pause-indicator.visible { display: inline-block; }
+  @keyframes pulse-pause {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .term-confirm-btn {
+    background: transparent;
+    border: 1px solid #33ff33;
+    color: #33ff33;
+    padding: 6px 20px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 8px;
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+  .term-confirm-btn:hover {
+    background: #33ff33;
+    color: #000;
+  }
+
+  /* SVG node styles */
+  .node-rect {
+    fill: #1a1a2e;
+    stroke: #333;
+    stroke-width: 2;
+    rx: 8;
+    transition: all 0.6s ease;
+  }
+  .node-rect.active {
+    fill: #0a2e1a;
+    stroke: #00ff88;
+    stroke-width: 2.5;
+    filter: drop-shadow(0 0 8px rgba(0,255,136,0.4));
+  }
+  .node-rect.batch { stroke: #ffa94d; }
+  .node-rect.batch.active {
+    fill: #2e1a0a;
+    stroke: #ffa94d;
+    stroke-width: 2.5;
+    filter: drop-shadow(0 0 8px rgba(255,169,77,0.4));
+  }
+  .node-rect.reject-active {
+    fill: #2e0a0a;
+    stroke: #ff6b6b;
+    stroke-width: 2.5;
+    filter: drop-shadow(0 0 8px rgba(255,107,107,0.4));
+  }
+  .node-label {
+    fill: #555;
+    font-family: 'SF Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    text-anchor: middle;
+    transition: fill 0.6s ease;
+    pointer-events: none;
+  }
+  .node-label.active { fill: #00ff88; }
+  .node-label.batch-active { fill: #ffa94d; }
+  .node-label.reject-active { fill: #ff6b6b; }
+  .node-sublabel {
+    fill: #444;
+    font-family: 'SF Mono', monospace;
+    font-size: 8px;
+    text-anchor: middle;
+    transition: fill 0.6s ease;
+    pointer-events: none;
+  }
+  .node-sublabel.active { fill: #88ffbb; }
+  .node-sublabel.batch-active { fill: #ffd699; }
+  .node-sublabel.reject-active { fill: #ff9999; }
+  .edge-line {
+    stroke: #2a2a3e;
+    stroke-width: 1.5;
+    fill: none;
+    transition: all 0.6s ease;
+  }
+  .edge-line.active {
+    stroke: #00ff88;
+    stroke-width: 2;
+    filter: drop-shadow(0 0 3px rgba(0,255,136,0.3));
+  }
+  .edge-line.batch-active {
+    stroke: #ffa94d;
+    stroke-width: 2;
+    filter: drop-shadow(0 0 3px rgba(255,169,77,0.3));
+  }
+  .edge-line.reject-active {
+    stroke: #ff6b6b;
+    stroke-width: 2;
+    filter: drop-shadow(0 0 3px rgba(255,107,107,0.3));
+  }
+  .edge-line.dashed { stroke-dasharray: 6 3; }
+  .edge-label {
+    fill: #333;
+    font-family: 'SF Mono', monospace;
+    font-size: 8px;
+    text-anchor: middle;
+    transition: fill 0.6s ease;
+    pointer-events: none;
+  }
+  .edge-label.active { fill: #00ff88; }
+  .edge-label.batch-active { fill: #ffa94d; }
+  .edge-label.reject-active { fill: #ff6b6b; }
+
+  .decision-node polygon {
+    fill: #1a1a2e;
+    stroke: #4da6ff;
+    stroke-width: 2;
+    transition: all 0.6s ease;
+  }
+  .decision-node polygon.active {
+    fill: #0a2e1a;
+    stroke: #00ff88;
+    stroke-width: 2.5;
+    filter: drop-shadow(0 0 8px rgba(0,255,136,0.4));
+  }
+  .decision-node polygon.reject-active {
+    fill: #2e0a0a;
+    stroke: #ff6b6b;
+    stroke-width: 2.5;
+    filter: drop-shadow(0 0 8px rgba(255,107,107,0.4));
+  }
+  .decision-node text {
+    fill: #4da6ff;
+    font-family: 'SF Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    text-anchor: middle;
+    pointer-events: none;
+    transition: fill 0.6s ease;
+  }
+  .decision-node text.active { fill: #00ff88; }
+  .decision-node text.reject-active { fill: #ff6b6b; }
+  .decision-label {
+    fill: #444;
+    font-family: 'SF Mono', monospace;
+    font-size: 7px;
+    text-anchor: middle;
+    pointer-events: none;
+    transition: fill 0.6s ease;
+  }
+  .decision-label.active { fill: #00ff88; }
+  .decision-label.reject-active { fill: #ff6b6b; }
+
+  .section-label {
+    fill: #4a4a6a;
+    font-family: 'SF Mono', monospace;
+    font-size: 10px;
     font-weight: 600;
     text-anchor: middle;
     letter-spacing: 0.5px;
   }
   .separator-line {
-    stroke: #1a1a2e;
+    stroke: #1e3a5f;
     stroke-width: 1;
     stroke-dasharray: 6,6;
   }
-  .readonly-badge { display: none; }
-  .readonly-badge.visible rect {
-    fill: #4ecdc4;
-    rx: 4; ry: 4;
+
+  .value-badge rect {
+    fill: #0d1117;
+    stroke: #333;
+    stroke-width: 1;
+    rx: 4;
+    transition: all 0.5s;
   }
-  .readonly-badge.visible text {
-    fill: #fff;
-    font-size: 9px;
-    font-weight: 700;
-    font-family: 'JetBrains Mono', monospace;
+  .value-badge text {
+    fill: #8b949e;
+    font-family: 'SF Mono', monospace;
+    font-size: 8px;
     text-anchor: middle;
+    pointer-events: none;
+    transition: fill 0.5s;
+  }
+  .value-badge.active rect { stroke: #00ff88; }
+  .value-badge.active text { fill: #00ff88; }
+  .value-badge.reject rect { stroke: #ff6b6b; }
+  .value-badge.reject text { fill: #ff6b6b; }
+
+  .readonly-badge rect {
+    fill: #0d2818;
+    stroke: #4ecdc4;
+    stroke-width: 1;
+    rx: 3;
+  }
+  .readonly-badge text {
+    fill: #4ecdc4;
+    font-family: 'SF Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    text-anchor: middle;
+    pointer-events: none;
+  }
+  .readonly-badge { opacity: 0; transition: opacity 0.5s; }
+  .readonly-badge.visible { opacity: 1; }
+
+  .subtree-label {
+    fill: #4ecdc4;
+    font-family: 'SF Mono', monospace;
+    font-size: 9px;
+    font-weight: 600;
+    text-anchor: middle;
+    letter-spacing: 0.5px;
+    opacity: 0.7;
   }
 
-  /* No-diagram popup */
-  #no-diagram-popup {
-    display: none;
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    background: #1a1a2e;
-    border: 2px solid #ffa94d;
-    border-radius: 12px;
-    padding: 24px 32px;
-    z-index: 300;
-    text-align: center;
-    box-shadow: 0 0 40px rgba(255,169,77,0.2);
-    max-width: 420px;
+  @keyframes pulse {
+    0%, 100% { filter: drop-shadow(0 0 8px rgba(0,255,136,0.4)); }
+    50% { filter: drop-shadow(0 0 16px rgba(0,255,136,0.7)); }
   }
-  #no-diagram-popup.visible { display: block; }
-  #no-diagram-popup h3 {
-    color: #ffa94d;
-    font-size: 15px;
-    margin-bottom: 10px;
-  }
-  #no-diagram-popup p {
-    color: #c9d1d9;
-    font-size: 12px;
-    line-height: 1.6;
-    margin-bottom: 14px;
-  }
-  #no-diagram-popup button {
-    background: #ffa94d;
-    color: #0a0a1a;
-    padding: 6px 20px;
-    font-weight: 700;
-  }
+  .node-rect.pulse { animation: pulse 1.2s ease-in-out infinite; }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: #0d1117; }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1><span>Devin</span> &mdash; Dynamic Call Resolution Live Trace</h1>
+  <h1><span>CardDemo</span> — Live Devin Trace</h1>
   <div class="controls">
-    <a href="/static" style="color:#ffa94d;text-decoration:none;font-size:11px;border:1px solid #ffa94d;padding:4px 12px;border-radius:4px;">Switch to Static Mode</a>
-    <button id="simulate-btn" onclick="showTerminal('simulate')">Simulate Demo</button>
-    <button id="start-btn" onclick="showTerminal('live')">Start Live Trace</button>
-    <button id="reset-btn" onclick="resetAll()">Reset</button>
+    <span id="phase-label" class="phase-indicator"></span>
+    <a id="session-link" href="#" target="_blank" style="display:none;font-size:11px;color:#4da6ff;text-decoration:underline;margin-right:6px">Devin Session</a>
+    <button id="run-btn" onclick="startLiveTrace()">Start Live Trace</button>
+    <button id="reset-btn" onclick="resetAll()">Reset DB</button>
+    <span class="kbd-hint"><kbd>Ctrl</kbd>+<kbd>I</kbd> toggle terminal</span>
+    <span id="pause-indicator" class="pause-indicator" style="display:none"></span>
   </div>
 </header>
 
-<!-- 3270 Terminal Overlay -->
+<!-- ========== 3270 TERMINAL OVERLAY ========== -->
 <div id="terminal-overlay">
   <div class="terminal-screen">
     <div class="terminal-header">
       <span>CICS TRANSACTION SERVER &mdash; CARDDEMO</span>
-      <span class="terminal-close" onclick="closeTerminal()">&times;</span>
+      <span id="term-screen-id" style="color:#22aa22;font-size:10px">MAIN MENU</span>
     </div>
-    <div class="terminal-body">
-      <div class="term-title">CARDDEMO MAIN MENU</div>
-      <div class="term-subtitle">COMEN01C &mdash; Program: COMEN02Y.cpy Data Table</div>
-      <div class="term-divider"></div>
-      <div id="menu-options"></div>
-      <div class="term-divider"></div>
-      <div class="terminal-input-row">
-        <span>OPTION ==&gt;</span>
-        <input type="text" id="term-input" maxlength="2" autocomplete="off" />
-        <span class="term-cursor"></span>
-      </div>
-      <div id="terminal-status" class="terminal-status">Enter option number (1-11) or click a menu item</div>
+    <div class="terminal-body" id="terminal-body">
+      <!-- dynamically populated -->
     </div>
   </div>
-</div>
-
-<!-- No-diagram popup -->
-<div id="no-diagram-popup">
-  <h3 id="ndp-title">Option Not in Diagram</h3>
-  <p id="ndp-body">This option's call flow is not included in the current diagram. Devin is still tracing it — check the log panel for results.</p>
-  <button onclick="document.getElementById('no-diagram-popup').classList.remove('visible')">OK</button>
 </div>
 
 <main>
+  <!-- Diagram Panel with zoom/pan -->
   <div id="diagram-panel">
     <div id="step-indicator"><span class="step-num"></span> <span class="step-text"></span></div>
 
-    <svg id="call-tree" viewBox="0 0 1300 920" xmlns="http://www.w3.org/2000/svg">
+    <svg id="flow-diagram" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <marker id="arrow-gray" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto">
+        <marker id="arr-gray" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
           <polygon points="0 0, 10 3.5, 0 7" fill="#2a2a3e"/>
         </marker>
-        <marker id="arrow-green" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto">
+        <marker id="arr-green" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
           <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+        </marker>
+        <marker id="arr-orange" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#ffa94d"/>
+        </marker>
+        <marker id="arr-red" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b6b"/>
         </marker>
       </defs>
 
-      <!-- ===== SHARED TOP SECTION ===== -->
-      <g id="node-terminal">
-        <rect class="node-rect" x="560" y="15" width="180" height="48" />
-        <text class="node-label" x="650" y="43">3270 Terminal</text>
-        <text class="node-sublabel" x="650" y="55">User Input</text>
-      </g>
-      <g id="node-comen01c">
-        <rect class="node-rect" x="370" y="110" width="180" height="48" />
-        <text class="node-label" x="460" y="138">COMEN01C</text>
-        <text class="node-sublabel" x="460" y="150">Menu Dispatch</text>
-      </g>
-      <g id="node-comen02y">
-        <rect class="node-rect" x="730" y="110" width="180" height="48" />
-        <text class="node-label" x="820" y="138">COMEN02Y</text>
-        <text class="node-sublabel" x="820" y="150">Menu Data Table</text>
+      <g id="svg-pan-group">
+      <!-- ===== SECTION: CICS ONLINE ===== -->
+      <text class="section-label" x="300" y="18">CICS Online — Real-Time Transaction Entry</text>
+
+      <!-- 3270 Terminal -->
+      <g id="n-terminal">
+        <rect class="node-rect" x="210" y="30" width="180" height="42"/>
+        <text class="node-label" x="300" y="54">3270 Terminal</text>
+        <text class="node-sublabel" x="300" y="64">User Input</text>
       </g>
 
-      <!-- Shared edges -->
-      <line id="edge-terminal-comen01c" class="edge-line" x1="610" y1="63" x2="500" y2="108" />
-      <text id="elabel-terminal-comen01c" class="edge-label" x="540" y="82">option 8</text>
-      <line id="edge-comen01c-comen02y" class="edge-line" x1="550" y1="134" x2="728" y2="134" />
-      <text id="elabel-comen01c-comen02y" class="edge-label" x="640" y="127">reads table</text>
-
-      <!-- ===== VERTICAL SEPARATOR ===== -->
-      <line class="separator-line" x1="630" y1="195" x2="630" y2="560" />
-
-      <!-- ===== LEFT TREE: Option 8 — Transaction Add ===== -->
-      <text class="subtree-label" x="280" y="198">Option 8 — Transaction Add</text>
-      <line id="edge-comen01c-cotrn02c" class="edge-line" x1="420" y1="158" x2="320" y2="208" />
-      <text id="elabel-comen01c-cotrn02c" class="edge-label" x="350" y="188">XCTL</text>
-
-      <g id="node-cotrn02c">
-        <rect class="node-rect" x="190" y="210" width="180" height="48" />
-        <text class="node-label" x="280" y="238">COTRN02C</text>
-        <text class="node-sublabel" x="280" y="250">Add Transaction</text>
-      </g>
-      <g id="node-ccxref">
-        <rect class="node-rect" x="20" y="340" width="155" height="48" />
-        <text class="node-label" x="97" y="368">CCXREF</text>
-        <text class="node-sublabel" x="97" y="380">Card XREF VSAM</text>
-      </g>
-      <g id="node-cxacaix">
-        <rect class="node-rect" x="195" y="340" width="155" height="48" />
-        <text class="node-label" x="272" y="368">CXACAIX</text>
-        <text class="node-sublabel" x="272" y="380">Acct AIX VSAM</text>
-      </g>
-      <g id="node-csutldtc">
-        <rect class="node-rect" x="375" y="340" width="160" height="48" />
-        <text class="node-label" x="455" y="368">CSUTLDTC</text>
-        <text class="node-sublabel" x="455" y="380">Date Validator</text>
-      </g>
-      <g id="node-ceedays">
-        <rect class="node-rect" x="405" y="440" width="160" height="48" />
-        <text class="node-label" x="485" y="468">CEEDAYS</text>
-        <text class="node-sublabel" x="485" y="480">IBM LE Runtime</text>
+      <!-- COMEN01C Menu -->
+      <g id="n-menu">
+        <rect class="node-rect" x="210" y="105" width="180" height="42"/>
+        <text class="node-label" x="300" y="129">COMEN01C</text>
+        <text class="node-sublabel" x="300" y="139">Menu Dispatch</text>
       </g>
 
-      <!-- Left tree edges -->
-      <line id="edge-cotrn02c-ccxref" class="edge-line" x1="220" y1="258" x2="115" y2="338" />
-      <text id="elabel-cotrn02c-ccxref" class="edge-label" x="148" y="293">Card# &rarr; READ</text>
-      <line id="edge-cotrn02c-cxacaix" class="edge-line" x1="260" y1="258" x2="272" y2="338" />
-      <text id="elabel-cotrn02c-cxacaix" class="edge-label" x="248" y="303">Acct ID &rarr; READ</text>
-      <line id="edge-cotrn02c-csutldtc" class="edge-line" x1="360" y1="258" x2="430" y2="338" />
-      <text id="elabel-cotrn02c-csutldtc" class="edge-label" x="405" y="293">CALL (dynamic)</text>
-      <line id="edge-csutldtc-ceedays" class="edge-line" x1="470" y1="388" x2="485" y2="438" />
-      <text id="elabel-csutldtc-ceedays" class="edge-label" x="500" y="418">CALL (chained)</text>
-
-      <!-- Decision: Confirm Y/N? (after validation) -->
-      <g id="decision-confirm" class="decision-node">
-        <polygon points="485,508 510,530 485,552 460,530" />
-        <text x="485" y="534">Y/N</text>
-      </g>
-      <text id="dlabel-confirm" class="decision-label" x="530" y="535">Confirm?</text>
-
-      <!-- TRANSACT write endpoint -->
-      <g id="node-transact">
-        <rect class="node-rect" x="395" y="575" width="180" height="48" />
-        <text class="node-label" x="485" y="603">TRANSACT</text>
-        <text class="node-sublabel" x="485" y="615">VSAM WRITE</text>
+      <!-- COMEN02Y Data Table -->
+      <g id="n-comen02y">
+        <rect class="node-rect" x="460" y="105" width="150" height="42"/>
+        <text class="node-label" x="535" y="129">COMEN02Y</text>
+        <text class="node-sublabel" x="535" y="139">Menu Data Table</text>
       </g>
 
-      <!-- Edges: CEEDAYS -> Confirm -> TRANSACT -->
-      <line id="edge-ceedays-confirm" class="edge-line" x1="485" y1="488" x2="485" y2="506" />
-      <text id="elabel-ceedays-confirm" class="edge-label" x="510" y="500">validated</text>
-      <line id="edge-confirm-transact" class="edge-line" x1="485" y1="552" x2="485" y2="573" />
-      <text id="elabel-confirm-transact" class="edge-label" x="520" y="567">Y &rarr; WRITE</text>
+      <!-- COTRN02C Transaction Add -->
+      <g id="n-cotrn02c">
+        <rect class="node-rect" x="210" y="185" width="180" height="42"/>
+        <text class="node-label" x="300" y="209">COTRN02C</text>
+        <text class="node-sublabel" x="300" y="219">Transaction Add</text>
+      </g>
+
+      <!-- XREF Lookup (online) -->
+      <g id="n-xref-online">
+        <rect class="node-rect" x="30" y="185" width="130" height="36"/>
+        <text class="node-label" x="95" y="206">CCXREF</text>
+        <text class="node-sublabel" x="95" y="216">Card XREF VSAM</text>
+      </g>
+
+      <!-- CXACAIX (Acct AIX) -->
+      <g id="n-cxacaix">
+        <rect class="node-rect" x="460" y="185" width="130" height="36"/>
+        <text class="node-label" x="525" y="206">CXACAIX</text>
+        <text class="node-sublabel" x="525" y="216">Acct AIX VSAM</text>
+      </g>
+
+      <!-- CSUTLDTC (Date Validator) -->
+      <g id="n-csutldtc">
+        <rect class="node-rect" x="630" y="185" width="130" height="36"/>
+        <text class="node-label" x="695" y="206">CSUTLDTC</text>
+        <text class="node-sublabel" x="695" y="216">Date Validator</text>
+      </g>
+
+      <!-- CEEDAYS -->
+      <g id="n-ceedays">
+        <rect class="node-rect" x="650" y="240" width="110" height="30"/>
+        <text class="node-label" x="705" y="258">CEEDAYS</text>
+        <text class="node-sublabel" x="705" y="268">IBM LE Runtime</text>
+      </g>
+
+      <!-- Confirm Decision -->
+      <g id="d-confirm" class="decision-node">
+        <polygon points="300,270 325,290 300,310 275,290"/>
+        <text x="300" y="294">Y/N</text>
+      </g>
+
+      <!-- TRANSACT Write -->
+      <g id="n-transact-write">
+        <rect class="node-rect" x="210" y="325" width="180" height="42"/>
+        <text class="node-label" x="300" y="349">TRANSACT</text>
+        <text class="node-sublabel" x="300" y="359">VSAM WRITE</text>
+      </g>
+
+      <!-- Value badge: transaction amount -->
+      <g id="vb-txn-amt" class="value-badge" style="opacity:0">
+        <rect x="400" y="333" width="90" height="20"/>
+        <text id="vb-txn-amt-text" x="445" y="346">$500.00</text>
+      </g>
+
+      <!-- Online edges -->
+      <line id="e-term-menu" class="edge-line" x1="300" y1="72" x2="300" y2="103" marker-end="url(#arr-gray)"/>
+      <text id="el-term-menu" class="edge-label" x="325" y="90">option 8</text>
+      <line id="e-menu-comen02y" class="edge-line" x1="390" y1="126" x2="458" y2="126" marker-end="url(#arr-gray)"/>
+      <text id="el-menu-comen02y" class="edge-label" x="424" y="119">reads table</text>
+      <line id="e-menu-cotrn" class="edge-line" x1="300" y1="147" x2="300" y2="183" marker-end="url(#arr-gray)"/>
+      <text id="el-menu-cotrn" class="edge-label" x="325" y="168">XCTL</text>
+      <line id="e-cotrn-xref" class="edge-line" x1="210" y1="204" x2="162" y2="204" marker-end="url(#arr-gray)"/>
+      <text id="el-cotrn-xref" class="edge-label" x="178" y="196">READ</text>
+      <line id="e-cotrn-cxacaix" class="edge-line" x1="390" y1="204" x2="458" y2="204" marker-end="url(#arr-gray)"/>
+      <text id="el-cotrn-cxacaix" class="edge-label" x="424" y="196">READ</text>
+      <line id="e-cotrn-csutldtc" class="edge-line" x1="390" y1="212" x2="628" y2="200" marker-end="url(#arr-gray)"/>
+      <text id="el-cotrn-csutldtc" class="edge-label" x="510" y="200">CALL</text>
+      <line id="e-csutldtc-ceedays" class="edge-line" x1="695" y1="221" x2="705" y2="238" marker-end="url(#arr-gray)"/>
+      <text id="el-csutldtc-ceedays" class="edge-label" x="720" y="232">CALL</text>
+      <line id="e-cotrn-confirm" class="edge-line" x1="300" y1="227" x2="300" y2="268" marker-end="url(#arr-gray)"/>
+      <text id="el-cotrn-confirm" class="edge-label" x="325" y="252">Confirm?</text>
+      <line id="e-confirm-transact" class="edge-line" x1="300" y1="310" x2="300" y2="323" marker-end="url(#arr-gray)"/>
+      <text id="el-confirm-transact" class="edge-label" x="320" y="320">Y → WRITE</text>
+
+      <!-- ===== SEPARATOR ===== -->
+      <line class="separator-line" x1="20" y1="385" x2="880" y2="385"/>
+
+      <!-- ===== SECTION: BATCH PROCESSING ===== -->
+      <text class="section-label" x="450" y="405">Batch Processing — CBTRN02C (CICS START Triggered)</text>
+
+      <!-- CICS START trigger edge -->
+      <line id="e-trigger" class="edge-line dashed" x1="300" y1="367" x2="300" y2="423" marker-end="url(#arr-gray)"/>
+      <text id="el-trigger" class="edge-label" x="340" y="396">CICS START</text>
+
+      <!-- CBTRN02C Batch Engine -->
+      <g id="n-cbtrn02c">
+        <rect class="node-rect batch" x="210" y="425" width="180" height="42"/>
+        <text class="node-label" x="300" y="449">CBTRN02C</text>
+        <text class="node-sublabel" x="300" y="459">Batch Post-Tran</text>
+      </g>
+
+      <!-- DALYTRAN Read -->
+      <g id="n-dalytran">
+        <rect class="node-rect batch" x="30" y="430" width="130" height="36"/>
+        <text class="node-label" x="95" y="451">DALYTRAN</text>
+        <text class="node-sublabel" x="95" y="461">Daily Trans File</text>
+      </g>
+
+      <!-- XREF Batch Lookup -->
+      <g id="n-xref-batch">
+        <rect class="node-rect batch" x="30" y="495" width="130" height="36"/>
+        <text class="node-label" x="95" y="516">XREF</text>
+        <text class="node-sublabel" x="95" y="526">Card→Acct Lookup</text>
+      </g>
+
+      <!-- ACCOUNT Read -->
+      <g id="n-acct-read">
+        <rect class="node-rect batch" x="210" y="495" width="180" height="42"/>
+        <text class="node-label" x="300" y="519">ACCOUNT</text>
+        <text class="node-sublabel" x="300" y="529">READ Master File</text>
+      </g>
+
+      <!-- Value badge: account state -->
+      <g id="vb-acct" class="value-badge" style="opacity:0">
+        <rect x="400" y="499" width="150" height="32"/>
+        <text id="vb-acct-text1" x="475" y="514">Bal: $400 / Lim: $1000</text>
+        <text id="vb-acct-text2" x="475" y="526">CycCr: $0 / CycDb: $0</text>
+      </g>
+
+      <!-- Decision: Overlimit? -->
+      <g id="d-overlimit" class="decision-node">
+        <polygon points="300,575 330,600 300,625 270,600"/>
+        <text x="300" y="604">?</text>
+      </g>
+      <text id="dl-overlimit" class="decision-label" x="300" y="640">ACCT-CREDIT-LIMIT</text>
+      <text id="dl-overlimit2" class="decision-label" x="300" y="649">≥ WS-TEMP-BAL?</text>
+
+      <!-- Value badge: computation -->
+      <g id="vb-calc" class="value-badge" style="opacity:0">
+        <rect x="345" y="585" width="180" height="22"/>
+        <text id="vb-calc-text" x="435" y="599">$0 - $0 + $500 = $500</text>
+      </g>
+
+      <!-- ACCEPT path -->
+      <g id="n-accept">
+        <rect class="node-rect batch" x="100" y="670" width="160" height="42"/>
+        <text class="node-label" x="180" y="694">ACCEPT</text>
+        <text class="node-sublabel" x="180" y="704">Post + Update Acct</text>
+      </g>
+
+      <!-- REJECT path -->
+      <g id="n-reject">
+        <rect class="node-rect batch" x="380" y="670" width="160" height="42"/>
+        <text class="node-label" x="460" y="694">REJECT</text>
+        <text class="node-sublabel" x="460" y="704">Write to DALYREJS</text>
+      </g>
+
+      <!-- Value badges: result -->
+      <g id="vb-result" class="value-badge" style="opacity:0">
+        <rect x="100" y="720" width="160" height="18"/>
+        <text id="vb-result-text" x="180" y="732">REWRITE bal → $900</text>
+      </g>
+      <g id="vb-reject-reason" class="value-badge" style="opacity:0">
+        <rect x="370" y="720" width="180" height="18"/>
+        <text id="vb-reject-text" x="460" y="732">Code 102: OVERLIMIT</text>
+      </g>
+
+      <!-- Output files -->
+      <g id="n-transact-posted">
+        <rect class="node-rect batch" x="680" y="580" width="140" height="36"/>
+        <text class="node-label" x="750" y="601">TRANSACT</text>
+        <text class="node-sublabel" x="750" y="611">Posted Record</text>
+      </g>
+      <g id="n-tcatbal">
+        <rect class="node-rect batch" x="680" y="635" width="140" height="36"/>
+        <text class="node-label" x="750" y="656">TCATBAL</text>
+        <text class="node-sublabel" x="750" y="666">Category Balance</text>
+      </g>
+      <g id="n-dalyrejs">
+        <rect class="node-rect batch" x="680" y="690" width="140" height="36"/>
+        <text class="node-label" x="750" y="711">DALYREJS</text>
+        <text class="node-sublabel" x="750" y="721">Reject File</text>
+      </g>
+
+      <!-- Batch edges -->
+      <line id="e-cbtrn-daly" class="edge-line" x1="210" y1="448" x2="162" y2="448" marker-end="url(#arr-gray)"/>
+      <text id="el-cbtrn-daly" class="edge-label" x="185" y="441">READ</text>
+      <line id="e-cbtrn-xref" class="edge-line" x1="210" y1="460" x2="130" y2="503" marker-end="url(#arr-gray)"/>
+      <text id="el-cbtrn-xref" class="edge-label" x="155" y="485">LOOKUP</text>
+      <line id="e-cbtrn-acct" class="edge-line" x1="300" y1="467" x2="300" y2="493" marker-end="url(#arr-gray)"/>
+      <text id="el-cbtrn-acct" class="edge-label" x="325" y="483">READ</text>
+      <line id="e-acct-decision" class="edge-line" x1="300" y1="537" x2="300" y2="573" marker-end="url(#arr-gray)"/>
+      <text id="el-acct-decision" class="edge-label" x="335" y="557">VALIDATE</text>
+      <line id="e-decision-accept" class="edge-line" x1="270" y1="600" x2="200" y2="668" marker-end="url(#arr-gray)"/>
+      <text id="el-decision-accept" class="edge-label" x="220" y="635">YES</text>
+      <line id="e-decision-reject" class="edge-line" x1="330" y1="600" x2="420" y2="668" marker-end="url(#arr-gray)"/>
+      <text id="el-decision-reject" class="edge-label" x="390" y="635">NO</text>
+      <line id="e-accept-transact" class="edge-line" x1="260" y1="690" x2="678" y2="598" marker-end="url(#arr-gray)"/>
+      <text id="el-accept-transact" class="edge-label" x="480" y="639">WRITE</text>
+      <line id="e-accept-tcatbal" class="edge-line" x1="260" y1="700" x2="678" y2="653" marker-end="url(#arr-gray)"/>
+      <text id="el-accept-tcatbal" class="edge-label" x="480" y="679">UPDATE</text>
+      <line id="e-reject-rejs" class="edge-line" x1="540" y1="695" x2="678" y2="705" marker-end="url(#arr-gray)"/>
+      <text id="el-reject-rejs" class="edge-label" x="615" y="693">WRITE</text>
 
       <!-- ===== RIGHT TREE: Option 3 — Credit Card List ===== -->
-      <text class="subtree-label" x="980" y="198">Option 3 — Credit Card List</text>
-      <line id="edge-comen01c-cocrdlic" class="edge-line" x1="540" y1="158" x2="940" y2="208" />
-      <text id="elabel-comen01c-cocrdlic" class="edge-label" x="730" y="178">XCTL</text>
+      <text class="subtree-label" x="1050" y="98">Option 3 — Credit Card List</text>
 
-      <g id="node-cocrdlic">
-        <rect class="node-rect" x="890" y="210" width="180" height="48" />
-        <text class="node-label" x="980" y="238">COCRDLIC</text>
-        <text class="node-sublabel" x="980" y="250">Credit Card List</text>
+      <g id="n-cocrdlic">
+        <rect class="node-rect" x="960" y="110" width="180" height="42"/>
+        <text class="node-label" x="1050" y="134">COCRDLIC</text>
+        <text class="node-sublabel" x="1050" y="144">Credit Card List</text>
       </g>
-      <g id="node-carddat">
-        <rect class="node-rect" x="890" y="360" width="180" height="48" />
-        <text class="node-label" x="980" y="388">CARDDAT</text>
-        <text class="node-sublabel" x="980" y="400">Card Data VSAM</text>
+
+      <g id="n-carddat">
+        <rect class="node-rect" x="960" y="210" width="180" height="42"/>
+        <text class="node-label" x="1050" y="234">CARDDAT</text>
+        <text class="node-sublabel" x="1050" y="244">Card Data VSAM</text>
       </g>
       <g id="badge-readonly" class="readonly-badge">
-        <rect x="1078" y="368" width="95" height="22" />
-        <text x="1125" y="383">READ ONLY</text>
+        <rect x="1148" y="218" width="90" height="20"/>
+        <text x="1193" y="231">READ ONLY</text>
       </g>
-      <g id="node-cocrdslc">
-        <rect class="node-rect" x="790" y="500" width="170" height="48" />
-        <text class="node-label" x="875" y="528">COCRDSLC</text>
-        <text class="node-sublabel" x="875" y="540">Card Detail View</text>
+
+      <g id="n-cocrdslc">
+        <rect class="node-rect" x="880" y="310" width="150" height="42"/>
+        <text class="node-label" x="955" y="334">COCRDSLC</text>
+        <text class="node-sublabel" x="955" y="344">Card Detail View</text>
       </g>
-      <g id="node-cocrdupc">
-        <rect class="node-rect" x="1000" y="500" width="170" height="48" />
-        <text class="node-label" x="1085" y="528">COCRDUPC</text>
-        <text class="node-sublabel" x="1085" y="540">Card Update</text>
+      <g id="n-cocrdupc">
+        <rect class="node-rect" x="1070" y="310" width="150" height="42"/>
+        <text class="node-label" x="1145" y="334">COCRDUPC</text>
+        <text class="node-sublabel" x="1145" y="344">Card Update</text>
       </g>
 
       <!-- Right tree edges -->
-      <line id="edge-cocrdlic-carddat" class="edge-line" x1="980" y1="258" x2="980" y2="358" />
-      <text id="elabel-cocrdlic-carddat" class="edge-label" x="1010" y="315">VSAM BROWSE</text>
-      <line id="edge-cocrdlic-cocrdslc" class="edge-line" x1="940" y1="258" x2="875" y2="498" />
-      <text id="elabel-cocrdlic-cocrdslc" class="edge-label" x="895" y="395">XCTL (select S)</text>
-      <line id="edge-cocrdlic-cocrdupc" class="edge-line" x1="1020" y1="258" x2="1085" y2="498" />
-      <text id="elabel-cocrdlic-cocrdupc" class="edge-label" x="1065" y="395">XCTL (select U)</text>
+      <line id="e-menu-cocrdlic" class="edge-line" x1="390" y1="126" x2="958" y2="131" marker-end="url(#arr-gray)"/>
+      <text id="el-menu-cocrdlic" class="edge-label" x="680" y="120">XCTL</text>
+      <line id="e-cocrdlic-carddat" class="edge-line" x1="1050" y1="152" x2="1050" y2="208" marker-end="url(#arr-gray)"/>
+      <text id="el-cocrdlic-carddat" class="edge-label" x="1080" y="183">VSAM BROWSE</text>
+      <line id="e-cocrdlic-cocrdslc" class="edge-line" x1="1010" y1="152" x2="955" y2="308" marker-end="url(#arr-gray)"/>
+      <text id="el-cocrdlic-cocrdslc" class="edge-label" x="970" y="240">XCTL (select S)</text>
+      <line id="e-cocrdlic-cocrdupc" class="edge-line" x1="1090" y1="152" x2="1145" y2="308" marker-end="url(#arr-gray)"/>
+      <text id="el-cocrdlic-cocrdupc" class="edge-label" x="1130" y="240">XCTL (select U)</text>
 
-      <!-- ===== BOTTOM: Option 10 — Bill Payment ===== -->
-      <line class="separator-line" x1="20" y1="660" x2="1280" y2="660" />
-      <text class="subtree-label" x="650" y="688">Option 10 — Bill Payment</text>
-
-      <g id="node-cobil00c">
-        <rect class="node-rect" x="540" y="710" width="180" height="48" />
-        <text class="node-label" x="630" y="738">COBIL00C</text>
-        <text class="node-sublabel" x="630" y="750">Bill Payment</text>
-      </g>
-      <text class="edge-label" x="630" y="702">XCTL from COMEN01C</text>
-
-      <!-- Decision: Balance > 0? Confirm Y/N? -->
-      <g id="decision-balance" class="decision-node">
-        <polygon points="420,790 445,812 420,834 395,812" />
-        <text x="420" y="816">?</text>
-      </g>
-      <text id="dlabel-balance" class="decision-label" x="420" y="852">Bal&gt;0 &amp; Confirm?</text>
-
-      <g id="node-acctdat">
-        <rect class="node-rect" x="220" y="800" width="155" height="48" />
-        <text class="node-label" x="297" y="828">ACCTDAT</text>
-        <text class="node-sublabel" x="297" y="840">Account VSAM</text>
-      </g>
-      <g id="badge-readwrite" class="readonly-badge">
-        <rect x="382" y="808" width="95" height="22" />
-        <text x="429" y="823">READ+REWRITE</text>
-      </g>
-
-      <g id="node-cxacaix-bp">
-        <rect class="node-rect" x="555" y="870" width="155" height="48" />
-        <text class="node-label" x="632" y="898">CXACAIX</text>
-        <text class="node-sublabel" x="632" y="910">Card XREF</text>
-      </g>
-
-      <g id="node-transact-bp">
-        <rect class="node-rect" x="760" y="870" width="155" height="48" />
-        <text class="node-label" x="837" y="898">TRANSACT</text>
-        <text class="node-sublabel" x="837" y="910">Payment WRITE</text>
-      </g>
-
-      <!-- Option 10 edges -->
-      <line id="edge-cobil00c-acctdat" class="edge-line" x1="580" y1="758" x2="340" y2="798" />
-      <text id="elabel-cobil00c-acctdat" class="edge-label" x="440" y="773">READ balance</text>
-      <line id="edge-cobil00c-cxacaix-bp" class="edge-line" x1="630" y1="758" x2="632" y2="868" />
-      <text id="elabel-cobil00c-cxacaix-bp" class="edge-label" x="655" y="818">READ card#</text>
-      <line id="edge-cobil00c-transact-bp" class="edge-line" x1="680" y1="758" x2="800" y2="868" />
-      <text id="elabel-cobil00c-transact-bp" class="edge-label" x="770" y="808">WRITE payment</text>
+      </g><!-- end svg-pan-group -->
     </svg>
+
+    <div class="zoom-controls">
+      <button class="zoom-btn" onclick="zoomIn()" title="Zoom in">+</button>
+      <button class="zoom-btn" onclick="zoomOut()" title="Zoom out">&minus;</button>
+      <button class="zoom-btn" onclick="zoomFit()" title="Fit to view" style="font-size:11px">Fit</button>
+    </div>
   </div>
 
-  <div id="event-panel">
-    <h3>Devin Trace Log</h3>
-    <div id="event-log">
-      <div style="padding: 16px; color: #555; font-size: 11px; text-align: center;">
-        Click <b>Simulate Demo</b> or <b>Start Live Trace</b> to open the CICS terminal
+  <!-- Tabbed Sidebar -->
+  <div id="sidebar">
+    <div class="sidebar-tabs">
+      <button class="sidebar-tab active" onclick="switchTab('vsam')">VSAM State</button>
+      <button class="sidebar-tab" onclick="switchTab('sql')">SQL Queries</button>
+    </div>
+
+    <!-- Tab: VSAM State -->
+    <div id="tab-vsam" class="sidebar-content active">
+      <div class="data-section">
+        <h4><span class="file-icon">SQLite</span> accounts — Account Master</h4>
+        <table class="data-table">
+          <thead><tr>
+            <th>Acct ID</th><th>Status</th><th>Balance</th><th>Credit Limit</th><th>Cyc Credit</th><th>Cyc Debit</th>
+          </tr></thead>
+          <tbody id="acct-tbody">
+            <tr>
+              <td>00001</td><td>Y</td>
+              <td id="td-bal">$400.00</td>
+              <td id="td-limit">$1,000.00</td>
+              <td id="td-cyc-cr">$0.00</td>
+              <td id="td-cyc-db">$0.00</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="data-section">
+        <h4><span class="file-icon">SQLite</span> cardxref — Cross Reference</h4>
+        <table class="data-table">
+          <thead><tr><th>Card Number</th><th>Cust ID</th><th>Acct ID</th></tr></thead>
+          <tbody id="xref-tbody">
+            <tr>
+              <td>9680294154603697</td><td>00001</td><td>00001</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="data-section">
+        <h4><span class="file-icon">SQLite</span> transactions — Transaction File</h4>
+        <table class="data-table">
+          <thead><tr><th>Tran ID</th><th>Type</th><th>Amount</th><th>Card</th><th>Status</th></tr></thead>
+          <tbody id="transact-tbody">
+            <tr style="color:#555"><td colspan="5" style="text-align:center">— empty —</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="data-section">
+        <h4><span class="file-icon">SQLite</span> daily_rejects — Rejected Transactions</h4>
+        <table class="data-table">
+          <thead><tr><th>Tran ID</th><th>Amount</th><th>Reason Code</th><th>Description</th></tr></thead>
+          <tbody id="rejs-tbody">
+            <tr style="color:#555"><td colspan="4" style="text-align:center">— empty —</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab: SQL Queries -->
+    <div id="tab-sql" class="sidebar-content">
+      <div id="sql-log" style="display:flex;flex-direction:column;gap:2px">
+        <div style="padding: 10px; color: #555; font-size: 11px; text-align: center;">
+          SQL queries will appear here as the demo runs
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trace Log -->
+  <div id="trace-panel">
+    <h3>
+      <span>Execution Trace</span>
+      <span id="trace-source" style="font-size:10px;color:#666;font-weight:400">Devin traces COBOL source live — DB queries drive routing</span>
+    </h3>
+    <div id="trace-log">
+      <div style="padding: 10px; color: #555; font-size: 11px; text-align: center;">
+        Click <b>Start Live Trace</b> to launch a Devin session that traces COBOL source code in real-time
       </div>
     </div>
   </div>
 </main>
 
-
 <script>
 // ============================================================
-//  TRACE STEPS — defines the animation sequence
+//  STATE  (live — driven by SQLite DB via API)
 // ============================================================
+let isRunning = false;
+let acctBal = 400.00;
+let acctCycCr = 0.00;
+let acctCycDb = 0.00;
+let creditLimit = 1000.00;
+let tranIdCounter = 1;
+let phase1Amount = 500;
+let phase3Amount = 1000;
+let isPaused = false;
+let _pauseResolve = null;
+let _selectedOption = null;
+
 // ============================================================
-//  COMEN02Y MENU OPTIONS (from app/cpy/COMEN02Y.cpy)
+//  SIDEBAR TABS
+// ============================================================
+function switchTab(tab) {
+  document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.sidebar-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelector(`.sidebar-tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+}
+
+// ============================================================
+//  DB API HELPERS
+// ============================================================
+async function apiGet(url) {
+  const res = await fetch(url);
+  return res.json();
+}
+async function apiPost(url, body) {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+function addSqlEntry(type, query, result) {
+  const log = document.getElementById('sql-log');
+  const empty = log.querySelector('div[style*="text-align: center"]');
+  if (empty) empty.remove();
+  const div = document.createElement('div');
+  div.className = 'sql-entry ' + type;
+  div.innerHTML = `<div class="sql-type">${type}</div><div class="sql-query">${query}</div>${result ? `<div class="sql-result">${result}</div>` : ''}`;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function logQueries(queries) {
+  if (!queries || !Array.isArray(queries)) return;
+  queries.forEach(q => {
+    const sql = q.sql || q.query || '';
+    const result = q.result || q.rows_affected || '';
+    let type = 'select';
+    const upper = sql.toUpperCase().trim();
+    if (upper.startsWith('INSERT')) type = 'insert';
+    else if (upper.startsWith('UPDATE') || upper.startsWith('REWRITE')) type = 'update';
+    else if (upper.startsWith('--') || upper.includes('DECISION') || upper.includes('OVERLIMIT')) type = 'decision';
+    addSqlEntry(type, sql, typeof result === 'object' ? JSON.stringify(result) : String(result));
+  });
+}
+
+async function refreshDbState() {
+  try {
+    const state = await apiGet('/api/db/state');
+    const acct = state.account;
+    if (acct) {
+      acctBal = acct.balance;
+      acctCycCr = acct.cyc_credit;
+      acctCycDb = acct.cyc_debit;
+      creditLimit = acct.credit_limit;
+      document.getElementById('td-bal').textContent = '$' + acctBal.toFixed(2);
+      document.getElementById('td-limit').textContent = '$' + creditLimit.toFixed(2);
+      document.getElementById('td-cyc-cr').textContent = '$' + acctCycCr.toFixed(2);
+      document.getElementById('td-cyc-db').textContent = '$' + acctCycDb.toFixed(2);
+    }
+    // Update transactions table
+    const tbody = document.getElementById('transact-tbody');
+    if (state.transactions && state.transactions.length > 0) {
+      tbody.innerHTML = state.transactions.map(t => `
+        <tr>
+          <td>${String(t.tran_id).padStart(16, '0')}</td>
+          <td>${t.tran_type || 'PR'}</td>
+          <td>$${parseFloat(t.amount).toFixed(2)}</td>
+          <td>${(t.card_num || '').substring(0, 6)}...${(t.card_num || '').slice(-4)}</td>
+          <td style="color:${t.status === 'Posted' ? '#00ff88' : t.status === 'Rejected' ? '#ff6b6b' : '#ffa94d'}">${t.status}</td>
+        </tr>
+      `).join('');
+    }
+    // Update rejects table
+    const rejsBody = document.getElementById('rejs-tbody');
+    if (state.daily_rejects && state.daily_rejects.length > 0) {
+      rejsBody.innerHTML = state.daily_rejects.map(r => `
+        <tr>
+          <td>${String(r.tran_id).padStart(16, '0')}</td>
+          <td class="rejected">$${parseFloat(r.amount).toFixed(2)}</td>
+          <td class="rejected">${r.reason_code}</td>
+          <td class="rejected">${r.description}</td>
+        </tr>
+      `).join('');
+    }
+  } catch (e) {
+    console.warn('Failed to refresh DB state:', e);
+  }
+}
+
+// Load initial state from DB
+document.addEventListener('DOMContentLoaded', () => { refreshDbState(); });
+
+// ============================================================
+//  ZOOM / PAN
+// ============================================================
+let svgScale = 1;
+let svgPanX = 0;
+let svgPanY = 0;
+let isPanning = false;
+let panStartX = 0;
+let panStartY = 0;
+
+function initZoomPan() {
+  const panel = document.getElementById('diagram-panel');
+  const svg = document.getElementById('flow-diagram');
+
+  // Set initial viewBox and fit
+  zoomFit();
+
+  // Mouse wheel zoom
+  panel.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    const newScale = Math.max(0.3, Math.min(3, svgScale * delta));
+    // Zoom toward cursor position
+    const rect = panel.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    svgPanX = mx - (mx - svgPanX) * (newScale / svgScale);
+    svgPanY = my - (my - svgPanY) * (newScale / svgScale);
+    svgScale = newScale;
+    applyTransform();
+  }, { passive: false });
+
+  // Pan with mouse drag
+  panel.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    isPanning = true;
+    panStartX = e.clientX - svgPanX;
+    panStartY = e.clientY - svgPanY;
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!isPanning) return;
+    svgPanX = e.clientX - panStartX;
+    svgPanY = e.clientY - panStartY;
+    applyTransform();
+  });
+  window.addEventListener('mouseup', () => { isPanning = false; });
+}
+
+function applyTransform() {
+  const g = document.getElementById('svg-pan-group');
+  g.setAttribute('transform', `translate(${svgPanX},${svgPanY}) scale(${svgScale})`);
+}
+
+function zoomIn() {
+  svgScale = Math.min(3, svgScale * 1.25);
+  applyTransform();
+}
+
+function zoomOut() {
+  svgScale = Math.max(0.3, svgScale * 0.8);
+  applyTransform();
+}
+
+function zoomFit() {
+  const panel = document.getElementById('diagram-panel');
+  const w = panel.clientWidth;
+  const h = panel.clientHeight;
+  // Content is roughly 880 x 750
+  const contentW = 880;
+  const contentH = 750;
+  svgScale = Math.min(w / contentW, h / contentH) * 0.92;
+  svgPanX = (w - contentW * svgScale) / 2;
+  svgPanY = (h - contentH * svgScale) / 2;
+  applyTransform();
+}
+
+document.addEventListener('DOMContentLoaded', initZoomPan);
+window.addEventListener('resize', zoomFit);
+
+// ============================================================
+//  TERMINAL SCREENS
 // ============================================================
 const MENU_OPTIONS = [
   { num: 1,  name: 'Account View',              pgm: 'COACTVWC' },
@@ -766,947 +1389,757 @@ const MENU_OPTIONS = [
   { num: 11, name: 'Pending Authorization View', pgm: 'COPAUS0C' }
 ];
 
-let selectedOption = null;
-let terminalMode = 'simulate'; // 'simulate' or 'live'
-
-function buildTerminalMenu() {
-  const container = document.getElementById('menu-options');
-  container.innerHTML = MENU_OPTIONS.map(opt => `
-    <div class="menu-option" onclick="selectMenuOption(${opt.num})">
-      <span class="opt-num">${String(opt.num).padStart(2,' ')}.</span>
-      <span class="opt-name">${opt.name}</span>
-      <span class="opt-pgm">${opt.pgm}</span>
+function showTerminalMenu() {
+  document.getElementById('term-screen-id').textContent = 'MAIN MENU';
+  const body = document.getElementById('terminal-body');
+  body.innerHTML = `
+    <div class="term-title">CARDDEMO MAIN MENU</div>
+    <div class="term-subtitle">COMEN01C — Program: COMEN02Y.cpy Data Table</div>
+    <div class="term-divider"></div>
+    <div id="menu-options">
+      ${MENU_OPTIONS.map(opt => `
+        <div class="menu-option" onclick="selectMenuOption(${opt.num})">
+          <span class="opt-num">${String(opt.num).padStart(2,' ')}.</span>
+          <span class="opt-name">${opt.name}</span>
+          <span class="opt-pgm">${opt.pgm}</span>
+        </div>
+      `).join('')}
     </div>
-  `).join('');
+    <div class="term-divider"></div>
+    <div class="terminal-input-row">
+      <span>OPTION ==&gt;</span>
+      <input type="text" id="term-input" class="term-field-input" style="width:40px" maxlength="2" autocomplete="off" />
+      <span class="term-cursor"></span>
+    </div>
+    <div id="terminal-status" class="terminal-status">Select Option 3 or 8 for traced flows, or click any menu item</div>
+  `;
+  document.getElementById('terminal-overlay').classList.add('open');
+  setTimeout(() => {
+    const inp = document.getElementById('term-input');
+    if (inp) inp.focus();
+  }, 100);
+
+  // Keyboard handler
+  setTimeout(() => {
+    const inp = document.getElementById('term-input');
+    if (inp) {
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const val = parseInt(inp.value);
+          if (val >= 1 && val <= 11) {
+            selectMenuOption(val);
+          } else {
+            document.getElementById('terminal-status').textContent = 'INVALID OPTION. Enter 1-11.';
+          }
+        }
+      });
+    }
+  }, 150);
 }
 
-function showTerminal(mode) {
-  if (isRunning) return;
-  resetAll();
-  terminalMode = mode || 'simulate';
-  buildTerminalMenu();
+let _menuResolve = null;
+
+function selectMenuOption(num) {
+  if (num !== 8 && num !== 3) {
+    document.getElementById('terminal-status').textContent = 'Demo supports Option 3 (Credit Card List) and Option 8 (Transaction Add)';
+    return;
+  }
+  _selectedOption = num;
+  // Highlight
+  document.querySelectorAll('.menu-option').forEach((el, i) => {
+    el.classList.toggle('selected', MENU_OPTIONS[i].num === num);
+  });
+  const inp = document.getElementById('term-input');
+  if (inp) inp.value = String(num);
+
+  const chosen = MENU_OPTIONS.find(o => o.num === num);
+  const status = document.getElementById('terminal-status');
+  status.className = 'terminal-status resolving';
+  status.innerHTML = `Resolving XCTL PROGRAM(CDEMO-MENU-OPT-PGMNAME(${num}))...`;
+
+  setTimeout(() => {
+    status.innerHTML = `RESOLVED &rarr; <span class="resolved-pgm">${chosen.pgm}</span> (${chosen.name})`;
+    setTimeout(() => {
+      document.getElementById('terminal-overlay').classList.remove('open');
+      if (_menuResolve) { _menuResolve(); _menuResolve = null; }
+    }, 1200);
+  }, 1200);
+}
+
+function waitForMenuSelect() {
+  return new Promise(resolve => { _menuResolve = resolve; });
+}
+
+let _termResolve = null;
+
+function showTransactionScreen(amount, txnNum) {
+  document.getElementById('term-screen-id').textContent = 'COTRN02C — ADD TRANSACTION';
   document.getElementById('terminal-overlay').classList.add('open');
-  document.getElementById('term-input').value = '';
-  document.getElementById('terminal-status').className = 'terminal-status';
-  document.getElementById('terminal-status').textContent = 'Enter option number (1-11) or click a menu item';
-  setTimeout(() => document.getElementById('term-input').focus(), 100);
+  const body = document.getElementById('terminal-body');
+  const suggestedAmt = amount > 0 ? amount.toFixed(2) : '';
+  body.innerHTML = `
+    <div class="term-title">ADD TRANSACTION</div>
+    <div class="term-subtitle">COTRN02C — Enter transaction details</div>
+    <div class="term-divider"></div>
+    <div class="term-form-row">
+      <span class="term-label">CARD NUMBER :</span>
+      <span class="term-value">9680 2941 5460 3697</span>
+    </div>
+    <div class="term-form-row">
+      <span class="term-label">ACCOUNT ID :</span>
+      <span class="term-value">00001</span>
+    </div>
+    <div class="term-form-row">
+      <span class="term-label">TRANSACTION TYPE :</span>
+      <span class="term-value">PR (Purchase)</span>
+    </div>
+    <div class="term-form-row">
+      <span class="term-label">AMOUNT ($) :</span>
+      <input type="number" id="txn-amount" class="term-field-editable" placeholder="Enter amount" value="${suggestedAmt}" step="0.01" min="0" style="font-size:16px;width:140px" />
+    </div>
+    <div class="term-form-row">
+      <span class="term-label">MERCHANT :</span>
+      <input type="text" id="txn-merchant" class="term-field-editable" placeholder="Enter merchant" value="" maxlength="30" style="width:180px" />
+    </div>
+    <div class="term-form-row">
+      <span class="term-label">TRANSACTION DATE :</span>
+      <span class="term-value">${new Date().toISOString().slice(0,10)}</span>
+    </div>
+    <div class="term-divider"></div>
+    <div id="terminal-status" class="terminal-status" style="text-align:center">
+      Enter amount and merchant, then confirm
+    </div>
+    <div style="text-align:center;margin-top:8px">
+      <button class="term-confirm-btn" onclick="confirmTransactionFromForm(${txnNum})">CONFIRM (Y)</button>
+    </div>
+  `;
+  setTimeout(() => { const el = document.getElementById('txn-amount'); if (el && !el.value) el.focus(); }, 100);
+}
+
+function confirmTransactionFromForm(txnNum) {
+  const amtEl = document.getElementById('txn-amount');
+  const merchEl = document.getElementById('txn-merchant');
+  const amount = parseFloat(amtEl ? amtEl.value : 0);
+  const merchant = (merchEl && merchEl.value.trim()) ? merchEl.value.trim().toUpperCase() : 'UNSPECIFIED';
+  if (!amount || amount <= 0) {
+    const status = document.getElementById('terminal-status');
+    status.textContent = 'Please enter a valid amount';
+    status.style.color = '#ff4444';
+    if (amtEl) amtEl.focus();
+    return;
+  }
+  _lastMerchant = merchant;
+  if (txnNum === 1) phase1Amount = amount;
+  else phase3Amount = amount;
+  confirmTransaction(amount, txnNum);
+}
+
+let _lastMerchant = 'UNSPECIFIED';
+
+async function confirmTransaction(amount, txnNum) {
+  const merchant = _lastMerchant || 'UNSPECIFIED';
+  const status = document.getElementById('terminal-status');
+  status.className = 'terminal-status resolving';
+  status.style.color = '';
+  status.innerHTML = 'Processing... POST /api/input';
+
+  addTrace('step', `User enters: Card# <span class="highlight">9680294154603697</span>, Amount: <span class="highlight">$${amount.toFixed(2)}</span>, Merchant: ${merchant}`);
+
+  try {
+    const result = await apiPost('/api/input', { amount, merchant, session_id: _activeSessionId });
+
+    status.innerHTML = '<span class="resolved-pgm">INPUT RECEIVED — DEVIN WILL TRACE WRITE TRANSACT</span>';
+    addTrace('step', `Input sent to Devin: $${amount.toFixed(2)} @ ${merchant}. DB write deferred until Devin traces EXEC CICS WRITE TRANSACT.`);
+
+    _inputTxnNum++;
+    setTimeout(() => {
+      document.getElementById('terminal-overlay').classList.remove('open');
+      if (_termResolve) {
+        _termResolve();
+        _termResolve = null;
+      }
+    }, 1500);
+  } catch (e) {
+    status.innerHTML = 'ERROR: ' + e.message;
+    status.style.color = '#ff4444';
+  }
 }
 
 function closeTerminal() {
   document.getElementById('terminal-overlay').classList.remove('open');
 }
 
-function selectMenuOption(num) {
-  const opt = MENU_OPTIONS.find(o => o.num === num);
-  if (!opt) return;
-  selectedOption = opt;
-
-  document.querySelectorAll('.menu-option').forEach((el, i) => {
-    el.classList.toggle('selected', MENU_OPTIONS[i].num === num);
-  });
-  document.getElementById('term-input').value = num;
-
-  const status = document.getElementById('terminal-status');
-  status.className = 'terminal-status resolving';
-  status.innerHTML = `Resolving XCTL PROGRAM(CDEMO-MENU-OPT-PGMNAME(${num}))...`;
-
-  setTimeout(() => {
-    status.innerHTML = `RESOLVED &rarr; <span class="resolved-pgm">${opt.pgm}</span> (${opt.name})`;
-    const edgeLabel = document.getElementById('elabel-terminal-comen01c');
-    if (edgeLabel) edgeLabel.textContent = `option ${num}`;
-    setTimeout(() => {
-      closeTerminal();
-      if (terminalMode === 'live') {
-        openConfig(opt);
-      } else {
-        startSimulation(opt);
-      }
-    }, 1200);
-  }, 800);
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  const input = document.getElementById('term-input');
-  if (input) {
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        const val = parseInt(input.value);
-        if (val >= 1 && val <= 11) {
-          selectMenuOption(val);
-        } else {
-          const status = document.getElementById('terminal-status');
-          status.className = 'terminal-status';
-          status.textContent = 'INVALID OPTION. Enter 1-11.';
-        }
-      }
-    });
-  }
-});
-
-const TRACE_STEPS = [
-  {
-    id: 'step1',
-    title: 'Step 1: Menu Dispatch',
-    subtitle: 'Resolving dynamic XCTL from COMEN02Y data table',
-    nodes: ['node-terminal', 'node-comen01c', 'node-comen02y'],
-    edges: ['edge-terminal-comen01c', 'edge-comen01c-comen02y'],
-    edgeLabels: ['elabel-terminal-comen01c', 'elabel-comen01c-comen02y'],
-    nodeClass: 'active',
-    edgeClass: 'active',
-    file: 'COMEN02Y.cpy + COMEN01C.cbl',
-    message: 'Reading menu data table... Option 8 maps to program name via REDEFINES overlay.',
-    code: `10 FILLER PIC 9(02) VALUE 8.\n10 FILLER PIC X(35) VALUE\n   'Transaction Add'.\n10 FILLER PIC X(08) VALUE <span class="resolved">'COTRN02C'</span>.\n\n<span class="kw">EXEC CICS</span>\n  <span class="kw">XCTL PROGRAM</span>(CDEMO-MENU-OPT-PGMNAME(WS-OPTION))\n  COMMAREA(CARDDEMO-COMMAREA)\n<span class="kw">END-EXEC</span>`,
-    delay: 2500
-  },
-  {
-    id: 'step2',
-    title: 'Step 2: XCTL Transfer',
-    subtitle: 'Control transfers to COTRN02C via CICS XCTL + COMMAREA',
-    nodes: ['node-cotrn02c'],
-    edges: ['edge-comen01c-cotrn02c'],
-    edgeLabels: ['elabel-comen01c-cotrn02c'],
-    nodeClass: 'active',
-    edgeClass: 'active',
-    file: 'COTRN02C.cbl',
-    message: 'XCTL transfers control to COTRN02C with COMMAREA carrying user context (ID, flags, source program).',
-    code: `<span class="kw">PERFORM</span> VALIDATE-INPUT-KEY-FIELDS\n<span class="kw">PERFORM</span> VALIDATE-INPUT-DATA-FIELDS\n...\n<span class="kw">PERFORM</span> ADD-TRANSACTION`,
-    delay: 2000
-  },
-  {
-    id: 'step3',
-    title: 'Step 3: Cross-Reference Lookup',
-    subtitle: 'Variable dataset names resolved by CICS File Control Table',
-    nodes: ['node-ccxref', 'node-cxacaix'],
-    edges: ['edge-cotrn02c-ccxref', 'edge-cotrn02c-cxacaix'],
-    edgeLabels: ['elabel-cotrn02c-ccxref', 'elabel-cotrn02c-cxacaix'],
-    nodeClass: 'active',
-    edgeClass: 'active',
-    file: 'COTRN02C.cbl (lines 330-365)',
-    message: 'CICS READ with variable dataset names: WS-CCXREF-FILE and WS-CXACAIX-FILE resolved at runtime via FCT.',
-    code: `05 WS-CCXREF-FILE  PIC X(08) VALUE <span class="str">'CCXREF  '</span>.\n05 WS-CXACAIX-FILE PIC X(08) VALUE <span class="str">'CXACAIX '</span>.\n\n<span class="kw">EXEC CICS READ</span>\n  DATASET(WS-CCXREF-FILE)   <span class="resolved">&larr; FCT resolved</span>\n  INTO(CARD-XREF-RECORD)\n  RIDFLD(WS-CARD-RID-CARDNUM)\n<span class="kw">END-EXEC</span>`,
-    delay: 2500
-  },
-  {
-    id: 'step4',
-    title: 'Step 4: Dynamic CALL — Date Validation',
-    subtitle: 'OS loader resolves CSUTLDTC at runtime; positional param mapping',
-    nodes: ['node-csutldtc'],
-    edges: ['edge-cotrn02c-csutldtc'],
-    edgeLabels: ['elabel-cotrn02c-csutldtc'],
-    nodeClass: 'active',
-    edgeClass: 'active',
-    file: 'COTRN02C.cbl (line 393) + CSUTLDTC.cbl',
-    message: 'CALL \'CSUTLDTC\' — positional mapping: Param1→LS-DATE X(10), Param2→LS-DATE-FORMAT X(10), Param3→LS-RESULT X(80).',
-    code: `<span class="kw">CALL</span> <span class="str">'CSUTLDTC'</span> <span class="kw">USING</span>\n  CSUTLDTC-DATE         <span class="resolved">&rarr; LS-DATE</span>\n  CSUTLDTC-DATE-FORMAT  <span class="resolved">&rarr; LS-DATE-FORMAT</span>\n  CSUTLDTC-RESULT       <span class="resolved">&rarr; LS-RESULT</span>\n\n<span class="kw">LINKAGE SECTION.</span>\n  01 LS-DATE        PIC X(10).\n  01 LS-DATE-FORMAT PIC X(10).\n  01 LS-RESULT      PIC X(80).`,
-    delay: 3000
-  },
-  {
-    id: 'step5',
-    title: 'Step 5: Chained CALL — CEEDAYS',
-    subtitle: 'Nested dynamic CALL to IBM Language Environment runtime service',
-    nodes: ['node-ceedays'],
-    edges: ['edge-csutldtc-ceedays'],
-    edgeLabels: ['elabel-csutldtc-ceedays'],
-    nodeClass: 'active',
-    edgeClass: 'active',
-    file: 'CSUTLDTC.cbl (line 116)',
-    message: 'CSUTLDTC chains to CEEDAYS (IBM LE) — converts date to Lilian day number for validation.',
-    code: `<span class="kw">CALL</span> <span class="str">"CEEDAYS"</span> <span class="kw">USING</span>\n  WS-DATE-TO-TEST     <span class="resolved">(vstring)</span>\n  WS-DATE-FORMAT      <span class="resolved">(vstring)</span>\n  OUTPUT-LILLIAN      <span class="resolved">S9(9) BINARY</span>\n  FEEDBACK-CODE       <span class="resolved">8-byte struct</span>`,
-    delay: 2000
-  },
-  {
-    id: 'step6',
-    title: 'Step 6: User Confirmation → TRANSACT WRITE',
-    subtitle: 'Confirm Y/N decision point — writes new transaction record',
-    nodes: ['node-transact'],
-    edges: ['edge-ceedays-confirm', 'edge-confirm-transact'],
-    edgeLabels: ['elabel-ceedays-confirm', 'elabel-confirm-transact'],
-    decisions: ['decision-confirm'],
-    decisionLabels: ['dlabel-confirm'],
-    nodeClass: 'active',
-    edgeClass: 'active',
-    file: 'COTRN02C.cbl (ADD-TRANSACTION para)',
-    message: 'After all validation passes, user confirms Y/N. If Y: STARTBR at HIGH-VALUES → READPREV (last ID) → ENDBR → increment → WRITE new record.',
-    code: `<span class="kw">IF</span> WS-RETURN-MSG-OFF = 0\n  <span class="kw">IF</span> CONFIRMI = <span class="str">'Y'</span> OR <span class="str">'y'</span>\n    <span class="kw">PERFORM</span> ADD-TRANSACTION\n  <span class="kw">ELSE</span>\n    MOVE <span class="str">'Confirm to add this transaction'</span>\n    TO WS-RETURN-MSG\n\n<span class="cmt">* ADD-TRANSACTION:</span>\n<span class="kw">EXEC CICS STARTBR</span> DATASET(WS-TRANSACT-FILE)\n  RIDFLD(<span class="resolved">HIGH-VALUES</span>) GTEQ\n<span class="kw">END-EXEC</span>\n<span class="kw">EXEC CICS READPREV</span> → last TRAN-ID\n<span class="kw">EXEC CICS WRITE</span> DATASET(WS-TRANSACT-FILE)\n  FROM(<span class="resolved">TRAN-RECORD</span>)`,
-    delay: 3000
-  },
-];
-
-// ============================================================
-//  COCRDLIC TRACE STEPS (Option 3 — Credit Card List)
-// ============================================================
-const COCRDLIC_STEPS = [
-  {
-    id: 'coc-step1',
-    title: 'Step 1: Menu Dispatch',
-    subtitle: 'Resolving dynamic XCTL from COMEN02Y data table',
-    nodes: ['node-terminal', 'node-comen01c', 'node-comen02y'],
-    edges: ['edge-terminal-comen01c', 'edge-comen01c-comen02y'],
-    edgeLabels: ['elabel-terminal-comen01c', 'elabel-comen01c-comen02y'],
-    nodeClass: 'active',
-    edgeClass: 'active',
-    file: 'COMEN02Y.cpy',
-    message: 'Reading menu data table... Option 3 maps to COCRDLIC via REDEFINES overlay — a completely different program than option 8.',
-    code: `10 FILLER PIC 9(02) VALUE <span class="resolved">3</span>.\n10 FILLER PIC X(35) VALUE\n   <span class="str">'Credit Card List'</span>.\n10 FILLER PIC X(08) VALUE <span class="resolved">'COCRDLIC'</span>.\n\n<span class="kw">EXEC CICS</span>\n  <span class="kw">XCTL PROGRAM</span>(CDEMO-MENU-OPT-PGMNAME(3))\n  COMMAREA(CARDDEMO-COMMAREA)\n<span class="kw">END-EXEC</span>`,
-    delay: 2500
-  },
-  {
-    id: 'coc-step2',
-    title: 'Step 2: XCTL to COCRDLIC',
-    subtitle: 'Control transfers to Credit Card List program + COMMAREA',
-    nodes: ['node-cocrdlic'],
-    edges: ['edge-comen01c-cocrdlic'],
-    edgeLabels: ['elabel-comen01c-cocrdlic'],
-    nodeClass: 'active',
-    edgeClass: 'active',
-    file: 'COCRDLIC.cbl',
-    message: 'COCRDLIC is a pseudo-conversational CICS program. No CALL statements — all transfers use XCTL. Only reads data, never writes.',
-    code: `<span class="kw">EXEC CICS</span>\n  <span class="kw">XCTL PROGRAM</span>(<span class="resolved">COCRDLIC</span>)\n  COMMAREA(CARDDEMO-COMMAREA)\n<span class="kw">END-EXEC</span>\n\n<span class="cmt">* Key difference: NO CALL statements</span>\n<span class="cmt">* All transfers use XCTL</span>\n<span class="cmt">* READ-ONLY data access</span>`,
-    delay: 2000
-  },
-  {
-    id: 'coc-step3',
-    title: 'Step 3: CARDDAT Browse',
-    subtitle: 'VSAM STARTBR/READNEXT/ENDBR — read-only paginated browse',
-    nodes: ['node-carddat'],
-    edges: ['edge-cocrdlic-carddat'],
-    edgeLabels: ['elabel-cocrdlic-carddat'],
-    nodeClass: 'active',
-    edgeClass: 'active',
-    badge: 'badge-readonly',
-    file: 'COCRDLIC.cbl (9000-READ-FORWARD)',
-    message: 'COCRDLIC browses CARDDAT VSAM with STARTBR/READNEXT/ENDBR — READ ONLY. No CALL statements, only XCTL transfers.',
-    code: `<span class="kw">EXEC CICS STARTBR</span>\n  DATASET(<span class="resolved">LIT-CARD-FILE</span>)  <span class="cmt">&larr; 'CARDDAT'</span>\n  RIDFLD(WS-CARD-RID-CARDNUM)\n  GTEQ\n<span class="kw">END-EXEC</span>\n\n<span class="kw">EXEC CICS READNEXT</span>\n  DATASET(<span class="resolved">LIT-CARD-FILE</span>)\n  INTO(<span class="resolved">CARD-RECORD</span>)\n<span class="kw">END-EXEC</span>\n\n<span class="kw">EXEC CICS ENDBR</span> DATASET(LIT-CARD-FILE)\n<span class="kw">END-EXEC</span>`,
-    delay: 2500
-  },
-  {
-    id: 'coc-step4',
-    title: 'Step 4: Downstream Navigation',
-    subtitle: 'Dynamic XCTL to detail view (S) or update (U) via CCARD-NEXT-PROG',
-    nodes: ['node-cocrdslc', 'node-cocrdupc'],
-    edges: ['edge-cocrdlic-cocrdslc', 'edge-cocrdlic-cocrdupc'],
-    edgeLabels: ['elabel-cocrdlic-cocrdslc', 'elabel-cocrdlic-cocrdupc'],
-    nodeClass: 'active',
-    edgeClass: 'active',
-    file: 'COCRDLIC.cbl + CVCRD01Y.cpy',
-    message: 'Another layer of dynamic call resolution — CCARD-NEXT-PROG resolves to COCRDSLC (S) or COCRDUPC (U) based on user selection.',
-    code: `<span class="cmt">* User types 'S':</span>\n<span class="kw">MOVE</span> LIT-CARDDTLPGM <span class="kw">TO</span> CCARD-NEXT-PROG\n<span class="cmt">&larr; 'COCRDSLC'</span>\n\n<span class="cmt">* User types 'U':</span>\n<span class="kw">MOVE</span> LIT-CARDUPDPGM <span class="kw">TO</span> CCARD-NEXT-PROG\n<span class="cmt">&larr; 'COCRDUPC'</span>\n\n<span class="kw">EXEC CICS</span>\n  <span class="kw">XCTL PROGRAM</span>(<span class="resolved">CCARD-NEXT-PROG</span>)\n  COMMAREA(WS-COMMAREA)\n<span class="kw">END-EXEC</span>`,
-    delay: 2500
-  }
-];
-
-// ============================================================
-//  COBIL00C TRACE STEPS (Option 10 — Bill Payment)
-// ============================================================
-const COBIL00C_STEPS = [
-  {
-    id: 'bp-step1',
-    title: 'Step 1: Menu Dispatch',
-    subtitle: 'Resolving dynamic XCTL from COMEN02Y data table',
-    nodes: ['node-terminal', 'node-comen01c', 'node-comen02y'],
-    edges: ['edge-terminal-comen01c', 'edge-comen01c-comen02y'],
-    edgeLabels: ['elabel-terminal-comen01c', 'elabel-comen01c-comen02y'],
-    nodeClass: 'active',
-    edgeClass: 'active',
-    file: 'COMEN02Y.cpy',
-    message: 'Reading menu data table... Option 10 maps to COBIL00C — a completely different flow from options 3 and 8.',
-    code: `10 FILLER PIC 9(02) VALUE <span class="resolved">10</span>.\n10 FILLER PIC X(35) VALUE\n   <span class="str">'Bill Payment'</span>.\n10 FILLER PIC X(08) VALUE <span class="resolved">'COBIL00C'</span>.\n\n<span class="kw">EXEC CICS</span>\n  <span class="kw">XCTL PROGRAM</span>(CDEMO-MENU-OPT-PGMNAME(10))\n  COMMAREA(CARDDEMO-COMMAREA)\n<span class="kw">END-EXEC</span>`,
-    delay: 2500
-  },
-  {
-    id: 'bp-step2',
-    title: 'Step 2: XCTL to COBIL00C',
-    subtitle: 'Bill Payment program — pseudo-conversational CICS',
-    nodes: ['node-cobil00c'],
-    edges: [],
-    edgeLabels: [],
-    nodeClass: 'active',
-    edgeClass: 'active',
-    file: 'COBIL00C.cbl',
-    message: 'COBIL00C is a pseudo-conversational CICS program. Key difference from COTRN02C: NO CALL statements at all — all I/O is inline CICS commands.',
-    code: `<span class="kw">EXEC CICS</span>\n  <span class="kw">XCTL PROGRAM</span>(<span class="resolved">COBIL00C</span>)\n  COMMAREA(CARDDEMO-COMMAREA)\n<span class="kw">END-EXEC</span>\n\n<span class="cmt">* Key difference: NO CALL chains</span>\n<span class="cmt">* All VSAM I/O is direct CICS READ/WRITE</span>\n<span class="cmt">* Balance check + Confirm Y/N branching</span>`,
-    delay: 2000
-  },
-  {
-    id: 'bp-step3',
-    title: 'Step 3: Account Lookup + Balance Check',
-    subtitle: 'READ ACCTDAT to validate account and check balance > 0',
-    nodes: ['node-acctdat'],
-    edges: ['edge-cobil00c-acctdat'],
-    edgeLabels: ['elabel-cobil00c-acctdat'],
-    decisions: ['decision-balance'],
-    decisionLabels: ['dlabel-balance'],
-    badge: 'badge-readwrite',
-    nodeClass: 'active',
-    edgeClass: 'active',
-    file: 'COBIL00C.cbl',
-    message: 'User enters Account ID → READ ACCTDAT to get balance. If balance ≤ 0 → error. If > 0 → prompt Confirm Y/N. This is a user-input decision point.',
-    code: `<span class="kw">EXEC CICS READ</span>\n  DATASET(<span class="str">'ACCTDAT'</span>)\n  INTO(<span class="resolved">ACCOUNT-RECORD</span>)\n  RIDFLD(ACCT-ID)\n  UPDATE\n<span class="kw">END-EXEC</span>\n\n<span class="kw">IF</span> ACCT-CURR-BAL > 0\n  MOVE <span class="str">'Confirm payment (Y/N)?'</span>\n<span class="kw">ELSE</span>\n  MOVE <span class="str">'Nothing to pay'</span> TO WS-MSG`,
-    delay: 2500
-  },
-  {
-    id: 'bp-step4',
-    title: 'Step 4: Confirm → Payment Processing',
-    subtitle: 'READ CXACAIX + WRITE TRANSACT + REWRITE ACCTDAT',
-    nodes: ['node-cxacaix-bp', 'node-transact-bp'],
-    edges: ['edge-cobil00c-cxacaix-bp', 'edge-cobil00c-transact-bp'],
-    edgeLabels: ['elabel-cobil00c-cxacaix-bp', 'elabel-cobil00c-transact-bp'],
-    nodeClass: 'active',
-    edgeClass: 'active',
-    file: 'COBIL00C.cbl (PROCESS-PAYMENT)',
-    message: 'Confirm=Y triggers: READ CXACAIX (get card#) → generate new TRAN-ID via STARTBR/READPREV → WRITE TRANSACT (payment record) → REWRITE ACCTDAT (balance=0).',
-    code: `<span class="cmt">* Confirm = Y path:</span>\n<span class="kw">EXEC CICS READ</span> DATASET(<span class="str">'CXACAIX'</span>)\n  INTO(CARD-XREF-RECORD) RIDFLD(ACCT-ID)\n<span class="kw">END-EXEC</span>\n\n<span class="kw">EXEC CICS WRITE</span> DATASET(<span class="str">'TRANSACT'</span>)\n  FROM(<span class="resolved">TRAN-RECORD</span>)  <span class="cmt">&larr; payment</span>\n<span class="kw">END-EXEC</span>\n\n<span class="kw">EXEC CICS REWRITE</span> DATASET(<span class="str">'ACCTDAT'</span>)\n  FROM(<span class="resolved">ACCOUNT-RECORD</span>)  <span class="cmt">&larr; bal=0</span>\n<span class="kw">END-EXEC</span>`,
-    delay: 3000
-  }
-];
-
-// ============================================================
-//  STATE
-// ============================================================
-let isRunning = false;
-let simulationTimer = null;
-
-// ============================================================
-//  SIMULATION MODE
-// ============================================================
-async function startSimulation(opt) {
-  if (isRunning) return;
-  const chosen = opt || selectedOption || MENU_OPTIONS[7];
-  isRunning = true;
-  document.getElementById('simulate-btn').disabled = true;
-  document.getElementById('start-btn').disabled = true;
-  document.getElementById('event-log').innerHTML = '';
-
-  const edgeLabel = document.getElementById('elabel-terminal-comen01c');
-  if (edgeLabel) edgeLabel.textContent = `option ${chosen.num}`;
-
-  // Terminal selection log
-  addLogEntry({
-    title: 'CICS Terminal Input',
-    file: 'COMEN02Y.cpy',
-    message: `Operator selected option ${chosen.num} (${chosen.name}) — resolving XCTL target...`,
-    code: `10 FILLER PIC 9(02) VALUE <span class="resolved">${chosen.num}</span>.\n10 FILLER PIC X(35) VALUE\n   <span class="str">'${chosen.name}'</span>.\n10 FILLER PIC X(08) VALUE <span class="resolved">'${chosen.pgm}'</span>.`
-  });
-  await sleep(1500);
-
-  if (chosen.num === 8) {
-    // ===== OPTION 8: Full 7-step trace (left tree) =====
-    for (let i = 0; i < TRACE_STEPS.length; i++) {
-      if (!isRunning) break;
-      highlightStep(TRACE_STEPS[i]);
-      addLogEntry(TRACE_STEPS[i]);
-      await sleep(TRACE_STEPS[i].delay);
-    }
-    if (isRunning) {
-      showStepIndicator('Trace Complete', 'All 6 call resolution + decision steps traced');
-      addCompletionEntry();
-    }
-  } else if (chosen.num === 10) {
-    // ===== OPTION 10: Full 4-step COBIL00C trace (bottom tree) =====
-    for (let i = 0; i < COBIL00C_STEPS.length; i++) {
-      if (!isRunning) break;
-      highlightStep(COBIL00C_STEPS[i]);
-      addLogEntry(COBIL00C_STEPS[i]);
-      await sleep(COBIL00C_STEPS[i].delay);
-    }
-    if (isRunning) {
-      showStepIndicator('Trace Complete', 'COBIL00C bill payment flow traced');
-      addCobil00cCompletionEntry();
-    }
-  } else if (chosen.num === 3) {
-    // ===== OPTION 3: Full 4-step COCRDLIC trace (right tree) =====
-    for (let i = 0; i < COCRDLIC_STEPS.length; i++) {
-      if (!isRunning) break;
-      highlightStep(COCRDLIC_STEPS[i]);
-      addLogEntry(COCRDLIC_STEPS[i]);
-      await sleep(COCRDLIC_STEPS[i].delay);
-    }
-    if (isRunning) {
-      showStepIndicator('Trace Complete', 'COCRDLIC flow traced — compare with Option 8');
-      addCocrdlicCompletionEntry();
-    }
-  } else {
-    // ===== OTHER OPTIONS: partial trace =====
-    const step1 = {...TRACE_STEPS[0]};
-    step1.message = `Reading menu data table... Option ${chosen.num} maps to program ${chosen.pgm} via REDEFINES overlay.`;
-    step1.code = `10 FILLER PIC 9(02) VALUE ${chosen.num}.\n10 FILLER PIC X(35) VALUE\n   '${chosen.name}'.\n10 FILLER PIC X(08) VALUE <span class="resolved">'${chosen.pgm}'</span>.\n\n<span class="kw">EXEC CICS</span>\n  <span class="kw">XCTL PROGRAM</span>(CDEMO-MENU-OPT-PGMNAME(${chosen.num}))\n  COMMAREA(CARDDEMO-COMMAREA)\n<span class="kw">END-EXEC</span>`;
-    highlightStep(step1);
-    addLogEntry(step1);
-    await sleep(step1.delay);
-
-    if (isRunning) {
-      showStepIndicator('Trace Paused', 'Select Option 3, 8, or 10 for full traced flows');
-      addLogEntry({
-        title: 'END OF TRACE',
-        file: '',
-        message: `Option ${chosen.num} resolved to ${chosen.pgm} (${chosen.name}). Try Option 3 (right tree), Option 8 (left tree), or Option 10 (bottom tree) for full traced flows.`,
-        code: ''
-      });
-    }
-  }
-  isRunning = false;
-  enableButtons();
-}
-
-function enableButtons() {
-  document.getElementById('simulate-btn').disabled = false;
-  document.getElementById('start-btn').disabled = false;
+function waitForTerminalClose() {
+  return new Promise(resolve => { _termResolve = resolve; });
 }
 
 // ============================================================
-//  LIVE TRACE MODE
-// ============================================================
-function openConfig(opt) {
-  selectedOption = opt || selectedOption || MENU_OPTIONS[7];
-  startLiveTrace();
-}
-
-async function startLiveTrace() {
-  const serverUrl = window.location.origin;
-
-  isRunning = true;
-  document.getElementById('simulate-btn').disabled = true;
-  document.getElementById('start-btn').disabled = true;
-  document.getElementById('event-log').innerHTML = '';
-  const optNum = selectedOption ? selectedOption.num : '8';
-  const optName = selectedOption ? selectedOption.name : 'Add Transaction';
-  addLogEntry({
-    title: 'Connecting...',
-    file: 'Devin API',
-    message: `Asking Devin: "What does option ${optNum} (${optName}) do?"`,
-    code: ''
-  });
-
-  try {
-    // Connect to local proxy server via SSE
-    const evtSource = new EventSource(
-      `${serverUrl}/events?option=${encodeURIComponent(optNum)}&option_name=${encodeURIComponent(optName)}`
-    );
-
-    // Live mode: dynamically match Devin's responses to diagram nodes
-    let liveStepCount = 0;
-    let liveMatchedAnyNode = false;
-
-    // Pre-highlight starting nodes — every option flows through these
-    highlightStartingNodes(optNum);
-
-    evtSource.onmessage = function(event) {
-      const data = JSON.parse(event.data);
-      if (data.type === 'step') {
-        const stepIdx = data.step_index;
-
-        if (stepIdx === -1) {
-          // Trace finished — show popup only if no option-specific nodes ever matched
-          if (!liveMatchedAnyNode) {
-            showNoDiagramPopup(optNum, optName);
-          }
-          showStepIndicator('Trace Complete', 'All dynamic calls resolved');
-          addLogEntry({
-            title: 'TRACE COMPLETE',
-            file: '',
-            message: data.finding || 'All dynamic call resolution steps traced.',
-            code: ''
-          });
-        } else {
-          liveStepCount++;
-          // Parse program names from Devin's response and light up matching nodes
-          const matched = highlightLiveStep(data, liveStepCount);
-          if (matched) liveMatchedAnyNode = true;
-          addLogEntry({
-            title: data.title || `Step ${liveStepCount}`,
-            file: data.file || '',
-            message: data.finding || '',
-            code: data.code_snippet || ''
-          });
-        }
-      } else if (data.type === 'complete') {
-        // Trace finished — show popup only if no option-specific nodes ever matched
-        if (!liveMatchedAnyNode) {
-          showNoDiagramPopup(optNum, optName);
-        }
-        showStepIndicator('Trace Complete', `${data.steps_resolved || 0} steps resolved`);
-        if (data.session_url) {
-          addLogEntry({
-            title: 'Session Complete',
-            file: data.session_url,
-            message: `Trace finished. ${data.steps_resolved || 0} dynamic call resolution steps traced.`,
-            code: ''
-          });
-        }
-        evtSource.close();
-        isRunning = false;
-        document.getElementById('simulate-btn').disabled = false;
-        document.getElementById('start-btn').disabled = false;
-      } else if (data.type === 'session_created') {
-        addLogEntry({
-          title: 'Session Created',
-          file: data.session_url || '',
-          message: `Devin session started: ${data.session_id}`,
-          code: ''
-        });
-      } else if (data.type === 'status') {
-        addLogEntry({
-          title: 'Status',
-          file: '',
-          message: data.message || '',
-          code: ''
-        });
-      } else if (data.type === 'error') {
-        addLogEntry({
-          title: 'Error',
-          file: '',
-          message: data.message || 'An error occurred during tracing.',
-          code: ''
-        });
-      }
-    };
-
-    evtSource.onerror = function(err) {
-      console.error('SSE error:', err);
-      addLogEntry({
-        title: 'Connection Error',
-        file: '',
-        message: 'Lost connection to trace server. Using simulation mode as fallback.',
-        code: ''
-      });
-      evtSource.close();
-      // Fallback to simulation
-      setTimeout(() => startSimulation(), 1000);
-    };
-  } catch (err) {
-    console.error('Failed to start live trace:', err);
-    addLogEntry({
-      title: 'Error',
-      file: '',
-      message: `Failed to connect: ${err.message}. Falling back to simulation.`,
-      code: ''
-    });
-    setTimeout(() => startSimulation(), 1000);
-  }
-}
-
-// ============================================================
-//  LIVE TRACE: DYNAMIC PROGRAM-NAME MATCHING
+//  LIVE TRACE: SSE-DRIVEN DEVIN SESSION
 // ============================================================
 
-// Map known COBOL program/file names → diagram node IDs
+let _activeSessionId = null;
+let _evtSource = null;
+let _inputTxnNum = 1;
+let _lastPhase = null;
+
+// Program name → SVG node ID
 const PROGRAM_NODE_MAP = {
-  'COMEN01C': 'node-comen01c',
-  'COMEN02Y': 'node-comen02y',
-  'COTRN02C': 'node-cotrn02c',
-  'CCXREF':   'node-ccxref',
-  'CXACAIX':  'node-cxacaix',
-  'CSUTLDTC': 'node-csutldtc',
-  'CEEDAYS':  'node-ceedays',
-  'TRANSACT': 'node-transact',
-  'COCRDLIC': 'node-cocrdlic',
-  'CARDDAT':  'node-carddat',
-  'COCRDSLC': 'node-cocrdslc',
-  'COCRDUPC': 'node-cocrdupc',
-  'COBIL00C': 'node-cobil00c',
-  'ACCTDAT':  'node-acctdat'
+  'COMEN01C': 'n-menu', 'COMEN02Y': 'n-comen02y',
+  'COTRN02C': 'n-cotrn02c',
+  'CCXREF': 'n-xref-online', 'CXACAIX': 'n-cxacaix',
+  'CSUTLDTC': 'n-csutldtc', 'CEEDAYS': 'n-ceedays',
+  'TRANSACT': 'n-transact-write',
+  'CBTRN02C': 'n-cbtrn02c', 'DALYTRAN': 'n-dalytran',
+  'ACCOUNT': 'n-acct-read', 'ACCTDAT': 'n-acct-read',
+  'COCRDLIC': 'n-cocrdlic', 'CARDDAT': 'n-carddat',
+  'COCRDSLC': 'n-cocrdslc', 'COCRDUPC': 'n-cocrdupc',
+  'DALYREJS': 'n-dalyrejs', 'TCATBAL': 'n-tcatbal',
 };
 
-// For option 10 live mode, map shared file names to bill-payment-specific nodes
-const PROGRAM_NODE_MAP_BP = {
-  'COMEN01C': 'node-comen01c',
-  'COMEN02Y': 'node-comen02y',
-  'COBIL00C': 'node-cobil00c',
-  'ACCTDAT':  'node-acctdat',
-  'CXACAIX':  'node-cxacaix-bp',
-  'TRANSACT': 'node-transact-bp'
-};
-
-// Edge adjacency derived from SVG edge IDs (edge-{src}-{tgt})
-// Maps "srcNodeId|tgtNodeId" → { edgeId, labelId }
+// Edge adjacency: nodeA-nodeB → [edgeId, labelId, style?]
+// When both nodes are active, light the edge between them
 const EDGE_ADJACENCY = {
-  'node-terminal|node-comen01c':       { edge: 'edge-terminal-comen01c',     label: 'elabel-terminal-comen01c' },
-  'node-comen01c|node-comen02y':       { edge: 'edge-comen01c-comen02y',     label: 'elabel-comen01c-comen02y' },
-  'node-comen01c|node-cotrn02c':       { edge: 'edge-comen01c-cotrn02c',     label: 'elabel-comen01c-cotrn02c' },
-  'node-cotrn02c|node-ccxref':         { edge: 'edge-cotrn02c-ccxref',       label: 'elabel-cotrn02c-ccxref' },
-  'node-cotrn02c|node-cxacaix':        { edge: 'edge-cotrn02c-cxacaix',      label: 'elabel-cotrn02c-cxacaix' },
-  'node-cotrn02c|node-csutldtc':       { edge: 'edge-cotrn02c-csutldtc',     label: 'elabel-cotrn02c-csutldtc' },
-  'node-csutldtc|node-ceedays':        { edge: 'edge-csutldtc-ceedays',      label: 'elabel-csutldtc-ceedays' },
-  'node-ceedays|node-transact':        { edge: 'edge-confirm-transact',      label: 'elabel-confirm-transact' },
-  'node-comen01c|node-cocrdlic':       { edge: 'edge-comen01c-cocrdlic',     label: 'elabel-comen01c-cocrdlic' },
-  'node-cocrdlic|node-carddat':        { edge: 'edge-cocrdlic-carddat',      label: 'elabel-cocrdlic-carddat' },
-  'node-cocrdlic|node-cocrdslc':       { edge: 'edge-cocrdlic-cocrdslc',     label: 'elabel-cocrdlic-cocrdslc' },
-  'node-cocrdlic|node-cocrdupc':       { edge: 'edge-cocrdlic-cocrdupc',     label: 'elabel-cocrdlic-cocrdupc' },
-  'node-cobil00c|node-acctdat':        { edge: 'edge-cobil00c-acctdat',      label: 'elabel-cobil00c-acctdat' },
-  'node-cobil00c|node-cxacaix-bp':     { edge: 'edge-cobil00c-cxacaix-bp',   label: 'elabel-cobil00c-cxacaix-bp' },
-  'node-cobil00c|node-transact-bp':    { edge: 'edge-cobil00c-transact-bp',  label: 'elabel-cobil00c-transact-bp' }
+  'n-terminal|n-menu':         ['e-term-menu', 'el-term-menu'],
+  'n-menu|n-comen02y':         ['e-menu-comen02y', 'el-menu-comen02y'],
+  'n-menu|n-cotrn02c':         ['e-menu-cotrn', 'el-menu-cotrn'],
+  'n-cotrn02c|n-xref-online':  ['e-cotrn-xref', 'el-cotrn-xref'],
+  'n-cotrn02c|n-cxacaix':      ['e-cotrn-cxacaix', 'el-cotrn-cxacaix'],
+  'n-cotrn02c|n-csutldtc':     ['e-cotrn-csutldtc', 'el-cotrn-csutldtc'],
+  'n-csutldtc|n-ceedays':      ['e-csutldtc-ceedays', 'el-csutldtc-ceedays'],
+  'n-cotrn02c|n-transact-write': ['e-confirm-transact', 'el-confirm-transact'],
+  'n-cbtrn02c|n-dalytran':     ['e-cbtrn-daly', 'el-cbtrn-daly'],
+  'n-cbtrn02c|n-xref-batch':   ['e-cbtrn-xref', 'el-cbtrn-xref'],
+  'n-cbtrn02c|n-acct-read':    ['e-cbtrn-acct', 'el-cbtrn-acct'],
+  // Accept/reject path edges are NOT here — they are activated exclusively
+  // by handleDBResult based on the actual DB decision, not by edge inference.
+  'n-menu|n-cocrdlic':         ['e-menu-cocrdlic', 'el-menu-cocrdlic'],
+  'n-cocrdlic|n-carddat':      ['e-cocrdlic-carddat', 'el-cocrdlic-carddat'],
+  'n-cocrdlic|n-cocrdslc':     ['e-cocrdlic-cocrdslc', 'el-cocrdlic-cocrdslc'],
+  'n-cocrdlic|n-cocrdupc':     ['e-cocrdlic-cocrdupc', 'el-cocrdlic-cocrdupc'],
 };
 
-// Badge hints: if a node is mentioned with a write/mutate context, show the badge
-const NODE_BADGES = {
-  'node-carddat':  'badge-readonly',
-  'node-acctdat':  'badge-readwrite'
-};
+// Track which nodes are currently active for edge inference
+let _activeNodes = new Set();
 
-// Starting nodes that are common to ALL options (shared top section)
-const STARTING_NODES = ['node-terminal', 'node-comen01c', 'node-comen02y'];
+function highlightPrograms(programs, phase) {
+  if (!programs || !programs.length) return;
+  const style = (phase === 'batch') ? 'batch' : undefined;
+  const nodeIds = [];
 
-// Track which nodes have been highlighted so far in the live session
-let liveHighlightedNodes = new Set();
-
-function highlightStartingNodes(optNum) {
-  // Light up terminal → COMEN01C → COMEN02Y (shared starting path)
-  for (const nodeId of STARTING_NODES) {
-    const g = document.getElementById(nodeId);
-    if (!g) continue;
-    const rect = g.querySelector('.node-rect');
-    const label = g.querySelector('.node-label');
-    const sublabel = g.querySelector('.node-sublabel');
-    if (rect) rect.classList.add('active');
-    if (label) label.classList.add('active');
-    if (sublabel) sublabel.classList.add('active');
-    liveHighlightedNodes.add(nodeId);
+  for (const pgm of programs) {
+    const upper = pgm.toUpperCase();
+    const nodeId = PROGRAM_NODE_MAP[upper];
+    if (!nodeId) continue;
+    // ACCOUNT/ACCTDAT should only light up after CBTRN02C is active (batch phase)
+    if ((upper === 'ACCOUNT' || upper === 'ACCTDAT') && !_activeNodes.has('n-cbtrn02c')) continue;
+    activateNode(nodeId, style);
+    _activeNodes.add(nodeId);
+    nodeIds.push(nodeId);
   }
-  // Light up shared edges
-  const e1 = document.getElementById('edge-terminal-comen01c');
-  const l1 = document.getElementById('elabel-terminal-comen01c');
-  const e2 = document.getElementById('edge-comen01c-comen02y');
-  const l2 = document.getElementById('elabel-comen01c-comen02y');
-  if (e1) e1.classList.add('active');
-  if (l1) { l1.classList.add('active'); l1.textContent = `option ${optNum}`; }
-  if (e2) e2.classList.add('active');
-  if (l2) l2.classList.add('active');
 
-  // For option 10, also pre-highlight the COBIL00C node label annotation
-  if (parseInt(optNum) === 10) {
-    showStepIndicator('Starting Trace', 'COMEN01C → COBIL00C (Bill Payment)');
+  // Infer edges: check every pair of active nodes
+  for (const nA of _activeNodes) {
+    for (const nB of nodeIds) {
+      if (nA === nB) continue;
+      const key1 = nA + '|' + nB;
+      const key2 = nB + '|' + nA;
+      const edge = EDGE_ADJACENCY[key1] || EDGE_ADJACENCY[key2];
+      if (edge) activateEdge(edge[0], edge[1], style);
+    }
+  }
+}
+
+function startLiveTrace() {
+  if (isRunning) return;
+  isRunning = true;
+  _inputTxnNum = 1;
+  _activeSessionId = null;
+  _lastPhase = null;
+  _activeNodes = new Set();
+
+  // Reset all diagram highlights from previous session
+  clearDiagramState();
+
+  document.getElementById('run-btn').disabled = true;
+  document.getElementById('trace-log').innerHTML = '';
+  document.getElementById('sql-log').innerHTML = '';
+  const sessionLink = document.getElementById('session-link');
+  if (sessionLink) sessionLink.style.display = 'none';
+
+  // Show terminal menu — user selects option
+  setPhase('Menu Dispatch — Select Option');
+  showTerminalMenu();
+  addTrace('step', '3270 Terminal: CARDDEMO Main Menu');
+
+  waitForMenuSelect().then(() => {
+    const opt = _selectedOption;
+    const optInfo = MENU_OPTIONS.find(o => o.num === opt);
+    addTrace('step', `Selected <span class="highlight">Option ${opt} — ${optInfo.name}</span>`);
+
+    // Pre-light the known entry nodes (these are givens)
+    activateNode('n-terminal');
+    activateEdge('e-term-menu', 'el-term-menu');
+    activateNode('n-menu');
+    activateEdge('e-menu-comen02y', 'el-menu-comen02y');
+    activateNode('n-comen02y');
+    _activeNodes.add('n-terminal');
+    _activeNodes.add('n-menu');
+    _activeNodes.add('n-comen02y');
+
+    addTrace('step', 'Connecting to Devin trace server...');
+
+    const url = `/events?option=${opt}&option_name=${encodeURIComponent(optInfo.name)}`;
+    _evtSource = new EventSource(url);
+
+    _evtSource.onmessage = function(event) {
+      try {
+        const data = JSON.parse(event.data);
+        handleSSEEvent(data);
+      } catch (e) {
+        console.error('SSE parse error:', e);
+      }
+    };
+
+    _evtSource.onerror = function(err) {
+      console.error('SSE error:', err);
+      addTrace('reject', 'Connection to trace server lost');
+      if (_evtSource) { _evtSource.close(); _evtSource = null; }
+      isRunning = false;
+      document.getElementById('run-btn').disabled = false;
+    };
+  });
+}
+
+function handleSSEEvent(data) {
+  const type = data.type;
+
+  if (type === 'status') {
+    addTrace('step', data.message || '');
+    return;
+  }
+  if (type === 'session_created') {
+    _activeSessionId = data.session_id;
+    const link = document.getElementById('session-link');
+    if (link && data.session_url) {
+      link.href = data.session_url;
+      link.style.display = 'inline';
+    }
+    addTrace('data', `Devin session: <a href="${data.session_url || '#'}" target="_blank" style="color:#4da6ff">${data.session_id || 'started'}</a>`);
+    return;
+  }
+  if (type === 'step') { handleTraceStep(data); return; }
+  if (type === 'input_required') { handleInputRequired(data); return; }
+  if (type === 'db_result') { handleDBResult(data); return; }
+  if (type === 'complete') { handleComplete(data); return; }
+  if (type === 'error') {
+    addTrace('reject', 'Error: ' + (data.message || 'Unknown'));
+    return;
+  }
+}
+
+function handleTraceStep(data) {
+  const phase = data.phase || 'online';
+
+  // Phase transition: clear diagram when switching to batch or back
+  if (phase !== _lastPhase) {
+    if (_lastPhase && phase === 'batch') {
+      clearDiagramState();
+      _activeNodes = new Set();
+    }
+    _lastPhase = phase;
+    if (phase === 'online') setPhase('Online — CICS Interactive');
+    else if (phase === 'batch') setPhase('Batch Processing');
+    else if (phase === 'complete') { handleComplete(data); return; }
+  }
+
+  showStep(data.title || 'Tracing...', data.finding ? data.finding.substring(0, 80) : '');
+
+  // Highlight programs from the explicit programs array only
+  highlightPrograms(data.programs, phase);
+
+  // Build trace entry
+  const finding = data.finding || '';
+  const code = data.code_snippet || '';
+  let html = '';
+  if (data.title) html += `<span class="code">${data.title}</span>`;
+  if (finding || code) {
+    html += '<div class="devin-response"><div class="devin-label">Devin Analysis</div>' + finding;
+    if (code) html += '<div class="cobol-block">' + escCode(code) + '</div>';
+    html += '</div>';
+  }
+  if (html) addTrace('step', html);
+
+  // Accept/reject paths are controlled exclusively by handleDBResult (actual DB decision).
+  // Do NOT scan Devin's text for accept/reject — COBOL code contains REJECT-RECORD,
+  // WS-REJECT-COUNT, etc. and Devin's descriptions use "rejected" in non-decision contexts.
+  const pgms = (data.programs || []).map(p => p.toUpperCase());
+
+  // Refresh DB state when touching data-access programs or when transaction was committed
+  if (data.db_committed || pgms.some(p => ['CCXREF', 'TRANSACT', 'ACCOUNT', 'ACCTDAT', 'DALYTRAN', 'CARDDAT', 'TCATBAL', 'DALYREJS'].includes(p))) {
+    refreshDbState();
+    if (data.db_committed) {
+      addSqlEntry('insert', `INSERT INTO transactions (amount, merchant, status) — committed when Devin traced WRITE TRANSACT`, `tran_id=${data.tran_id || '?'}`);
+    }
+  }
+}
+
+function handleInputRequired(data) {
+  _activeSessionId = data.session_id || _activeSessionId;
+  const phase = data.phase || 'online';
+  if (phase !== _lastPhase) {
+    if (_lastPhase && phase !== _lastPhase) {
+      clearDiagramState();
+      _activeNodes = new Set();
+    }
+    _lastPhase = phase;
+  }
+
+  showStep(data.title || 'Input Required', 'Waiting for user input');
+  highlightPrograms(data.programs, phase);
+
+  // Show the confirmation decision diamond
+  activateEdge('e-cotrn-confirm', 'el-cotrn-confirm');
+  activateDecision('d-confirm', null, 'active');
+
+  addTrace('step', `<span class="highlight">AWAITING INPUT</span>: ${data.finding || 'Enter transaction details in the 3270 terminal'}`);
+  showTransactionScreen(0, _inputTxnNum);
+}
+
+async function handleDBResult(data) {
+  // Accept/reject path is controlled HERE — based on the actual DB batch decision.
+  // Strict equality checks: only 'ACCEPTED' or 'REJECTED'. UNKNOWN triggers nothing.
+  const batchResult = data.batch_result || {};
+  const queries = data.queries_executed || batchResult.queries_executed || [];
+  const results = batchResult.results || [];
+  const r = results[0] || {};
+  const decision = r.decision || 'UNKNOWN';
+  const tempBal = r.temp_bal || 0;
+
+  showStep(data.title || 'Overlimit Check', data.finding ? data.finding.substring(0, 80) : '');
+  highlightPrograms(data.programs, 'batch');
+
+  // Light the decision edge
+  activateEdge('e-acct-decision', 'el-acct-decision', 'batch');
+
+  logQueries(queries);
+  switchTab('sql');
+  addSqlEntry('decision', `-- OVERLIMIT CHECK: credit_limit(${creditLimit}) >= temp_bal(${tempBal}) ?`, decision);
+
+  await refreshDbState();
+  switchTab('vsam');
+
+  if (decision === 'ACCEPTED') {
+    activateDecision('d-overlimit', 'dl-overlimit', 'active');
+    activateDecision(null, 'dl-overlimit2', 'active');
+    activateEdge('e-decision-accept', 'el-decision-accept');
+    activateNode('n-accept');
+    activateEdge('e-accept-transact', 'el-accept-transact');
+    activateEdge('e-accept-tcatbal', 'el-accept-tcatbal');
+    activateNode('n-transact-posted');
+    activateNode('n-tcatbal');
+    showBadge('vb-result', `REWRITE bal → $${acctBal.toFixed(0)}`);
+    const balTd = document.getElementById('td-bal');
+    const cycCrTd = document.getElementById('td-cyc-cr');
+    balTd.classList.add('changed', 'flash-green');
+    cycCrTd.classList.add('changed', 'flash-green');
+    setTimeout(() => { balTd.classList.remove('flash-green'); cycCrTd.classList.remove('flash-green'); }, 1200);
+    addTrace('accept', `→ credit_limit($${creditLimit.toFixed(2)}) >= temp_bal($${typeof tempBal === 'number' ? tempBal.toFixed(2) : tempBal}) → <span class="highlight">ACCEPTED</span>`);
+  } else if (decision === 'REJECTED') {
+    activateDecision('d-overlimit', 'dl-overlimit', 'reject-active');
+    activateDecision(null, 'dl-overlimit2', 'reject-active');
+    activateEdge('e-decision-reject', 'el-decision-reject', 'reject');
+    activateNode('n-reject', 'reject');
+    activateEdge('e-reject-rejs', 'el-reject-rejs', 'reject');
+    activateNode('n-dalyrejs', 'reject');
+    showBadge('vb-reject-reason', 'Code 102: OVERLIMIT');
+    addTrace('reject', `→ credit_limit($${creditLimit.toFixed(2)}) < temp_bal($${typeof tempBal === 'number' ? tempBal.toFixed(2) : tempBal}) → <span class="warn">REJECTED</span>`);
+  }
+  // UNKNOWN decision → no path activated, just log
+
+  if (data.finding) {
+    addTrace('step', '<div class="devin-response"><div class="devin-label">Devin Analysis</div>' + data.finding + '</div>');
+  }
+}
+
+function handleComplete(data) {
+  showStep('Trace Complete', data.title || 'All programs resolved');
+  setPhase('Complete');
+  addTrace('phase', '═══ TRACE COMPLETE ═══');
+  if (data.finding) addTrace('step', '<div class="devin-response"><div class="devin-label">Devin Summary</div>' + data.finding + '</div>');
+  if (data.session_url) {
+    addTrace('data', `<a href="${data.session_url}" target="_blank" style="color:#4da6ff">View full Devin session</a>`);
+  }
+  if (_evtSource) { _evtSource.close(); _evtSource = null; }
+  isRunning = false;
+  document.getElementById('run-btn').disabled = false;
+}
+
+function escCode(s) {
+  if (!s) return '';
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+
+// ============================================================
+//  DIAGRAM HELPERS
+// ============================================================
+function activateNode(id, style) {
+  const g = document.getElementById(id);
+  if (!g) return;
+  const rect = g.querySelector('.node-rect');
+  const label = g.querySelector('.node-label');
+  const sub = g.querySelector('.node-sublabel');
+  const cls = style === 'batch' ? 'batch active' : style === 'reject' ? 'reject-active' : 'active';
+  const lblCls = style === 'batch' ? 'batch-active' : style === 'reject' ? 'reject-active' : 'active';
+  if (rect) { rect.classList.add(...cls.split(' ')); rect.classList.add('pulse'); setTimeout(() => rect.classList.remove('pulse'), 1500); }
+  if (label) label.classList.add(lblCls);
+  if (sub) sub.classList.add(lblCls);
+}
+
+function activateEdge(edgeId, labelId, style) {
+  const cls = style === 'batch' ? 'batch-active' : style === 'reject' ? 'reject-active' : 'active';
+  const markerId = style === 'batch' ? 'arr-orange' : style === 'reject' ? 'arr-red' : 'arr-green';
+  const e = document.getElementById(edgeId);
+  const l = labelId ? document.getElementById(labelId) : null;
+  if (e) { e.classList.add(cls); e.setAttribute('marker-end', `url(#${markerId})`); }
+  if (l) l.classList.add(cls);
+}
+
+function activateDecision(polyId, labelId, cls) {
+  if (polyId) {
+    const g = document.getElementById(polyId);
+    if (g) {
+      const p = g.querySelector('polygon');
+      const t = g.querySelector('text');
+      if (p) p.classList.add(cls);
+      if (t) t.classList.add(cls);
+    }
+  }
+  if (labelId) {
+    const l = document.getElementById(labelId);
+    if (l) l.classList.add(cls);
+  }
+}
+
+function showBadge(id, text, styleOrLines) {
+  const g = document.getElementById(id);
+  if (!g) return;
+  g.style.opacity = '1';
+  if (id === 'vb-acct' && Array.isArray(styleOrLines)) {
+    g.classList.add('active');
+    const t1 = document.getElementById('vb-acct-text1');
+    const t2 = document.getElementById('vb-acct-text2');
+    if (t1) t1.textContent = styleOrLines[0];
+    if (t2) t2.textContent = styleOrLines[1];
+    return;
+  }
+  if (typeof styleOrLines === 'string') {
+    g.classList.remove('active', 'reject');
+    g.classList.add(styleOrLines);
   } else {
-    showStepIndicator('Starting Trace', 'COMEN01C → Menu Dispatch');
+    g.classList.add('active');
+  }
+  if (text) {
+    const t = g.querySelector('text');
+    if (t) t.textContent = text;
   }
 }
 
-function getActiveNodeMap() {
-  const optNum = selectedOption ? selectedOption.num : 8;
-  return (optNum === 10) ? PROGRAM_NODE_MAP_BP : PROGRAM_NODE_MAP;
+function showStep(title, subtitle) {
+  const ind = document.getElementById('step-indicator');
+  ind.querySelector('.step-num').textContent = title;
+  ind.querySelector('.step-text').textContent = subtitle ? '— ' + subtitle : '';
+  ind.classList.add('visible');
 }
 
-function extractProgramNames(text) {
-  const upper = text.toUpperCase();
-  const found = [];
-  const map = getActiveNodeMap();
-  for (const pgm of Object.keys(map)) {
-    if (upper.includes(pgm)) {
-      found.push(pgm);
-    }
-  }
-  return found;
+function setPhase(text) {
+  document.getElementById('phase-label').textContent = text;
 }
 
-function highlightLiveStep(data, stepNum) {
-  // Combine all text fields from the SSE event
-  const text = [data.title, data.file, data.finding, data.code_snippet]
-    .filter(Boolean).join(' ');
-
-  const programs = extractProgramNames(text);
-  if (programs.length === 0) return false;
-
-  // Resolve node IDs for matched programs (context-aware for option 10)
-  const map = getActiveNodeMap();
-  const nodeIds = programs.map(p => map[p]).filter(Boolean);
-
-  const nodeClass = 'active';
-  const edgeClass = 'active';
-
-  // Show step indicator
-  showStepIndicator(
-    data.title || `Step ${stepNum}`,
-    data.file || programs.join(' → ')
-  );
-
-  // Highlight each matched node
-  for (const nodeId of nodeIds) {
-    const g = document.getElementById(nodeId);
-    if (!g) continue;
-    const rect = g.querySelector('.node-rect');
-    const label = g.querySelector('.node-label');
-    const sublabel = g.querySelector('.node-sublabel');
-    if (rect) { rect.classList.add(nodeClass); rect.classList.add('active-pulse'); }
-    if (label) label.classList.add(nodeClass);
-    if (sublabel) sublabel.classList.add(nodeClass);
-    setTimeout(() => { if (rect) rect.classList.remove('active-pulse'); }, 2000);
-
-    // Show badge if applicable
-    if (NODE_BADGES[nodeId]) {
-      const badge = document.getElementById(NODE_BADGES[nodeId]);
-      if (badge) badge.classList.add('visible');
-    }
-
-    // Light up decision diamonds when relevant nodes activate
-    if (nodeId === 'node-transact') {
-      // Confirm decision lights up when TRANSACT is reached
-      const dc = document.getElementById('decision-confirm');
-      if (dc) { const p = dc.querySelector('polygon'); const t = dc.querySelector('text'); if (p) p.classList.add('active'); if (t) t.classList.add('active'); }
-      const dl = document.getElementById('dlabel-confirm');
-      if (dl) dl.classList.add('active');
-      // Also light up the edges through the confirm diamond
-      const ec = document.getElementById('edge-ceedays-confirm');
-      const lc = document.getElementById('elabel-ceedays-confirm');
-      if (ec) ec.classList.add('active');
-      if (lc) lc.classList.add('active');
-    }
-    if (nodeId === 'node-acctdat' || nodeId === 'node-cxacaix-bp' || nodeId === 'node-transact-bp') {
-      // Balance/Confirm decision lights up for bill payment nodes
-      const db = document.getElementById('decision-balance');
-      if (db) { const p = db.querySelector('polygon'); const t = db.querySelector('text'); if (p) p.classList.add('active'); if (t) t.classList.add('active'); }
-      const dl = document.getElementById('dlabel-balance');
-      if (dl) dl.classList.add('active');
-    }
-
-    // Light up edges connecting previously-highlighted nodes to this one
-    for (const prevNode of liveHighlightedNodes) {
-      // Check both directions
-      const keyFwd = prevNode + '|' + nodeId;
-      const keyRev = nodeId + '|' + prevNode;
-      const adj = EDGE_ADJACENCY[keyFwd] || EDGE_ADJACENCY[keyRev];
-      if (adj) {
-        const edgeEl = document.getElementById(adj.edge);
-        const labelEl = document.getElementById(adj.label);
-        if (edgeEl) edgeEl.classList.add(edgeClass);
-        if (labelEl) labelEl.classList.add(edgeClass);
-      }
-    }
-
-    // Also light up edges between nodes in the same step
-    for (const otherNode of nodeIds) {
-      if (otherNode === nodeId) continue;
-      const key = nodeId + '|' + otherNode;
-      const adj = EDGE_ADJACENCY[key];
-      if (adj) {
-        const edgeEl = document.getElementById(adj.edge);
-        const labelEl = document.getElementById(adj.label);
-        if (edgeEl) edgeEl.classList.add(edgeClass);
-        if (labelEl) labelEl.classList.add(edgeClass);
-      }
-    }
-
-    liveHighlightedNodes.add(nodeId);
-  }
-
-  return true;
-}
-
-function showNoDiagramPopup(optNum, optName) {
-  const popup = document.getElementById('no-diagram-popup');
-  document.getElementById('ndp-title').textContent = `Option ${optNum} — ${optName}`;
-  document.getElementById('ndp-body').textContent =
-    `This option's call flow is not included in the current diagram. ` +
-    `Devin is still tracing it live — check the log panel on the right for results. ` +
-    `Options 3, 8, and 10 have full diagram support.`;
-  popup.classList.add('visible');
+function clearDiagramState() {
+  document.querySelectorAll('.node-rect').forEach(el => {
+    const wasBatch = el.classList.contains('batch');
+    el.setAttribute('class', 'node-rect' + (wasBatch ? ' batch' : ''));
+  });
+  document.querySelectorAll('.node-label').forEach(el => el.setAttribute('class', 'node-label'));
+  document.querySelectorAll('.node-sublabel').forEach(el => el.setAttribute('class', 'node-sublabel'));
+  document.querySelectorAll('.edge-line').forEach(el => {
+    const wasDashed = el.classList.contains('dashed');
+    el.setAttribute('class', 'edge-line' + (wasDashed ? ' dashed' : ''));
+    el.setAttribute('marker-end', 'url(#arr-gray)');
+  });
+  document.querySelectorAll('.edge-label').forEach(el => el.setAttribute('class', 'edge-label'));
+  document.querySelectorAll('.decision-node polygon').forEach(el => el.setAttribute('class', ''));
+  document.querySelectorAll('.decision-node text').forEach(el => el.setAttribute('class', ''));
+  document.querySelectorAll('.decision-label').forEach(el => el.setAttribute('class', 'decision-label'));
+  document.querySelectorAll('.value-badge').forEach(el => {
+    el.style.opacity = '0';
+    el.classList.remove('active', 'reject');
+  });
+  document.getElementById('step-indicator').classList.remove('visible');
 }
 
 // ============================================================
-//  DIAGRAM MANIPULATION
+//  DATA PANEL HELPERS
 // ============================================================
-function highlightStep(step) {
-  // Show step indicator
-  showStepIndicator(step.title, step.subtitle);
-
-  // Highlight nodes
-  (step.nodes || []).forEach(nodeId => {
-    const g = document.getElementById(nodeId);
-    if (!g) return;
-    const rect = g.querySelector('.node-rect');
-    const label = g.querySelector('.node-label');
-    const sublabel = g.querySelector('.node-sublabel');
-    if (rect) { rect.classList.add(step.nodeClass); rect.classList.add('active-pulse'); }
-    if (label) label.classList.add(step.nodeClass);
-    if (sublabel) sublabel.classList.add(step.nodeClass);
-
-    // Remove pulse after 2s (keep the highlight)
-    setTimeout(() => { if (rect) rect.classList.remove('active-pulse'); }, 2000);
-  });
-
-  // Highlight edges
-  (step.edges || []).forEach(edgeId => {
-    const el = document.getElementById(edgeId);
-    if (el) el.classList.add(step.edgeClass);
-  });
-
-  // Highlight edge labels
-  (step.edgeLabels || []).forEach(labelId => {
-    const el = document.getElementById(labelId);
-    if (el) el.classList.add(step.edgeClass);
-  });
-
-  // Show badge if any
-  if (step.badge) {
-    const badge = document.getElementById(step.badge);
-    if (badge) badge.classList.add('visible');
+function updateAcctDisplay(flash) {
+  const balTd = document.getElementById('td-bal');
+  const cycCrTd = document.getElementById('td-cyc-cr');
+  balTd.textContent = '$' + acctBal.toFixed(2);
+  cycCrTd.textContent = '$' + acctCycCr.toFixed(2);
+  if (flash) {
+    balTd.classList.add('changed', 'flash-green');
+    cycCrTd.classList.add('changed', 'flash-green');
+    setTimeout(() => {
+      balTd.classList.remove('flash-green');
+      cycCrTd.classList.remove('flash-green');
+    }, 1200);
   }
-
-  // Highlight decision diamonds
-  (step.decisions || []).forEach(decId => {
-    const g = document.getElementById(decId);
-    if (!g) return;
-    const poly = g.querySelector('polygon');
-    const txt = g.querySelector('text');
-    if (poly) poly.classList.add(step.nodeClass);
-    if (txt) txt.classList.add(step.nodeClass);
-  });
-  (step.decisionLabels || []).forEach(lblId => {
-    const el = document.getElementById(lblId);
-    if (el) el.classList.add(step.nodeClass);
-  });
 }
 
-function showStepIndicator(title, subtitle) {
-  const indicator = document.getElementById('step-indicator');
-  indicator.querySelector('.step-num').textContent = title;
-  indicator.querySelector('.step-text').textContent = subtitle ? '— ' + subtitle : '';
-  indicator.classList.add('visible');
+function highlightXref() {
+  const tbody = document.getElementById('xref-tbody');
+  const cells = tbody.querySelectorAll('td');
+  cells.forEach(c => { c.classList.add('changed'); setTimeout(() => c.classList.remove('changed'), 2000); });
 }
 
-function addLogEntry(step) {
-  const log = document.getElementById('event-log');
-  const entry = document.createElement('div');
-  entry.className = 'log-entry';
-  entry.innerHTML = `
-    <div class="log-step">${step.title}</div>
-    ${step.file ? `<div class="log-file">${step.file}</div>` : ''}
-    <div class="log-msg">${step.message}</div>
-    ${step.code ? `<div class="log-code">${step.code}</div>` : ''}
+function addTransactRow(id, type, amount, card, status) {
+  const tbody = document.getElementById('transact-tbody');
+  const empty = tbody.querySelector('td[colspan]');
+  if (empty) empty.parentElement.remove();
+  const tr = document.createElement('tr');
+  tr.className = 'new-row';
+  tr.id = 'tran-row-' + id;
+  tr.innerHTML = `
+    <td>${String(id).padStart(16, '0')}</td>
+    <td>${type}</td>
+    <td>$${amount.toFixed(2)}</td>
+    <td>${card}</td>
+    <td id="tran-status-${id}" style="color:#ffa94d">${status}</td>
   `;
-  log.appendChild(entry);
-  log.scrollTop = log.scrollHeight;
+  tbody.appendChild(tr);
 }
 
-function addCompletionEntry() {
-  const log = document.getElementById('event-log');
-  const entry = document.createElement('div');
-  entry.className = 'log-entry';
-  entry.innerHTML = `
-    <div class="log-step" style="color:#4da6ff;">TRACE COMPLETE — Option 8 (Left Tree)</div>
-    <div class="log-msg">All 6 call resolution + decision steps traced successfully.<br>
-    <br>
-    <b style="color:#00ff88;">Programs resolved:</b> COMEN01C &rarr; COTRN02C &rarr; CCXREF / CXACAIX &rarr; CSUTLDTC &rarr; CEEDAYS &rarr; TRANSACT<br>
-    <b style="color:#00ff88;">Resolution mechanisms:</b> XCTL data table, CALL positional params, CICS FCT, OS loader<br>
-    <b style="color:#4da6ff;">Decision points:</b> Acct ID vs Card# (different VSAM reads), Confirm Y/N (write or loop)<br>
-    <br>
-    <b style="color:#4ecdc4;">Now try Option 3</b> (Credit Card List) or <b style="color:#4ecdc4;">Option 10</b> (Bill Payment) for different flows.
-    </div>
-  `;
-  log.appendChild(entry);
-  log.scrollTop = log.scrollHeight;
+function updateTransactStatus(id, status) {
+  const td = document.getElementById('tran-status-' + id);
+  if (!td) return;
+  td.textContent = status;
+  if (status === 'Posted') {
+    td.style.color = '#00ff88';
+    td.classList.add('changed', 'flash-green');
+  } else if (status === 'Rejected') {
+    td.style.color = '#ff6b6b';
+    td.classList.add('rejected', 'flash-red');
+  }
 }
 
-function addCobil00cCompletionEntry() {
-  const log = document.getElementById('event-log');
-  const entry = document.createElement('div');
-  entry.className = 'log-entry';
-  entry.innerHTML = `
-    <div class="log-step" style="color:#ff6b9d;">TRACE COMPLETE — Option 10 (Bottom Tree)</div>
-    <div class="log-msg">All 4 COBIL00C bill payment steps traced.<br>
-    <br>
-    <b style="color:#00ff88;">Programs resolved:</b> COMEN01C &rarr; COBIL00C &rarr; ACCTDAT / CXACAIX / TRANSACT<br>
-    <b style="color:#4da6ff;">Decision points:</b> Balance &gt; 0? + Confirm Y/N (payment or error)<br>
-    <b style="color:#ff6b9d;">Data operations:</b> READ+REWRITE ACCTDAT, READ CXACAIX, WRITE TRANSACT<br>
-    <br>
-    <b>Key contrast vs Option 8:</b> COBIL00C has NO CALL statements at all — no CSUTLDTC, no CEEDAYS chain. All I/O is direct inline CICS commands. But it shares CXACAIX and TRANSACT VSAM files with COTRN02C.<br>
-    <br>
-    <b style="color:#4ecdc4;">Try Option 8</b> (Transaction Add) to see the CALL chain + input branching contrast.
-    </div>
+function addRejectRow(id, amount, code, desc) {
+  const tbody = document.getElementById('rejs-tbody');
+  const empty = tbody.querySelector('td[colspan]');
+  if (empty) empty.parentElement.remove();
+  const tr = document.createElement('tr');
+  tr.className = 'new-row';
+  tr.innerHTML = `
+    <td>${String(id).padStart(16, '0')}</td>
+    <td class="rejected">$${amount.toFixed(2)}</td>
+    <td class="rejected">${code}</td>
+    <td class="rejected">${desc}</td>
   `;
-  log.appendChild(entry);
-  log.scrollTop = log.scrollHeight;
+  tbody.appendChild(tr);
 }
 
-function addCocrdlicCompletionEntry() {
-  const log = document.getElementById('event-log');
-  const entry = document.createElement('div');
-  entry.className = 'log-entry';
-  entry.innerHTML = `
-    <div class="log-step" style="color:#4ecdc4;">TRACE COMPLETE — Option 3 (Right Tree)</div>
-    <div class="log-msg">All 4 COCRDLIC resolution steps traced.<br>
-    <br>
-    <b style="color:#00ff88;">Programs resolved:</b> COMEN01C &rarr; COCRDLIC &rarr; COCRDSLC / COCRDUPC<br>
-    <b style="color:#4ecdc4;">Data access:</b> CARDDAT VSAM (read-only browse)<br>
-    <b style="color:#ffa94d;">Resolution:</b> XCTL data table + CCARD-NEXT-PROG variable indirection<br>
-    <br>
-    <b>Key contrast:</b> Option 8 has dynamic CALL chains (CSUTLDTC &rarr; CEEDAYS) + user input decisions. Option 3 is read-only with no CALL statements. Same XCTL dispatch, completely different runtime behavior.<br>
-    <br>
-    <b style="color:#4ecdc4;">Also try Option 10</b> (Bill Payment) — inline CICS I/O with balance check + confirm branching.
-    </div>
-  `;
-  log.appendChild(entry);
+function addTrace(type, html) {
+  const log = document.getElementById('trace-log');
+  const div = document.createElement('div');
+  div.className = 'trace-entry ' + type;
+  div.innerHTML = html;
+  log.appendChild(div);
   log.scrollTop = log.scrollHeight;
 }
 
 // ============================================================
 //  RESET
 // ============================================================
-function resetAll() {
+async function resetAll() {
+  // Close SSE connection if active
+  if (_evtSource) { _evtSource.close(); _evtSource = null; }
+  _activeSessionId = null;
+  _inputTxnNum = 1;
+  _lastPhase = null;
+  _activeNodes = new Set();
+  const sessionLink = document.getElementById('session-link');
+  if (sessionLink) sessionLink.style.display = 'none';
+
   isRunning = false;
-  document.getElementById('simulate-btn').disabled = false;
-  document.getElementById('start-btn').disabled = false;
+  document.getElementById('run-btn').disabled = false;
+  setPhase('');
+  closeTerminal();
+  tranIdCounter = 1;
+  phase1Amount = 500;
+  phase3Amount = 1000;
+  _lastMerchant = 'UNSPECIFIED';
+  isPaused = false;
+  _pauseResolve = null;
+  _menuResolve = null;
+  _selectedOption = null;
+  document.getElementById('pause-indicator').classList.remove('visible');
+  const readonlyBadge = document.getElementById('badge-readonly');
+  if (readonlyBadge) readonlyBadge.classList.remove('visible');
 
-  // Reset all nodes
-  document.querySelectorAll('.node-rect').forEach(el => {
-    el.setAttribute('class', 'node-rect');
-  });
-  document.querySelectorAll('.node-label').forEach(el => {
-    el.setAttribute('class', 'node-label');
-  });
-  document.querySelectorAll('.node-sublabel').forEach(el => {
-    el.setAttribute('class', 'node-sublabel');
-  });
+  // Reset the SQLite database via API
+  try {
+    await apiPost('/api/db/reset');
+  } catch (e) {
+    console.warn('DB reset failed:', e);
+  }
 
-  // Reset all edges
-  document.querySelectorAll('.edge-line').forEach(el => {
-    el.setAttribute('class', 'edge-line');
-  });
-  document.querySelectorAll('.edge-label').forEach(el => {
-    el.setAttribute('class', 'edge-label');
-  });
+  // Refresh state from DB
+  await refreshDbState();
 
-  // Reset badges
-  document.querySelectorAll('.readonly-badge').forEach(el => {
-    el.classList.remove('visible');
-  });
-
-  // Reset decision diamonds
-  document.querySelectorAll('.decision-node polygon').forEach(el => {
-    el.classList.remove('active');
-  });
-  document.querySelectorAll('.decision-node text').forEach(el => {
-    el.classList.remove('active');
-  });
-  document.querySelectorAll('.decision-label').forEach(el => {
-    el.classList.remove('active');
-  });
-
-  // Reset step indicator
-  document.getElementById('step-indicator').classList.remove('visible');
-
-  // Dismiss no-diagram popup
-  document.getElementById('no-diagram-popup').classList.remove('visible');
-
-  // Reset log
-  document.getElementById('event-log').innerHTML = `
-    <div style="padding: 16px; color: #555; font-size: 11px; text-align: center;">
-      Click <b>Simulate Demo</b> or <b>Start Live Trace</b> to open the CICS terminal
-    </div>
-  `;
-  selectedOption = null;
-  liveHighlightedNodes = new Set();
-  // Restore edge label
-  const edgeLabel = document.getElementById('elabel-terminal-comen01c');
-  if (edgeLabel) edgeLabel.textContent = 'option 8';
+  document.getElementById('td-bal').className = '';
+  document.getElementById('td-cyc-cr').className = '';
+  document.getElementById('transact-tbody').innerHTML = '<tr style="color:#555"><td colspan="5" style="text-align:center">— empty —</td></tr>';
+  document.getElementById('rejs-tbody').innerHTML = '<tr style="color:#555"><td colspan="4" style="text-align:center">— empty —</td></tr>';
+  clearDiagramState();
+  document.getElementById('trace-log').innerHTML = '<div style="padding: 10px; color: #555; font-size: 11px; text-align: center;">Click <b>Start Live Trace</b> to launch a Devin session that traces COBOL source code in real-time</div>';
+  document.getElementById('sql-log').innerHTML = '<div style="padding: 10px; color: #555; font-size: 11px; text-align: center;">SQL queries will appear here as the demo runs</div>';
+  switchTab('vsam');
 }
 
-// ============================================================
-//  UTILITY
-// ============================================================
+function waitIfPaused() {
+  if (!isPaused) return Promise.resolve();
+  return new Promise(resolve => { _pauseResolve = resolve; });
+}
+
 function sleep(ms) {
-  return new Promise(resolve => {
-    simulationTimer = setTimeout(resolve, ms);
-  });
+  return waitIfPaused().then(() => new Promise(resolve => setTimeout(resolve, ms)));
 }
+
+function togglePause() {
+  isPaused = !isPaused;
+  document.getElementById('pause-indicator').classList.toggle('visible', isPaused);
+  if (!isPaused && _pauseResolve) {
+    const r = _pauseResolve;
+    _pauseResolve = null;
+    r();
+  }
+}
+
+// Ctrl+I to toggle terminal overlay
+document.addEventListener('keydown', function(e) {
+  if (e.ctrlKey && (e.key === 'i' || e.key === 'I')) {
+    e.preventDefault();
+    const overlay = document.getElementById('terminal-overlay');
+    overlay.classList.toggle('open');
+  }
+  if (e.key === ' ' && isRunning && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag !== 'input' && tag !== 'textarea' && tag !== 'button') {
+      e.preventDefault();
+      togglePause();
+    }
+  }
+});
 </script>
 </body>
 </html>
