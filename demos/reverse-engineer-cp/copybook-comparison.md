@@ -1267,8 +1267,8 @@ A 10-line placeholder with no meaningful content.
 
 ### Overall Statistics
 
-- **✅ EXACT MATCH:** 22 / 29 copybooks (76%)
-- **⚠️ FUNCTIONAL/STRUCTURAL MATCH:** 6 / 29 copybooks (21%)
+- **✅ EXACT MATCH:** 24 / 29 copybooks (83%)
+- **⚠️ FUNCTIONAL/STRUCTURAL MATCH:** 4 / 29 copybooks (14%)
 - **❌ NOT RECOVERABLE:** 1 / 29 copybooks (3%)
 
 ### Key Insights
