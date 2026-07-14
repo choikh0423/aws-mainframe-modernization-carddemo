@@ -4,6 +4,7 @@ import com.carddemo.transaction.entity.CardXrefRecord;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -12,8 +13,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Round-trip and account-index coverage for {@link CardXrefRepository}, backing
  * CT02's account<->card resolution. Runs against the seeded H2 DB.
+ * {@code @Transactional} rolls back save() writes to keep the shared DB pristine.
  */
 @SpringBootTest
+@Transactional
 class CardXrefRepositoryTest {
 
     @Autowired

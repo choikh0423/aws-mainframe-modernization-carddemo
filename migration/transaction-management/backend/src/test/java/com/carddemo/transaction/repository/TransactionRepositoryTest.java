@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -15,8 +16,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Round-trip and browse-helper coverage for {@link TransactionRepository}.
  * Runs against the H2 in-memory DB seeded by schema.sql + data.sql (30 rows).
+ * {@code @Transactional} rolls back the save() writes so the JVM-shared in-memory
+ * DB stays at the 30-row baseline for order-independent runs of the rest of the suite.
  */
 @SpringBootTest
+@Transactional
 class TransactionRepositoryTest {
 
     @Autowired
