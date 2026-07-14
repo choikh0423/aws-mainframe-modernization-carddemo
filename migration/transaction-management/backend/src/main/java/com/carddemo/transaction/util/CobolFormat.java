@@ -30,4 +30,22 @@ public final class CobolFormat {
         String intPart = String.format("%08d", Long.parseLong(parts[0]));
         return sign + intPart + "." + parts[1];
     }
+
+    /**
+     * Renders the CT00 list row date exactly like COTRN00C's POPULATE-TRAN-DATA
+     * (COTRN00C.cbl:383-388): it slices {@code TRAN-ORIG-TS}
+     * ({@code YYYY-MM-DD-HH.MM.SS.uuuuuu}) into {@code WS-CURDATE-MM-DD-YY},
+     * i.e. {@code MM/DD/YY} using the last two digits of the year.
+     * Example: {@code "2023-06-01-10.15.31.000000" -> "06/01/23"}.
+     * A null/short timestamp yields an empty string (the blank list cell).
+     */
+    public static String listDate(String origTs) {
+        if (origTs == null || origTs.length() < 10) {
+            return "";
+        }
+        String mm = origTs.substring(5, 7);
+        String dd = origTs.substring(8, 10);
+        String yy = origTs.substring(2, 4);
+        return mm + "/" + dd + "/" + yy;
+    }
 }
