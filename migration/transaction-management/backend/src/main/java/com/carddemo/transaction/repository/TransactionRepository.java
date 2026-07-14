@@ -13,6 +13,7 @@ import java.util.Optional;
  *   - READ TRANSACT by key            -> findById()
  *   - WRITE TRANSACT                  -> save()
  *   - STARTBR + READNEXT (page fwd)   -> findAllByOrderByIdAsc / findByIdGreaterThanOrderByIdAsc
+ *   - STARTBR GTEQ + READNEXT (filter)-> findByIdGreaterThanEqualOrderByIdAsc (CT00 start-at)
  *   - STARTBR + READPREV (page back)  -> findByIdLessThanOrderByIdDesc
  *   - STARTBR HIGH-VALUES + READPREV  -> findTopByOrderByIdDesc (max key for CT02 key-gen)
  *
@@ -25,6 +26,8 @@ public interface TransactionRepository extends JpaRepository<TransactionRecord, 
     List<TransactionRecord> findAllByOrderByIdAsc(Pageable pageable);
 
     List<TransactionRecord> findByIdGreaterThanOrderByIdAsc(String id, Pageable pageable);
+
+    List<TransactionRecord> findByIdGreaterThanEqualOrderByIdAsc(String id, Pageable pageable);
 
     List<TransactionRecord> findByIdLessThanOrderByIdDesc(String id, Pageable pageable);
 
