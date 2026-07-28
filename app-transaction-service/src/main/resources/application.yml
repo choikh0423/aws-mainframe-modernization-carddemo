@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: app-transaction-service
+  datasource:
+    url: ${CARDDEMO_DB_URL:jdbc:postgresql://localhost:5432/carddemo}
+    username: ${CARDDEMO_DB_USER:carddemo}
+    password: ${CARDDEMO_DB_PASSWORD:carddemo}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+    open-in-view: false
+  sql:
+    init:
+      mode: never
+
+server:
+  port: 8082
