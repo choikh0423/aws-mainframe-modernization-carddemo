@@ -1,0 +1,33 @@
+spring:
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: always
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+  sql:
+    init:
+      mode: always
+
+carddemo:
+  files:
+    daily-transaction: classpath:data/dailytran.dat
+    daily-rejects: output/dailyrejects.dat
+    transaction-report: output/tranrept.txt
+    transaction-backup: output/tranbkup.dat
+    export-file: output/export.dat
+    import-file: input/import.dat
+    combine-input: classpath:data/combtran.dat
+
+logging:
+  level:
+    com.carddemo.batch: DEBUG
+    org.springframework.batch: INFO
