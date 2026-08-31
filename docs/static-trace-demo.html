@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Devin Static Trace: Dynamic Call Resolution</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a1a;
+    color: #e0e0e0;
+    font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    background: linear-gradient(90deg, #0d1b2a 0%, #1b2838 100%);
+    border-bottom: 1px solid #1e3a5f;
+    height: 56px;
+  }
+  header h1 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #4da6ff;
+    letter-spacing: 0.5px;
+  }
+  header h1 span { color: #00ff88; }
+  .mode-badge {
+    background: #1a1a2e;
+    border: 1px solid #ffa94d;
+    color: #ffa94d;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  button {
+    padding: 6px 16px;
+    border: none;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  #play-btn {
+    background: #00ff88;
+    color: #0a0a1a;
+  }
+  #play-btn:hover { background: #00cc6a; }
+  #play-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+  #reset-btn {
+    background: transparent;
+    border: 1px solid #555;
+    color: #888;
+  }
+  #reset-btn:hover { background: rgba(255,255,255,0.05); }
+  .nav-link {
+    color: #4da6ff;
+    text-decoration: none;
+    font-size: 11px;
+    border: 1px solid #4da6ff;
+    padding: 4px 12px;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+  .nav-link:hover { background: rgba(77,166,255,0.1); }
+
+  main {
+    display: flex;
+    height: calc(100vh - 56px);
+  }
+
+  #diagram-panel {
+    flex: 1;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  #call-tree {
+    width: 100%;
+    height: 100%;
+    max-width: 900px;
+    max-height: 800px;
+  }
+
+  #step-indicator {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.85);
+    border: 1px solid #4da6ff;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 14px;
+    color: #4da6ff;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.5s;
+    z-index: 10;
+    pointer-events: none;
+  }
+  #step-indicator.visible { opacity: 1; }
+  #step-indicator .step-num { color: #00ff88; font-weight: 700; }
+
+  #event-panel {
+    width: 440px;
+    background: #0d1117;
+    border-left: 1px solid #1e3a5f;
+    display: flex;
+    flex-direction: column;
+  }
+  #event-panel h3 {
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #4da6ff;
+    border-bottom: 1px solid #1e3a5f;
+    font-weight: 600;
+  }
+  #event-log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+  }
+  .log-entry {
+    padding: 10px 16px;
+    border-bottom: 1px solid #111;
+    font-size: 11px;
+    line-height: 1.5;
+    opacity: 0;
+    animation: fadeIn 0.5s forwards;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .log-entry .log-step {
+    color: #00ff88;
+    font-weight: 700;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+  }
+  .log-entry .log-file {
+    color: #ffa94d;
+    font-size: 10px;
+  }
+  .log-entry .log-msg {
+    color: #c9d1d9;
+    margin-top: 2px;
+  }
+  .log-entry .devin-response {
+    background: #161b22;
+    border: 1px solid #1e3a5f;
+    border-left: 3px solid #4da6ff;
+    border-radius: 4px;
+    padding: 8px 10px;
+    margin-top: 6px;
+    font-size: 10px;
+    color: #8b949e;
+    line-height: 1.6;
+  }
+  .log-entry .devin-response .devin-label {
+    color: #4da6ff;
+    font-weight: 700;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .log-entry .devin-response code {
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 3px;
+    padding: 2px 4px;
+    font-size: 10px;
+    color: #e0e0e0;
+  }
+  .log-entry .devin-response .cobol-block {
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 4px;
+    padding: 6px 8px;
+    margin: 6px 0;
+    font-size: 10px;
+    white-space: pre;
+    overflow-x: auto;
+    color: #8b949e;
+  }
+  .log-entry .devin-response .cobol-block .kw { color: #ff7b72; }
+  .log-entry .devin-response .cobol-block .str { color: #a5d6ff; }
+  .log-entry .devin-response .cobol-block .resolved { color: #00ff88; font-weight: 700; }
+  .log-entry .devin-response .cobol-block .cmt { color: #555; font-style: italic; }
+
+  .node-rect {
+    fill: #1a1a2e;
+    stroke: #333;
+    stroke-width: 2;
+    rx: 8;
+    transition: all 0.8s ease;
+  }
+  .node-rect.active {
+    fill: #0a2e1a;
+    stroke: #00ff88;
+    stroke-width: 2.5;
+    filter: drop-shadow(0 0 8px rgba(0,255,136,0.4));
+  }
+  .node-rect.mutation {
+    fill: #2e1a0a;
+    stroke: #ff6b6b;
+    stroke-width: 2.5;
+    filter: drop-shadow(0 0 8px rgba(255,107,107,0.4));
+  }
+  .node-rect.batch {
+    fill: #1a1a2e;
+    stroke: #ffa94d;
+    stroke-width: 2.5;
+    filter: drop-shadow(0 0 8px rgba(255,169,77,0.3));
+  }
+  .node-label {
+    fill: #555;
+    font-family: 'SF Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    text-anchor: middle;
+    transition: fill 0.8s ease;
+    pointer-events: none;
+  }
+  .node-label.active { fill: #00ff88; }
+  .node-label.mutation { fill: #ff6b6b; }
+  .node-label.batch { fill: #ffa94d; }
+  .node-sublabel {
+    fill: #444;
+    font-family: 'SF Mono', monospace;
+    font-size: 9px;
+    text-anchor: middle;
+    transition: fill 0.8s ease;
+    pointer-events: none;
+  }
+  .node-sublabel.active { fill: #88ffbb; }
+  .node-sublabel.mutation { fill: #ffaaaa; }
+  .node-sublabel.batch { fill: #ffcc88; }
+  .edge-line {
+    stroke: #2a2a3e;
+    stroke-width: 2;
+    fill: none;
+    transition: all 0.8s ease;
+    marker-end: url(#arrow-gray);
+  }
+  .edge-line.active {
+    stroke: #00ff88;
+    stroke-width: 2.5;
+    marker-end: url(#arrow-green);
+    filter: drop-shadow(0 0 4px rgba(0,255,136,0.3));
+  }
+  .edge-line.mutation {
+    stroke: #ff6b6b;
+    stroke-width: 2.5;
+    marker-end: url(#arrow-red);
+    filter: drop-shadow(0 0 4px rgba(255,107,107,0.3));
+  }
+  .edge-line.batch {
+    stroke: #ffa94d;
+    stroke-width: 2.5;
+    marker-end: url(#arrow-orange);
+  }
+  .edge-label {
+    fill: #333;
+    font-family: 'SF Mono', monospace;
+    font-size: 9px;
+    text-anchor: middle;
+    transition: fill 0.8s ease;
+    pointer-events: none;
+  }
+  .edge-label.active { fill: #00ff88; }
+  .edge-label.mutation { fill: #ff6b6b; }
+  .edge-label.batch { fill: #ffa94d; }
+  .batch-line {
+    stroke: #ffa94d;
+    stroke-width: 1;
+    stroke-dasharray: 8 4;
+    opacity: 0.4;
+  }
+  .batch-label {
+    fill: #ffa94d;
+    font-family: 'SF Mono', monospace;
+    font-size: 10px;
+    text-anchor: middle;
+    opacity: 0.4;
+  }
+  .data-badge {
+    opacity: 0;
+    transition: opacity 0.8s ease;
+  }
+  .data-badge.visible { opacity: 1; }
+  .data-badge rect {
+    fill: #ff6b6b;
+    rx: 4;
+  }
+  .data-badge text {
+    fill: #fff;
+    font-family: 'SF Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    text-anchor: middle;
+  }
+
+  @keyframes pulse {
+    0%, 100% { filter: drop-shadow(0 0 8px rgba(0,255,136,0.4)); }
+    50% { filter: drop-shadow(0 0 16px rgba(0,255,136,0.7)); }
+  }
+  .node-rect.active-pulse {
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #0d1117; }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+  /* Typing cursor animation */
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+  .typing-cursor {
+    display: inline-block;
+    width: 6px;
+    height: 12px;
+    background: #4da6ff;
+    animation: blink 0.8s infinite;
+    vertical-align: middle;
+    margin-left: 2px;
+  }
+
+  /* 3270 Terminal Overlay */
+  #terminal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  #terminal-overlay.open { display: flex; }
+  .terminal-screen {
+    background: #0a0a0a;
+    border: 3px solid #33ff33;
+    border-radius: 8px;
+    width: 640px;
+    padding: 0;
+    box-shadow: 0 0 40px rgba(51,255,51,0.15), inset 0 0 80px rgba(51,255,51,0.03);
+    font-family: 'Courier New', 'Lucida Console', monospace;
+    overflow: hidden;
+  }
+  .terminal-header {
+    background: #111;
+    border-bottom: 1px solid #33ff33;
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .terminal-header span {
+    color: #33ff33;
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+  .terminal-header .terminal-close {
+    color: #666;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .terminal-header .terminal-close:hover { color: #ff6b6b; }
+  .terminal-body {
+    padding: 16px 20px;
+    color: #33ff33;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  .terminal-body .term-title {
+    color: #33ff33;
+    font-weight: 700;
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+  }
+  .terminal-body .term-subtitle {
+    color: #22aa22;
+    font-size: 11px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .terminal-body .term-divider {
+    border-top: 1px dashed #226622;
+    margin: 8px 0;
+  }
+  .menu-option {
+    display: flex;
+    align-items: center;
+    padding: 3px 8px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: background 0.15s;
+  }
+  .menu-option:hover {
+    background: #33ff33;
+    color: #000;
+  }
+  .menu-option:hover .opt-num,
+  .menu-option:hover .opt-name,
+  .menu-option:hover .opt-pgm {
+    color: #000;
+  }
+  .menu-option .opt-num {
+    color: #ffff33;
+    width: 30px;
+    font-weight: 700;
+  }
+  .menu-option .opt-name {
+    color: #33ff33;
+    flex: 1;
+  }
+  .menu-option .opt-pgm {
+    color: #22aa22;
+    font-size: 11px;
+  }
+  .menu-option.selected {
+    background: #33ff33;
+    color: #000;
+  }
+  .menu-option.selected .opt-num,
+  .menu-option.selected .opt-name,
+  .menu-option.selected .opt-pgm {
+    color: #000;
+  }
+  .terminal-input-row {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .terminal-input-row span {
+    color: #33ff33;
+  }
+  #term-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #33ff33;
+    color: #ffff33;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    width: 40px;
+    text-align: center;
+    outline: none;
+    caret-color: #33ff33;
+  }
+  .terminal-status {
+    margin-top: 8px;
+    padding: 6px 8px;
+    font-size: 11px;
+    color: #22aa22;
+    min-height: 20px;
+  }
+  .terminal-status.resolving {
+    color: #ffff33;
+  }
+  .terminal-status .resolved-pgm {
+    color: #33ff33;
+    font-weight: 700;
+  }
+  @keyframes termBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+  .term-cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: #33ff33;
+    animation: termBlink 0.6s step-end infinite;
+    vertical-align: middle;
+  }
+  /* Subtree labels & separator */
+  .subtree-label {
+    fill: #4a4a6a;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    text-anchor: middle;
+    letter-spacing: 0.5px;
+  }
+  .separator-line {
+    stroke: #1a1a2e;
+    stroke-width: 1;
+    stroke-dasharray: 6,6;
+  }
+  .readonly-badge { display: none; }
+  .readonly-badge.visible rect {
+    fill: #4ecdc4;
+    rx: 4; ry: 4;
+  }
+  .readonly-badge.visible text {
+    fill: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    text-anchor: middle;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span>Devin</span> &mdash; Dynamic Call Resolution Trace <span class="mode-badge">STATIC REPLAY</span></h1>
+  <div class="controls">
+    <a href="/live" class="nav-link">Switch to Live Mode</a>
+    <button id="play-btn" onclick="showTerminal()">Play Trace</button>
+    <button id="reset-btn" onclick="resetAll()">Reset</button>
+  </div>
+</header>
+
+<!-- 3270 Terminal Overlay -->
+<div id="terminal-overlay">
+  <div class="terminal-screen">
+    <div class="terminal-header">
+      <span>CICS TRANSACTION SERVER &mdash; CARDDEMO</span>
+      <span class="terminal-close" onclick="closeTerminal()">&times;</span>
+    </div>
+    <div class="terminal-body">
+      <div class="term-title">CARDDEMO MAIN MENU</div>
+      <div class="term-subtitle">COMEN01C &mdash; Program: COMEN02Y.cpy Data Table</div>
+      <div class="term-divider"></div>
+      <div id="menu-options"></div>
+      <div class="term-divider"></div>
+      <div class="terminal-input-row">
+        <span>OPTION ==&gt;</span>
+        <input type="text" id="term-input" maxlength="2" autocomplete="off" />
+        <span class="term-cursor"></span>
+      </div>
+      <div id="terminal-status" class="terminal-status">Enter option number (1-11) or click a menu item</div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div id="diagram-panel">
+    <div id="step-indicator"><span class="step-num"></span> <span class="step-text"></span></div>
+
+    <svg id="call-tree" viewBox="0 0 1300 820" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow-gray" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#2a2a3e"/>
+        </marker>
+        <marker id="arrow-green" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+        </marker>
+        <marker id="arrow-red" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b6b"/>
+        </marker>
+        <marker id="arrow-orange" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#ffa94d"/>
+        </marker>
+      </defs>
+
+      <!-- ===== SHARED TOP SECTION ===== -->
+      <g id="node-terminal">
+        <rect class="node-rect" x="560" y="15" width="180" height="48" />
+        <text class="node-label" x="650" y="43">3270 Terminal</text>
+        <text class="node-sublabel" x="650" y="55">User Input</text>
+      </g>
+      <g id="node-comen01c">
+        <rect class="node-rect" x="370" y="110" width="180" height="48" />
+        <text class="node-label" x="460" y="138">COMEN01C</text>
+        <text class="node-sublabel" x="460" y="150">Menu Dispatch</text>
+      </g>
+      <g id="node-comen02y">
+        <rect class="node-rect" x="730" y="110" width="180" height="48" />
+        <text class="node-label" x="820" y="138">COMEN02Y</text>
+        <text class="node-sublabel" x="820" y="150">Menu Data Table</text>
+      </g>
+
+      <!-- Shared edges -->
+      <line id="edge-terminal-comen01c" class="edge-line" x1="610" y1="63" x2="500" y2="108" />
+      <text id="elabel-terminal-comen01c" class="edge-label" x="540" y="82">option 8</text>
+      <line id="edge-comen01c-comen02y" class="edge-line" x1="550" y1="134" x2="728" y2="134" />
+      <text id="elabel-comen01c-comen02y" class="edge-label" x="640" y="127">reads table</text>
+
+      <!-- ===== VERTICAL SEPARATOR ===== -->
+      <line class="separator-line" x1="630" y1="195" x2="630" y2="810" />
+
+      <!-- ===== LEFT TREE: Option 8 — Transaction Add ===== -->
+      <text class="subtree-label" x="280" y="198">Option 8 — Transaction Add</text>
+      <line id="edge-comen01c-cotrn02c" class="edge-line" x1="420" y1="158" x2="320" y2="208" />
+      <text id="elabel-comen01c-cotrn02c" class="edge-label" x="350" y="188">XCTL</text>
+
+      <g id="node-cotrn02c">
+        <rect class="node-rect" x="190" y="210" width="180" height="48" />
+        <text class="node-label" x="280" y="238">COTRN02C</text>
+        <text class="node-sublabel" x="280" y="250">Add Transaction</text>
+      </g>
+      <g id="node-ccxref">
+        <rect class="node-rect" x="20" y="340" width="155" height="48" />
+        <text class="node-label" x="97" y="368">CCXREF</text>
+        <text class="node-sublabel" x="97" y="380">Card XREF VSAM</text>
+      </g>
+      <g id="node-cxacaix">
+        <rect class="node-rect" x="195" y="340" width="155" height="48" />
+        <text class="node-label" x="272" y="368">CXACAIX</text>
+        <text class="node-sublabel" x="272" y="380">Acct AIX VSAM</text>
+      </g>
+      <g id="node-csutldtc">
+        <rect class="node-rect" x="375" y="340" width="160" height="48" />
+        <text class="node-label" x="455" y="368">CSUTLDTC</text>
+        <text class="node-sublabel" x="455" y="380">Date Validator</text>
+      </g>
+      <g id="node-ceedays">
+        <rect class="node-rect" x="405" y="440" width="160" height="48" />
+        <text class="node-label" x="485" y="468">CEEDAYS</text>
+        <text class="node-sublabel" x="485" y="480">IBM LE Runtime</text>
+      </g>
+      <g id="node-transact">
+        <rect class="node-rect" x="170" y="540" width="200" height="56" />
+        <text class="node-label" x="270" y="568">TRANSACT</text>
+        <text class="node-sublabel" x="270" y="582">Transaction VSAM File</text>
+      </g>
+      <g id="badge-mutation" class="data-badge">
+        <rect x="378" y="548" width="108" height="22" />
+        <text x="432" y="563">DATA MUTATED</text>
+      </g>
+      <line class="batch-line" x1="20" y1="628" x2="580" y2="628" />
+      <text class="batch-label" x="300" y="642">BATCH (Nightly Cycle)</text>
+      <g id="node-cbtrn02c">
+        <rect class="node-rect" x="190" y="670" width="180" height="48" />
+        <text class="node-label" x="280" y="698">CBTRN02C</text>
+        <text class="node-sublabel" x="280" y="710">Batch Post</text>
+      </g>
+      <g id="node-account">
+        <rect class="node-rect" x="50" y="760" width="170" height="48" />
+        <text class="node-label" x="135" y="788">ACCTFILE</text>
+        <text class="node-sublabel" x="135" y="800">Account Master</text>
+      </g>
+      <g id="node-tcatbal">
+        <rect class="node-rect" x="310" y="760" width="170" height="48" />
+        <text class="node-label" x="395" y="788">TCATBALF</text>
+        <text class="node-sublabel" x="395" y="800">Category Balance</text>
+      </g>
+
+      <!-- Left tree edges -->
+      <line id="edge-cotrn02c-ccxref" class="edge-line" x1="220" y1="258" x2="115" y2="338" />
+      <text id="elabel-cotrn02c-ccxref" class="edge-label" x="155" y="293">CICS READ</text>
+      <line id="edge-cotrn02c-cxacaix" class="edge-line" x1="260" y1="258" x2="272" y2="338" />
+      <text id="elabel-cotrn02c-cxacaix" class="edge-label" x="255" y="303">CICS READ</text>
+      <line id="edge-cotrn02c-csutldtc" class="edge-line" x1="360" y1="258" x2="430" y2="338" />
+      <text id="elabel-cotrn02c-csutldtc" class="edge-label" x="405" y="293">CALL (dynamic)</text>
+      <line id="edge-csutldtc-ceedays" class="edge-line" x1="470" y1="388" x2="485" y2="438" />
+      <text id="elabel-csutldtc-ceedays" class="edge-label" x="500" y="418">CALL (chained)</text>
+      <line id="edge-cotrn02c-transact" class="edge-line" x1="280" y1="258" x2="270" y2="538" />
+      <text id="elabel-cotrn02c-transact" class="edge-label" x="295" y="420">VSAM WRITE</text>
+      <line id="edge-transact-cbtrn02c" class="edge-line" x1="270" y1="596" x2="280" y2="668" />
+      <text id="elabel-transact-cbtrn02c" class="edge-label" x="295" y="648">batch READ</text>
+      <line id="edge-cbtrn02c-account" class="edge-line" x1="230" y1="718" x2="170" y2="758" />
+      <text id="elabel-cbtrn02c-account" class="edge-label" x="185" y="742">REWRITE</text>
+      <line id="edge-cbtrn02c-tcatbal" class="edge-line" x1="330" y1="718" x2="380" y2="758" />
+      <text id="elabel-cbtrn02c-tcatbal" class="edge-label" x="370" y="742">WRITE/REWRITE</text>
+
+      <!-- ===== RIGHT TREE: Option 3 — Credit Card List ===== -->
+      <text class="subtree-label" x="980" y="198">Option 3 — Credit Card List</text>
+      <line id="edge-comen01c-cocrdlic" class="edge-line" x1="540" y1="158" x2="940" y2="208" />
+      <text id="elabel-comen01c-cocrdlic" class="edge-label" x="730" y="178">XCTL</text>
+
+      <g id="node-cocrdlic">
+        <rect class="node-rect" x="890" y="210" width="180" height="48" />
+        <text class="node-label" x="980" y="238">COCRDLIC</text>
+        <text class="node-sublabel" x="980" y="250">Credit Card List</text>
+      </g>
+      <g id="node-carddat">
+        <rect class="node-rect" x="890" y="360" width="180" height="48" />
+        <text class="node-label" x="980" y="388">CARDDAT</text>
+        <text class="node-sublabel" x="980" y="400">Card Data VSAM</text>
+      </g>
+      <g id="badge-readonly" class="readonly-badge">
+        <rect x="1078" y="368" width="95" height="22" />
+        <text x="1125" y="383">READ ONLY</text>
+      </g>
+      <g id="node-cocrdslc">
+        <rect class="node-rect" x="790" y="500" width="170" height="48" />
+        <text class="node-label" x="875" y="528">COCRDSLC</text>
+        <text class="node-sublabel" x="875" y="540">Card Detail View</text>
+      </g>
+      <g id="node-cocrdupc">
+        <rect class="node-rect" x="1000" y="500" width="170" height="48" />
+        <text class="node-label" x="1085" y="528">COCRDUPC</text>
+        <text class="node-sublabel" x="1085" y="540">Card Update</text>
+      </g>
+
+      <!-- Right tree edges -->
+      <line id="edge-cocrdlic-carddat" class="edge-line" x1="980" y1="258" x2="980" y2="358" />
+      <text id="elabel-cocrdlic-carddat" class="edge-label" x="1010" y="315">VSAM BROWSE</text>
+      <line id="edge-cocrdlic-cocrdslc" class="edge-line" x1="940" y1="258" x2="875" y2="498" />
+      <text id="elabel-cocrdlic-cocrdslc" class="edge-label" x="895" y="395">XCTL (select S)</text>
+      <line id="edge-cocrdlic-cocrdupc" class="edge-line" x1="1020" y1="258" x2="1085" y2="498" />
+      <text id="elabel-cocrdlic-cocrdupc" class="edge-label" x="1065" y="395">XCTL (select U)</text>
+    </svg>
+  </div>
+
+  <div id="event-panel">
+    <h3>Devin Response History</h3>
+    <div id="event-log">
+      <div style="padding: 16px; color: #555; font-size: 11px; text-align: center;">
+        Click <b>Play Trace</b> to open the CICS terminal and select a menu option
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+// ============================================================
+//  PRE-RECORDED DEVIN RESPONSES
+//  These are actual Devin analysis outputs from tracing through
+//  the CardDemo COBOL source code.
+// ============================================================
+// ============================================================
+//  COMEN02Y MENU OPTIONS (from app/cpy/COMEN02Y.cpy)
+// ============================================================
+const MENU_OPTIONS = [
+  { num: 1,  name: 'Account View',              pgm: 'COACTVWC' },
+  { num: 2,  name: 'Account Update',             pgm: 'COACTUPC' },
+  { num: 3,  name: 'Credit Card List',           pgm: 'COCRDLIC' },
+  { num: 4,  name: 'Credit Card View',           pgm: 'COCRDSLC' },
+  { num: 5,  name: 'Credit Card Update',         pgm: 'COCRDUPC' },
+  { num: 6,  name: 'Transaction List',           pgm: 'COTRN00C' },
+  { num: 7,  name: 'Transaction View',           pgm: 'COTRN01C' },
+  { num: 8,  name: 'Transaction Add',            pgm: 'COTRN02C' },
+  { num: 9,  name: 'Transaction Reports',        pgm: 'CORPT00C' },
+  { num: 10, name: 'Bill Payment',               pgm: 'COBIL00C' },
+  { num: 11, name: 'Pending Authorization View', pgm: 'COPAUS0C' }
+];
+
+let selectedOption = null;
+
+// Build menu in terminal
+function buildTerminalMenu() {
+  const container = document.getElementById('menu-options');
+  container.innerHTML = MENU_OPTIONS.map(opt => `
+    <div class="menu-option" onclick="selectMenuOption(${opt.num})">
+      <span class="opt-num">${String(opt.num).padStart(2,' ')}.</span>
+      <span class="opt-name">${opt.name}</span>
+      <span class="opt-pgm">${opt.pgm}</span>
+    </div>
+  `).join('');
+}
+
+function showTerminal() {
+  if (isRunning) return;
+  resetAll();
+  buildTerminalMenu();
+  document.getElementById('terminal-overlay').classList.add('open');
+  document.getElementById('term-input').value = '';
+  document.getElementById('terminal-status').className = 'terminal-status';
+  document.getElementById('terminal-status').textContent = 'Enter option number (1-11) or click a menu item';
+  setTimeout(() => document.getElementById('term-input').focus(), 100);
+}
+
+function closeTerminal() {
+  document.getElementById('terminal-overlay').classList.remove('open');
+}
+
+function selectMenuOption(num) {
+  const opt = MENU_OPTIONS.find(o => o.num === num);
+  if (!opt) return;
+  selectedOption = opt;
+
+  // Highlight selected row
+  document.querySelectorAll('.menu-option').forEach((el, i) => {
+    el.classList.toggle('selected', MENU_OPTIONS[i].num === num);
+  });
+  document.getElementById('term-input').value = num;
+
+  // Show resolving animation
+  const status = document.getElementById('terminal-status');
+  status.className = 'terminal-status resolving';
+  status.innerHTML = `Resolving XCTL PROGRAM(CDEMO-MENU-OPT-PGMNAME(${num}))...`;
+
+  setTimeout(() => {
+    status.innerHTML = `RESOLVED &rarr; <span class="resolved-pgm">${opt.pgm}</span> (${opt.name})`;
+    // Update the SVG edge label to show selected option
+    const edgeLabel = document.getElementById('elabel-terminal-comen01c');
+    if (edgeLabel) edgeLabel.textContent = `option ${num}`;
+    setTimeout(() => {
+      closeTerminal();
+      startReplay(opt);
+    }, 1200);
+  }, 800);
+}
+
+// Handle keyboard input in terminal
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('term-input');
+  if (input) {
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const val = parseInt(input.value);
+        if (val >= 1 && val <= 11) {
+          selectMenuOption(val);
+        } else {
+          const status = document.getElementById('terminal-status');
+          status.className = 'terminal-status';
+          status.textContent = 'INVALID OPTION. Enter 1-11.';
+        }
+      }
+    });
+  }
+});
+
+const STATIC_TRACE = [
+  {
+    title: 'Step 1: Menu Dispatch',
+    subtitle: 'Resolving dynamic XCTL from COMEN02Y data table',
+    nodes: ['node-terminal', 'node-comen01c', 'node-comen02y'],
+    edges: ['edge-terminal-comen01c', 'edge-comen01c-comen02y'],
+    edgeLabels: ['elabel-terminal-comen01c', 'elabel-comen01c-comen02y'],
+    nodeClass: 'active',
+    edgeClass: 'active',
+    file: 'app/cpy/COMEN02Y.cpy (line 69-71)',
+    badge: null,
+    devinResponse: `<div class="devin-label">Devin reading COMEN02Y.cpy</div>
+I found the menu data table at <code>app/cpy/COMEN02Y.cpy</code>. The structure uses a <code>REDEFINES</code> overlay to map option numbers to program names. Each menu entry is a group of three FILLER fields: a 2-digit option number, a 35-char description, and an 8-char program name.
+
+For option 8 (Add Transaction):
+<div class="cobol-block"><span class="cmt">* COMEN02Y.cpy lines 69-71:</span>
+10 FILLER  PIC 9(02) VALUE <span class="resolved">8</span>.
+10 FILLER  PIC X(35) VALUE
+    <span class="str">'Transaction Add'</span>.
+10 FILLER  PIC X(08) VALUE <span class="resolved">'COTRN02C'</span>.</div>
+The menu dispatch program <code>COMEN01C</code> reads the user's selection, indexes into this table via the <code>REDEFINES</code> overlay <code>CDEMO-MENU-OPT-PGMNAME(WS-OPTION)</code>, and uses CICS XCTL to transfer control to the resolved program name &mdash; in this case <code>COTRN02C</code>. This is a <b>runtime resolution</b>: the target program name is not hardcoded in the XCTL statement.`,
+    delay: 4000
+  },
+  {
+    title: 'Step 2: XCTL Transfer',
+    subtitle: 'Control transfers to COTRN02C via CICS XCTL + COMMAREA',
+    nodes: ['node-cotrn02c'],
+    edges: ['edge-comen01c-cotrn02c'],
+    edgeLabels: ['elabel-comen01c-cotrn02c'],
+    nodeClass: 'active',
+    edgeClass: 'active',
+    file: 'app/cbl/COMEN01C.cbl (lines 184-187)',
+    badge: null,
+    devinResponse: `<div class="devin-label">Devin reading COMEN01C.cbl</div>
+The XCTL statement in COMEN01C passes the full <code>CARDDEMO-COMMAREA</code> (defined in copybook <code>COCOM01Y.cpy</code>) to the target program:
+<div class="cobol-block"><span class="kw">EXEC CICS</span>
+    <span class="kw">XCTL PROGRAM</span>(CDEMO-MENU-OPT-PGMNAME(WS-OPTION))
+    <span class="kw">COMMAREA</span>(CARDDEMO-COMMAREA)
+<span class="kw">END-EXEC</span></div>
+The COMMAREA carries session state across the XCTL boundary: the signed-on user ID, security flags, current program name, and previous program name. <code>COTRN02C</code> receives this via its own <code>DFHCOMMAREA</code> and copies it into its working storage copy of <code>CARDDEMO-COMMAREA</code>.
+
+This is key: <b>grep cannot find this call</b> because the program name is a variable (<code>CDEMO-MENU-OPT-PGMNAME(WS-OPTION)</code>), not a literal. You must read the COMEN02Y data table to resolve it.`,
+    delay: 3500
+  },
+  {
+    title: 'Step 3: Cross-Reference Lookup',
+    subtitle: 'Variable dataset names resolved by CICS File Control Table',
+    nodes: ['node-ccxref', 'node-cxacaix'],
+    edges: ['edge-cotrn02c-ccxref', 'edge-cotrn02c-cxacaix'],
+    edgeLabels: ['elabel-cotrn02c-ccxref', 'elabel-cotrn02c-cxacaix'],
+    nodeClass: 'active',
+    edgeClass: 'active',
+    file: 'app/cbl/COTRN02C.cbl (lines 39-42, 579, 612)',
+    badge: null,
+    devinResponse: `<div class="devin-label">Devin reading COTRN02C.cbl</div>
+COTRN02C defines its VSAM dataset names as working storage variables, not literals:
+<div class="cobol-block"><span class="cmt">* COTRN02C.cbl lines 39-42:</span>
+05 WS-TRANSACT-FILE  PIC X(08) VALUE <span class="str">'TRANSACT'</span>.
+05 WS-CCXREF-FILE    PIC X(08) VALUE <span class="str">'CCXREF  '</span>.
+05 WS-CXACAIX-FILE   PIC X(08) VALUE <span class="str">'CXACAIX '</span>.</div>
+When the user enters a card number, COTRN02C first looks up the card-to-account mapping using CICS READ with these variable dataset names:
+<div class="cobol-block"><span class="kw">EXEC CICS READ</span>
+    DATASET(<span class="resolved">WS-CXACAIX-FILE</span>)  <span class="cmt">&larr; 'CXACAIX' resolved by FCT</span>
+    INTO(ACCT-XREF-RECORD)
+    RIDFLD(WS-CARD-RID-ACCT-ID)
+<span class="kw">END-EXEC</span>
+
+<span class="kw">EXEC CICS READ</span>
+    DATASET(<span class="resolved">WS-CCXREF-FILE</span>)   <span class="cmt">&larr; 'CCXREF' resolved by FCT</span>
+    INTO(CARD-XREF-RECORD)
+    RIDFLD(WS-CARD-RID-CARDNUM)
+<span class="kw">END-EXEC</span></div>
+The CICS File Control Table (FCT) resolves these logical names to physical VSAM clusters at runtime. This is another layer of indirection invisible to static analysis.`,
+    delay: 4000
+  },
+  {
+    title: 'Step 4: Dynamic CALL &mdash; Date Validation',
+    subtitle: 'OS loader resolves CSUTLDTC at runtime; positional param mapping',
+    nodes: ['node-csutldtc'],
+    edges: ['edge-cotrn02c-csutldtc'],
+    edgeLabels: ['elabel-cotrn02c-csutldtc'],
+    nodeClass: 'active',
+    edgeClass: 'active',
+    file: 'app/cbl/COTRN02C.cbl (line 393) + app/cbl/CSUTLDTC.cbl',
+    badge: null,
+    devinResponse: `<div class="devin-label">Devin reading COTRN02C.cbl + CSUTLDTC.cbl</div>
+Before writing the transaction, COTRN02C validates dates by dynamically calling CSUTLDTC:
+<div class="cobol-block"><span class="cmt">* COTRN02C.cbl line 393:</span>
+<span class="kw">CALL</span> <span class="str">'CSUTLDTC'</span> <span class="kw">USING</span>
+    CSUTLDTC-DATE
+    CSUTLDTC-DATE-FORMAT
+    CSUTLDTC-RESULT</div>
+I then opened <code>CSUTLDTC.cbl</code> and matched the USING parameters positionally to the LINKAGE SECTION:
+<div class="cobol-block"><span class="cmt">* CSUTLDTC.cbl lines 83-88:</span>
+<span class="kw">LINKAGE SECTION.</span>
+01 LS-DATE         PIC X(10).  <span class="resolved">&larr; receives CSUTLDTC-DATE</span>
+01 LS-DATE-FORMAT  PIC X(10).  <span class="resolved">&larr; receives CSUTLDTC-DATE-FORMAT</span>
+01 LS-RESULT       PIC X(80).  <span class="resolved">&larr; returns validation result</span>
+
+<span class="kw">PROCEDURE DIVISION USING</span> LS-DATE, LS-DATE-FORMAT, LS-RESULT.</div>
+This is a <b>true dynamic CALL</b> &mdash; the OS loader resolves <code>CSUTLDTC</code> from the load library at runtime. Understanding what data flows in and out requires reading the LINKAGE SECTION and matching parameters by position, not by name.`,
+    delay: 4500
+  },
+  {
+    title: 'Step 5: Chained CALL &mdash; CEEDAYS',
+    subtitle: 'Nested dynamic CALL to IBM Language Environment runtime service',
+    nodes: ['node-ceedays'],
+    edges: ['edge-csutldtc-ceedays'],
+    edgeLabels: ['elabel-csutldtc-ceedays'],
+    nodeClass: 'active',
+    edgeClass: 'active',
+    file: 'app/cbl/CSUTLDTC.cbl (line 116)',
+    badge: null,
+    devinResponse: `<div class="devin-label">Devin reading CSUTLDTC.cbl</div>
+Inside CSUTLDTC, I found a nested dynamic CALL to the IBM Language Environment (LE) runtime service <code>CEEDAYS</code>:
+<div class="cobol-block"><span class="cmt">* CSUTLDTC.cbl line 116:</span>
+<span class="kw">CALL</span> <span class="str">"CEEDAYS"</span> <span class="kw">USING</span>
+    WS-DATE-TO-TEST      <span class="resolved">(vstring: length + date text)</span>
+    WS-DATE-FORMAT        <span class="resolved">(vstring: length + format)</span>
+    OUTPUT-LILLIAN         <span class="resolved">S9(9) BINARY &mdash; Lilian day number</span>
+    FEEDBACK-CODE          <span class="resolved">8-byte struct &mdash; condition/severity</span></div>
+<code>CEEDAYS</code> is an IBM LE callable service that converts a date string to a Lilian day number (days since Oct 15, 1582). If the FEEDBACK-CODE indicates an error, the date is invalid.
+
+This is a <b>two-level dynamic call chain</b>: COTRN02C &rarr; CSUTLDTC &rarr; CEEDAYS, where each link is resolved at runtime by a different mechanism (OS loader for CSUTLDTC, LE runtime for CEEDAYS). No static tool can trace this chain.`,
+    delay: 3500
+  },
+  {
+    title: 'Step 6: DATA MUTATION',
+    subtitle: 'New transaction written to TRANSACT VSAM file',
+    nodes: ['node-transact'],
+    edges: ['edge-cotrn02c-transact'],
+    edgeLabels: ['elabel-cotrn02c-transact'],
+    nodeClass: 'mutation',
+    edgeClass: 'mutation',
+    badge: 'badge-mutation',
+    file: 'app/cbl/COTRN02C.cbl (lines 445-446, 713-714)',
+    devinResponse: `<div class="devin-label">Devin reading COTRN02C.cbl &mdash; WRITE section</div>
+This is the actual data mutation. COTRN02C auto-generates a new transaction ID using a VSAM browse pattern, then writes the new record:
+<div class="cobol-block"><span class="cmt">* COTRN02C.cbl lines 445-446, then 713-714:</span>
+<span class="kw">PERFORM</span> STARTBR-TRANSACT-FILE   <span class="cmt">&larr; open browse</span>
+<span class="kw">PERFORM</span> READPREV-TRANSACT-FILE  <span class="cmt">&larr; read last record</span>
+
+<span class="cmt">* Extract numeric portion of TRAN-ID, increment:</span>
+<span class="kw">ADD</span> 1 <span class="kw">TO</span> WS-TRAN-ID-N
+
+<span class="cmt">* Write new record:</span>
+<span class="kw">EXEC CICS WRITE</span>
+    DATASET(<span class="resolved">WS-TRANSACT-FILE</span>)   <span class="cmt">&larr; 'TRANSACT'</span>
+    FROM(<span class="resolved">TRAN-RECORD</span>)
+    RIDFLD(<span class="resolved">TRAN-ID</span>)
+<span class="kw">END-EXEC</span></div>
+<b>This WRITE is the real-time data change</b> &mdash; a new TRAN-RECORD is physically written to the TRANSACT VSAM file with an auto-incremented ID. The STARTBR/READPREV pattern positions to the highest existing key, reads it, adds 1, and uses the new key for the WRITE.`,
+    delay: 4500
+  },
+  {
+    title: 'Step 7: Batch Processing',
+    subtitle: 'CBTRN02C reads TRANSACT, updates ACCOUNT + TCATBAL',
+    nodes: ['node-cbtrn02c', 'node-account', 'node-tcatbal'],
+    edges: ['edge-transact-cbtrn02c', 'edge-cbtrn02c-account', 'edge-cbtrn02c-tcatbal'],
+    edgeLabels: ['elabel-transact-cbtrn02c', 'elabel-cbtrn02c-account', 'elabel-cbtrn02c-tcatbal'],
+    nodeClass: 'batch',
+    edgeClass: 'batch',
+    badge: null,
+    file: 'app/cbl/CBTRN02C.cbl',
+    devinResponse: `<div class="devin-label">Devin reading CBTRN02C.cbl</div>
+The batch program <code>CBTRN02C</code> runs in a nightly cycle and reads from the <b>same TRANSACT file</b> that COTRN02C wrote to. It then posts each transaction to the account master:
+<div class="cobol-block"><span class="kw">PERFORM</span> 2700-UPDATE-TCATBAL    <span class="cmt">&larr; category balance</span>
+<span class="kw">PERFORM</span> 2800-UPDATE-ACCOUNT-REC <span class="cmt">&larr; account master</span>
+
+<span class="cmt">* Inside 2800-UPDATE-ACCOUNT-REC:</span>
+<span class="kw">ADD</span> DALYTRAN-AMT <span class="kw">TO</span> ACCT-CURR-BAL
+<span class="kw">REWRITE</span> FD-ACCTFILE-REC
+    <span class="kw">FROM</span> <span class="resolved">ACCOUNT-RECORD</span></div>
+Both programs share data structures via the <code>CVTRA05Y</code> copybook (TRAN-RECORD layout). The batch job reads each transaction, updates <code>ACCT-CURR-BAL</code> in the ACCOUNT file, and maintains running totals in the <code>TCATBAL</code> category balance file.
+
+This completes the full data lineage: <b>online WRITE &rarr; batch READ &rarr; account REWRITE</b>. The connection between these two programs is the shared TRANSACT VSAM file &mdash; they are never linked at compile time, only through the data they share at runtime.`,
+    delay: 4000
+  }
+];
+
+// ============================================================
+//  COCRDLIC TRACE (Option 3 — Credit Card List)
+// ============================================================
+const COCRDLIC_TRACE = [
+  {
+    title: 'Step 1: Menu Dispatch',
+    subtitle: 'Resolving dynamic XCTL from COMEN02Y data table',
+    nodes: ['node-terminal', 'node-comen01c', 'node-comen02y'],
+    edges: ['edge-terminal-comen01c', 'edge-comen01c-comen02y'],
+    edgeLabels: ['elabel-terminal-comen01c', 'elabel-comen01c-comen02y'],
+    nodeClass: 'active',
+    edgeClass: 'active',
+    file: 'app/cpy/COMEN02Y.cpy (lines 37-39)',
+    badge: null,
+    devinResponse: `<div class="devin-label">Devin reading COMEN02Y.cpy</div>
+I found the menu data table at <code>app/cpy/COMEN02Y.cpy</code>. The structure uses a <code>REDEFINES</code> overlay to map option numbers to program names.
+
+For option 3 (Credit Card List):
+<div class="cobol-block"><span class="cmt">* COMEN02Y.cpy &mdash; option 3:</span>
+10 FILLER  PIC 9(02) VALUE <span class="resolved">3</span>.
+10 FILLER  PIC X(35) VALUE
+    <span class="str">'Credit Card List'</span>.
+10 FILLER  PIC X(08) VALUE <span class="resolved">'COCRDLIC'</span>.</div>
+The menu dispatch resolves option 3 to <code>COCRDLIC</code> &mdash; a <b>completely different program</b> than option 8's <code>COTRN02C</code>. Same XCTL instruction, different runtime target.`,
+    delay: 4000
+  },
+  {
+    title: 'Step 2: XCTL to COCRDLIC',
+    subtitle: 'Control transfers to Credit Card List program + COMMAREA',
+    nodes: ['node-cocrdlic'],
+    edges: ['edge-comen01c-cocrdlic'],
+    edgeLabels: ['elabel-comen01c-cocrdlic'],
+    nodeClass: 'active',
+    edgeClass: 'active',
+    file: 'app/cbl/COCRDLIC.cbl',
+    badge: null,
+    devinResponse: `<div class="devin-label">Devin reading COCRDLIC.cbl</div>
+COCRDLIC is a <b>pseudo-conversational CICS program</b> that lists credit cards with pagination. It follows the standard SEND-then-RETURN pattern:
+<div class="cobol-block"><span class="kw">EXEC CICS</span>
+    <span class="kw">XCTL PROGRAM</span>(CDEMO-MENU-OPT-PGMNAME(<span class="resolved">3</span>))
+    <span class="cmt">&larr; resolves to 'COCRDLIC'</span>
+    <span class="kw">COMMAREA</span>(CARDDEMO-COMMAREA)
+<span class="kw">END-EXEC</span></div>
+COCRDLIC receives the shared <code>CARDDEMO-COMMAREA</code> (COCOM01Y.cpy) plus its own extension <code>WS-THIS-PROGCOMMAREA</code> for pagination state.
+
+<b>Key difference from COTRN02C:</b> COCRDLIC has <b>no CALL statements</b> &mdash; all transfers use XCTL. And it only <b>reads</b> data, never writes.`,
+    delay: 4000
+  },
+  {
+    title: 'Step 3: CARDDAT Browse',
+    subtitle: 'VSAM STARTBR/READNEXT/ENDBR &mdash; read-only paginated browse',
+    nodes: ['node-carddat'],
+    edges: ['edge-cocrdlic-carddat'],
+    edgeLabels: ['elabel-cocrdlic-carddat'],
+    nodeClass: 'active',
+    edgeClass: 'active',
+    file: 'app/cbl/COCRDLIC.cbl (9000-READ-FORWARD)',
+    badge: 'badge-readonly',
+    devinResponse: `<div class="devin-label">Devin reading COCRDLIC.cbl &mdash; browse logic</div>
+COCRDLIC browses the CARDDAT VSAM file to list credit cards with pagination:
+<div class="cobol-block"><span class="cmt">* 9000-READ-FORWARD:</span>
+<span class="kw">EXEC CICS STARTBR</span>
+    DATASET(<span class="resolved">LIT-CARD-FILE</span>)   <span class="cmt">&larr; 'CARDDAT'</span>
+    RIDFLD(WS-CARD-RID-CARDNUM)
+    GTEQ
+<span class="kw">END-EXEC</span>
+
+<span class="cmt">* Loop: READNEXT up to 7 rows</span>
+<span class="kw">EXEC CICS READNEXT</span>
+    DATASET(<span class="resolved">LIT-CARD-FILE</span>)
+    INTO(<span class="resolved">CARD-RECORD</span>)  <span class="cmt">&larr; CVACT02Y (150 bytes)</span>
+    RIDFLD(WS-CARD-RID-CARDNUM)
+<span class="kw">END-EXEC</span>
+
+<span class="cmt">* Peek-ahead + ENDBR to detect next page</span>
+<span class="kw">EXEC CICS ENDBR</span> DATASET(LIT-CARD-FILE)
+<span class="kw">END-EXEC</span></div>
+<b>Contrast with COTRN02C:</b> COCRDLIC is <b>read-only</b> &mdash; it only browses CARDDAT using STARTBR/READNEXT/READPREV/ENDBR. It never writes, rewrites, or deletes records. COTRN02C writes to TRANSACT. Different programs, different data access patterns.`,
+    delay: 4500
+  },
+  {
+    title: 'Step 4: Downstream Navigation',
+    subtitle: 'Dynamic XCTL to detail view (S) or update (U) via CCARD-NEXT-PROG',
+    nodes: ['node-cocrdslc', 'node-cocrdupc'],
+    edges: ['edge-cocrdlic-cocrdslc', 'edge-cocrdlic-cocrdupc'],
+    edgeLabels: ['elabel-cocrdlic-cocrdslc', 'elabel-cocrdlic-cocrdupc'],
+    nodeClass: 'active',
+    edgeClass: 'active',
+    file: 'app/cbl/COCRDLIC.cbl + app/cpy/CVCRD01Y.cpy',
+    badge: null,
+    devinResponse: `<div class="devin-label">Devin reading COCRDLIC.cbl &mdash; downstream transfers</div>
+When the user selects a card row, COCRDLIC transfers control via another dynamic XCTL:
+<div class="cobol-block"><span class="cmt">* User types 'S' next to a row:</span>
+<span class="kw">MOVE</span> LIT-CARDDTLPGM <span class="kw">TO</span> CCARD-NEXT-PROG
+<span class="cmt">&larr; LIT-CARDDTLPGM = 'COCRDSLC'</span>
+
+<span class="cmt">* User types 'U' next to a row:</span>
+<span class="kw">MOVE</span> LIT-CARDUPDPGM <span class="kw">TO</span> CCARD-NEXT-PROG
+<span class="cmt">&larr; LIT-CARDUPDPGM = 'COCRDUPC'</span>
+
+<span class="kw">EXEC CICS</span>
+    <span class="kw">XCTL PROGRAM</span>(<span class="resolved">CCARD-NEXT-PROG</span>)
+    COMMAREA(WS-COMMAREA)
+<span class="kw">END-EXEC</span></div>
+The variable <code>CCARD-NEXT-PROG</code> (from copybook CVCRD01Y.cpy) acts as another indirection point &mdash; the XCTL target depends on what the user typed ('S' or 'U'). This is <b>yet another layer of dynamic call resolution</b>.
+
+<b>Full chain:</b> Menu option &rarr; COCRDLIC &rarr; user selection &rarr; COCRDSLC or COCRDUPC. Every link resolved at runtime.`,
+    delay: 4000
+  }
+];
+
+// ============================================================
+//  STATE
+// ============================================================
+let isRunning = false;
+
+// ============================================================
+//  REPLAY
+// ============================================================
+async function startReplay(opt) {
+  if (isRunning) return;
+  const chosen = opt || selectedOption || MENU_OPTIONS[7]; // default option 8
+  isRunning = true;
+  document.getElementById('play-btn').disabled = true;
+  document.getElementById('event-log').innerHTML = '';
+
+  // Update SVG labels to reflect chosen option
+  const edgeLabel = document.getElementById('elabel-terminal-comen01c');
+  if (edgeLabel) edgeLabel.textContent = `option ${chosen.num}`;
+
+  // Initial "session" log entry showing terminal selection
+  addLogEntry({
+    title: 'CICS Terminal Input',
+    file: '',
+    devinResponse: `<div class="devin-label">User selected menu option ${chosen.num}</div>The 3270 terminal operator selected option <b>${chosen.num}</b> (<b>${chosen.name}</b>) from the CARDDEMO main menu. COMEN01C will now resolve the dynamic XCTL target from the COMEN02Y data table.`
+  });
+
+  await sleep(1500);
+
+  if (chosen.num === 8) {
+    // ===== OPTION 8: Full 7-step trace (left tree) =====
+    for (let i = 0; i < STATIC_TRACE.length; i++) {
+      if (!isRunning) break;
+      highlightStep(STATIC_TRACE[i]);
+      addLogEntry(STATIC_TRACE[i]);
+      await sleep(STATIC_TRACE[i].delay);
+    }
+    if (isRunning) {
+      showStepIndicator('Trace Complete', 'All 7 dynamic call resolution steps traced');
+      addCompletionEntry();
+    }
+  } else if (chosen.num === 3) {
+    // ===== OPTION 3: Full 4-step COCRDLIC trace (right tree) =====
+    for (let i = 0; i < COCRDLIC_TRACE.length; i++) {
+      if (!isRunning) break;
+      highlightStep(COCRDLIC_TRACE[i]);
+      addLogEntry(COCRDLIC_TRACE[i]);
+      await sleep(COCRDLIC_TRACE[i].delay);
+    }
+    if (isRunning) {
+      showStepIndicator('Trace Complete', 'COCRDLIC flow traced — compare with Option 8');
+      addCocrdlicCompletionEntry();
+    }
+  } else {
+    // ===== OTHER OPTIONS: partial 2-step trace =====
+    // Step 1: Menu dispatch (shared)
+    const step1 = {
+      ...STATIC_TRACE[0],
+      devinResponse: `<div class="devin-label">Devin reading COMEN02Y.cpy</div>
+I found the menu data table at <code>app/cpy/COMEN02Y.cpy</code>. The structure uses a <code>REDEFINES</code> overlay to map option numbers to program names.
+
+For option ${chosen.num} (${chosen.name}):
+<div class="cobol-block"><span class="cmt">* COMEN02Y.cpy &mdash; option ${chosen.num}:</span>
+10 FILLER  PIC 9(02) VALUE <span class="resolved">${chosen.num}</span>.
+10 FILLER  PIC X(35) VALUE
+    <span class="str">'${chosen.name}'</span>.
+10 FILLER  PIC X(08) VALUE <span class="resolved">'${chosen.pgm}'</span>.</div>
+The menu dispatch resolves option ${chosen.num} to <code>${chosen.pgm}</code>.
+
+<b style="color:#ffa94d;">Note:</b> This resolves to a different program than option 8 (<code>COTRN02C</code>) or option 3 (<code>COCRDLIC</code>). Try those options to see the full traced flows on the left and right trees.`
+    };
+    highlightStep(step1);
+    addLogEntry(step1);
+    await sleep(step1.delay);
+
+    if (isRunning) {
+      showStepIndicator('Trace Paused', `Select Option 3 or 8 for full traced flows`);
+      addLogEntry({
+        title: 'END OF TRACE',
+        file: '',
+        devinResponse: `<div class="devin-label">Devin Summary</div>
+<b>Dynamic call resolution proved:</b> Option ${chosen.num} would resolve to <code>${chosen.pgm}</code> (${chosen.name}).
+
+<div style="margin-top:8px;padding:8px;background:rgba(255,169,77,0.1);border:1px solid rgba(255,169,77,0.3);border-radius:4px;">
+<b>Try these options for full traced flows:</b><br>
+&bull; <b>Option 3</b> (Credit Card List) &rarr; right tree: read-only VSAM browse + dynamic XCTL navigation<br>
+&bull; <b>Option 8</b> (Transaction Add) &rarr; left tree: CALL chains, data mutation, batch processing
+</div>`
+      });
+    }
+  }
+  isRunning = false;
+  document.getElementById('play-btn').disabled = false;
+}
+
+// ============================================================
+//  DIAGRAM MANIPULATION
+// ============================================================
+function highlightStep(step) {
+  showStepIndicator(step.title, step.subtitle);
+
+  (step.nodes || []).forEach(nodeId => {
+    const g = document.getElementById(nodeId);
+    if (!g) return;
+    const rect = g.querySelector('.node-rect');
+    const label = g.querySelector('.node-label');
+    const sublabel = g.querySelector('.node-sublabel');
+    if (rect) { rect.classList.add(step.nodeClass); rect.classList.add('active-pulse'); }
+    if (label) label.classList.add(step.nodeClass);
+    if (sublabel) sublabel.classList.add(step.nodeClass);
+    setTimeout(() => { if (rect) rect.classList.remove('active-pulse'); }, 2000);
+  });
+
+  (step.edges || []).forEach(edgeId => {
+    const el = document.getElementById(edgeId);
+    if (el) el.classList.add(step.edgeClass);
+  });
+
+  (step.edgeLabels || []).forEach(labelId => {
+    const el = document.getElementById(labelId);
+    if (el) el.classList.add(step.edgeClass);
+  });
+
+  if (step.badge) {
+    const badge = document.getElementById(step.badge);
+    if (badge) badge.classList.add('visible');
+  }
+}
+
+function showStepIndicator(title, subtitle) {
+  const indicator = document.getElementById('step-indicator');
+  indicator.querySelector('.step-num').textContent = title;
+  indicator.querySelector('.step-text').textContent = subtitle ? '\u2014 ' + subtitle : '';
+  indicator.classList.add('visible');
+}
+
+function addLogEntry(step) {
+  const log = document.getElementById('event-log');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `
+    <div class="log-step">${step.title}</div>
+    ${step.file ? `<div class="log-file">${step.file}</div>` : ''}
+    ${step.devinResponse ? `<div class="devin-response">${step.devinResponse}</div>` : ''}
+  `;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+}
+
+function addCompletionEntry() {
+  const log = document.getElementById('event-log');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `
+    <div class="log-step" style="color:#4da6ff;">TRACE COMPLETE &mdash; Option 8 (Left Tree)</div>
+    <div class="devin-response">
+      <div class="devin-label">Devin Summary</div>
+      All 7 dynamic call resolution steps traced successfully from actual COBOL source.<br><br>
+      <b style="color:#00ff88;">Programs resolved:</b> COMEN01C &rarr; COTRN02C &rarr; CSUTLDTC &rarr; CEEDAYS &rarr; CBTRN02C<br>
+      <b style="color:#ff6b6b;">Data mutations:</b> TRANSACT (online write) &rarr; ACCOUNT + TCATBAL (batch update)<br>
+      <b style="color:#ffa94d;">Resolution mechanisms:</b> XCTL data table, CALL positional params, CICS FCT, OS loader<br><br>
+      <b>Key insight:</b> None of these program-to-program links are discoverable via grep or static text search.<br><br>
+      <div style="padding:8px;background:rgba(78,205,196,0.1);border:1px solid rgba(78,205,196,0.3);border-radius:4px;">
+      <b style="color:#4ecdc4;">Now try Option 3</b> (Credit Card List) to see the right tree light up &mdash; a completely different flow with read-only VSAM browse and dynamic XCTL navigation. Same menu dispatch, different runtime path.
+      </div>
+    </div>
+  `;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+}
+
+function addCocrdlicCompletionEntry() {
+  const log = document.getElementById('event-log');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `
+    <div class="log-step" style="color:#4ecdc4;">TRACE COMPLETE &mdash; Option 3 (Right Tree)</div>
+    <div class="devin-response">
+      <div class="devin-label">Devin Summary</div>
+      All 4 COCRDLIC resolution steps traced from actual COBOL source.<br><br>
+      <b style="color:#00ff88;">Programs resolved:</b> COMEN01C &rarr; COCRDLIC &rarr; COCRDSLC / COCRDUPC<br>
+      <b style="color:#4ecdc4;">Data access:</b> CARDDAT VSAM (read-only browse &mdash; STARTBR/READNEXT/ENDBR)<br>
+      <b style="color:#ffa94d;">Resolution mechanisms:</b> XCTL data table, CCARD-NEXT-PROG variable indirection<br><br>
+      <b>Key contrast with Option 8:</b><br>
+      <table style="font-size:11px;margin:8px 0;border-collapse:collapse;width:100%;">
+        <tr style="border-bottom:1px solid #2a2a3e;">
+          <td style="padding:4px;"></td>
+          <td style="padding:4px;color:#00ff88;"><b>Option 8 (Left)</b></td>
+          <td style="padding:4px;color:#4ecdc4;"><b>Option 3 (Right)</b></td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a1a2e;">
+          <td style="padding:4px;color:#888;">Program</td>
+          <td style="padding:4px;">COTRN02C</td>
+          <td style="padding:4px;">COCRDLIC</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a1a2e;">
+          <td style="padding:4px;color:#888;">CALL stmts</td>
+          <td style="padding:4px;">Yes (CSUTLDTC &rarr; CEEDAYS)</td>
+          <td style="padding:4px;">None</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a1a2e;">
+          <td style="padding:4px;color:#888;">Data access</td>
+          <td style="padding:4px;"><span style="color:#ff6b6b;">WRITE</span> to TRANSACT</td>
+          <td style="padding:4px;"><span style="color:#4ecdc4;">READ ONLY</span> from CARDDAT</td>
+        </tr>
+        <tr>
+          <td style="padding:4px;color:#888;">Batch link</td>
+          <td style="padding:4px;">Yes (CBTRN02C)</td>
+          <td style="padding:4px;">None</td>
+        </tr>
+      </table>
+      Same <code>XCTL PROGRAM(variable)</code> instruction, completely different runtime behavior.
+    </div>
+  `;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+}
+
+// ============================================================
+//  RESET
+// ============================================================
+function resetAll() {
+  isRunning = false;
+  document.getElementById('play-btn').disabled = false;
+
+  document.querySelectorAll('.node-rect').forEach(el => { el.setAttribute('class', 'node-rect'); });
+  document.querySelectorAll('.node-label').forEach(el => { el.setAttribute('class', 'node-label'); });
+  document.querySelectorAll('.node-sublabel').forEach(el => { el.setAttribute('class', 'node-sublabel'); });
+  document.querySelectorAll('.edge-line').forEach(el => { el.setAttribute('class', 'edge-line'); });
+  document.querySelectorAll('.edge-label').forEach(el => { el.setAttribute('class', 'edge-label'); });
+  document.querySelectorAll('.data-badge').forEach(el => { el.classList.remove('visible'); });
+  document.querySelectorAll('.readonly-badge').forEach(el => { el.classList.remove('visible'); });
+  document.getElementById('step-indicator').classList.remove('visible');
+  document.getElementById('event-log').innerHTML = `
+    <div style="padding: 16px; color: #555; font-size: 11px; text-align: center;">
+      Click <b>Play Trace</b> to open the CICS terminal and select a menu option
+    </div>
+  `;
+  selectedOption = null;
+  // Restore edge label
+  const edgeLabel = document.getElementById('elabel-terminal-comen01c');
+  if (edgeLabel) edgeLabel.textContent = 'option 8';
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+</script>
+</body>
+</html>
