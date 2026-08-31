@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CICS Transaction Flows – CardDemo Analysis | UniCredit</title>
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  .flow-group-title {
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--uc-gray-400);
+    margin: 2rem 0 .75rem;
+    padding-bottom: .4rem;
+    border-bottom: 2px solid var(--uc-gray-200);
+  }
+  .flow-group-title:first-of-type { margin-top: 0; }
+  .stat-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: .75rem;
+    margin-bottom: 2rem;
+  }
+  .stat-card {
+    background: var(--uc-white);
+    border: 1px solid var(--uc-gray-200);
+    border-radius: var(--uc-radius-sm);
+    padding: .85rem;
+    text-align: center;
+  }
+  .stat-value { font-size: 1.4rem; font-weight: 800; color: var(--uc-red); }
+  .stat-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--uc-gray-600); margin-top: .15rem; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════  HERO  ════════════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. &mdash; Milano</div>
+    </div>
+    <h1>CICS Transaction Flows &ndash; <span>CardDemo Analysis</span></h1>
+    <p class="hero-subtitle">
+      Detailed flow documentation for all 17 CICS online transactions in the CardDemo credit-card management system. Each document follows the 12-section CICS Transaction Analysis Template.
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Transactions</dt><dd>17</dd></div>
+      <div><dt>Online Programs</dt><dd>17</dd></div>
+      <div><dt>BMS Mapsets</dt><dd>17</dd></div>
+      <div><dt>Total COBOL LOC</dt><dd>14,780</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">&rsaquo;</span>
+  CICS Transaction Flows
+</div>
+
+<!-- ════════════════════  BODY  ════════════════════ -->
+<div class="page-wrap-single">
+
+<!-- ── Stats ─────────────────────────────────── -->
+<div class="stat-strip">
+  <div class="stat-card"><div class="stat-value">8</div><div class="stat-label">Flow Groups</div></div>
+  <div class="stat-card"><div class="stat-value">17</div><div class="stat-label">Transactions</div></div>
+  <div class="stat-card"><div class="stat-value">6</div><div class="stat-label">VSAM Files</div></div>
+  <div class="stat-card"><div class="stat-value">17</div><div class="stat-label">BMS Maps</div></div>
+  <div class="stat-card"><div class="stat-value">14,780</div><div class="stat-label">Lines of COBOL</div></div>
+</div>
+
+<!-- ── Navigation Diagram ───────────────────── -->
+<section class="section">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num" style="background:var(--uc-gold);color:var(--uc-navy)">&mapsto;</span>
+    <h2>Transaction Navigation Map</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="diagram-box">
+<pre>
+TERMINAL &rarr; CC00 (Sign-On)
+              &boxv;
+    &boxdr;&HorizontalLine;&HorizontalLine;&HorizontalLine;&HorizontalLine;&HorizontalLine;&HorizontalLine;&HorizontalLine;&HorizontalLine;&HorizontalLine;&boxbt;&HorizontalLine;&HorizontalLine;&HorizontalLine;&HorizontalLine;&HorizontalLine;&HorizontalLine;&HorizontalLine;&HorizontalLine;&HorizontalLine;&boxdl;
+    &boxv;                   &boxv;
+  Admin               Regular
+    &boxv;                   &boxv;
+  CA00               CM00
+  (Admin Menu)       (Main Menu)
+    &boxv;                   &boxv;
+    &boxvr;&HorizontalLine; CU00 User List   &boxvr;&HorizontalLine; 1. CAVW Account View
+    &boxvr;&HorizontalLine; CU01 User Add    &boxvr;&HorizontalLine; 2. CAUP Account Update
+    &boxvr;&HorizontalLine; CU02 User Update &boxvr;&HorizontalLine; 3. CCLI Credit Card List
+    &boxvr;&HorizontalLine; CU03 User Delete &boxv;     &boxvr;&HorizontalLine; CCDL Card View
+    &boxvr;&HorizontalLine; CTLI Tran Types  &boxv;     &boxur;&HorizontalLine; CCUP Card Update
+    &boxur;&HorizontalLine; CTTU Tran Update &boxvr;&HorizontalLine; 4. CT00 Transaction List
+                        &boxv;     &boxur;&HorizontalLine; CT01 Transaction View
+                        &boxvr;&HorizontalLine; 5. CT02 Transaction Add
+                        &boxvr;&HorizontalLine; 6. CR00 Reports
+                        &boxur;&HorizontalLine; 7. CB00 Bill Payment
+</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════  FLOW GROUPS  ═══════════════ -->
+
+<!-- ── 1. Sign-On & Navigation ────────────────── -->
+<h4 class="flow-group-title">&#128274; Sign-On &amp; Navigation</h4>
+<div class="flow-nav">
+  <a class="flow-nav-card" href="CC00-sign-on.html">
+    <div class="flow-nav-icon cics">&#128274;</div>
+    <div class="flow-nav-body">
+      <h4>Sign-On (CC00)</h4>
+      <p>COSGN00C &mdash; Authentication, USRSEC file read, admin/regular routing via XCTL</p>
+      <span class="flow-nav-badge scaffold">260 LOC</span>
+    </div>
+  </a>
+  <a class="flow-nav-card" href="CM00-main-menu.html">
+    <div class="flow-nav-icon cics">&#128209;</div>
+    <div class="flow-nav-body">
+      <h4>Main Menu (CM00)</h4>
+      <p>COMEN01C &mdash; Regular user menu dispatcher, 11 options via XCTL</p>
+      <span class="flow-nav-badge scaffold">308 LOC</span>
+    </div>
+  </a>
+  <a class="flow-nav-card" href="CA00-admin-menu.html">
+    <div class="flow-nav-icon cics">&#128736;</div>
+    <div class="flow-nav-body">
+      <h4>Admin Menu (CA00)</h4>
+      <p>COADM01C &mdash; Admin user menu dispatcher, 6 options via XCTL</p>
+      <span class="flow-nav-badge scaffold">288 LOC</span>
+    </div>
+  </a>
+</div>
+
+<!-- ── 2. Account Management ──────────────────── -->
+<h4 class="flow-group-title">&#127974; Account Management</h4>
+<div class="flow-nav">
+  <a class="flow-nav-card" href="CAVW-account-view.html">
+    <div class="flow-nav-icon cics">&#128269;</div>
+    <div class="flow-nav-body">
+      <h4>Account View (CAVW)</h4>
+      <p>COACTVWC &mdash; Browse &amp; display account details from ACCTDAT VSAM</p>
+      <span class="flow-nav-badge scaffold">941 LOC</span>
+    </div>
+  </a>
+  <a class="flow-nav-card" href="CAUP-account-update.html">
+    <div class="flow-nav-icon cics">&#9998;</div>
+    <div class="flow-nav-body">
+      <h4>Account Update (CAUP)</h4>
+      <p>COACTUPC &mdash; Modify account &amp; customer records, REWRITE ACCTDAT/CUSTDAT</p>
+      <span class="flow-nav-badge scaffold">4,236 LOC</span>
+    </div>
+  </a>
+</div>
+
+<!-- ── 3. Credit Card Management ──────────────── -->
+<h4 class="flow-group-title">&#128179; Credit Card Management</h4>
+<div class="flow-nav">
+  <a class="flow-nav-card" href="CCLI-credit-card-list.html">
+    <div class="flow-nav-icon cics">&#128203;</div>
+    <div class="flow-nav-body">
+      <h4>Credit Card List (CCLI)</h4>
+      <p>COCRDLIC &mdash; Browse CARDDAT with STARTBR/READNEXT, select for view/update</p>
+      <span class="flow-nav-badge scaffold">1,459 LOC</span>
+    </div>
+  </a>
+  <a class="flow-nav-card" href="CCDL-credit-card-view.html">
+    <div class="flow-nav-icon cics">&#128269;</div>
+    <div class="flow-nav-body">
+      <h4>Credit Card View (CCDL)</h4>
+      <p>COCRDSLC &mdash; Display single card details from CARDDAT</p>
+      <span class="flow-nav-badge scaffold">887 LOC</span>
+    </div>
+  </a>
+  <a class="flow-nav-card" href="CCUP-credit-card-update.html">
+    <div class="flow-nav-icon cics">&#9998;</div>
+    <div class="flow-nav-body">
+      <h4>Credit Card Update (CCUP)</h4>
+      <p>COCRDUPC &mdash; Modify card name/status/expiry, REWRITE CARDDAT</p>
+      <span class="flow-nav-badge scaffold">1,560 LOC</span>
+    </div>
+  </a>
+</div>
+
+<!-- ── 4. Transaction Processing ──────────────── -->
+<h4 class="flow-group-title">&#128260; Transaction Processing</h4>
+<div class="flow-nav">
+  <a class="flow-nav-card" href="CT00-transaction-list.html">
+    <div class="flow-nav-icon cics">&#128203;</div>
+    <div class="flow-nav-body">
+      <h4>Transaction List (CT00)</h4>
+      <p>COTRN00C &mdash; Browse TRANSACT VSAM with STARTBR/READNEXT, paging</p>
+      <span class="flow-nav-badge scaffold">699 LOC</span>
+    </div>
+  </a>
+  <a class="flow-nav-card" href="CT01-transaction-view.html">
+    <div class="flow-nav-icon cics">&#128269;</div>
+    <div class="flow-nav-body">
+      <h4>Transaction View (CT01)</h4>
+      <p>COTRN01C &mdash; Display single transaction detail from TRANSACT</p>
+      <span class="flow-nav-badge scaffold">330 LOC</span>
+    </div>
+  </a>
+  <a class="flow-nav-card" href="CT02-transaction-add.html">
+    <div class="flow-nav-icon cics">&#10010;</div>
+    <div class="flow-nav-body">
+      <h4>Transaction Add (CT02)</h4>
+      <p>COTRN02C &mdash; Create new transaction record in TRANSACT</p>
+      <span class="flow-nav-badge scaffold">783 LOC</span>
+    </div>
+  </a>
+</div>
+
+<!-- ── 5. Bill Payment & Reporting ────────────── -->
+<h4 class="flow-group-title">&#128176; Bill Payment &amp; Reporting</h4>
+<div class="flow-nav">
+  <a class="flow-nav-card" href="CB00-bill-payment.html">
+    <div class="flow-nav-icon cics">&#128176;</div>
+    <div class="flow-nav-body">
+      <h4>Bill Payment (CB00)</h4>
+      <p>COBIL00C &mdash; Pay account balance (full or partial), browse TRANSACT</p>
+      <span class="flow-nav-badge scaffold">572 LOC</span>
+    </div>
+  </a>
+  <a class="flow-nav-card" href="CR00-transaction-reports.html">
+    <div class="flow-nav-icon cics">&#128202;</div>
+    <div class="flow-nav-body">
+      <h4>Transaction Reports (CR00)</h4>
+      <p>CORPT00C &mdash; Generate &amp; display transaction reports</p>
+      <span class="flow-nav-badge scaffold">649 LOC</span>
+    </div>
+  </a>
+</div>
+
+<!-- ── 6. User Security Administration ────────── -->
+<h4 class="flow-group-title">&#128101; User Security Administration (Admin Only)</h4>
+<div class="flow-nav">
+  <a class="flow-nav-card" href="CU00-user-list.html">
+    <div class="flow-nav-icon cics">&#128203;</div>
+    <div class="flow-nav-body">
+      <h4>User List (CU00)</h4>
+      <p>COUSR00C &mdash; Browse USRSEC with STARTBR/READNEXT, paging</p>
+      <span class="flow-nav-badge scaffold">695 LOC</span>
+    </div>
+  </a>
+  <a class="flow-nav-card" href="CU01-user-add.html">
+    <div class="flow-nav-icon cics">&#10010;</div>
+    <div class="flow-nav-body">
+      <h4>User Add (CU01)</h4>
+      <p>COUSR01C &mdash; Create new user record in USRSEC</p>
+      <span class="flow-nav-badge scaffold">299 LOC</span>
+    </div>
+  </a>
+  <a class="flow-nav-card" href="CU02-user-update.html">
+    <div class="flow-nav-icon cics">&#9998;</div>
+    <div class="flow-nav-body">
+      <h4>User Update (CU02)</h4>
+      <p>COUSR02C &mdash; Modify user record in USRSEC</p>
+      <span class="flow-nav-badge scaffold">414 LOC</span>
+    </div>
+  </a>
+  <a class="flow-nav-card" href="CU03-user-delete.html">
+    <div class="flow-nav-icon cics">&#128465;</div>
+    <div class="flow-nav-body">
+      <h4>User Delete (CU03)</h4>
+      <p>COUSR03C &mdash; Remove user record from USRSEC</p>
+      <span class="flow-nav-badge scaffold">359 LOC</span>
+    </div>
+  </a>
+</div>
+
+<!-- ── VSAM File Reference ────────────────────── -->
+<section class="section" style="margin-top:2.5rem;">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">&#128450;</span>
+    <h2>VSAM File Reference</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>FCT Name</th><th>Description</th><th>Key Programs</th><th>Access Modes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>ACCTDAT</code></td><td>Account master records</td><td>COACTVWC, COACTUPC</td><td>READ, REWRITE</td></tr>
+          <tr><td><code>CUSTDAT</code></td><td>Customer master records</td><td>COACTUPC</td><td>READ, REWRITE</td></tr>
+          <tr><td><code>CARDDAT</code></td><td>Credit card data</td><td>COCRDLIC, COCRDSLC, COCRDUPC</td><td>READ, REWRITE, STARTBR, READNEXT</td></tr>
+          <tr><td><code>CARDXREF</code></td><td>Card cross-reference</td><td>COCRDLIC, COCRDSLC</td><td>READ, STARTBR</td></tr>
+          <tr><td><code>TRANSACT</code></td><td>Transaction records</td><td>COTRN00C, COTRN01C, COTRN02C, COBIL00C, CORPT00C</td><td>READ, WRITE, STARTBR, READNEXT</td></tr>
+          <tr><td><code>USRSEC</code></td><td>User security records</td><td>COSGN00C, COUSR00C&ndash;03C</td><td>READ, WRITE, REWRITE, DELETE, STARTBR, READNEXT</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+</div><!-- /page-wrap-single -->
+
+<footer class="footer">
+  <strong>UniCredit S.p.A.</strong> &mdash; CardDemo CICS Transaction Flows &middot; Auto-generated
+</footer>
+
+</body>
+</html>

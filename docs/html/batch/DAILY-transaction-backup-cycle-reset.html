@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DAILY – Transaction Backup &amp; Cycle Reset | Batch Process Analysis | UniCredit CardDemo</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   UniCredit CardDemo — Shared Theme (inlined for standalone viewing)
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --uc-red:        #E4002B;
+  --uc-red-dark:   #B8001F;
+  --uc-red-light:  #FF3354;
+  --uc-navy:       #1D2B4E;
+  --uc-navy-light: #2A3D6B;
+  --uc-gold:       #C5A44E;
+  --uc-gold-light: #E2C97A;
+  --uc-white:      #FFFFFF;
+  --uc-gray-50:    #F8F9FA;
+  --uc-gray-100:   #F0F1F3;
+  --uc-gray-200:   #E2E4E8;
+  --uc-gray-400:   #9EA3AE;
+  --uc-gray-600:   #6B7280;
+  --uc-gray-800:   #374151;
+  --uc-text:       #1F2937;
+  --uc-shadow:     0 4px 24px rgba(29,43,78,.08);
+  --uc-shadow-lg:  0 12px 48px rgba(29,43,78,.12);
+  --uc-radius:     12px;
+  --uc-radius-sm:  8px;
+  --uc-transition: .25s cubic-bezier(.4,0,.2,1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--uc-text);
+  background: var(--uc-gray-50);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+.hero {
+  background: linear-gradient(135deg, var(--uc-navy) 0%, var(--uc-navy-light) 50%, var(--uc-red-dark) 100%);
+  color: var(--uc-white);
+  padding: 3rem 2rem 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -60%; right: -20%;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(228,0,43,.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute; bottom: -30%; left: -10%;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(197,164,78,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-inner { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+.hero-brand { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.hero-logo { height: 48px; flex-shrink: 0; }
+.hero-logo img { height: 100%; width: auto; display: block; }
+.hero-brand-text { font-size: .95rem; opacity: .85; letter-spacing: .04em; text-transform: uppercase; }
+.hero h1 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; letter-spacing: -.02em; line-height: 1.15; margin-bottom: .75rem; }
+.hero h1 span { color: var(--uc-gold-light); }
+.hero-subtitle { font-size: 1.15rem; opacity: .88; max-width: 720px; }
+.hero-meta { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,.15); }
+.hero-meta dt { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin-bottom: .15rem; }
+.hero-meta dd { font-size: .95rem; font-weight: 600; }
+.breadcrumb { max-width: 1200px; margin: 1.25rem auto .5rem; padding: 0 2rem; font-size: .8rem; color: var(--uc-gray-400); }
+.breadcrumb a { color: var(--uc-red); text-decoration: none; font-weight: 600; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb .sep { margin: 0 .4rem; opacity: .5; }
+.page-wrap-single { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+.section { background: var(--uc-white); border-radius: var(--uc-radius); box-shadow: var(--uc-shadow); margin-bottom: 2rem; overflow: hidden; }
+.section-header { display: flex; align-items: center; gap: .75rem; padding: 1.25rem 1.5rem; background: linear-gradient(90deg, var(--uc-navy) 0%, var(--uc-navy-light) 100%); color: var(--uc-white); cursor: pointer; user-select: none; }
+.section-header:hover { filter: brightness(1.1); }
+.section-num { background: var(--uc-red); color: var(--uc-white); font-size: .72rem; font-weight: 700; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.section-header h2 { font-size: 1.1rem; font-weight: 700; letter-spacing: -.01em; flex: 1; }
+.section-toggle { width: 24px; height: 24px; transition: transform var(--uc-transition); opacity: .7; }
+.section.collapsed .section-toggle { transform: rotate(-90deg); }
+.section-body { padding: 1.5rem; }
+.section.collapsed .section-body { display: none; }
+.subsection { margin-bottom: 1.75rem; }
+.subsection:last-child { margin-bottom: 0; }
+.subsection h3 { font-size: .95rem; font-weight: 700; color: var(--uc-navy); margin-bottom: .75rem; padding-bottom: .4rem; border-bottom: 2px solid var(--uc-gray-200); display: flex; align-items: center; gap: .5rem; }
+.subsection h3 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--uc-red); flex-shrink: 0; }
+.subsection h4 { font-size: .88rem; font-weight: 600; color: var(--uc-gray-800); margin: 1rem 0 .5rem; }
+.subsection p, .subsection li { font-size: .88rem; color: var(--uc-gray-800); line-height: 1.7; }
+.subsection ul, .subsection ol { padding-left: 1.4rem; margin-top: .35rem; }
+.subsection li { margin-bottom: .25rem; }
+.table-wrap { overflow-x: auto; margin: .75rem 0; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .82rem; }
+thead th { background: var(--uc-navy); color: var(--uc-white); text-align: left; padding: .6rem .75rem; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
+thead th:first-child { border-radius: var(--uc-radius-sm) 0 0 0; }
+thead th:last-child  { border-radius: 0 var(--uc-radius-sm) 0 0; }
+tbody td { padding: .55rem .75rem; border-bottom: 1px solid var(--uc-gray-200); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:nth-child(even) { background: var(--uc-gray-50); }
+tbody tr:hover { background: rgba(228,0,43,.04); }
+pre { background: var(--uc-navy); color: #E2E8F0; border-radius: var(--uc-radius-sm); padding: 1rem 1.25rem; font-size: .78rem; font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; overflow-x: auto; line-height: 1.65; margin: .75rem 0; }
+code { font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; font-size: .82em; background: var(--uc-gray-100); padding: .1em .35em; border-radius: 4px; color: var(--uc-red-dark); }
+pre code { background: none; padding: 0; color: inherit; }
+.callout { border-left: 4px solid var(--uc-gold); background: rgba(197,164,78,.08); padding: .85rem 1rem; border-radius: 0 var(--uc-radius-sm) var(--uc-radius-sm) 0; margin: .75rem 0; font-size: .85rem; }
+.callout-red { border-left-color: var(--uc-red); background: rgba(228,0,43,.05); }
+.callout strong { color: var(--uc-navy); }
+.diagram-box { background: var(--uc-gray-100); border: 2px dashed var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1.5rem; text-align: center; margin: .75rem 0; }
+.diagram-box pre { text-align: left; background: var(--uc-navy); display: inline-block; max-width: 100%; }
+.badge { display: inline-block; font-size: .68rem; font-weight: 700; padding: .15em .55em; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; line-height: 1.6; }
+.badge-red    { background: var(--uc-red);   color: #fff; }
+.badge-navy   { background: var(--uc-navy);  color: #fff; }
+.badge-gold   { background: var(--uc-gold);  color: var(--uc-navy); }
+.badge-gray   { background: var(--uc-gray-200); color: var(--uc-gray-800); }
+.kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin: 1rem 0; }
+.kpi-card { background: var(--uc-gray-50); border: 1px solid var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1rem; text-align: center; transition: var(--uc-transition); }
+.kpi-card:hover { border-color: var(--uc-red); box-shadow: var(--uc-shadow); transform: translateY(-2px); }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--uc-red); line-height: 1.2; }
+.kpi-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--uc-gray-600); margin-top: .25rem; }
+.footer { background: var(--uc-navy); color: rgba(255,255,255,.6); text-align: center; padding: 2rem; font-size: .78rem; }
+.footer strong { color: var(--uc-gold-light); }
+@media print {
+  .section.collapsed .section-body { display: block; }
+  .hero { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════  HERO  ════════════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. &mdash; Milano</div>
+    </div>
+    <h1>DAILY &ndash; <span>Transaction Backup &amp; Cycle Reset</span></h1>
+    <p class="hero-subtitle">
+      Job Stream <code>A1</code> &middot; Programs <code>SDSF</code>, <code>IDCAMS</code>, <code>COBSWAIT</code> &middot; Close CICS files, backup transaction VSAM to GDG, delete/redefine empty VSAM, pause, and reopen CICS files for the next business day
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Job Stream</dt><dd>DAILY-TransactionBackup</dd></div>
+      <div><dt>Jobs</dt><dd>CLOSEFIL &rarr; TRANBKP &rarr; WAITSTEP &rarr; OPENFIL</dd></div>
+      <div><dt>Frequency</dt><dd>Daily (ALL days)</dd></div>
+      <div><dt>COBOL LOC</dt><dd>41</dd></div>
+      <div><dt>Files Touched</dt><dd>7</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ════════════════════  BREADCRUMB  ════════════════════ -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">&rsaquo;</span>
+  <a href="index.html">Batch Flows</a>
+  <span class="sep">&rsaquo;</span>
+  DAILY &ndash; Transaction Backup &amp; Cycle Reset
+</div>
+
+<!-- ════════════════════  BODY  ════════════════════ -->
+<div class="page-wrap-single">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     IDENTIFICATION
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s0">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">ID</span>
+    <h2>Identification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <tbody>
+          <tr><td><strong>Job Stream Name</strong></td><td><code>DAILY-TransactionBackup</code> (Control-M Smart Folder)</td></tr>
+          <tr><td><strong>Job Names</strong></td><td><code>CLOSEFIL</code> &rarr; <code>TRANBKP</code> &rarr; <code>WAITSTEP</code> &rarr; <code>OPENFIL</code></td></tr>
+          <tr><td><strong>Business Domain</strong></td><td>End-of-Day Cycle Management / Transaction VSAM Lifecycle</td></tr>
+          <tr><td><strong>Owning Team</strong></td><td>CardDemo Batch Operations</td></tr>
+          <tr><td><strong>Frequency</strong></td><td>Daily (ALL days, no calendar exclusions)</td></tr>
+          <tr><td><strong>Batch Window</strong></td><td>Must complete before 23:00 (TIMETO constraint)</td></tr>
+          <tr><td><strong>Criticality</strong></td><td><span class="badge badge-red">Critical</span></td></tr>
+          <tr><td><strong>Elapsed Time SLA</strong></td><td>Must complete before POSTTRAN or next-day CICS online access</td></tr>
+          <tr><td><strong>Primary Program</strong></td><td><code>COBSWAIT</code> (COBOL Batch, 41 LOC) &middot; Utilities: <code>SDSF</code>, <code>IDCAMS</code></td></tr>
+          <tr><td><strong>Source Location</strong></td><td><code>app/jcl/CLOSEFIL.jcl</code>, <code>app/jcl/TRANBKP.jcl</code>, <code>app/jcl/WAITSTEP.jcl</code>, <code>app/jcl/OPENFIL.jcl</code>, <code>app/cbl/COBSWAIT.cbl</code></td></tr>
+          <tr><td><strong>Scheduler</strong></td><td>Control-M &mdash; <code>app/scheduler/CardDemo.controlm</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 1 — Business Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">1</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 1.1 -->
+    <div class="subsection" id="s1-1">
+      <h3><span class="dot"></span> 1.1 Business Context</h3>
+      <ul>
+        <li><strong>What:</strong> A four-job stream that performs the daily transaction VSAM cycle reset. It closes CICS-managed VSAM files, backs up the Transaction Master to a GDG generation, deletes and redefines the empty VSAM cluster (resetting it for the next day&rsquo;s transactions), pauses briefly for I/O stabilization, and finally reopens all files in CICS.</li>
+        <li><strong>Who:</strong> Downstream consumers include the <em>POSTTRAN</em> batch job (which writes new transactions into the freshly emptied VSAM), and CICS online transaction processing (which requires files to be reopened before users can enter transactions).</li>
+        <li><strong>When:</strong> Runs daily, triggered by Control-M scheduler. Executes every day of the year (DAYS=ALL). Must complete before 23:00.</li>
+        <li><strong>Why:</strong> The Transaction Master VSAM accumulates all posted transactions during the day. Before the next posting cycle, the previous day&rsquo;s data must be preserved (backup to GDG) and the file must be emptied to receive new postings. CICS files must be closed during this process to prevent online access conflicts with batch utilities.</li>
+        <li><strong>Outcome:</strong> Transaction VSAM backed up to GDG generation (+1); VSAM cluster deleted and redefined (empty); CICS files reopened for online processing; system ready for next day&rsquo;s POSTTRAN batch cycle.</li>
+      </ul>
+    </div>
+
+    <!-- 1.2 -->
+    <div class="subsection" id="s1-2">
+      <h3><span class="dot"></span> 1.2 Business Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────────┐
+  │        DAILY TRANSACTION BACKUP &amp; CYCLE RESET (A1)             │
+  └─────────────────────────────────────────────────────────────────┘
+
+  End-of-Day Trigger (Control-M, DAYS=ALL)
+       │
+       ▼
+  ┌──────────────────────┐
+  │ JOB 1: CLOSEFIL      │  Close VSAM files in CICS region
+  │ (SDSF → CEMT SET CLO)│  TRANSACT, CCXREF, ACCTDAT,
+  │                       │  CXACAIX, USRSEC
+  └──────────┬───────────┘
+             │ OUTCOND: DAILY-TransactionBackup-CLOSEFIL
+             ▼
+  ┌──────────────────────┐
+  │ JOB 2: TRANBKP       │  ┌─ STEP05R: REPRO VSAM → GDG(+1)
+  │ (IDCAMS utility)     │  ├─ STEP05:  DELETE CLUSTER &amp; AIX
+  │                       │  └─ STEP10:  DEFINE CLUSTER (empty)
+  └──────────┬───────────┘
+             │ OUTCOND: DAILY-TransactionBackup-TRANBKP
+             ▼
+  ┌──────────────────────┐
+  │ JOB 3: WAITSTEP      │  COBSWAIT: pause 36 seconds
+  │ (COBOL wait utility) │  (allow I/O subsystem to stabilize)
+  └──────────┬───────────┘
+             │ OUTCOND: DAILY-TransactionBackup-WAITSTEP
+             ▼
+  ┌──────────────────────┐
+  │ JOB 4: OPENFIL       │  Reopen VSAM files in CICS region
+  │ (SDSF → CEMT SET OPE)│  TRANSACT, CCXREF, ACCTDAT,
+  │                       │  CXACAIX, USRSEC
+  └──────────────────────┘
+             │
+             ▼
+  System Ready for POSTTRAN / Online CICS
+</pre>
+      </div>
+    </div>
+
+    <!-- 1.3 -->
+    <div class="subsection" id="s1-3">
+      <h3><span class="dot"></span> 1.3 Business Rules Applied in This Process</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Rule ID</th><th>Description</th><th>Applied At</th><th>Exception Handling</th></tr></thead>
+          <tbody>
+            <tr><td>BR-001</td><td>All CICS-managed VSAM files must be closed before batch utilities can access them exclusively</td><td>CLOSEFIL (CEMT SET FIL CLO)</td><td>If CICS region unavailable, SDSF command fails &rarr; job abends</td></tr>
+            <tr><td>BR-002</td><td>Transaction VSAM must be backed up to GDG before deletion to preserve audit trail</td><td>TRANBKP STEP05R (REPRO)</td><td>REPRO failure &rarr; non-zero RC; subsequent steps may still execute (no COND override)</td></tr>
+            <tr><td>BR-003</td><td>VSAM cluster and AIX must be deleted before redefine to ensure a clean empty state</td><td>TRANBKP STEP05 (DELETE)</td><td><code>IF MAXCC LE 08 THEN SET MAXCC = 0</code> &mdash; tolerates &ldquo;not found&rdquo; condition (RC=8)</td></tr>
+            <tr><td>BR-004</td><td>VSAM must be redefined with identical attributes (KEYS 16 0, RECORDSIZE 350 350) to maintain compatibility with CICS programs</td><td>TRANBKP STEP10 (DEFINE)</td><td>COND=(4,LT) &mdash; only executes if prior step RC &le; 4</td></tr>
+            <tr><td>BR-005</td><td>A stabilization pause is required between VSAM recreation and CICS file reopen to allow catalog and I/O subsystem propagation</td><td>WAITSTEP (COBSWAIT 36s)</td><td>N/A &mdash; unconditional wait</td></tr>
+            <tr><td>BR-006</td><td>CICS files must be reopened after batch processing to restore online transaction capability</td><td>OPENFIL (CEMT SET FIL OPE)</td><td>If CICS region unavailable, SDSF command fails &rarr; job abends</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 1.4 -->
+    <div class="subsection" id="s1-4">
+      <h3><span class="dot"></span> 1.4 Business Inputs and Outputs</h3>
+      <h4>Inputs</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Input</th><th>Source System</th><th>Business Description</th><th>Timing</th></tr></thead>
+          <tbody>
+            <tr><td>Transaction Master VSAM (<code>TRANSACT.VSAM.KSDS</code>)</td><td>POSTTRAN batch / CICS online</td><td>Contains all posted transactions from the current day</td><td>Populated during business day by POSTTRAN</td></tr>
+            <tr><td>CICS Region (<code>CICSAWSA</code>)</td><td>Online transaction processor</td><td>Target for file open/close commands</td><td>Running continuously</td></tr>
+            <tr><td>Wait parameter (<code>SYSIN: 00003600</code>)</td><td>JCL inline data</td><td>Centisecond value controlling pause duration (36 seconds)</td><td>Static configuration</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h4>Outputs</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Output</th><th>Destination</th><th>Business Description</th><th>Timing</th></tr></thead>
+          <tbody>
+            <tr><td>Transaction Backup GDG (<code>TRANSACT.BKUP(+1)</code>)</td><td>Tape/DASD archive</td><td>Sequential flat-file copy of all transactions from the completed day</td><td>Created during TRANBKP STEP05R</td></tr>
+            <tr><td>Empty Transaction VSAM (<code>TRANSACT.VSAM.KSDS</code>)</td><td>POSTTRAN / CICS online</td><td>Freshly defined empty VSAM ready for next day&rsquo;s postings</td><td>Available after TRANBKP STEP10</td></tr>
+            <tr><td>CICS Files Reopened</td><td>CICS online region</td><td>All 5 VSAM files accessible to online users</td><td>Available after OPENFIL completes</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 2 — Technical Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">2</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 2.1 -->
+    <div class="subsection" id="s2-1">
+      <h3><span class="dot"></span> 2.1 Technical Flow Diagram &ndash; Overview</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ JOB STREAM: DAILY-TransactionBackup (Control-M Folder)          │
+  │                                                                 │
+  │  JOB 1: CLOSEFIL                                                │
+  │  ┌─────────────────────────────────────────────────────────┐   │
+  │  │ CLCIFIL: PGM=SDSF                                       │   │
+  │  │   ISFIN ← /F CICSAWSA,'CEMT SET FIL(xxxxx) CLO'         │   │
+  │  │   Files: TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC     │   │
+  │  └─────────────────────────────────────────────────────────┘   │
+  │         │                                                       │
+  │         ▼  (OUTCOND +)                                          │
+  │  JOB 2: TRANBKP                                                │
+  │  ┌─────────────────────────────────────────────────────────┐   │
+  │  │ STEP05R: PROC=REPROC (IDCAMS REPRO)                      │   │
+  │  │   VSAM KSDS ──(REPRO)──▶ GDG TRANSACT.BKUP(+1)         │   │
+  │  │                                                          │   │
+  │  │ STEP05: PGM=IDCAMS                                       │   │
+  │  │   DELETE CLUSTER + DELETE AIX (tolerates RC≤8)            │   │
+  │  │                                                          │   │
+  │  │ STEP10: PGM=IDCAMS, COND=(4,LT)                         │   │
+  │  │   DEFINE CLUSTER (KEYS 16 0, RECSZ 350, INDEXED)        │   │
+  │  └─────────────────────────────────────────────────────────┘   │
+  │         │                                                       │
+  │         ▼  (OUTCOND +)                                          │
+  │  JOB 3: WAITSTEP                                                │
+  │  ┌─────────────────────────────────────────────────────────┐   │
+  │  │ WAIT: PGM=COBSWAIT                                       │   │
+  │  │   ACCEPT 00003600 → CALL MVSWAIT (36 seconds)            │   │
+  │  └─────────────────────────────────────────────────────────┘   │
+  │         │                                                       │
+  │         ▼  (OUTCOND +)                                          │
+  │  JOB 4: OPENFIL                                                 │
+  │  ┌─────────────────────────────────────────────────────────┐   │
+  │  │ OPCIFIL: PGM=SDSF                                        │   │
+  │  │   ISFIN ← /F CICSAWSA,'CEMT SET FIL(xxxxx) OPE'         │   │
+  │  │   Files: TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC     │   │
+  │  └─────────────────────────────────────────────────────────┘   │
+  └─────────────────────────────────────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.2 -->
+    <div class="subsection" id="s2-2">
+      <h3><span class="dot"></span> 2.2 Technical Flow Diagram &ndash; Detailed (Step-by-Step)</h3>
+      <div class="diagram-box">
+<pre>
+  ═══════════════════════════════════════════════════════════════
+  JOB 1: CLOSEFIL — Close VSAM files in CICS
+  ═══════════════════════════════════════════════════════════════
+  STEP: CLCIFIL  EXEC PGM=SDSF
+    DD:
+      ISFOUT  → SYSOUT=*  (SDSF output)
+      CMDOUT  → SYSOUT=*  (Command output)
+      ISFIN   ← Inline commands (5 CEMT SET FIL CLO commands)
+    PROCESSING:
+      1. Issue: /F CICSAWSA,'CEMT SET FIL(TRANSACT) CLO'
+      2. Issue: /F CICSAWSA,'CEMT SET FIL(CCXREF  ) CLO'
+      3. Issue: /F CICSAWSA,'CEMT SET FIL(ACCTDAT ) CLO'
+      4. Issue: /F CICSAWSA,'CEMT SET FIL(CXACAIX ) CLO'
+      5. Issue: /F CICSAWSA,'CEMT SET FIL(USRSEC  ) CLO'
+    RC: 0=Success
+
+  ═══════════════════════════════════════════════════════════════
+  JOB 2: TRANBKP — Backup and Reset Transaction VSAM
+  ═══════════════════════════════════════════════════════════════
+  STEP: STEP05R  EXEC PROC=REPROC, CNTLLIB=AWS.M2.CARDDEMO.CNTL
+    Proc REPROC invokes PGM=IDCAMS with REPROCT control card:
+      REPRO INFILE(FILEIN) OUTFILE(FILEOUT)
+    DD overrides:
+      PRC001.FILEIN  → AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS (SHR)
+      PRC001.FILEOUT → AWS.M2.CARDDEMO.TRANSACT.BKUP(+1)
+                       (NEW,CATLG,DELETE) LRECL=350 RECFM=FB
+    PROCESSING:
+      1. REPRO all records from VSAM KSDS to sequential GDG(+1)
+    RC: 0=Success, 4=Warning (empty input), 12+=Error
+
+  STEP: STEP05  EXEC PGM=IDCAMS
+    DD:
+      SYSPRINT → SYSOUT=*
+      SYSIN    ← Inline IDCAMS commands
+    PROCESSING:
+      1. DELETE AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS CLUSTER
+         IF MAXCC LE 08 THEN SET MAXCC = 0
+      2. DELETE AWS.M2.CARDDEMO.TRANSACT.VSAM.AIX ALTERNATEINDEX
+         IF MAXCC LE 08 THEN SET MAXCC = 0
+    RC: 0=Success (RC≤8 forced to 0)
+
+  STEP: STEP10  EXEC PGM=IDCAMS, COND=(4,LT)
+    Executes only if prior STEP05 RC ≤ 4
+    DD:
+      SYSPRINT → SYSOUT=*
+      SYSIN    ← Inline IDCAMS commands
+    PROCESSING:
+      1. DEFINE CLUSTER:
+         NAME(AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS)
+         CYLINDERS(1 5), VOLUMES(AWSHJ1)
+         KEYS(16 0), RECORDSIZE(350 350)
+         SHAREOPTIONS(2 3), ERASE, INDEXED
+         DATA(AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS.DATA)
+         INDEX(AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS.INDEX)
+    RC: 0=Success, 12+=Error
+
+  ═══════════════════════════════════════════════════════════════
+  JOB 3: WAITSTEP — Stabilization Pause
+  ═══════════════════════════════════════════════════════════════
+  STEP: WAIT  EXEC PGM=COBSWAIT
+    DD:
+      STEPLIB  → AWS.M2.CARDDEMO.LOADLIB (SHR)
+      SYSOUT   → SYSOUT=*
+      SYSIN    ← 00003600 (36 seconds in centiseconds)
+    PROCESSING:
+      1. ACCEPT PARM-VALUE FROM SYSIN   → "00003600"
+      2. MOVE PARM-VALUE TO MVSWAIT-TIME (PIC 9(8) COMP)
+      3. CALL 'MVSWAIT' USING MVSWAIT-TIME
+      4. STOP RUN
+    RC: 0=Success
+
+  ═══════════════════════════════════════════════════════════════
+  JOB 4: OPENFIL — Reopen VSAM files in CICS
+  ═══════════════════════════════════════════════════════════════
+  STEP: OPCIFIL  EXEC PGM=SDSF
+    DD:
+      ISFOUT  → SYSOUT=*  (SDSF output)
+      CMDOUT  → SYSOUT=*  (Command output)
+      ISFIN   ← Inline commands (5 CEMT SET FIL OPE commands)
+    PROCESSING:
+      1. Issue: /F CICSAWSA,'CEMT SET FIL(TRANSACT) OPE'
+      2. Issue: /F CICSAWSA,'CEMT SET FIL(CCXREF  ) OPE'
+      3. Issue: /F CICSAWSA,'CEMT SET FIL(ACCTDAT ) OPE'
+      4. Issue: /F CICSAWSA,'CEMT SET FIL(CXACAIX ) OPE'
+      5. Issue: /F CICSAWSA,'CEMT SET FIL(USRSEC  ) OPE'
+    RC: 0=Success
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.3 -->
+    <div class="subsection" id="s2-3">
+      <h3><span class="dot"></span> 2.3 Step Dependency and Condition Code Logic</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Job</th><th>Step</th><th>Program</th><th>Executes If</th><th>Condition Code Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>CLOSEFIL</td><td>CLCIFIL</td><td>SDSF</td><td>Always (first in chain)</td><td>0 = All CEMT commands issued successfully</td></tr>
+            <tr><td>TRANBKP</td><td>STEP05R</td><td>IDCAMS (REPROC)</td><td>CLOSEFIL completed (INCOND)</td><td>0 = REPRO successful<br>4 = Empty input (warning)</td></tr>
+            <tr><td>TRANBKP</td><td>STEP05</td><td>IDCAMS</td><td>Always within job</td><td>0 = DELETE successful (forced from RC&le;8)</td></tr>
+            <tr><td>TRANBKP</td><td>STEP10</td><td>IDCAMS</td><td>COND=(4,LT) &mdash; prior RC &le; 4</td><td>0 = DEFINE CLUSTER successful<br>12 = Duplicate or catalog error</td></tr>
+            <tr><td>WAITSTEP</td><td>WAIT</td><td>COBSWAIT</td><td>TRANBKP completed (INCOND)</td><td>0 = Wait completed normally</td></tr>
+            <tr><td>OPENFIL</td><td>OPCIFIL</td><td>SDSF</td><td>WAITSTEP completed (INCOND)</td><td>0 = All CEMT commands issued successfully</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 3 — JCL Job Stream Specification
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">3</span>
+    <h2>JCL Job Stream Specification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 3.1 -->
+    <div class="subsection" id="s3-1">
+      <h3><span class="dot"></span> 3.1 JCL Overview</h3>
+      <h4>CLOSEFIL.jcl</h4>
+<pre><code>//CLOSEFIL JOB 'Close files in CICS',CLASS=A,MSGCLASS=0,
+// NOTIFY=&amp;SYSUID
+//CLCIFIL EXEC PGM=SDSF
+//ISFOUT DD SYSOUT=*
+//CMDOUT DD SYSOUT=*
+//ISFIN  DD *
+ /F CICSAWSA,'CEMT SET FIL(TRANSACT ) CLO'
+ /F CICSAWSA,'CEMT SET FIL(CCXREF ) CLO'
+ /F CICSAWSA,'CEMT SET FIL(ACCTDAT ) CLO'
+ /F CICSAWSA,'CEMT SET FIL(CXACAIX ) CLO'
+ /F CICSAWSA,'CEMT SET FIL(USRSEC ) CLO'
+/*</code></pre>
+      <h4>TRANBKP.jcl</h4>
+<pre><code>//TRANBKP JOB 'REPRO and Delete Transaction Master',CLASS=A,MSGCLASS=0,
+//  NOTIFY=&amp;SYSUID
+//JOBLIB JCLLIB ORDER=('AWS.M2.CARDDEMO.PROC')
+//* REPRO the processed transaction file
+//STEP05R EXEC PROC=REPROC,
+// CNTLLIB=AWS.M2.CARDDEMO.CNTL
+//PRC001.FILEIN  DD DISP=SHR,
+//        DSN=AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS
+//PRC001.FILEOUT DD DISP=(NEW,CATLG,DELETE),
+//        UNIT=SYSDA,
+//        DCB=(LRECL=350,RECFM=FB,BLKSIZE=0),
+//        SPACE=(CYL,(1,1),RLSE),
+//        DSN=AWS.M2.CARDDEMO.TRANSACT.BKUP(+1)
+//* DELETE TRANSACTION MASTER VSAM FILE
+//STEP05 EXEC PGM=IDCAMS
+//SYSPRINT DD   SYSOUT=*
+//SYSIN    DD   *
+   DELETE AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS CLUSTER
+   IF MAXCC LE 08 THEN SET MAXCC = 0
+   DELETE AWS.M2.CARDDEMO.TRANSACT.VSAM.AIX ALTERNATEINDEX
+   IF MAXCC LE 08 THEN SET MAXCC = 0
+/*
+//* DEFINE TRANSACTION MASTER VSAM FILE
+//STEP10 EXEC PGM=IDCAMS,COND=(4,LT)
+//SYSPRINT DD   SYSOUT=*
+//SYSIN    DD   *
+   DEFINE CLUSTER (NAME(AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS)
+          CYLINDERS(1 5) VOLUMES(AWSHJ1)
+          KEYS(16 0) RECORDSIZE(350 350)
+          SHAREOPTIONS(2 3) ERASE INDEXED)
+          DATA (NAME(AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS.DATA))
+          INDEX (NAME(AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS.INDEX))
+/*</code></pre>
+      <h4>WAITSTEP.jcl</h4>
+<pre><code>//WAITSTEP JOB 'WAIT STEP',CLASS=A,MSGCLASS=0,
+// NOTIFY=&amp;SYSUID
+//* WAIT FOR CENTISECONDS IN THE PARM EG: 00003600 = 36 SECONDS
+//WAIT     EXEC PGM=COBSWAIT
+//STEPLIB  DD DSN=AWS.M2.CARDDEMO.LOADLIB,DISP=SHR
+//SYSOUT DD SYSOUT=*
+//SYSIN    DD *
+00003600      VALUE IN CENTISECONDS
+/*</code></pre>
+      <h4>OPENFIL.jcl</h4>
+<pre><code>//OPENFIL JOB 'Open files in CICS',CLASS=A,MSGCLASS=0,
+// NOTIFY=&amp;SYSUID
+//OPCIFIL EXEC PGM=SDSF
+//ISFOUT DD SYSOUT=*
+//CMDOUT DD SYSOUT=*
+//ISFIN  DD *
+ /F CICSAWSA,'CEMT SET FIL(TRANSACT ) OPE'
+ /F CICSAWSA,'CEMT SET FIL(CCXREF ) OPE'
+ /F CICSAWSA,'CEMT SET FIL(ACCTDAT ) OPE'
+ /F CICSAWSA,'CEMT SET FIL(CXACAIX ) OPE'
+ /F CICSAWSA,'CEMT SET FIL(USRSEC ) OPE'
+/*</code></pre>
+    </div>
+
+    <!-- 3.2 -->
+    <div class="subsection" id="s3-2">
+      <h3><span class="dot"></span> 3.2 DD Statement Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Job</th><th>Step</th><th>DD Name</th><th>Disposition</th><th>Dataset Name</th><th>Type</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>CLOSEFIL</td><td>CLCIFIL</td><td>ISFOUT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>SDSF output</td></tr>
+            <tr><td>CLOSEFIL</td><td>CLCIFIL</td><td>CMDOUT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>Command output</td></tr>
+            <tr><td>CLOSEFIL</td><td>CLCIFIL</td><td>ISFIN</td><td>Inline (*)</td><td>&mdash;</td><td>In-stream</td><td>CEMT close commands</td></tr>
+            <tr><td>TRANBKP</td><td>STEP05R</td><td>PRC001.FILEIN</td><td>SHR</td><td>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</td><td>VSAM KSDS</td><td>Input: transaction VSAM to backup</td></tr>
+            <tr><td>TRANBKP</td><td>STEP05R</td><td>PRC001.FILEOUT</td><td>(NEW,CATLG,DELETE)</td><td>AWS.M2.CARDDEMO.TRANSACT.BKUP(+1)</td><td>GDG / Sequential</td><td>Output: backup flat file</td></tr>
+            <tr><td>TRANBKP</td><td>STEP05</td><td>SYSPRINT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>IDCAMS messages</td></tr>
+            <tr><td>TRANBKP</td><td>STEP05</td><td>SYSIN</td><td>Inline (*)</td><td>&mdash;</td><td>In-stream</td><td>DELETE commands</td></tr>
+            <tr><td>TRANBKP</td><td>STEP10</td><td>SYSPRINT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>IDCAMS messages</td></tr>
+            <tr><td>TRANBKP</td><td>STEP10</td><td>SYSIN</td><td>Inline (*)</td><td>&mdash;</td><td>In-stream</td><td>DEFINE CLUSTER command</td></tr>
+            <tr><td>WAITSTEP</td><td>WAIT</td><td>STEPLIB</td><td>SHR</td><td>AWS.M2.CARDDEMO.LOADLIB</td><td>PDS</td><td>Program load library</td></tr>
+            <tr><td>WAITSTEP</td><td>WAIT</td><td>SYSOUT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>Program output</td></tr>
+            <tr><td>WAITSTEP</td><td>WAIT</td><td>SYSIN</td><td>Inline (*)</td><td>&mdash;</td><td>In-stream</td><td>Wait duration parameter (centiseconds)</td></tr>
+            <tr><td>OPENFIL</td><td>OPCIFIL</td><td>ISFOUT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>SDSF output</td></tr>
+            <tr><td>OPENFIL</td><td>OPCIFIL</td><td>CMDOUT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>Command output</td></tr>
+            <tr><td>OPENFIL</td><td>OPCIFIL</td><td>ISFIN</td><td>Inline (*)</td><td>&mdash;</td><td>In-stream</td><td>CEMT open commands</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.3 -->
+    <div class="subsection" id="s3-3">
+      <h3><span class="dot"></span> 3.3 GDG Usage</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>GDG Base</th><th>Generation</th><th>RECFM/LRECL</th><th>Retention</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANSACT.BKUP</code></td><td>+1 (new)</td><td>FB / 350</td><td>Not specified in JCL (GDG limit defined externally)</td><td>Daily sequential backup of the Transaction Master VSAM before reset. Each generation represents one day&rsquo;s transaction data.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.4 -->
+    <div class="subsection" id="s3-4">
+      <h3><span class="dot"></span> 3.4 Scheduler Dependencies</h3>
+      <div class="callout">
+        <strong>Control-M Configuration:</strong> The DAILY-TransactionBackup smart folder defines a strict linear dependency chain using INCOND/OUTCOND pairs. Each job signals completion via a positive OUTCOND which is consumed as a prerequisite INCOND by the next job. All jobs run under application <code>CARD-DEMO</code>, sub-application <code>CTRLM</code>, scheduled for ALL days with MAXRERUN=5.
+      </div>
+      <div class="diagram-box">
+<pre>
+  Control-M: DAILY-TransactionBackup (Smart Folder)
+  ══════════════════════════════════════════════════
+
+  CLOSEFIL ──OUTCOND(+)──▶ TRANBKP ──OUTCOND(+)──▶ WAITSTEP ──OUTCOND(+)──▶ OPENFIL
+     │                        │                        │                        │
+     │ DAYS=ALL               │ INCOND: CLOSEFIL       │ INCOND: TRANBKP        │ INCOND: WAITSTEP
+     │ TIMETO=23:00           │ Consumes CLOSEFIL(-)   │ Consumes TRANBKP(-)    │ Consumes WAITSTEP(-)
+     │ MAXRERUN=5             │ DAYS=ALL               │ DAYS=ALL               │ DAYS=ALL
+     │                        │ TIMETO=23:00           │ TIMETO=23:00           │ TIMETO=23:00
+     │                        │ MAXRERUN=5             │ MAXRERUN=5             │ MAXRERUN=5
+     ▼                        ▼                        ▼                        ▼
+  No predecessor           Waits for CLOSEFIL       Waits for TRANBKP       Waits for WAITSTEP
+
+  Downstream: POSTTRAN (loads new daily transactions into the freshly reset VSAM)
+</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 4 — Program Inventory and Call Chain
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">4</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 4.1 -->
+    <div class="subsection" id="s4-1">
+      <h3><span class="dot"></span> 4.1 Program Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Program ID</th><th>Job / Step</th><th>Purpose</th><th>Language</th><th>LOC</th><th>Source Location</th></tr></thead>
+          <tbody>
+            <tr><td><code>SDSF</code></td><td>CLOSEFIL / CLCIFIL</td><td>System Display and Search Facility &mdash; issues MVS console commands to CICS region</td><td>System Utility</td><td>&mdash;</td><td>z/OS system library</td></tr>
+            <tr><td><code>IDCAMS</code></td><td>TRANBKP / STEP05R, STEP05, STEP10</td><td>Access Method Services &mdash; REPRO, DELETE, DEFINE for VSAM management</td><td>System Utility</td><td>&mdash;</td><td>z/OS system library</td></tr>
+            <tr><td><code>COBSWAIT</code></td><td>WAITSTEP / WAIT</td><td>COBOL batch wait utility &mdash; pauses for specified centiseconds</td><td>COBOL</td><td>41</td><td><code>app/cbl/COBSWAIT.cbl</code></td></tr>
+            <tr><td><code>MVSWAIT</code></td><td>WAITSTEP (called by COBSWAIT)</td><td>System wait service &mdash; suspends execution for specified duration</td><td>System</td><td>&mdash;</td><td>System runtime library</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4.2 -->
+    <div class="subsection" id="s4-2">
+      <h3><span class="dot"></span> 4.2 Call / Paragraph Hierarchy</h3>
+      <div class="diagram-box">
+<pre>
+COBSWAIT (PROCEDURE DIVISION)
+│
+├── ACCEPT PARM-VALUE FROM SYSIN
+│     → Reads 8-character centisecond value from SYSIN DD
+│
+├── MOVE PARM-VALUE TO MVSWAIT-TIME
+│     → Convert display value to PIC 9(8) COMP
+│
+├── CALL 'MVSWAIT' USING MVSWAIT-TIME
+│     → System service: suspend for specified centiseconds
+│
+└── STOP RUN
+      → Return control to JES (RC=0)
+
+
+REPROC Procedure (invoked by TRANBKP STEP05R):
+│
+└── PRC001: EXEC PGM=IDCAMS
+      SYSIN → REPROCT.ctl: "REPRO INFILE(FILEIN) OUTFILE(FILEOUT)"
+      FILEIN  ← overridden to TRANSACT.VSAM.KSDS
+      FILEOUT ← overridden to TRANSACT.BKUP(+1)
+</pre>
+      </div>
+    </div>
+
+    <!-- 4.3 -->
+    <div class="subsection" id="s4-3">
+      <h3><span class="dot"></span> 4.3 Copybooks Used</h3>
+      <div class="callout">
+        <strong>Note:</strong> COBSWAIT.cbl does not use any COPY statements. All data items are defined directly in WORKING-STORAGE SECTION. The REPROC procedure references control card <code>REPROCT.ctl</code> (not a COBOL copybook).
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Artifact</th><th>Type</th><th>Referenced By</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>REPROCT.ctl</code></td><td>IDCAMS Control Card</td><td>REPROC.prc (STEP05R)</td><td>Contains <code>REPRO INFILE(FILEIN) OUTFILE(FILEOUT)</code> command</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 5 — File and Dataset Inventory
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">5</span>
+    <h2>File and Dataset Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 5.1 -->
+    <div class="subsection" id="s5-1">
+      <h3><span class="dot"></span> 5.1 Complete Dataset Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Dataset Name</th><th>Type</th><th>LRECL</th><th>Key</th><th>Access Mode</th><th>Job/Step</th></tr></thead>
+          <tbody>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>350</td><td>16 bytes @ offset 0</td><td>READ (REPRO source) / DELETE / DEFINE</td><td>TRANBKP / STEP05R, STEP05, STEP10</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANSACT.VSAM.AIX</code></td><td>VSAM AIX</td><td>&mdash;</td><td>&mdash;</td><td>DELETE</td><td>TRANBKP / STEP05</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANSACT.BKUP(+1)</code></td><td>GDG Sequential</td><td>350</td><td>&mdash;</td><td>WRITE (NEW,CATLG)</td><td>TRANBKP / STEP05R</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.LOADLIB</code></td><td>PDS</td><td>&mdash;</td><td>&mdash;</td><td>READ (load modules)</td><td>WAITSTEP / WAIT</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.PROC</code></td><td>PDS (JCLLIB)</td><td>&mdash;</td><td>&mdash;</td><td>READ (procedure library)</td><td>TRANBKP (JOBLIB)</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.CNTL</code></td><td>PDS (control cards)</td><td>&mdash;</td><td>&mdash;</td><td>READ (REPROCT member)</td><td>TRANBKP / STEP05R</td></tr>
+            <tr><td>CICS Files: TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC</td><td>VSAM (managed by CICS)</td><td>Various</td><td>Various</td><td>CLO/OPE via CEMT commands</td><td>CLOSEFIL, OPENFIL</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.2 -->
+    <div class="subsection" id="s5-2">
+      <h3><span class="dot"></span> 5.2 Record Layouts</h3>
+      <div class="callout">
+        <strong>Note:</strong> The primary data record for this job stream is the Transaction VSAM record (350 bytes, key 16 bytes at offset 0). The full record layout is defined in copybook <code>CVTRA05Y</code> (used by POSTTRAN/CBTRN02C). This job stream does not parse individual fields &mdash; it operates at the dataset level (REPRO, DELETE, DEFINE).
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>Offset</th><th>Length</th><th>Type</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>Transaction Key</td><td>0</td><td>16</td><td>Alphanumeric</td><td>Unique transaction identifier (used as VSAM primary key)</td></tr>
+            <tr><td>Remaining Data</td><td>16</td><td>334</td><td>Various</td><td>Transaction details (card number, amount, timestamps, etc.)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>GDG backup record is identical (FB 350) &mdash; REPRO performs a byte-for-byte copy with no transformation.</p>
+    </div>
+
+    <!-- 5.3 -->
+    <div class="subsection" id="s5-3">
+      <h3><span class="dot"></span> 5.3 File Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌────────────────────────────────────────────────────────────┐
+  │                   FILE FLOW ACROSS JOB STREAM              │
+  └────────────────────────────────────────────────────────────┘
+
+  CICS Region (CICSAWSA)
+  ┌─────────────────────────────────────────────────┐
+  │ TRANSACT │ CCXREF │ ACCTDAT │ CXACAIX │ USRSEC │
+  └────┬──────────────────────────────────────┬─────┘
+       │ CLOSEFIL: SET CLO                    │ OPENFIL: SET OPE
+       ▼                                      ▲
+  ┌─────────────────────────────────┐         │
+  │ TRANSACT.VSAM.KSDS              │         │
+  │ (closed, exclusive to batch)    │         │
+  └────────┬────────────────────────┘         │
+           │                                  │
+           │ STEP05R: REPRO                   │
+           ▼                                  │
+  ┌─────────────────────────────────┐         │
+  │ TRANSACT.BKUP(+1) [GDG]        │         │
+  │ (FB 350, sequential backup)     │         │
+  └─────────────────────────────────┘         │
+           │                                  │
+           │ STEP05: DELETE CLUSTER + AIX     │
+           ▼                                  │
+  ┌─────────────────────────────────┐         │
+  │ (VSAM deleted from catalog)     │         │
+  └────────┬────────────────────────┘         │
+           │                                  │
+           │ STEP10: DEFINE CLUSTER           │
+           ▼                                  │
+  ┌─────────────────────────────────┐         │
+  │ TRANSACT.VSAM.KSDS (empty)      │─────────┘
+  │ KEYS(16 0) RECSZ(350 350)      │  (after WAITSTEP pause)
+  └─────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 5.4 -->
+    <div class="subsection" id="s5-4">
+      <h3><span class="dot"></span> 5.4 Dataset Dependency Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Dataset</th><th>CLOSEFIL</th><th>TRANBKP</th><th>WAITSTEP</th><th>OPENFIL</th><th>Downstream (POSTTRAN)</th></tr></thead>
+          <tbody>
+            <tr><td>TRANSACT.VSAM.KSDS</td><td>CLO</td><td>READ/DEL/DEF</td><td>&mdash;</td><td>OPE</td><td>WRITE</td></tr>
+            <tr><td>TRANSACT.VSAM.AIX</td><td>&mdash;</td><td>DELETE</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+            <tr><td>TRANSACT.BKUP(+1)</td><td>&mdash;</td><td>WRITE (new)</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+            <tr><td>CCXREF (CICS)</td><td>CLO</td><td>&mdash;</td><td>&mdash;</td><td>OPE</td><td>READ</td></tr>
+            <tr><td>ACCTDAT (CICS)</td><td>CLO</td><td>&mdash;</td><td>&mdash;</td><td>OPE</td><td>I-O</td></tr>
+            <tr><td>CXACAIX (CICS)</td><td>CLO</td><td>&mdash;</td><td>&mdash;</td><td>OPE</td><td>&mdash;</td></tr>
+            <tr><td>USRSEC (CICS)</td><td>CLO</td><td>&mdash;</td><td>&mdash;</td><td>OPE</td><td>&mdash;</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 6 — Data Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">6</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 6.1 -->
+    <div class="subsection" id="s6-1">
+      <h3><span class="dot"></span> 6.1 Data Transformation Map</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>Input</th><th>Transformation</th><th>Output</th></tr></thead>
+          <tbody>
+            <tr><td>STEP05R (REPRO)</td><td>TRANSACT.VSAM.KSDS (all records)</td><td>Byte-for-byte copy (no transformation)</td><td>TRANSACT.BKUP(+1) sequential flat file</td></tr>
+            <tr><td>STEP05 (DELETE)</td><td>VSAM catalog entries</td><td>Remove cluster and AIX definitions</td><td>Catalog entries removed</td></tr>
+            <tr><td>STEP10 (DEFINE)</td><td>IDCAMS parameters</td><td>Create new empty VSAM cluster definition</td><td>Empty TRANSACT.VSAM.KSDS with DATA + INDEX components</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 6.2 -->
+    <div class="subsection" id="s6-2">
+      <h3><span class="dot"></span> 6.2 Data Lineage Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  Day N (Online CICS + POSTTRAN)         Day N (Batch Close)           Day N+1
+  ─────────────────────────────         ────────────────────          ──────────
+
+  CICS transactions                     DAILY-TransactionBackup
+       │                                       │
+       ▼                                       │
+  TRANSACT.VSAM.KSDS ──────────────────▶ REPRO ──▶ TRANSACT.BKUP(+N)
+  (populated with Day N                        │         (archive)
+   posted transactions)                        │
+                                               ▼
+                                         DELETE + DEFINE
+                                               │
+                                               ▼
+                                         TRANSACT.VSAM.KSDS
+                                         (empty, ready for Day N+1)
+                                               │
+                                               ▼
+                                         POSTTRAN (Day N+1)
+                                         writes new transactions
+</pre>
+      </div>
+    </div>
+
+    <!-- 6.3 -->
+    <div class="subsection" id="s6-3">
+      <h3><span class="dot"></span> 6.3 Control Totals and Reconciliation</h3>
+      <div class="callout">
+        <strong>Gap:</strong> This job stream does not produce any control total reports. The REPRO step does not output a record count. There is no reconciliation between the number of records backed up and the number that existed in the VSAM. This is a known limitation (see Section 13).
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 7 — Sort/Merge and Utility Processing
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">7</span>
+    <h2>Sort/Merge and Utility Processing</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s7-1">
+      <h3><span class="dot"></span> 7.1 Utility Programs</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Utility</th><th>Step</th><th>Function</th><th>Parameters</th></tr></thead>
+          <tbody>
+            <tr><td><code>IDCAMS</code></td><td>TRANBKP / STEP05R (via REPROC)</td><td>REPRO &mdash; Copy all records from VSAM to sequential file</td><td><code>REPRO INFILE(FILEIN) OUTFILE(FILEOUT)</code></td></tr>
+            <tr><td><code>IDCAMS</code></td><td>TRANBKP / STEP05</td><td>DELETE &mdash; Remove VSAM cluster and alternate index</td><td><code>DELETE ... CLUSTER</code>, <code>DELETE ... ALTERNATEINDEX</code></td></tr>
+            <tr><td><code>IDCAMS</code></td><td>TRANBKP / STEP10</td><td>DEFINE CLUSTER &mdash; Create empty VSAM KSDS with DATA and INDEX components</td><td>CYLINDERS(1 5), KEYS(16 0), RECORDSIZE(350 350), SHAREOPTIONS(2 3), ERASE, INDEXED</td></tr>
+            <tr><td><code>SDSF</code></td><td>CLOSEFIL / CLCIFIL</td><td>Issue MVS MODIFY commands to CICS region to close files</td><td>5 &times; <code>/F CICSAWSA,'CEMT SET FIL(...) CLO'</code></td></tr>
+            <tr><td><code>SDSF</code></td><td>OPENFIL / OPCIFIL</td><td>Issue MVS MODIFY commands to CICS region to open files</td><td>5 &times; <code>/F CICSAWSA,'CEMT SET FIL(...) OPE'</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>No SORT/MERGE:</strong> This job stream does not use DFSORT, SYNCSORT, or any sort/merge utility. All processing is sequential (REPRO) or catalog management (DELETE/DEFINE).
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 8 — Checkpoint, Restart, and Recovery
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">8</span>
+    <h2>Checkpoint, Restart, and Recovery</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 8.1 -->
+    <div class="subsection" id="s8-1">
+      <h3><span class="dot"></span> 8.1 Checkpoint Strategy</h3>
+      <div class="callout callout-red">
+        <strong>No Checkpoint/Restart:</strong> This job stream implements no checkpoint logic. Each job is either fully successful or must be re-run from the beginning. The Control-M MAXRERUN=5 setting allows automatic retry of failed jobs.
+      </div>
+    </div>
+
+    <!-- 8.2 -->
+    <div class="subsection" id="s8-2">
+      <h3><span class="dot"></span> 8.2 Restart Procedures</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Failure Point</th><th>State Left Behind</th><th>Recovery Action</th></tr></thead>
+          <tbody>
+            <tr><td>CLOSEFIL fails</td><td>Some/all files may still be open in CICS</td><td>Re-run CLOSEFIL (idempotent &mdash; closing already-closed files is harmless)</td></tr>
+            <tr><td>TRANBKP STEP05R fails (REPRO)</td><td>Partial or no backup created; VSAM still intact</td><td>Delete partial GDG generation; re-run from TRANBKP</td></tr>
+            <tr><td>TRANBKP STEP05 fails (DELETE)</td><td>VSAM may still exist; backup already created</td><td>Re-run from STEP05 (DELETE tolerates RC&le;8 = not found)</td></tr>
+            <tr><td>TRANBKP STEP10 fails (DEFINE)</td><td>VSAM deleted but not redefined</td><td>Re-run STEP10 only or restart TRANBKP</td></tr>
+            <tr><td>WAITSTEP fails</td><td>Unlikely (simple timer); VSAM already reset</td><td>Re-run WAITSTEP or skip to OPENFIL</td></tr>
+            <tr><td>OPENFIL fails</td><td>Files remain closed in CICS</td><td>Re-run OPENFIL (idempotent &mdash; opening already-open files is harmless)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 8.3 -->
+    <div class="subsection" id="s8-3">
+      <h3><span class="dot"></span> 8.3 Recovery Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  FAILURE SCENARIOS &amp; RECOVERY PATHS
+  ═══════════════════════════════════
+
+  Scenario A: CLOSEFIL fails (CICS unavailable)
+  ┌──────────────┐
+  │ CLOSEFIL ✗   │──▶ Check CICS region status
+  └──────────────┘    Fix CICS → Re-run CLOSEFIL (MAXRERUN=5)
+
+  Scenario B: REPRO fails (I/O error or VSAM corruption)
+  ┌──────────────┐
+  │ STEP05R ✗    │──▶ Investigate VSAM health
+  └──────────────┘    If partial GDG: DELETE GDG(+1)
+                      Re-run from TRANBKP start
+
+  Scenario C: DEFINE fails (catalog conflict)
+  ┌──────────────┐
+  │ STEP10 ✗     │──▶ Check for existing catalog entry
+  └──────────────┘    Manual DELETE if needed → Re-run STEP10
+                      Backup is safe in GDG(+1)
+
+  Scenario D: OPENFIL fails (CICS down)
+  ┌──────────────┐
+  │ OPENFIL ✗    │──▶ Check CICS region status
+  └──────────────┘    Fix CICS → Re-run OPENFIL (MAXRERUN=5)
+                      VSAM is already reset and ready
+</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 9 — Error Handling and Abend Resolution
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">9</span>
+    <h2>Error Handling and Abend Resolution</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 9.1 -->
+    <div class="subsection" id="s9-1">
+      <h3><span class="dot"></span> 9.1 Error Handling Flow</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────┐
+  │                    ERROR HANDLING SUMMARY                    │
+  └─────────────────────────────────────────────────────────────┘
+
+  CLOSEFIL / OPENFIL:
+    SDSF command failure → Job RC ≠ 0 → Control-M MAXRERUN=5
+
+  TRANBKP STEP05R (REPRO):
+    VSAM I/O error → IDCAMS RC=12+ → Job fails
+    Empty VSAM → IDCAMS RC=4 (warning, acceptable)
+
+  TRANBKP STEP05 (DELETE):
+    Cluster not found → RC=8 → Forced to 0 by IF MAXCC LE 08
+    Catalog error → RC=12+ → Job fails (STEP10 skipped via COND)
+
+  TRANBKP STEP10 (DEFINE):
+    Only executes if STEP05 RC ≤ 4 (COND=(4,LT))
+    Duplicate cluster → RC=12 → Job fails
+
+  WAITSTEP (COBSWAIT):
+    MVSWAIT system service failure → Unlikely; STOP RUN returns RC=0
+    Invalid PARM-VALUE → Undefined behavior (no input validation)
+</pre>
+      </div>
+    </div>
+
+    <!-- 9.2 -->
+    <div class="subsection" id="s9-2">
+      <h3><span class="dot"></span> 9.2 Return Codes</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Job</th><th>Step</th><th>RC</th><th>Meaning</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td>CLOSEFIL</td><td>CLCIFIL</td><td>0</td><td>All CEMT CLO commands issued</td><td>Continue to TRANBKP</td></tr>
+            <tr><td>CLOSEFIL</td><td>CLCIFIL</td><td>&ne;0</td><td>SDSF/CICS communication failure</td><td>Investigate CICS region; retry</td></tr>
+            <tr><td>TRANBKP</td><td>STEP05R</td><td>0</td><td>REPRO completed successfully</td><td>Continue</td></tr>
+            <tr><td>TRANBKP</td><td>STEP05R</td><td>4</td><td>REPRO completed with warnings (e.g., empty input)</td><td>Continue (acceptable)</td></tr>
+            <tr><td>TRANBKP</td><td>STEP05R</td><td>12+</td><td>REPRO I/O failure</td><td>Investigate VSAM; delete partial GDG</td></tr>
+            <tr><td>TRANBKP</td><td>STEP05</td><td>0</td><td>DELETE successful (or not-found forced to 0)</td><td>Continue to STEP10</td></tr>
+            <tr><td>TRANBKP</td><td>STEP10</td><td>0</td><td>DEFINE CLUSTER successful</td><td>Continue to WAITSTEP</td></tr>
+            <tr><td>TRANBKP</td><td>STEP10</td><td>12+</td><td>DEFINE failure (duplicate, volume full)</td><td>Investigate catalog/volume; manual cleanup</td></tr>
+            <tr><td>WAITSTEP</td><td>WAIT</td><td>0</td><td>Wait completed normally</td><td>Continue to OPENFIL</td></tr>
+            <tr><td>OPENFIL</td><td>OPCIFIL</td><td>0</td><td>All CEMT OPE commands issued</td><td>Job stream complete</td></tr>
+            <tr><td>OPENFIL</td><td>OPCIFIL</td><td>&ne;0</td><td>SDSF/CICS communication failure</td><td>Investigate CICS region; retry</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 9.3 -->
+    <div class="subsection" id="s9-3">
+      <h3><span class="dot"></span> 9.3 Common Abend Scenarios</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Abend</th><th>Likely Cause</th><th>Resolution</th></tr></thead>
+          <tbody>
+            <tr><td>S0C7 (COBSWAIT)</td><td>Non-numeric SYSIN input causing invalid COMP conversion</td><td>Verify SYSIN contains exactly 8 numeric characters</td></tr>
+            <tr><td>S013 (TRANBKP)</td><td>Dataset not found or catalog error during REPRO</td><td>Verify TRANSACT.VSAM.KSDS exists and is cataloged</td></tr>
+            <tr><td>S213 (TRANBKP)</td><td>VSAM open failure (file in use by CICS)</td><td>Ensure CLOSEFIL completed successfully before TRANBKP</td></tr>
+            <tr><td>IEC070I (TRANBKP)</td><td>Volume full during GDG allocation</td><td>Free space on SYSDA; archive old GDG generations</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 10 — Security and Authorization
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s10-1">
+      <h3><span class="dot"></span> 10.1 Dataset Access Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Resource</th><th>Access Level</th><th>Required By</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</code></td><td>ALTER</td><td>TRANBKP (STEP05, STEP10)</td><td>DELETE and DEFINE require ALTER authority on the cluster</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</code></td><td>READ</td><td>TRANBKP (STEP05R)</td><td>REPRO requires READ access to source</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANSACT.BKUP</code></td><td>UPDATE</td><td>TRANBKP (STEP05R)</td><td>Creating new GDG generation requires UPDATE on GDG base</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.LOADLIB</code></td><td>READ</td><td>WAITSTEP</td><td>Execute authority on load library</td></tr>
+            <tr><td>CICS Region (<code>CICSAWSA</code>)</td><td>CONTROL</td><td>CLOSEFIL, OPENFIL</td><td>MVS MODIFY command authority required to issue /F commands</td></tr>
+            <tr><td>Volume <code>AWSHJ1</code></td><td>SPACE</td><td>TRANBKP (STEP10)</td><td>Space allocation authority for VSAM DEFINE</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>Run-As User:</strong> All jobs execute under user <code>xuemingh</code> (per Control-M RUN_AS attribute). This user requires RACF/ACF2 profiles granting the above access levels.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 11 — Performance and Batch Window Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Performance and Batch Window Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 11.1 -->
+    <div class="subsection" id="s11-1">
+      <h3><span class="dot"></span> 11.1 I/O Characteristics</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>I/O Type</th><th>Volume</th><th>Estimated Duration</th></tr></thead>
+          <tbody>
+            <tr><td>CLCIFIL (CLOSEFIL)</td><td>Console I/O (MVS commands)</td><td>5 commands</td><td>&lt; 5 seconds</td></tr>
+            <tr><td>STEP05R (REPRO)</td><td>Sequential read (VSAM) + sequential write (GDG)</td><td>Proportional to daily transaction count; VSAM CYLINDERS(1 5)</td><td>Seconds to low minutes (depends on volume)</td></tr>
+            <tr><td>STEP05 (DELETE)</td><td>Catalog I/O</td><td>2 catalog operations</td><td>&lt; 2 seconds</td></tr>
+            <tr><td>STEP10 (DEFINE)</td><td>Catalog I/O + VTOC update</td><td>1 cluster definition</td><td>&lt; 2 seconds</td></tr>
+            <tr><td>WAIT (COBSWAIT)</td><td>None (timer only)</td><td>&mdash;</td><td>36 seconds (fixed)</td></tr>
+            <tr><td>OPCIFIL (OPENFIL)</td><td>Console I/O (MVS commands)</td><td>5 commands</td><td>&lt; 5 seconds</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 11.2 -->
+    <div class="subsection" id="s11-2">
+      <h3><span class="dot"></span> 11.2 Batch Window Fit</h3>
+      <div class="kpi-strip">
+        <div class="kpi-card"><div class="kpi-value">&lt; 2 min</div><div class="kpi-label">Estimated Total Elapsed</div></div>
+        <div class="kpi-card"><div class="kpi-value">36s</div><div class="kpi-label">Fixed Wait (COBSWAIT)</div></div>
+        <div class="kpi-card"><div class="kpi-value">23:00</div><div class="kpi-label">TIMETO Deadline</div></div>
+        <div class="kpi-card"><div class="kpi-value">5</div><div class="kpi-label">Max Reruns (Control-M)</div></div>
+      </div>
+      <div class="callout">
+        <strong>Assessment:</strong> This job stream is lightweight and completes well within any reasonable batch window. The 36-second fixed wait dominates total elapsed time. The REPRO step duration scales with daily transaction volume but is bounded by the VSAM allocation of CYLINDERS(1 5). Even at maximum capacity, the entire stream should complete in under 2 minutes.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 12 — Testing Approach
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 12.1 -->
+    <div class="subsection" id="s12-1">
+      <h3><span class="dot"></span> 12.1 Test Scenarios</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Test ID</th><th>Scenario</th><th>Preconditions</th><th>Expected Result</th><th>Business Rule</th></tr></thead>
+          <tbody>
+            <tr><td>TC-001</td><td>Normal daily cycle: VSAM has transactions</td><td>TRANSACT.VSAM populated with 100+ records; CICS files open</td><td>Files closed, REPRO creates GDG(+1) with same record count, VSAM deleted/redefined empty, files reopened. All RC=0.</td><td>BR-001 through BR-006</td></tr>
+            <tr><td>TC-002</td><td>Empty VSAM (no transactions posted)</td><td>TRANSACT.VSAM exists but contains 0 records</td><td>REPRO completes with RC=4 (warning); GDG(+1) created (empty); DELETE/DEFINE successful; stream completes normally.</td><td>BR-002, BR-003</td></tr>
+            <tr><td>TC-003</td><td>CICS region unavailable during CLOSEFIL</td><td>CICS region CICSAWSA is down</td><td>CLOSEFIL fails; Control-M retries (MAXRERUN=5); TRANBKP does not start.</td><td>BR-001</td></tr>
+            <tr><td>TC-004</td><td>VSAM cluster does not exist (first-time or corruption)</td><td>TRANSACT.VSAM.KSDS not in catalog</td><td>STEP05R fails (RC=12, dataset not found); STEP05 DELETE returns RC=8 (forced to 0); STEP10 DEFINE creates fresh cluster.</td><td>BR-003, BR-004</td></tr>
+            <tr><td>TC-005</td><td>GDG base does not exist</td><td>TRANSACT.BKUP GDG base not defined</td><td>STEP05R fails (RC=12, GDG allocation error); job stream halts.</td><td>BR-002</td></tr>
+            <tr><td>TC-006</td><td>Volume AWSHJ1 full</td><td>No space available on target volume</td><td>STEP10 DEFINE fails (IEC070I); VSAM left deleted; manual space recovery required.</td><td>BR-004</td></tr>
+            <tr><td>TC-007</td><td>Invalid COBSWAIT parameter</td><td>SYSIN contains non-numeric or &gt;8 character value</td><td>S0C7 abend or undefined MVSWAIT behavior; WAITSTEP fails.</td><td>BR-005</td></tr>
+            <tr><td>TC-008</td><td>Restart after TRANBKP STEP05 failure</td><td>Backup exists in GDG(+1); VSAM partially deleted</td><td>Re-run from STEP05: DELETE (tolerate not-found); STEP10 DEFINE succeeds; stream completes.</td><td>BR-003</td></tr>
+            <tr><td>TC-009</td><td>CICS files already closed (idempotent test)</td><td>CLOSEFIL already ran; files are closed</td><td>CLOSEFIL re-issues CLO commands; CICS returns &ldquo;already closed&rdquo; (non-error); RC=0.</td><td>BR-001</td></tr>
+            <tr><td>TC-010</td><td>Full end-to-end cycle with POSTTRAN downstream</td><td>Complete daily cycle: Backup &rarr; Reset &rarr; POSTTRAN loads new transactions</td><td>GDG(+1) contains Day N data; TRANSACT VSAM contains Day N+1 posted transactions only.</td><td>All rules</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 12.2 -->
+    <div class="subsection" id="s12-2">
+      <h3><span class="dot"></span> 12.2 Test Data Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Requirement</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>Populated TRANSACT VSAM</td><td>At least 100 transaction records (350 bytes each, key in first 16 bytes) to test REPRO volume</td></tr>
+            <tr><td>Active CICS Region</td><td>CICSAWSA must be running with file definitions for TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC</td></tr>
+            <tr><td>GDG Base Definition</td><td><code>AWS.M2.CARDDEMO.TRANSACT.BKUP</code> must be defined with appropriate generation limit</td></tr>
+            <tr><td>Volume Availability</td><td>Volume AWSHJ1 must have at least 1 cylinder free for DEFINE CLUSTER</td></tr>
+            <tr><td>Load Library</td><td><code>AWS.M2.CARDDEMO.LOADLIB</code> must contain COBSWAIT module</td></tr>
+            <tr><td>Procedure Library</td><td><code>AWS.M2.CARDDEMO.PROC</code> must contain REPROC member; <code>AWS.M2.CARDDEMO.CNTL</code> must contain REPROCT member</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 13 — Known Issues and Modernization Considerations
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s13">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">13</span>
+    <h2>Known Issues and Modernization Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 13.1 -->
+    <div class="subsection" id="s13-1">
+      <h3><span class="dot"></span> 13.1 Known Issues</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Issue ID</th><th>Description</th><th>Impact</th><th>Suggested Fix</th></tr></thead>
+          <tbody>
+            <tr><td>KI-001</td><td>Typo in TRANBKP JCL comment: &ldquo;TRANSACATION&rdquo; (should be &ldquo;TRANSACTION&rdquo;) appears twice (STEP05 and STEP10 comments)</td><td>Low &mdash; cosmetic, no processing impact</td><td>Correct spelling in JCL comments</td></tr>
+            <tr><td>KI-002</td><td>No record count reconciliation: REPRO does not verify or report the number of records backed up vs. the number in the source VSAM</td><td>Medium &mdash; silent data loss could go undetected if REPRO is partial</td><td>Add IDCAMS LISTCAT to capture record count before REPRO; compare with REPRO output count</td></tr>
+            <tr><td>KI-003</td><td>COBSWAIT has no input validation: if SYSIN contains non-numeric data or is missing, the MOVE to PIC 9(8) COMP will produce undefined behavior (likely S0C7)</td><td>Low &mdash; static inline JCL data; but fragile if ever parameterized</td><td>Add NUMERIC test on PARM-VALUE before MOVE; set default or ABEND gracefully</td></tr>
+            <tr><td>KI-004</td><td>No conditional dependency between STEP05R and STEP05 in TRANBKP: if REPRO fails (RC=12), STEP05 still executes and deletes the VSAM cluster, losing the only copy of the data</td><td>High &mdash; potential data loss if REPRO fails silently and no other backup exists</td><td>Add COND=(4,LT) to STEP05 to skip DELETE if REPRO failed; or restructure as separate jobs with Control-M conditions</td></tr>
+            <tr><td>KI-005</td><td>VSAM AIX is deleted but never redefined: STEP05 deletes <code>TRANSACT.VSAM.AIX</code> but STEP10 only defines the base cluster. If any program expects the AIX to exist, it will fail.</td><td>Medium &mdash; depends on whether downstream programs use the AIX</td><td>Add DEFINE ALTERNATEINDEX and DEFINE PATH after DEFINE CLUSTER in STEP10, or confirm AIX is not required</td></tr>
+            <tr><td>KI-006</td><td>Fixed 36-second wait is arbitrary: the WAITSTEP duration is hardcoded and not derived from any system metric. On fast systems it wastes time; on slow systems it may be insufficient.</td><td>Low &mdash; minor operational inefficiency</td><td>Replace with a polling mechanism that verifies catalog propagation, or parameterize via symbolic</td></tr>
+            <tr><td>KI-007</td><td>CLOSEFIL and OPENFIL use SDSF to issue CEMT commands: this is an unusual approach (normally done via DFHCSDUP or direct CICS API). SDSF availability and authority can vary across environments.</td><td>Low &mdash; works but non-standard; may cause portability issues in migration</td><td>Use DFHCSDUP batch utility or CICS SPI for file management</td></tr>
+            <tr><td>KI-008</td><td>No NOTIFY or email on job stream completion/failure: operations team has no proactive alerting for this critical daily process</td><td>Medium &mdash; failures may go unnoticed until POSTTRAN or CICS users report issues</td><td>Add Control-M SHOUT or DO MAIL action on completion/failure</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s13-2">
+      <h3><span class="dot"></span> 13.2 Modernization Considerations</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Area</th><th>Current State</th><th>Target State</th><th>Complexity</th></tr></thead>
+          <tbody>
+            <tr><td>File Management</td><td>SDSF + CEMT commands for CICS file open/close</td><td>Kubernetes-native sidecar or API-based resource locking</td><td>Medium</td></tr>
+            <tr><td>Data Backup</td><td>IDCAMS REPRO to GDG sequential file</td><td>Database point-in-time snapshot or continuous replication (e.g., CDC to S3)</td><td>Medium</td></tr>
+            <tr><td>VSAM Reset</td><td>DELETE + DEFINE (destructive cycle reset)</td><td>Database TRUNCATE TABLE or partition swap (zero-downtime)</td><td>Low</td></tr>
+            <tr><td>Wait/Stabilization</td><td>Fixed 36-second COBOL timer (COBSWAIT)</td><td>Event-driven readiness check (health probe, eventual consistency verification)</td><td>Low</td></tr>
+            <tr><td>Scheduling</td><td>Control-M with INCOND/OUTCOND linear chain</td><td>Event-driven orchestration (AWS Step Functions, Airflow, or Kubernetes CronJob with init containers)</td><td>Low</td></tr>
+            <tr><td>Recovery</td><td>No checkpoint; MAXRERUN=5 retries entire job</td><td>Idempotent operations with state tracking; database transactions with rollback</td><td>Medium</td></tr>
+            <tr><td>Observability</td><td>SYSPRINT spool output only</td><td>Structured logging, metrics (record counts), distributed tracing, alerting</td><td>Low</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /page-wrap-single -->
+
+<!-- ════════════════════  FOOTER  ════════════════════ -->
+<footer class="footer">
+  <p><strong>UniCredit CardDemo</strong> &mdash; Batch Process Analysis &mdash; DAILY-TransactionBackup (A1)</p>
+  <p>Generated from source: <code>app/jcl/CLOSEFIL.jcl</code> &middot; <code>app/jcl/TRANBKP.jcl</code> &middot; <code>app/jcl/WAITSTEP.jcl</code> &middot; <code>app/jcl/OPENFIL.jcl</code> &middot; <code>app/cbl/COBSWAIT.cbl</code> &middot; <code>app/proc/REPROC.prc</code> &middot; <code>app/ctl/REPROCT.ctl</code></p>
+</footer>
+
+</body>
+</html>

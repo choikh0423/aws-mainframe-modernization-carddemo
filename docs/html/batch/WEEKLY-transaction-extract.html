@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRANEXTR – Weekly Transaction Type/Category Extract | Batch Process Analysis | UniCredit CardDemo</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   UniCredit CardDemo — Shared Theme (inlined for standalone viewing)
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --uc-red:        #E4002B;
+  --uc-red-dark:   #B8001F;
+  --uc-red-light:  #FF3354;
+  --uc-navy:       #1D2B4E;
+  --uc-navy-light: #2A3D6B;
+  --uc-gold:       #C5A44E;
+  --uc-gold-light: #E2C97A;
+  --uc-white:      #FFFFFF;
+  --uc-gray-50:    #F8F9FA;
+  --uc-gray-100:   #F0F1F3;
+  --uc-gray-200:   #E2E4E8;
+  --uc-gray-400:   #9EA3AE;
+  --uc-gray-600:   #6B7280;
+  --uc-gray-800:   #374151;
+  --uc-text:       #1F2937;
+  --uc-shadow:     0 4px 24px rgba(29,43,78,.08);
+  --uc-shadow-lg:  0 12px 48px rgba(29,43,78,.12);
+  --uc-radius:     12px;
+  --uc-radius-sm:  8px;
+  --uc-transition: .25s cubic-bezier(.4,0,.2,1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--uc-text);
+  background: var(--uc-gray-50);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+.hero {
+  background: linear-gradient(135deg, var(--uc-navy) 0%, var(--uc-navy-light) 50%, var(--uc-red-dark) 100%);
+  color: var(--uc-white);
+  padding: 3rem 2rem 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -60%; right: -20%;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(228,0,43,.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute; bottom: -30%; left: -10%;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(197,164,78,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-inner { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+.hero-brand { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.hero-logo { height: 48px; flex-shrink: 0; }
+.hero-logo img { height: 100%; width: auto; display: block; }
+.hero-brand-text { font-size: .95rem; opacity: .85; letter-spacing: .04em; text-transform: uppercase; }
+.hero h1 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; letter-spacing: -.02em; line-height: 1.15; margin-bottom: .75rem; }
+.hero h1 span { color: var(--uc-gold-light); }
+.hero-subtitle { font-size: 1.15rem; opacity: .88; max-width: 720px; }
+.hero-meta { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,.15); }
+.hero-meta dt { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin-bottom: .15rem; }
+.hero-meta dd { font-size: .95rem; font-weight: 600; }
+.breadcrumb { max-width: 1200px; margin: 1.25rem auto .5rem; padding: 0 2rem; font-size: .8rem; color: var(--uc-gray-400); }
+.breadcrumb a { color: var(--uc-red); text-decoration: none; font-weight: 600; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb .sep { margin: 0 .4rem; opacity: .5; }
+.page-wrap-single { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+.section { background: var(--uc-white); border-radius: var(--uc-radius); box-shadow: var(--uc-shadow); margin-bottom: 2rem; overflow: hidden; }
+.section-header { display: flex; align-items: center; gap: .75rem; padding: 1.25rem 1.5rem; background: linear-gradient(90deg, var(--uc-navy) 0%, var(--uc-navy-light) 100%); color: var(--uc-white); cursor: pointer; user-select: none; }
+.section-header:hover { filter: brightness(1.1); }
+.section-num { background: var(--uc-red); color: var(--uc-white); font-size: .72rem; font-weight: 700; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.section-header h2 { font-size: 1.1rem; font-weight: 700; letter-spacing: -.01em; flex: 1; }
+.section-toggle { width: 24px; height: 24px; transition: transform var(--uc-transition); opacity: .7; }
+.section.collapsed .section-toggle { transform: rotate(-90deg); }
+.section-body { padding: 1.5rem; }
+.section.collapsed .section-body { display: none; }
+.subsection { margin-bottom: 1.75rem; }
+.subsection:last-child { margin-bottom: 0; }
+.subsection h3 { font-size: .95rem; font-weight: 700; color: var(--uc-navy); margin-bottom: .75rem; padding-bottom: .4rem; border-bottom: 2px solid var(--uc-gray-200); display: flex; align-items: center; gap: .5rem; }
+.subsection h3 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--uc-red); flex-shrink: 0; }
+.subsection h4 { font-size: .88rem; font-weight: 600; color: var(--uc-gray-800); margin: 1rem 0 .5rem; }
+.subsection p, .subsection li { font-size: .88rem; color: var(--uc-gray-800); line-height: 1.7; }
+.subsection ul, .subsection ol { padding-left: 1.4rem; margin-top: .35rem; }
+.subsection li { margin-bottom: .25rem; }
+.table-wrap { overflow-x: auto; margin: .75rem 0; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .82rem; }
+thead th { background: var(--uc-navy); color: var(--uc-white); text-align: left; padding: .6rem .75rem; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
+thead th:first-child { border-radius: var(--uc-radius-sm) 0 0 0; }
+thead th:last-child  { border-radius: 0 var(--uc-radius-sm) 0 0; }
+tbody td { padding: .55rem .75rem; border-bottom: 1px solid var(--uc-gray-200); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:nth-child(even) { background: var(--uc-gray-50); }
+tbody tr:hover { background: rgba(228,0,43,.04); }
+pre { background: var(--uc-navy); color: #E2E8F0; border-radius: var(--uc-radius-sm); padding: 1rem 1.25rem; font-size: .78rem; font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; overflow-x: auto; line-height: 1.65; margin: .75rem 0; }
+code { font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; font-size: .82em; background: var(--uc-gray-100); padding: .1em .35em; border-radius: 4px; color: var(--uc-red-dark); }
+pre code { background: none; padding: 0; color: inherit; }
+.callout { border-left: 4px solid var(--uc-gold); background: rgba(197,164,78,.08); padding: .85rem 1rem; border-radius: 0 var(--uc-radius-sm) var(--uc-radius-sm) 0; margin: .75rem 0; font-size: .85rem; }
+.callout-red { border-left-color: var(--uc-red); background: rgba(228,0,43,.05); }
+.callout strong { color: var(--uc-navy); }
+.diagram-box { background: var(--uc-gray-100); border: 2px dashed var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1.5rem; text-align: center; margin: .75rem 0; }
+.diagram-box pre { text-align: left; background: var(--uc-navy); display: inline-block; max-width: 100%; }
+.badge { display: inline-block; font-size: .68rem; font-weight: 700; padding: .15em .55em; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; line-height: 1.6; }
+.badge-red    { background: var(--uc-red);   color: #fff; }
+.badge-navy   { background: var(--uc-navy);  color: #fff; }
+.badge-gold   { background: var(--uc-gold);  color: var(--uc-navy); }
+.badge-gray   { background: var(--uc-gray-200); color: var(--uc-gray-800); }
+.kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin: 1rem 0; }
+.kpi-card { background: var(--uc-gray-50); border: 1px solid var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1rem; text-align: center; transition: var(--uc-transition); }
+.kpi-card:hover { border-color: var(--uc-red); box-shadow: var(--uc-shadow); transform: translateY(-2px); }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--uc-red); line-height: 1.2; }
+.kpi-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--uc-gray-600); margin-top: .25rem; }
+.footer { background: var(--uc-navy); color: rgba(255,255,255,.6); text-align: center; padding: 2rem; font-size: .78rem; }
+.footer strong { color: var(--uc-gold-light); }
+@media print {
+  .section.collapsed .section-body { display: block; }
+  .hero { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════  HERO  ════════════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. &mdash; Milano</div>
+    </div>
+    <h1>TRANEXTR &ndash; <span>Batch Process Analysis</span></h1>
+    <p class="hero-subtitle">
+      Job <code>TRANEXTR</code> &middot; Weekly DB2 extract of TRANSACTION_TYPE and TRANSACTION_TYPE_CATEGORY reference tables to flat files using DSNTIAUL via IKJEFT01, with GDG backup of prior extracts
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Job Name</dt><dd>TRANEXTR</dd></div>
+      <div><dt>Entry Program</dt><dd>IKJEFT01 / DSNTIAUL</dd></div>
+      <div><dt>Frequency</dt><dd>Weekly (Saturday)</dd></div>
+      <div><dt>JCL Steps</dt><dd>5</dd></div>
+      <div><dt>Files Touched</dt><dd>4</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ════════════════════  BREADCRUMB  ════════════════════ -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">&rsaquo;</span>
+  <a href="index.html">Batch Flows</a>
+  <span class="sep">&rsaquo;</span>
+  TRANEXTR &ndash; Weekly Transaction Type/Category Extract
+</div>
+
+<!-- ════════════════════  BODY  ════════════════════ -->
+<div class="page-wrap-single">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     IDENTIFICATION
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s0">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">ID</span>
+    <h2>Identification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <tbody>
+          <tr><td><strong>Job Name</strong></td><td><code>TRANEXTR</code></td></tr>
+          <tr><td><strong>Job Stream / Schedule</strong></td><td>WEEKLY-TransactionTypesDBRefresh (Control-M Smart Folder A5), runs after MNTTRDB2</td></tr>
+          <tr><td><strong>Business Domain</strong></td><td>Reference Data Management / Transaction Reporting Support</td></tr>
+          <tr><td><strong>Owning Team</strong></td><td>CardDemo Batch Operations</td></tr>
+          <tr><td><strong>Frequency</strong></td><td>Weekly (Saturday)</td></tr>
+          <tr><td><strong>Batch Window</strong></td><td>Weekly maintenance window, after MNTTRDB2 DB2 table maintenance</td></tr>
+          <tr><td><strong>Criticality</strong></td><td><span class="badge badge-navy">Medium</span></td></tr>
+          <tr><td><strong>Elapsed Time SLA</strong></td><td>Must complete before downstream report jobs reference the flat files</td></tr>
+          <tr><td><strong>Primary Program</strong></td><td><code>DSNTIAUL</code> (IBM DB2 Unload Utility, invoked via <code>IKJEFT01</code> TSO batch)</td></tr>
+          <tr><td><strong>Source Location</strong></td><td><code>app/app-transaction-type-db2/jcl/TRANEXTR.jcl</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 1 — Business Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">1</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 1.1 -->
+    <div class="subsection" id="s1-1">
+      <h3><span class="dot"></span> 1.1 Business Context</h3>
+      <ul>
+        <li><strong>What:</strong> Extracts the full contents of the DB2 <code>CARDDEMO.TRANSACTION_TYPE</code> and <code>CARDDEMO.TRANSACTION_TYPE_CATEGORY</code> reference tables into fixed-length 60-byte flat files (<code>TRANTYPE.PS</code> and <code>TRANCATG.PS</code>). Before extraction, the previous versions of these flat files are backed up to GDG datasets.</li>
+        <li><strong>Who:</strong> Downstream consumers include the <em>Transaction Report</em> job (TRANREPT/CBTRN03C) and any batch or online process that reads transaction type descriptions from flat files rather than directly from DB2.</li>
+        <li><strong>When:</strong> Runs weekly on Saturday as part of the <em>WEEKLY-TransactionTypesDBRefresh</em> Control-M folder, after the <code>MNTTRDB2</code> job has completed DB2 table maintenance (inserts, updates, deletes).</li>
+        <li><strong>Why:</strong> Ensures that flat-file copies of the DB2 reference data are refreshed after any weekly maintenance changes. Flat files are used by downstream COBOL batch programs that do not have direct DB2 connectivity.</li>
+        <li><strong>Outcome:</strong> Two refreshed flat files (<code>TRANTYPE.PS</code> and <code>TRANCATG.PS</code>) containing current DB2 reference data; two new GDG generations preserving the prior week&rsquo;s extracts for audit and rollback purposes.</li>
+      </ul>
+    </div>
+
+    <!-- 1.2 -->
+    <div class="subsection" id="s1-2">
+      <h3><span class="dot"></span> 1.2 Business Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────────┐
+  │        WEEKLY TRANSACTION TYPE / CATEGORY EXTRACT FLOW          │
+  └─────────────────────────────────────────────────────────────────┘
+
+  MNTTRDB2 (DB2 Table Maintenance)
+       │  Inserts / Updates / Deletes
+       │  on TRANSACTION_TYPE &amp;
+       │  TRANSACTION_TYPE_CATEGORY
+       │
+       ▼
+  ┌──────────────────────────────────────────────┐
+  │ TRANEXTR Job                                  │
+  │                                              │
+  │  STEP10: Backup TRANTYPE.PS → GDG(+1)       │
+  │  STEP20: Backup TRANCATG.PS → GDG(+1)       │
+  │  STEP30: Delete old flat files               │
+  │  STEP40: Extract TRANSACTION_TYPE → PS       │
+  │  STEP50: Extract TRANSACTION_TYPE_CATEGORY   │
+  │          → PS                                │
+  └──────────────────┬───────────────────────────┘
+                     │
+                     ▼
+  ┌──────────────────────────────────────────────┐
+  │ Downstream Consumers                          │
+  │  • TRANREPT (Transaction Report)             │
+  │  • Other batch programs reading flat files   │
+  └──────────────────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 1.3 -->
+    <div class="subsection" id="s1-3">
+      <h3><span class="dot"></span> 1.3 Business Rules Applied in This Process</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Rule ID</th><th>Description</th><th>Applied At</th><th>Exception Handling</th></tr></thead>
+          <tbody>
+            <tr><td>BR-001</td><td>Previous flat file versions must be backed up to GDG before being replaced</td><td>STEP10, STEP20 (IEBGENER)</td><td>If backup fails, subsequent steps are skipped (COND=(0,NE))</td></tr>
+            <tr><td>BR-002</td><td>Old flat files must be deleted before re-extraction to ensure a clean target</td><td>STEP30 (IEFBR14)</td><td>DISP=(MOD,DELETE,DELETE) ensures deletion; if file does not exist, step completes normally</td></tr>
+            <tr><td>BR-003</td><td>TRANSACTION_TYPE records are extracted with TR_TYPE (2 bytes) + TR_DESCRIPTION cast to CHAR(50), padded to 60 bytes with trailing zeros, ordered by TR_TYPE</td><td>STEP40 (DSNTIAUL SQL)</td><td>DB2 SQL error &rarr; non-zero RC from DSNTIAUL</td></tr>
+            <tr><td>BR-004</td><td>TRANSACTION_TYPE_CATEGORY records are extracted with TRC_TYPE_CODE (2) + TRC_TYPE_CATEGORY (4) + TRC_CAT_DATA cast to CHAR(50), padded to 60 bytes, ordered by TRC_TYPE_CODE, TRC_TYPE_CATEGORY</td><td>STEP50 (DSNTIAUL SQL)</td><td>DB2 SQL error &rarr; non-zero RC from DSNTIAUL</td></tr>
+            <tr><td>BR-005</td><td>Extract must run only after MNTTRDB2 completes successfully to ensure reference data is current</td><td>Control-M dependency</td><td>Control-M holds TRANEXTR until MNTTRDB2 OUTCOND is set</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 1.4 -->
+    <div class="subsection" id="s1-4">
+      <h3><span class="dot"></span> 1.4 Business Inputs and Outputs</h3>
+      <h4>Inputs</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Input</th><th>Source System</th><th>Business Description</th><th>Timing</th></tr></thead>
+          <tbody>
+            <tr><td>DB2 Table: <code>CARDDEMO.TRANSACTION_TYPE</code></td><td>DB2 subsystem DAZ1</td><td>Transaction type codes (2-byte code + 50-char description)</td><td>Updated by MNTTRDB2 before this job</td></tr>
+            <tr><td>DB2 Table: <code>CARDDEMO.TRANSACTION_TYPE_CATEGORY</code></td><td>DB2 subsystem DAZ1</td><td>Transaction category codes (2-byte type + 4-byte category + 50-char description)</td><td>Updated by MNTTRDB2 before this job</td></tr>
+            <tr><td>Existing flat file: <code>&amp;HLQ..TRANTYPE.PS</code></td><td>Previous TRANEXTR run</td><td>Previous week&rsquo;s transaction type extract (input to backup)</td><td>Must exist from prior run</td></tr>
+            <tr><td>Existing flat file: <code>&amp;HLQ..TRANCATG.PS</code></td><td>Previous TRANEXTR run</td><td>Previous week&rsquo;s transaction category extract (input to backup)</td><td>Must exist from prior run</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h4>Outputs</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Output</th><th>Destination</th><th>Business Description</th><th>Timing</th></tr></thead>
+          <tbody>
+            <tr><td>GDG: <code>&amp;HLQ..TRANTYPE.BKUP(+1)</code></td><td>Tape/DASD archive</td><td>Backup of previous TRANTYPE.PS (60-byte FB records)</td><td>Created in STEP10</td></tr>
+            <tr><td>GDG: <code>&amp;HLQ..TRANCATG.PS.BKUP(+1)</code></td><td>Tape/DASD archive</td><td>Backup of previous TRANCATG.PS (60-byte FB records)</td><td>Created in STEP20</td></tr>
+            <tr><td>Flat file: <code>&amp;HLQ..TRANTYPE.PS</code></td><td>TRANREPT, other batch consumers</td><td>Current transaction type reference data (60-byte fixed records)</td><td>Created in STEP40</td></tr>
+            <tr><td>Flat file: <code>&amp;HLQ..TRANCATG.PS</code></td><td>TRANREPT, other batch consumers</td><td>Current transaction category reference data (60-byte fixed records)</td><td>Created in STEP50</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 2 — Technical Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">2</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 2.1 -->
+    <div class="subsection" id="s2-1">
+      <h3><span class="dot"></span> 2.1 Technical Flow Diagram &ndash; Overview</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ JOB: TRANEXTR                                                   │
+  │                                                                 │
+  │  STEP10: PGM=IEBGENER   (Backup TRANTYPE.PS → GDG)            │
+  │       │                                                         │
+  │       ▼ COND=(0,NE)                                            │
+  │  STEP20: PGM=IEBGENER   (Backup TRANCATG.PS → GDG)            │
+  │       │                                                         │
+  │       ▼ COND=(0,NE)                                            │
+  │  STEP30: PGM=IEFBR14    (Delete old TRANTYPE.PS &amp; TRANCATG.PS) │
+  │       │                                                         │
+  │       ▼ COND=(0,NE)                                            │
+  │  STEP40: PGM=IKJEFT01   (DSNTIAUL: Extract TRANSACTION_TYPE)  │
+  │       │  DB2 → SYSREC00 → TRANTYPE.PS                         │
+  │       │                                                         │
+  │       ▼ COND=(4,LT)                                            │
+  │  STEP50: PGM=IKJEFT01   (DSNTIAUL: Extract TRAN_TYPE_CATEGORY)│
+  │          DB2 → SYSREC00 → TRANCATG.PS                         │
+  └─────────────────────────────────────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.2 -->
+    <div class="subsection" id="s2-2">
+      <h3><span class="dot"></span> 2.2 Technical Flow Diagram &ndash; Detailed (Step-by-Step)</h3>
+      <div class="diagram-box">
+<pre>
+  STEP10 - EXEC PGM=IEBGENER (Always executes)
+    INPUT:  SYSUT1 = &amp;HLQ..TRANTYPE.PS         (DISP=SHR, sequential read)
+    OUTPUT: SYSUT2 = &amp;HLQ..TRANTYPE.BKUP(+1)   (NEW,CATLG, LRECL=60 FB BLKSIZE=600)
+    SYSIN:  DUMMY (straight copy, no reformatting)
+    RC: 0=Success, &gt;0=Copy failed
+
+  STEP20 - EXEC PGM=IEBGENER, COND=(0,NE)
+    INPUT:  SYSUT1 = &amp;HLQ..TRANCATG.PS         (DISP=SHR, sequential read)
+    OUTPUT: SYSUT2 = &amp;HLQ..TRANCATG.PS.BKUP(+1)(NEW,CATLG, LRECL=60 FB BLKSIZE=600)
+    SYSIN:  DUMMY (straight copy)
+    RC: 0=Success, &gt;0=Copy failed
+
+  STEP30 - EXEC PGM=IEFBR14, COND=(0,NE)
+    DD01: &amp;HLQ..TRANTYPE.PS   DISP=(MOD,DELETE,DELETE)
+    DD02: &amp;HLQ..TRANCATG.PS   DISP=(MOD,DELETE,DELETE)
+    (Dummy program; dataset disposition processing deletes the files)
+
+  STEP40 - EXEC PGM=IKJEFT01, COND=(0,NE)
+    STEPLIB: OEM.DB2.DAZ1.RUNLIB.LOAD, OEMA.DB2.VERSIONA.SDSNLOAD
+    SYSREC00: &amp;HLQ..TRANTYPE.PS  (NEW,CATLG,DELETE)
+    SYSTSIN:  DSN SYSTEM(DAZ1) RUN PROGRAM(DSNTIAUL) PLAN(DSNTIAUL) PARMS('SQL')
+    SYSIN:    SELECT CAST(CONCAT(CONCAT(TR_TYPE, CAST(TR_DESCRIPTION AS CHAR(50))),
+              REPEAT('0',8)) AS CHAR(60))
+              FROM CARDDEMO.TRANSACTION_TYPE ORDER BY TR_TYPE;
+    RC: 0=Success, 4=Warning (e.g., empty table), &gt;4=Error
+
+  STEP50 - EXEC PGM=IKJEFT01, COND=(4,LT)
+    STEPLIB: OEM.DB2.DAZ1.RUNLIB.LOAD, OEMA.DB2.VERSIONA.SDSNLOAD
+    SYSREC00: &amp;HLQ..TRANCATG.PS (NEW,CATLG,DELETE)
+    SYSTSIN:  DSN SYSTEM(DAZ1) RUN PROGRAM(DSNTIAUL) PLAN(DSNTIAUL) PARMS('SQL')
+    SYSIN:    SELECT CAST(TRC_TYPE_CODE || TRC_TYPE_CATEGORY ||
+              CAST(TRC_CAT_DATA AS CHAR(50)) || REPEAT('0',4) AS CHAR(60))
+              FROM CARDDEMO.TRANSACTION_TYPE_CATEGORY
+              ORDER BY TRC_TYPE_CODE, TRC_TYPE_CATEGORY;
+    RC: 0=Success, 4=Warning, &gt;4=Error
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.3 -->
+    <div class="subsection" id="s2-3">
+      <h3><span class="dot"></span> 2.3 Step Dependency and Condition Code Logic</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>Program</th><th>Executes If</th><th>Condition Code Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>STEP10</td><td>IEBGENER</td><td>Always (no COND)</td><td>0 = TRANTYPE.PS backup copied successfully</td></tr>
+            <tr><td>STEP20</td><td>IEBGENER</td><td>COND=(0,NE) &mdash; all prior steps RC = 0</td><td>0 = TRANCATG.PS backup copied successfully</td></tr>
+            <tr><td>STEP30</td><td>IEFBR14</td><td>COND=(0,NE) &mdash; all prior steps RC = 0</td><td>0 = Old flat files deleted via disposition processing</td></tr>
+            <tr><td>STEP40</td><td>IKJEFT01 (DSNTIAUL)</td><td>COND=(0,NE) &mdash; all prior steps RC = 0</td><td>0 = TRANSACTION_TYPE extracted successfully<br>4 = Warning (e.g., empty result set)<br>&gt;4 = SQL or DB2 error</td></tr>
+            <tr><td>STEP50</td><td>IKJEFT01 (DSNTIAUL)</td><td>COND=(4,LT) &mdash; all prior steps RC &le; 4</td><td>0 = TRANSACTION_TYPE_CATEGORY extracted successfully<br>4 = Warning (e.g., empty result set)<br>&gt;4 = SQL or DB2 error</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>Note:</strong> STEP50 uses <code>COND=(4,LT)</code> which means it will be <em>bypassed</em> if any prior step returned RC &gt; 4. This allows STEP40 to return RC=4 (warning) without preventing STEP50 from running. However, if STEP40 returns RC &gt; 4 (error), STEP50 is skipped.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 3 — JCL Job Stream Specification
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">3</span>
+    <h2>JCL Job Stream Specification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 3.1 -->
+    <div class="subsection" id="s3-1">
+      <h3><span class="dot"></span> 3.1 JCL Overview</h3>
+<pre><code>//TRANEXTR JOB 'EXTRACT TRAN TYPE',
+//   CLASS=A,MSGCLASS=0,NOTIFY=&amp;SYSUID
+//*   Set Parms:
+//   SET HLQ=AWS.M2.CARDDEMO
+//*
+//** STEP10: Backup TRANTYPE.PS to GDG
+//STEP10   EXEC PGM=IEBGENER
+//SYSUT1   DD   DISP=SHR,DSN=&amp;HLQ..TRANTYPE.PS
+//SYSUT2   DD   DSN=&amp;HLQ..TRANTYPE.BKUP(+1),
+//       DISP=(NEW,CATLG),DCB=(LRECL=60,RECFM=FB,BLKSIZE=600)
+//*
+//** STEP20: Backup TRANCATG.PS to GDG
+//STEP20   EXEC PGM=IEBGENER,COND=(0,NE)
+//SYSUT1   DD   DISP=SHR,DSN=&amp;HLQ..TRANCATG.PS
+//SYSUT2   DD   DSN=&amp;HLQ..TRANCATG.PS.BKUP(+1),
+//       DISP=(NEW,CATLG),DCB=(LRECL=60,RECFM=FB,BLKSIZE=600)
+//*
+//** STEP30: Delete old flat files
+//STEP30   EXEC PGM=IEFBR14,COND=(0,NE)
+//DD01     DD DISP=(MOD,DELETE,DELETE),DSN=&amp;HLQ..TRANTYPE.PS
+//DD02     DD DISP=(MOD,DELETE,DELETE),DSN=&amp;HLQ..TRANCATG.PS
+//*
+//** STEP40: Extract TRANSACTION_TYPE via DSNTIAUL
+//STEP40   EXEC PGM=IKJEFT01,COND=(0,NE)
+//STEPLIB  DD  DISP=SHR,DSN=OEM.DB2.DAZ1.RUNLIB.LOAD
+//         DD  DISP=SHR,DSN=OEMA.DB2.VERSIONA.SDSNLOAD
+//SYSREC00 DD  DISP=(NEW,CATLG,DELETE),DSN=&amp;HLQ..TRANTYPE.PS
+//SYSIN    DD *
+ SELECT ... FROM CARDDEMO.TRANSACTION_TYPE ORDER BY TR_TYPE;
+//SYSTSIN DD *
+  DSN SYSTEM(DAZ1) RUN PROGRAM(DSNTIAUL) PLAN(DSNTIAUL) PARMS('SQL')
+//*
+//** STEP50: Extract TRANSACTION_TYPE_CATEGORY via DSNTIAUL
+//STEP50   EXEC PGM=IKJEFT01,COND=(4,LT)
+//STEPLIB  DD  DISP=SHR,DSN=OEM.DB2.DAZ1.RUNLIB.LOAD
+//         DD  DISP=SHR,DSN=OEMA.DB2.VERSIONA.SDSNLOAD
+//SYSREC00 DD  DISP=(NEW,CATLG,DELETE),DSN=&amp;HLQ..TRANCATG.PS
+//SYSIN    DD *
+ SELECT ... FROM CARDDEMO.TRANSACTION_TYPE_CATEGORY ORDER BY ...;
+//SYSTSIN DD *
+  DSN SYSTEM(DAZ1) RUN PROGRAM(DSNTIAUL) PLAN(DSNTIAUL) PARMS('SQL')</code></pre>
+    </div>
+
+    <!-- 3.2 -->
+    <div class="subsection" id="s3-2">
+      <h3><span class="dot"></span> 3.2 DD Statement Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>DD Name</th><th>Disposition</th><th>Dataset Name</th><th>Type</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>STEP10</td><td>SYSPRINT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>IEBGENER messages</td></tr>
+            <tr><td>STEP10</td><td>SYSIN</td><td>DUMMY</td><td>&mdash;</td><td>&mdash;</td><td>No control cards (straight copy)</td></tr>
+            <tr><td>STEP10</td><td>SYSUT1</td><td>SHR</td><td>&amp;HLQ..TRANTYPE.PS</td><td>Sequential (PS)</td><td>Input: current TRANTYPE flat file</td></tr>
+            <tr><td>STEP10</td><td>SYSUT2</td><td>(NEW,CATLG)</td><td>&amp;HLQ..TRANTYPE.BKUP(+1)</td><td>GDG / Sequential</td><td>Output: backup copy to new GDG generation</td></tr>
+            <tr><td>STEP20</td><td>SYSPRINT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>IEBGENER messages</td></tr>
+            <tr><td>STEP20</td><td>SYSIN</td><td>DUMMY</td><td>&mdash;</td><td>&mdash;</td><td>No control cards (straight copy)</td></tr>
+            <tr><td>STEP20</td><td>SYSUT1</td><td>SHR</td><td>&amp;HLQ..TRANCATG.PS</td><td>Sequential (PS)</td><td>Input: current TRANCATG flat file</td></tr>
+            <tr><td>STEP20</td><td>SYSUT2</td><td>(NEW,CATLG)</td><td>&amp;HLQ..TRANCATG.PS.BKUP(+1)</td><td>GDG / Sequential</td><td>Output: backup copy to new GDG generation</td></tr>
+            <tr><td>STEP30</td><td>DD01</td><td>(MOD,DELETE,DELETE)</td><td>&amp;HLQ..TRANTYPE.PS</td><td>Sequential (PS)</td><td>Delete old TRANTYPE flat file</td></tr>
+            <tr><td>STEP30</td><td>DD02</td><td>(MOD,DELETE,DELETE)</td><td>&amp;HLQ..TRANCATG.PS</td><td>Sequential (PS)</td><td>Delete old TRANCATG flat file</td></tr>
+            <tr><td>STEP40</td><td>STEPLIB</td><td>SHR</td><td>OEM.DB2.DAZ1.RUNLIB.LOAD, OEMA.DB2.VERSIONA.SDSNLOAD</td><td>PDS (concat)</td><td>DB2 runtime libraries</td></tr>
+            <tr><td>STEP40</td><td>SYSTSPRT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>TSO command output</td></tr>
+            <tr><td>STEP40</td><td>SYSPRINT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>DSNTIAUL messages</td></tr>
+            <tr><td>STEP40</td><td>SYSUDUMP</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>Dump output on abend</td></tr>
+            <tr><td>STEP40</td><td>SYSPUNCH</td><td>DUMMY</td><td>&mdash;</td><td>&mdash;</td><td>DSNTIAUL column header output (suppressed)</td></tr>
+            <tr><td>STEP40</td><td>SYSREC00</td><td>(NEW,CATLG,DELETE)</td><td>&amp;HLQ..TRANTYPE.PS</td><td>Sequential (PS)</td><td>Output: extracted transaction type data</td></tr>
+            <tr><td>STEP40</td><td>SYSIN</td><td>Instream (*)</td><td>&mdash;</td><td>SQL</td><td>SQL SELECT statement for TRANSACTION_TYPE</td></tr>
+            <tr><td>STEP40</td><td>SYSTSIN</td><td>Instream (*)</td><td>&mdash;</td><td>TSO commands</td><td>DSN subsystem connection and DSNTIAUL invocation</td></tr>
+            <tr><td>STEP50</td><td>STEPLIB</td><td>SHR</td><td>OEM.DB2.DAZ1.RUNLIB.LOAD, OEMA.DB2.VERSIONA.SDSNLOAD</td><td>PDS (concat)</td><td>DB2 runtime libraries</td></tr>
+            <tr><td>STEP50</td><td>SYSTSPRT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>TSO command output</td></tr>
+            <tr><td>STEP50</td><td>SYSPRINT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>DSNTIAUL messages</td></tr>
+            <tr><td>STEP50</td><td>SYSUDUMP</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>Dump output on abend</td></tr>
+            <tr><td>STEP50</td><td>SYSPUNCH</td><td>DUMMY</td><td>&mdash;</td><td>&mdash;</td><td>DSNTIAUL column header output (suppressed)</td></tr>
+            <tr><td>STEP50</td><td>SYSREC00</td><td>(NEW,CATLG,DELETE)</td><td>&amp;HLQ..TRANCATG.PS</td><td>Sequential (PS)</td><td>Output: extracted transaction category data</td></tr>
+            <tr><td>STEP50</td><td>SYSIN</td><td>Instream (*)</td><td>&mdash;</td><td>SQL</td><td>SQL SELECT statement for TRANSACTION_TYPE_CATEGORY</td></tr>
+            <tr><td>STEP50</td><td>SYSTSIN</td><td>Instream (*)</td><td>&mdash;</td><td>TSO commands</td><td>DSN subsystem connection and DSNTIAUL invocation</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.3 -->
+    <div class="subsection" id="s3-3">
+      <h3><span class="dot"></span> 3.3 GDG Usage</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>GDG Base</th><th>Generation</th><th>RECFM/LRECL</th><th>Retention</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANTYPE.BKUP</code></td><td>+1 (new)</td><td>FB / 60</td><td>Not specified in JCL (GDG base limit governs)</td><td>Weekly backup of TRANSACTION_TYPE flat file extract before refresh</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANCATG.PS.BKUP</code></td><td>+1 (new)</td><td>FB / 60</td><td>Not specified in JCL (GDG base limit governs)</td><td>Weekly backup of TRANSACTION_TYPE_CATEGORY flat file extract before refresh</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.4 -->
+    <div class="subsection" id="s3-4">
+      <h3><span class="dot"></span> 3.4 Scheduler Dependencies</h3>
+      <div class="callout">
+        <strong>Control-M folder:</strong> <code>WEEKLY-TransactionTypesDBRefresh</code>. TRANEXTR is in the <em>TransactionTypesDBRefresh</em> Smart Folder (A5) and depends on the completion of <code>MNTTRDB2</code>. The folder runs on <strong>Saturdays</strong> (DAYS=&ldquo;SA&rdquo;). TRANEXTR has an INCOND on <code>WEEKLY-TransactionTypesDBRefresh-MNTTRDB2</code>.
+      </div>
+      <div class="diagram-box">
+<pre>
+  WEEKLY-TransactionTypesDBRefresh Folder
+  ─────────────────────────────────────────
+
+  MNTTRDB2 (DB2 batch maintenance)
+       │
+       │  OUTCOND: WEEKLY-TransactionTypesDBRefresh-MNTTRDB2 (+)
+       │
+       ▼
+  TRANEXTR (DB2 extract to flat files)
+       │  INCOND: WEEKLY-TransactionTypesDBRefresh-MNTTRDB2
+       │
+       └──▶ (No downstream Control-M dependency defined)
+
+  Schedule: Saturdays, all months, MAXWAIT=7 days, MAXRERUN=5
+</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 4 — Program Inventory and Call Chain
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">4</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 4.1 -->
+    <div class="subsection" id="s4-1">
+      <h3><span class="dot"></span> 4.1 Program Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Program ID</th><th>Step(s)</th><th>Purpose</th><th>Language</th><th>LOC</th><th>Source Location</th></tr></thead>
+          <tbody>
+            <tr><td><code>IEBGENER</code></td><td>STEP10, STEP20</td><td>IBM utility &mdash; sequential dataset copy (backup flat files to GDG)</td><td>System</td><td>&mdash;</td><td>z/OS system utility</td></tr>
+            <tr><td><code>IEFBR14</code></td><td>STEP30</td><td>IBM dummy program &mdash; triggers disposition processing to delete datasets</td><td>System</td><td>&mdash;</td><td>z/OS system utility</td></tr>
+            <tr><td><code>IKJEFT01</code></td><td>STEP40, STEP50</td><td>TSO batch processor &mdash; executes DSN command to invoke DB2</td><td>System</td><td>&mdash;</td><td>z/OS TSO/E</td></tr>
+            <tr><td><code>DSNTIAUL</code></td><td>STEP40, STEP50 (called via IKJEFT01)</td><td>IBM DB2 unload utility &mdash; executes SQL and writes results to SYSREC00</td><td>System</td><td>&mdash;</td><td>DB2 for z/OS utility</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>Note:</strong> This job uses no custom COBOL programs. All processing is performed by IBM system utilities and DB2 tools. The predecessor job <code>MNTTRDB2</code> uses a custom COBOL program (<code>COBTUPDT</code>) for DB2 table maintenance.
+      </div>
+    </div>
+
+    <!-- 4.2 -->
+    <div class="subsection" id="s4-2">
+      <h3><span class="dot"></span> 4.2 Call Hierarchy</h3>
+      <div class="diagram-box">
+<pre>
+TRANEXTR JCL
+│
+├── STEP10: IEBGENER
+│   └── (straight copy: SYSUT1 → SYSUT2, no SYSIN control cards)
+│
+├── STEP20: IEBGENER
+│   └── (straight copy: SYSUT1 → SYSUT2, no SYSIN control cards)
+│
+├── STEP30: IEFBR14
+│   └── (no-op; DD disposition processing deletes datasets)
+│
+├── STEP40: IKJEFT01
+│   └── SYSTSIN: DSN SYSTEM(DAZ1)
+│       └── RUN PROGRAM(DSNTIAUL) PLAN(DSNTIAUL) PARMS('SQL')
+│           └── SYSIN: SQL SELECT from TRANSACTION_TYPE
+│               └── Output → SYSREC00 (TRANTYPE.PS)
+│
+└── STEP50: IKJEFT01
+    └── SYSTSIN: DSN SYSTEM(DAZ1)
+        └── RUN PROGRAM(DSNTIAUL) PLAN(DSNTIAUL) PARMS('SQL')
+            └── SYSIN: SQL SELECT from TRANSACTION_TYPE_CATEGORY
+                └── Output → SYSREC00 (TRANCATG.PS)
+</pre>
+      </div>
+    </div>
+
+    <!-- 4.3 -->
+    <div class="subsection" id="s4-3">
+      <h3><span class="dot"></span> 4.3 Copybooks Used</h3>
+      <div class="callout">
+        <strong>Not applicable.</strong> No COBOL programs are used in this job, therefore no copybooks are referenced. The DB2 table layouts are defined by DDL in <code>app/app-transaction-type-db2/ddl/TRNTYPE.ddl</code> and <code>TRNTYCAT.ddl</code>, with DCLGEN declarations in <code>DCLTRTYP.dcl</code> and <code>DCLTRCAT.dcl</code>.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 5 — File and Dataset Inventory
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">5</span>
+    <h2>File and Dataset Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 5.1 -->
+    <div class="subsection" id="s5-1">
+      <h3><span class="dot"></span> 5.1 Complete File Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File/Dataset</th><th>Type</th><th>Access</th><th>LRECL</th><th>Key</th><th>Purpose in Flow</th></tr></thead>
+          <tbody>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANTYPE.PS</code></td><td>Sequential (PS)</td><td>INPUT (STEP10) / DELETE (STEP30) / OUTPUT (STEP40)</td><td>60</td><td>&mdash;</td><td>Transaction type reference flat file</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANCATG.PS</code></td><td>Sequential (PS)</td><td>INPUT (STEP20) / DELETE (STEP30) / OUTPUT (STEP50)</td><td>60</td><td>&mdash;</td><td>Transaction category reference flat file</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANTYPE.BKUP(+1)</code></td><td>GDG / Sequential</td><td>OUTPUT (STEP10)</td><td>60</td><td>&mdash;</td><td>GDG backup of previous TRANTYPE.PS</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANCATG.PS.BKUP(+1)</code></td><td>GDG / Sequential</td><td>OUTPUT (STEP20)</td><td>60</td><td>&mdash;</td><td>GDG backup of previous TRANCATG.PS</td></tr>
+            <tr><td><code>CARDDEMO.TRANSACTION_TYPE</code> (DB2)</td><td>DB2 Table</td><td>READ (STEP40 SQL)</td><td>N/A</td><td>TR_TYPE CHAR(2)</td><td>Source reference table for transaction types</td></tr>
+            <tr><td><code>CARDDEMO.TRANSACTION_TYPE_CATEGORY</code> (DB2)</td><td>DB2 Table</td><td>READ (STEP50 SQL)</td><td>N/A</td><td>TRC_TYPE_CODE CHAR(2), TRC_TYPE_CATEGORY CHAR(4)</td><td>Source reference table for transaction categories</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.2 -->
+    <div class="subsection" id="s5-2">
+      <h3><span class="dot"></span> 5.2 Key Record Layouts</h3>
+
+      <h4>TRANTYPE.PS Output Record (60 bytes, derived from STEP40 SQL)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>Source Column</th><th>Offset</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>TR_TYPE</td><td>TR_TYPE</td><td>1</td><td>2</td><td>Transaction type code (CHAR(2))</td></tr>
+            <tr><td>TR_DESCRIPTION</td><td>CAST(TR_DESCRIPTION AS CHAR(50))</td><td>3</td><td>50</td><td>Transaction type description, space-padded to 50 bytes</td></tr>
+            <tr><td>Filler</td><td>REPEAT('0',8)</td><td>53</td><td>8</td><td>Zero-filled padding to reach 60-byte LRECL</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>TRANCATG.PS Output Record (60 bytes, derived from STEP50 SQL)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>Source Column</th><th>Offset</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>TRC_TYPE_CODE</td><td>TRC_TYPE_CODE</td><td>1</td><td>2</td><td>Transaction type code (CHAR(2))</td></tr>
+            <tr><td>TRC_TYPE_CATEGORY</td><td>TRC_TYPE_CATEGORY</td><td>3</td><td>4</td><td>Transaction category code (CHAR(4))</td></tr>
+            <tr><td>TRC_CAT_DATA</td><td>CAST(TRC_CAT_DATA AS CHAR(50))</td><td>7</td><td>50</td><td>Category description, space-padded to 50 bytes</td></tr>
+            <tr><td>Filler</td><td>REPEAT('0',4)</td><td>57</td><td>4</td><td>Zero-filled padding to reach 60-byte LRECL</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>DB2 Table: CARDDEMO.TRANSACTION_TYPE (DDL: TRNTYPE.ddl)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Column</th><th>Data Type</th><th>Nullable</th><th>Key</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>TR_TYPE</td><td>CHAR(2)</td><td>NOT NULL</td><td>PRIMARY KEY</td><td>Transaction type identifier</td></tr>
+            <tr><td>TR_DESCRIPTION</td><td>VARCHAR(50)</td><td>NOT NULL</td><td>&mdash;</td><td>Human-readable description</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>DB2 Table: CARDDEMO.TRANSACTION_TYPE_CATEGORY (DDL: TRNTYCAT.ddl)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Column</th><th>Data Type</th><th>Nullable</th><th>Key</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>TRC_TYPE_CODE</td><td>CHAR(2)</td><td>NOT NULL</td><td>PK (composite), FK &rarr; TRANSACTION_TYPE.TR_TYPE</td><td>Parent transaction type code</td></tr>
+            <tr><td>TRC_TYPE_CATEGORY</td><td>CHAR(4)</td><td>NOT NULL</td><td>PK (composite)</td><td>Category sub-code within the type</td></tr>
+            <tr><td>TRC_CAT_DATA</td><td>VARCHAR(50)</td><td>NOT NULL</td><td>&mdash;</td><td>Category description</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.3 -->
+    <div class="subsection" id="s5-3">
+      <h3><span class="dot"></span> 5.3 File Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌──────────────┐       STEP10        ┌──────────────────────┐
+  │ TRANTYPE.PS  │─────(IEBGENER)─────▶│ TRANTYPE.BKUP(+1)   │
+  │ (existing)   │                     │ (GDG backup)         │
+  └──────┬───────┘                     └──────────────────────┘
+         │
+         │ STEP30 (IEFBR14: DELETE)
+         ▼
+      [deleted]
+         │
+         │ STEP40 (DSNTIAUL)
+         │
+  ┌──────┴───────────────┐            ┌──────────────────────┐
+  │ DB2: TRANSACTION_TYPE│───(SQL)───▶│ TRANTYPE.PS (new)    │
+  └──────────────────────┘            └──────────────────────┘
+
+  ┌──────────────┐       STEP20        ┌──────────────────────┐
+  │ TRANCATG.PS  │─────(IEBGENER)─────▶│ TRANCATG.PS.BKUP(+1)│
+  │ (existing)   │                     │ (GDG backup)         │
+  └──────┬───────┘                     └──────────────────────┘
+         │
+         │ STEP30 (IEFBR14: DELETE)
+         ▼
+      [deleted]
+         │
+         │ STEP50 (DSNTIAUL)
+         │
+  ┌──────┴───────────────────────┐    ┌──────────────────────┐
+  │ DB2: TRANSACTION_TYPE_CATEGORY│──▶│ TRANCATG.PS (new)    │
+  └──────────────────────────────┘    └──────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 5.4 -->
+    <div class="subsection" id="s5-4">
+      <h3><span class="dot"></span> 5.4 Dependency Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Dataset</th><th>Produced By</th><th>Consumed By</th><th>Retention</th></tr></thead>
+          <tbody>
+            <tr><td>TRANTYPE.PS</td><td>TRANEXTR (STEP40)</td><td>TRANREPT (CBTRN03C), downstream batch programs</td><td>Overwritten weekly; previous version backed up to GDG</td></tr>
+            <tr><td>TRANCATG.PS</td><td>TRANEXTR (STEP50)</td><td>TRANREPT (CBTRN03C), downstream batch programs</td><td>Overwritten weekly; previous version backed up to GDG</td></tr>
+            <tr><td>TRANTYPE.BKUP GDG</td><td>TRANEXTR (STEP10)</td><td>Recovery/audit</td><td>Per GDG base LIMIT definition</td></tr>
+            <tr><td>TRANCATG.PS.BKUP GDG</td><td>TRANEXTR (STEP20)</td><td>Recovery/audit</td><td>Per GDG base LIMIT definition</td></tr>
+            <tr><td>DB2 TRANSACTION_TYPE</td><td>MNTTRDB2 (COBTUPDT), CICS online (COTRTUPC)</td><td>TRANEXTR (STEP40, read-only)</td><td>Persistent DB2 table</td></tr>
+            <tr><td>DB2 TRANSACTION_TYPE_CATEGORY</td><td>MNTTRDB2 (COBTUPDT), CICS online</td><td>TRANEXTR (STEP50, read-only)</td><td>Persistent DB2 table</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 6 — Data Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">6</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 6.1 -->
+    <div class="subsection" id="s6-1">
+      <h3><span class="dot"></span> 6.1 Transformation Map</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Source</th><th>Transformation</th><th>Target Field</th><th>Target File</th></tr></thead>
+          <tbody>
+            <tr><td>TR_TYPE (CHAR(2))</td><td>Direct copy</td><td>Bytes 1&ndash;2</td><td>TRANTYPE.PS</td></tr>
+            <tr><td>TR_DESCRIPTION (VARCHAR(50))</td><td>CAST to CHAR(50) &mdash; space-padded to fixed 50 bytes</td><td>Bytes 3&ndash;52</td><td>TRANTYPE.PS</td></tr>
+            <tr><td>(generated)</td><td>REPEAT('0',8) &mdash; 8 ASCII zeros appended as filler</td><td>Bytes 53&ndash;60</td><td>TRANTYPE.PS</td></tr>
+            <tr><td>TRC_TYPE_CODE (CHAR(2))</td><td>Direct copy (|| concatenation)</td><td>Bytes 1&ndash;2</td><td>TRANCATG.PS</td></tr>
+            <tr><td>TRC_TYPE_CATEGORY (CHAR(4))</td><td>Direct copy (|| concatenation)</td><td>Bytes 3&ndash;6</td><td>TRANCATG.PS</td></tr>
+            <tr><td>TRC_CAT_DATA (VARCHAR(50))</td><td>CAST to CHAR(50) &mdash; space-padded to fixed 50 bytes</td><td>Bytes 7&ndash;56</td><td>TRANCATG.PS</td></tr>
+            <tr><td>(generated)</td><td>REPEAT('0',4) &mdash; 4 ASCII zeros appended as filler</td><td>Bytes 57&ndash;60</td><td>TRANCATG.PS</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 6.2 -->
+    <div class="subsection" id="s6-2">
+      <h3><span class="dot"></span> 6.2 Data Lineage Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  CICS Online (COTRTUPC)           MNTTRDB2 Batch (COBTUPDT)
+       │                                │
+       │ INSERT/UPDATE/DELETE            │ INSERT/UPDATE/DELETE
+       ▼                                ▼
+  ┌───────────────────────────────────────────┐
+  │ DB2: CARDDEMO.TRANSACTION_TYPE            │
+  │      PK: TR_TYPE CHAR(2)                  │
+  │      TR_DESCRIPTION VARCHAR(50)           │
+  └─────────────────┬─────────────────────────┘
+                    │
+                    │ STEP40: DSNTIAUL SQL SELECT
+                    │ CAST + CONCAT + REPEAT('0',8) → CHAR(60)
+                    ▼
+  ┌───────────────────────────────────────────┐
+  │ TRANTYPE.PS (60-byte FB sequential)       │
+  │ [Type Code | Description     | Filler]    │
+  │ [  2 bytes | 50 bytes        | 8 bytes]   │
+  └───────────────────────────────────────────┘
+
+  ┌───────────────────────────────────────────┐
+  │ DB2: CARDDEMO.TRANSACTION_TYPE_CATEGORY   │
+  │      PK: TRC_TYPE_CODE + TRC_TYPE_CATEGORY│
+  │      FK: TRC_TYPE_CODE → TRANSACTION_TYPE  │
+  │      TRC_CAT_DATA VARCHAR(50)             │
+  └─────────────────┬─────────────────────────┘
+                    │
+                    │ STEP50: DSNTIAUL SQL SELECT
+                    │ || concatenation + CAST + REPEAT('0',4) → CHAR(60)
+                    ▼
+  ┌───────────────────────────────────────────┐
+  │ TRANCATG.PS (60-byte FB sequential)       │
+  │ [Type|Cat |Description      | Filler]     │
+  │ [ 2  | 4  | 50 bytes        | 4 bytes]    │
+  └───────────────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 6.3 -->
+    <div class="subsection" id="s6-3">
+      <h3><span class="dot"></span> 6.3 Control Totals and Reconciliation</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Control Point</th><th>What&rsquo;s Counted</th><th>Where Stored</th><th>Reconciled Against</th></tr></thead>
+          <tbody>
+            <tr><td>DSNTIAUL STEP40 row count</td><td>Rows extracted from TRANSACTION_TYPE</td><td>SYSTSPRT / SYSPRINT spool output</td><td>SELECT COUNT(*) FROM CARDDEMO.TRANSACTION_TYPE</td></tr>
+            <tr><td>DSNTIAUL STEP50 row count</td><td>Rows extracted from TRANSACTION_TYPE_CATEGORY</td><td>SYSTSPRT / SYSPRINT spool output</td><td>SELECT COUNT(*) FROM CARDDEMO.TRANSACTION_TYPE_CATEGORY</td></tr>
+            <tr><td>TRANTYPE.PS record count</td><td>Records in output flat file</td><td>File record count (IDCAMS PRINT COUNT or file utilities)</td><td>DB2 table row count</td></tr>
+            <tr><td>TRANCATG.PS record count</td><td>Records in output flat file</td><td>File record count</td><td>DB2 table row count</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-red">
+        <strong>Gap:</strong> The JCL does not include an explicit record-count reconciliation step. DSNTIAUL reports row counts in its spool output, but there is no automated comparison between the DB2 row count and the flat-file record count. Reconciliation is manual.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 7 — Sort/Merge and Utility Processing
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">7</span>
+    <h2>Sort/Merge and Utility Processing</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s7-1">
+      <h3><span class="dot"></span> 7.1 Utility Programs Used</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Utility</th><th>Step</th><th>Purpose</th><th>Key Parameters</th></tr></thead>
+          <tbody>
+            <tr><td><code>IEBGENER</code></td><td>STEP10, STEP20</td><td>Sequential dataset copy (flat file &rarr; GDG backup)</td><td>SYSIN=DUMMY (no reformatting); DCB on SYSUT2 specifies LRECL=60,RECFM=FB,BLKSIZE=600</td></tr>
+            <tr><td><code>IEFBR14</code></td><td>STEP30</td><td>No-op program; triggers DD disposition processing to delete datasets</td><td>DISP=(MOD,DELETE,DELETE) on DD01 and DD02; UNIT=SYSDA, SPACE=(TRK,(1,1))</td></tr>
+            <tr><td><code>IKJEFT01</code></td><td>STEP40, STEP50</td><td>TSO batch terminal monitor &mdash; executes DSN command to connect to DB2 subsystem DAZ1 and invoke DSNTIAUL</td><td>SYSTSIN contains: <code>DSN SYSTEM(DAZ1) RUN PROGRAM(DSNTIAUL) PLAN(DSNTIAUL) PARMS('SQL')</code></td></tr>
+            <tr><td><code>DSNTIAUL</code></td><td>STEP40, STEP50 (called)</td><td>DB2 sample unload utility &mdash; executes SQL from SYSIN and writes result rows to SYSREC00</td><td>PARMS('SQL') enables free-form SQL input; output to SYSREC00; SYSPUNCH=DUMMY suppresses column headers</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s7-2">
+      <h3><span class="dot"></span> 7.2 SQL Statements</h3>
+      <h4>STEP40 &ndash; TRANSACTION_TYPE Extract</h4>
+<pre><code> SELECT CAST(CONCAT(CONCAT(
+   TR_TYPE
+  ,CAST(TR_DESCRIPTION AS CHAR(50))
+   )
+  ,REPEAT('0',8)
+ ) AS CHAR(60))
+  FROM
+  CARDDEMO.TRANSACTION_TYPE
+  ORDER BY TR_TYPE;</code></pre>
+      <h4>STEP50 &ndash; TRANSACTION_TYPE_CATEGORY Extract</h4>
+<pre><code>  SELECT CAST(
+        TRC_TYPE_CODE
+     || TRC_TYPE_CATEGORY
+     || CAST(TRC_CAT_DATA AS CHAR(50))
+     || REPEAT('0',4)
+                      AS CHAR(60))
+  FROM  CARDDEMO.TRANSACTION_TYPE_CATEGORY
+  ORDER BY
+        TRC_TYPE_CODE
+      , TRC_TYPE_CATEGORY;</code></pre>
+    </div>
+
+    <div class="callout">
+      <strong>No SORT/MERGE steps.</strong> Ordering is handled by the <code>ORDER BY</code> clause within each SQL statement. No DFSORT, SYNCSORT, or ICETOOL steps are present.
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 8 — Checkpoint, Restart, and Recovery
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">8</span>
+    <h2>Checkpoint, Restart, and Recovery</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s8-1">
+      <h3><span class="dot"></span> 8.1 Checkpoint Strategy</h3>
+      <div class="callout">
+        <strong>Not applicable.</strong> This job uses only IBM utility programs (IEBGENER, IEFBR14) and DB2 DSNTIAUL. No application-level checkpointing is implemented. Each step is independently restartable because outputs are either GDG generations (which can be uncataloged) or flat files that are fully replaced.
+      </div>
+    </div>
+
+    <div class="subsection" id="s8-2">
+      <h3><span class="dot"></span> 8.2 Restart Procedures</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Failure Scenario</th><th>Restart Step</th><th>Prerequisites</th><th>Data Reset Required</th></tr></thead>
+          <tbody>
+            <tr><td>STEP10 fails (TRANTYPE.PS not found or GDG full)</td><td>STEP10 (resubmit entire job)</td><td>Ensure TRANTYPE.PS exists (or is created by initial load); check GDG base LIMIT</td><td>None (backup not yet written)</td></tr>
+            <tr><td>STEP20 fails (TRANCATG.PS not found or GDG full)</td><td>STEP20 (restart from STEP20)</td><td>Uncatalog partial TRANCATG.PS.BKUP(+1) if created; fix root cause</td><td>Minimal &mdash; only STEP20 output affected</td></tr>
+            <tr><td>STEP30 fails (delete fails)</td><td>STEP30 (restart from STEP30)</td><td>Investigate why delete failed (enqueue contention, security)</td><td>None</td></tr>
+            <tr><td>STEP40 fails (DB2 connection or SQL error)</td><td>STEP40 (restart from STEP40)</td><td>TRANTYPE.PS must have been successfully deleted in STEP30; fix DB2 issue (plan, authority, subsystem)</td><td>Delete partial TRANTYPE.PS if DISP=(NEW,CATLG,DELETE) didn&rsquo;t fire</td></tr>
+            <tr><td>STEP50 fails (DB2 connection or SQL error)</td><td>STEP50 (restart from STEP50)</td><td>TRANCATG.PS must have been successfully deleted in STEP30; fix DB2 issue</td><td>Delete partial TRANCATG.PS if needed</td></tr>
+            <tr><td>JCL error (before any step)</td><td>Resubmit</td><td>Fix JCL syntax</td><td>None</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s8-3">
+      <h3><span class="dot"></span> 8.3 Recovery Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  Normal flow:
+    STEP10 (backup) → STEP20 (backup) → STEP30 (delete) →
+    STEP40 (extract types) → STEP50 (extract categories) → Done
+
+  Failure at STEP40 or STEP50:
+    1. Check SYSTSPRT/SYSPRINT for DB2 error messages
+    2. SYSREC00 output file has DISP=(NEW,CATLG,DELETE):
+       - On normal completion: CATLG (keep)
+       - On abend: DELETE (automatic cleanup)
+    3. Fix root cause (DB2 authority, plan bind, subsystem)
+    4. Restart from failing step
+
+  Rollback to previous version:
+    1. If new extract is bad, restore from GDG:
+       IEBGENER from &amp;HLQ..TRANTYPE.BKUP(0) → &amp;HLQ..TRANTYPE.PS
+       IEBGENER from &amp;HLQ..TRANCATG.PS.BKUP(0) → &amp;HLQ..TRANCATG.PS
+</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 9 — Error Handling and Abend Resolution
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">9</span>
+    <h2>Error Handling and Abend Resolution</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 9.1 -->
+    <div class="subsection" id="s9-1">
+      <h3><span class="dot"></span> 9.1 Error Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  STEP10/STEP20 (IEBGENER) Errors:
+  ─────────────────────────────────
+    Input file not found      → RC &gt; 0 → STEP20+ bypassed (COND=(0,NE))
+    GDG base not defined      → RC &gt; 0 → STEP20+ bypassed
+    Output space exhausted    → RC &gt; 0 → STEP20+ bypassed
+    RACF access denied        → S913 ABEND
+
+  STEP30 (IEFBR14) Errors:
+  ─────────────────────────
+    File not found (already deleted) → Disposition processing ignores
+    RACF access denied               → S913 ABEND
+
+  STEP40/STEP50 (IKJEFT01/DSNTIAUL) Errors:
+  ──────────────────────────────────────────
+    DB2 subsystem not available → IKJEFT01 RC &gt; 0
+    DSNTIAUL plan not bound     → -805 SQLCODE → RC &gt; 4
+    SQL syntax error            → Negative SQLCODE → RC &gt; 4
+    Table not found (-204)      → RC &gt; 4
+    Auth failure (-551)         → RC &gt; 4
+    Empty result set            → RC = 4 (warning, 0 rows)
+    SYSREC00 output I/O error  → ABEND (S001, S002)
+</pre>
+      </div>
+    </div>
+
+    <!-- 9.2 -->
+    <div class="subsection" id="s9-2">
+      <h3><span class="dot"></span> 9.2 Return Code Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>RC=0</th><th>RC=4</th><th>RC &gt; 4</th></tr></thead>
+          <tbody>
+            <tr><td>STEP10 (IEBGENER)</td><td>Backup of TRANTYPE.PS successful</td><td>&mdash;</td><td>Copy failed; subsequent steps bypassed</td></tr>
+            <tr><td>STEP20 (IEBGENER)</td><td>Backup of TRANCATG.PS successful</td><td>&mdash;</td><td>Copy failed; subsequent steps bypassed</td></tr>
+            <tr><td>STEP30 (IEFBR14)</td><td>Old files deleted successfully</td><td>&mdash;</td><td>Deletion failed; subsequent steps bypassed</td></tr>
+            <tr><td>STEP40 (DSNTIAUL)</td><td>TRANSACTION_TYPE extracted successfully</td><td>Warning &mdash; possibly empty table (0 rows extracted)</td><td>SQL or DB2 error; STEP50 bypassed (COND=(4,LT))</td></tr>
+            <tr><td>STEP50 (DSNTIAUL)</td><td>TRANSACTION_TYPE_CATEGORY extracted successfully</td><td>Warning &mdash; possibly empty table (0 rows extracted)</td><td>SQL or DB2 error</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 9.3 -->
+    <div class="subsection" id="s9-3">
+      <h3><span class="dot"></span> 9.3 Common Abend Codes and Resolution</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Abend</th><th>Likely Cause</th><th>Resolution</th></tr></thead>
+          <tbody>
+            <tr><td>S913</td><td>RACF security violation on dataset access</td><td>Verify job userid has READ authority for input datasets and ALTER for GDG; check DB2 GRANT for SELECT</td></tr>
+            <tr><td>S001/S002</td><td>I/O error on SYSREC00 output</td><td>Check DASD volume for space; verify SPACE parameter on SYSREC00 DD</td></tr>
+            <tr><td>S806</td><td>DSNTIAUL or DB2 load module not found in STEPLIB</td><td>Verify STEPLIB concatenation: OEM.DB2.DAZ1.RUNLIB.LOAD and OEMA.DB2.VERSIONA.SDSNLOAD exist</td></tr>
+            <tr><td>S0C4</td><td>Invalid storage reference in utility</td><td>Check REGION parameter; verify DB2 subsystem compatibility</td></tr>
+            <tr><td>SQLCODE -805</td><td>DSNTIAUL plan not found or not bound to DB2 subsystem</td><td>BIND PLAN(DSNTIAUL) for subsystem DAZ1</td></tr>
+            <tr><td>SQLCODE -204</td><td>Table CARDDEMO.TRANSACTION_TYPE or TRANSACTION_TYPE_CATEGORY not found</td><td>Verify table exists: run CREADB21.jcl to create tables if needed</td></tr>
+            <tr><td>SQLCODE -551</td><td>Authorization failure on SELECT</td><td>GRANT SELECT ON CARDDEMO.TRANSACTION_TYPE TO job userid</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 9.4 -->
+    <div class="subsection" id="s9-4">
+      <h3><span class="dot"></span> 9.4 Condition Code Cascade Behavior</h3>
+      <p>The job uses two different COND parameter patterns:</p>
+      <ul>
+        <li><code>COND=(0,NE)</code> on STEP20, STEP30, STEP40: Step is <em>bypassed</em> if any prior step returned RC &ne; 0 (i.e., only runs if all prior steps returned RC=0)</li>
+        <li><code>COND=(4,LT)</code> on STEP50: Step is <em>bypassed</em> if any prior step returned RC &gt; 4. This is more lenient &mdash; allows STEP40 to return RC=4 (warning) without preventing STEP50 from executing</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 10 — Security and Authorization
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="subsection" id="s10-1">
+      <h3><span class="dot"></span> 10.1 Dataset and DB2 Security Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Resource</th><th>Type</th><th>Access Required</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr><td>AWS.M2.CARDDEMO.TRANTYPE.PS</td><td>Dataset</td><td>READ (STEP10), DELETE (STEP30), CREATE/WRITE (STEP40)</td><td>Backup input, delete old, create new extract</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.TRANCATG.PS</td><td>Dataset</td><td>READ (STEP20), DELETE (STEP30), CREATE/WRITE (STEP50)</td><td>Backup input, delete old, create new extract</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.TRANTYPE.BKUP</td><td>GDG base</td><td>ALTER (create new generation)</td><td>Write backup</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.TRANCATG.PS.BKUP</td><td>GDG base</td><td>ALTER (create new generation)</td><td>Write backup</td></tr>
+            <tr><td>OEM.DB2.DAZ1.RUNLIB.LOAD</td><td>Dataset</td><td>READ (FETCH)</td><td>DB2 runtime library</td></tr>
+            <tr><td>OEMA.DB2.VERSIONA.SDSNLOAD</td><td>Dataset</td><td>READ (FETCH)</td><td>DB2 load modules</td></tr>
+            <tr><td>CARDDEMO.TRANSACTION_TYPE</td><td>DB2 Table</td><td>SELECT</td><td>Extract data via DSNTIAUL SQL</td></tr>
+            <tr><td>CARDDEMO.TRANSACTION_TYPE_CATEGORY</td><td>DB2 Table</td><td>SELECT</td><td>Extract data via DSNTIAUL SQL</td></tr>
+            <tr><td>DSNTIAUL plan (DB2)</td><td>DB2 Plan</td><td>EXECUTE</td><td>Run DSNTIAUL under DB2 subsystem DAZ1</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 11 — Performance and Batch Window Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Performance and Batch Window Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s11-1">
+      <h3><span class="dot"></span> 11.1 Performance Characteristics</h3>
+      <p>This job is lightweight. The DB2 reference tables are small (typically tens to low hundreds of rows). Key I/O characteristics:</p>
+      <ol>
+        <li><strong>STEP10/STEP20 (IEBGENER):</strong> Single-pass sequential copy of 60-byte records. Minimal I/O &mdash; file size is proportional to number of transaction types (typically &lt; 1 track).</li>
+        <li><strong>STEP30 (IEFBR14):</strong> No I/O at all (dummy program); dataset deletion is handled by z/OS disposition processing.</li>
+        <li><strong>STEP40/STEP50 (DSNTIAUL):</strong> Full table scan of small DB2 tables with ORDER BY. DB2 optimizer will likely use the unique index (<code>XTRAN_TYPE</code> or <code>X_TRAN_TYPE_CATG</code>) for ordering. Output is sequential write to SYSREC00.</li>
+      </ol>
+      <div class="callout">
+        <strong>Performance note:</strong> Expected elapsed time is seconds, not minutes. The SPACE allocation of <code>TRK,(1,1)</code> on the output files confirms the expectation of very small datasets. This job is not a batch window concern.
+      </div>
+    </div>
+
+    <div class="subsection" id="s11-2">
+      <h3><span class="dot"></span> 11.2 Batch Window Fit</h3>
+      <div class="table-wrap">
+        <table>
+          <tbody>
+            <tr><td><strong>Window Opens</strong></td><td>After MNTTRDB2 completes (DB2 table maintenance)</td></tr>
+            <tr><td><strong>Window Closes</strong></td><td>Before downstream batch programs read TRANTYPE.PS / TRANCATG.PS</td></tr>
+            <tr><td><strong>Predecessor</strong></td><td>MNTTRDB2 (Control-M: WEEKLY-TransactionTypesDBRefresh-MNTTRDB2)</td></tr>
+            <tr><td><strong>Successor</strong></td><td>No direct Control-M successor defined; downstream TRANREPT reads the flat files on-demand</td></tr>
+            <tr><td><strong>Critical Path</strong></td><td>No &mdash; small reference data extract; does not block online systems</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 12 — Testing Approach
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s12-1">
+      <h3><span class="dot"></span> 12.1 Test Scenarios</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Scenario</th><th>Input Setup</th><th>Expected Output</th><th>Verify Method</th></tr></thead>
+          <tbody>
+            <tr><td>TC-001</td><td>Normal run &mdash; both tables populated</td><td>DB2 tables with known rows; existing TRANTYPE.PS and TRANCATG.PS from prior run</td><td>RC=0 all steps; GDG backups created; new flat files match DB2 content</td><td>Compare flat file record count with DB2 COUNT(*); verify content with IEBGENER PRINT or IDCAMS PRINT</td></tr>
+            <tr><td>TC-002</td><td>First-time run &mdash; no prior flat files</td><td>TRANTYPE.PS and TRANCATG.PS do not exist</td><td>STEP10 fails (input not found), STEP20&ndash;STEP50 bypassed (COND=(0,NE))</td><td>Check JES log for STEP10 RC &gt; 0 and subsequent steps &ldquo;NOT EXECUTED&rdquo;</td></tr>
+            <tr><td>TC-003</td><td>Empty DB2 tables</td><td>DB2 tables exist but contain 0 rows</td><td>STEP40/STEP50 RC=4 (empty result set); TRANTYPE.PS and TRANCATG.PS created but empty</td><td>Verify RC=4 in JES log; verify 0-byte or 0-record output files</td></tr>
+            <tr><td>TC-004</td><td>DB2 subsystem down</td><td>DB2 DAZ1 not available</td><td>STEP40 RC &gt; 4; STEP50 bypassed (COND=(4,LT))</td><td>Check SYSTSPRT for DB2 connection error messages</td></tr>
+            <tr><td>TC-005</td><td>GDG base full (LIMIT reached)</td><td>GDG base at maximum generation limit with NOEMPTY</td><td>STEP10 ABEND or RC &gt; 0; subsequent steps bypassed</td><td>Check JES log for GDG generation error</td></tr>
+            <tr><td>TC-006</td><td>STEP40 warning, STEP50 succeeds</td><td>TRANSACTION_TYPE empty (0 rows), TRANSACTION_TYPE_CATEGORY populated</td><td>STEP40 RC=4; STEP50 executes (COND=(4,LT) allows) and RC=0</td><td>Verify STEP50 &ldquo;EXECUTED&rdquo; despite STEP40 RC=4</td></tr>
+            <tr><td>TC-007</td><td>Data integrity &mdash; record layout verification</td><td>Known rows: e.g., TR_TYPE=&rsquo;01&rsquo;, TR_DESCRIPTION=&rsquo;PURCHASE&rsquo;</td><td>TRANTYPE.PS byte 1&ndash;2 = &rsquo;01&rsquo;, bytes 3&ndash;52 = &rsquo;PURCHASE&rsquo; + spaces, bytes 53&ndash;60 = &rsquo;00000000&rsquo;</td><td>Hex dump or IEBGENER PRINT of first record</td></tr>
+            <tr><td>TC-008</td><td>Backup content matches original</td><td>Run job; compare GDG(0) with pre-run TRANTYPE.PS</td><td>Byte-for-byte match</td><td>IEBCOMPR or SUPERC compare</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s12-2">
+      <h3><span class="dot"></span> 12.2 Test Data Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Resource</th><th>Records Needed</th><th>Setup Method</th></tr></thead>
+          <tbody>
+            <tr><td>DB2: TRANSACTION_TYPE</td><td>5&ndash;20 rows with known TR_TYPE and TR_DESCRIPTION values</td><td>CREADB21.jcl (create tables) + MNTTRDB2 (load data via INPFILE)</td></tr>
+            <tr><td>DB2: TRANSACTION_TYPE_CATEGORY</td><td>10&ndash;50 rows with known type/category/description values</td><td>CREADB21.jcl + MNTTRDB2 or direct SQL INSERT</td></tr>
+            <tr><td>TRANTYPE.PS (pre-existing)</td><td>At least 1 record (from prior successful run)</td><td>Run TRANEXTR once with seeded DB2 data; or IEBGENER from inline</td></tr>
+            <tr><td>TRANCATG.PS (pre-existing)</td><td>At least 1 record</td><td>Same as above</td></tr>
+            <tr><td>GDG bases: TRANTYPE.BKUP, TRANCATG.PS.BKUP</td><td>Must be defined (IDCAMS DEFINE GDG)</td><td>IDCAMS DEFINE GDG NAME(&amp;HLQ..TRANTYPE.BKUP) LIMIT(5) SCRATCH</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 13 — Known Issues and Modernization Considerations
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s13">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">13</span>
+    <h2>Known Issues and Modernization Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s13-1">
+      <h3><span class="dot"></span> 13.1 Known Issues</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Description</th><th>Impact</th><th>Workaround</th></tr></thead>
+          <tbody>
+            <tr><td>KI-001</td><td>JCL comment in STEP50 says &ldquo;EXTRACT DATA FROM TRANSACTION TYPE TABLE&rdquo; but actually extracts from <code>TRANSACTION_TYPE_CATEGORY</code>. Misleading for operators.</td><td>Low &mdash; cosmetic; copy-paste error in JCL comment</td><td>Correct the JCL comment to read &ldquo;EXTRACT DATA FROM TRANSACTION TYPE CATEGORY TABLE&rdquo;</td></tr>
+            <tr><td>KI-002</td><td>JCL header comment says &ldquo;It runs once a day&rdquo; but the Control-M schedule and business context indicate weekly (Saturday) execution. Contradictory documentation.</td><td>Low &mdash; cosmetic; may confuse operations staff</td><td>Update JCL comment to &ldquo;It runs once a week&rdquo;</td></tr>
+            <tr><td>KI-003</td><td>First-time execution failure: STEP10 requires <code>TRANTYPE.PS</code> to already exist (DISP=SHR). On a fresh environment, this file does not exist and STEP10 will fail, cascading to skip all remaining steps.</td><td>Medium &mdash; job cannot be run for the first time without manual intervention to seed the flat files</td><td>Create empty seed files before first run, or add COND logic to allow STEP40/STEP50 to run independently of STEP10/STEP20 success</td></tr>
+            <tr><td>KI-004</td><td>GDG base names are inconsistent: <code>TRANTYPE.BKUP</code> vs <code>TRANCATG.PS.BKUP</code>. The latter includes &ldquo;.PS&rdquo; in the GDG base name while the former does not.</td><td>Low &mdash; cosmetic naming inconsistency; does not affect processing but complicates dataset management</td><td>Standardize naming convention (either both with .PS or both without)</td></tr>
+            <tr><td>KI-005</td><td>STEP40 SQL uses <code>CONCAT(CONCAT(...),...)</code> (nested function calls) while STEP50 uses <code>||</code> (infix operator) for concatenation. Inconsistent SQL style across the two extract steps.</td><td>Low &mdash; cosmetic; both produce identical results but maintenance is harder with mixed styles</td><td>Standardize on <code>||</code> operator for readability</td></tr>
+            <tr><td>KI-006</td><td>No record count validation step. The job does not verify that the number of rows extracted matches the DB2 table count. A partial extract (e.g., due to SYSREC00 space exhaustion) would go undetected.</td><td>Medium &mdash; silent data loss possible if extract is truncated</td><td>Add a post-extract step that compares DSNTIAUL row count output with a DB2 SELECT COUNT(*)</td></tr>
+            <tr><td>KI-007</td><td>Zero-filled padding in output records (<code>REPEAT('0',8)</code> and <code>REPEAT('0',4)</code>) uses ASCII character &lsquo;0&rsquo; (x&rsquo;30&rsquo; in EBCDIC / x&rsquo;F0&rsquo;). This could be confused with legitimate data if downstream programs do not expect filler at fixed offsets.</td><td>Low &mdash; downstream programs must be aware of the fixed 60-byte layout</td><td>Document the filler convention clearly for downstream consumers</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s13-2">
+      <h3><span class="dot"></span> 13.2 Modernization Considerations</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Area</th><th>Current State</th><th>Target State</th><th>Complexity</th></tr></thead>
+          <tbody>
+            <tr><td>Data Access Pattern</td><td>DB2 &rarr; flat file extract for downstream COBOL consumption</td><td>Direct DB2/JDBC access from modernized applications; eliminate flat-file intermediary</td><td>Medium</td></tr>
+            <tr><td>Extract Mechanism</td><td>DSNTIAUL via IKJEFT01 TSO batch with instream SQL</td><td>Stored procedure, AWS DMS, or API-based data sync</td><td>Low</td></tr>
+            <tr><td>Scheduling</td><td>Control-M weekly schedule with MNTTRDB2 dependency</td><td>Event-driven trigger (e.g., DB2 change data capture, SNS/SQS notification after maintenance)</td><td>Low</td></tr>
+            <tr><td>Backup Strategy</td><td>GDG-based versioning of flat files</td><td>Database-level point-in-time recovery; S3 versioning for any persisted extracts</td><td>Low</td></tr>
+            <tr><td>Data Format</td><td>Fixed-length 60-byte EBCDIC flat files with zero-fill padding</td><td>JSON, CSV, or Parquet in cloud storage; or direct database access</td><td>Low</td></tr>
+            <tr><td>Reconciliation</td><td>None (manual only)</td><td>Automated row count and checksum validation with alerting</td><td>Low</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /page-wrap-single -->
+
+<!-- ════════════════════  FOOTER  ════════════════════ -->
+<footer class="footer">
+  <p><strong>UniCredit CardDemo</strong> &mdash; Batch Process Analysis &mdash; TRANEXTR / DSNTIAUL (Weekly DB2 Extract)</p>
+  <p>Generated from source: <code>app/app-transaction-type-db2/jcl/TRANEXTR.jcl</code> &middot; DDL: <code>TRNTYPE.ddl</code>, <code>TRNTYCAT.ddl</code> &middot; DCL: <code>DCLTRTYP.dcl</code>, <code>DCLTRCAT.dcl</code> &middot; Control-M: <code>CardDemo.controlm</code></p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MNTTRDB2 – Weekly Transaction Types DB2 Refresh | Batch Process Analysis | UniCredit CardDemo</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   UniCredit CardDemo — Shared Theme (inlined for standalone viewing)
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --uc-red:        #E4002B;
+  --uc-red-dark:   #B8001F;
+  --uc-red-light:  #FF3354;
+  --uc-navy:       #1D2B4E;
+  --uc-navy-light: #2A3D6B;
+  --uc-gold:       #C5A44E;
+  --uc-gold-light: #E2C97A;
+  --uc-white:      #FFFFFF;
+  --uc-gray-50:    #F8F9FA;
+  --uc-gray-100:   #F0F1F3;
+  --uc-gray-200:   #E2E4E8;
+  --uc-gray-400:   #9EA3AE;
+  --uc-gray-600:   #6B7280;
+  --uc-gray-800:   #374151;
+  --uc-text:       #1F2937;
+  --uc-shadow:     0 4px 24px rgba(29,43,78,.08);
+  --uc-shadow-lg:  0 12px 48px rgba(29,43,78,.12);
+  --uc-radius:     12px;
+  --uc-radius-sm:  8px;
+  --uc-transition: .25s cubic-bezier(.4,0,.2,1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--uc-text);
+  background: var(--uc-gray-50);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+.hero {
+  background: linear-gradient(135deg, var(--uc-navy) 0%, var(--uc-navy-light) 50%, var(--uc-red-dark) 100%);
+  color: var(--uc-white);
+  padding: 3rem 2rem 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -60%; right: -20%;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(228,0,43,.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute; bottom: -30%; left: -10%;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(197,164,78,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-inner { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+.hero-brand { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.hero-logo { height: 48px; flex-shrink: 0; }
+.hero-logo img { height: 100%; width: auto; display: block; }
+.hero-brand-text { font-size: .95rem; opacity: .85; letter-spacing: .04em; text-transform: uppercase; }
+.hero h1 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; letter-spacing: -.02em; line-height: 1.15; margin-bottom: .75rem; }
+.hero h1 span { color: var(--uc-gold-light); }
+.hero-subtitle { font-size: 1.15rem; opacity: .88; max-width: 720px; }
+.hero-meta { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,.15); }
+.hero-meta dt { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin-bottom: .15rem; }
+.hero-meta dd { font-size: .95rem; font-weight: 600; }
+.breadcrumb { max-width: 1200px; margin: 1.25rem auto .5rem; padding: 0 2rem; font-size: .8rem; color: var(--uc-gray-400); }
+.breadcrumb a { color: var(--uc-red); text-decoration: none; font-weight: 600; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb .sep { margin: 0 .4rem; opacity: .5; }
+.page-wrap-single { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+.section { background: var(--uc-white); border-radius: var(--uc-radius); box-shadow: var(--uc-shadow); margin-bottom: 2rem; overflow: hidden; }
+.section-header { display: flex; align-items: center; gap: .75rem; padding: 1.25rem 1.5rem; background: linear-gradient(90deg, var(--uc-navy) 0%, var(--uc-navy-light) 100%); color: var(--uc-white); cursor: pointer; user-select: none; }
+.section-header:hover { filter: brightness(1.1); }
+.section-num { background: var(--uc-red); color: var(--uc-white); font-size: .72rem; font-weight: 700; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.section-header h2 { font-size: 1.1rem; font-weight: 700; letter-spacing: -.01em; flex: 1; }
+.section-toggle { width: 24px; height: 24px; transition: transform var(--uc-transition); opacity: .7; }
+.section.collapsed .section-toggle { transform: rotate(-90deg); }
+.section-body { padding: 1.5rem; }
+.section.collapsed .section-body { display: none; }
+.subsection { margin-bottom: 1.75rem; }
+.subsection:last-child { margin-bottom: 0; }
+.subsection h3 { font-size: .95rem; font-weight: 700; color: var(--uc-navy); margin-bottom: .75rem; padding-bottom: .4rem; border-bottom: 2px solid var(--uc-gray-200); display: flex; align-items: center; gap: .5rem; }
+.subsection h3 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--uc-red); flex-shrink: 0; }
+.subsection h4 { font-size: .88rem; font-weight: 600; color: var(--uc-gray-800); margin: 1rem 0 .5rem; }
+.subsection p, .subsection li { font-size: .88rem; color: var(--uc-gray-800); line-height: 1.7; }
+.subsection ul, .subsection ol { padding-left: 1.4rem; margin-top: .35rem; }
+.subsection li { margin-bottom: .25rem; }
+.table-wrap { overflow-x: auto; margin: .75rem 0; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .82rem; }
+thead th { background: var(--uc-navy); color: var(--uc-white); text-align: left; padding: .6rem .75rem; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
+thead th:first-child { border-radius: var(--uc-radius-sm) 0 0 0; }
+thead th:last-child  { border-radius: 0 var(--uc-radius-sm) 0 0; }
+tbody td { padding: .55rem .75rem; border-bottom: 1px solid var(--uc-gray-200); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:nth-child(even) { background: var(--uc-gray-50); }
+tbody tr:hover { background: rgba(228,0,43,.04); }
+pre { background: var(--uc-navy); color: #E2E8F0; border-radius: var(--uc-radius-sm); padding: 1rem 1.25rem; font-size: .78rem; font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; overflow-x: auto; line-height: 1.65; margin: .75rem 0; }
+code { font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; font-size: .82em; background: var(--uc-gray-100); padding: .1em .35em; border-radius: 4px; color: var(--uc-red-dark); }
+pre code { background: none; padding: 0; color: inherit; }
+.callout { border-left: 4px solid var(--uc-gold); background: rgba(197,164,78,.08); padding: .85rem 1rem; border-radius: 0 var(--uc-radius-sm) var(--uc-radius-sm) 0; margin: .75rem 0; font-size: .85rem; }
+.callout-red { border-left-color: var(--uc-red); background: rgba(228,0,43,.05); }
+.callout strong { color: var(--uc-navy); }
+.diagram-box { background: var(--uc-gray-100); border: 2px dashed var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1.5rem; text-align: center; margin: .75rem 0; }
+.diagram-box pre { text-align: left; background: var(--uc-navy); display: inline-block; max-width: 100%; }
+.badge { display: inline-block; font-size: .68rem; font-weight: 700; padding: .15em .55em; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; line-height: 1.6; }
+.badge-red    { background: var(--uc-red);   color: #fff; }
+.badge-navy   { background: var(--uc-navy);  color: #fff; }
+.badge-gold   { background: var(--uc-gold);  color: var(--uc-navy); }
+.badge-gray   { background: var(--uc-gray-200); color: var(--uc-gray-800); }
+.kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin: 1rem 0; }
+.kpi-card { background: var(--uc-gray-50); border: 1px solid var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1rem; text-align: center; transition: var(--uc-transition); }
+.kpi-card:hover { border-color: var(--uc-red); box-shadow: var(--uc-shadow); transform: translateY(-2px); }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--uc-red); line-height: 1.2; }
+.kpi-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--uc-gray-600); margin-top: .25rem; }
+.footer { background: var(--uc-navy); color: rgba(255,255,255,.6); text-align: center; padding: 2rem; font-size: .78rem; }
+.footer strong { color: var(--uc-gold-light); }
+@media print {
+  .section.collapsed .section-body { display: block; }
+  .hero { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════  HERO  ════════════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. &mdash; Milano</div>
+    </div>
+    <h1>MNTTRDB2 &ndash; <span>Batch Process Analysis</span></h1>
+    <p class="hero-subtitle">
+      Job <code>MNTTRDB2</code> &middot; Program <code>COBTUPDT</code> &middot; Weekly batch refresh of the DB2 TRANSACTION_TYPE table via Add, Update, and Delete operations driven by a sequential input control file
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Job Name</dt><dd>MNTTRDB2</dd></div>
+      <div><dt>Entry Program</dt><dd>COBTUPDT</dd></div>
+      <div><dt>Frequency</dt><dd>Weekly (Saturdays)</dd></div>
+      <div><dt>LOC</dt><dd>237</dd></div>
+      <div><dt>Files Touched</dt><dd>1 input + 1 DB2 table</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ════════════════════  BREADCRUMB  ════════════════════ -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">&rsaquo;</span>
+  <a href="index.html">Batch Flows</a>
+  <span class="sep">&rsaquo;</span>
+  MNTTRDB2 &ndash; Weekly Transaction Types DB2 Refresh
+</div>
+
+<!-- ════════════════════  BODY  ════════════════════ -->
+<div class="page-wrap-single">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     IDENTIFICATION
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s0">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">ID</span>
+    <h2>Identification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <tbody>
+          <tr><td><strong>Job Name</strong></td><td><code>MNTTRDB2</code></td></tr>
+          <tr><td><strong>Job Stream / Schedule</strong></td><td>WEEKLY-TransactionTypesDBRefresh (Control-M folder)</td></tr>
+          <tr><td><strong>Business Domain</strong></td><td>Reference Data Management / Transaction Type Maintenance</td></tr>
+          <tr><td><strong>Owning Team</strong></td><td>CardDemo Batch Operations</td></tr>
+          <tr><td><strong>Frequency</strong></td><td>Weekly &mdash; Saturdays</td></tr>
+          <tr><td><strong>Batch Window</strong></td><td>Saturday maintenance window (before next business cycle)</td></tr>
+          <tr><td><strong>Criticality</strong></td><td><span class="badge badge-navy">Medium</span></td></tr>
+          <tr><td><strong>Elapsed Time SLA</strong></td><td>Must complete before downstream DisclosureGroupsRefresh chain starts</td></tr>
+          <tr><td><strong>Primary Program</strong></td><td><code>COBTUPDT</code> (COBOL Batch + Embedded SQL, 237 LOC)</td></tr>
+          <tr><td><strong>Source Location</strong></td><td><code>app/app-transaction-type-db2/cbl/COBTUPDT.cbl</code> &middot; JCL: <code>app/app-transaction-type-db2/jcl/MNTTRDB2.jcl</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 1 — Business Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">1</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 1.1 -->
+    <div class="subsection" id="s1-1">
+      <h3><span class="dot"></span> 1.1 Business Context</h3>
+      <ul>
+        <li><strong>What:</strong> Reads a sequential input control file containing Add (A), Update (U), Delete (D), and Comment (*) directives. For each non-comment record, executes the corresponding SQL INSERT, UPDATE, or DELETE against the DB2 <code>CARDDEMO.TRANSACTION_TYPE</code> table to maintain the canonical list of transaction type codes and their descriptions.</li>
+        <li><strong>Who:</strong> Downstream consumers include all online CICS programs that look up transaction type descriptions (e.g., account inquiry, transaction posting, statement generation) and the weekly <em>DisclosureGroupsRefresh</em> chain that depends on this job&rsquo;s successful completion.</li>
+        <li><strong>When:</strong> Runs weekly on Saturdays as part of the <code>WEEKLY-TransactionTypesDBRefresh</code> Control-M folder, before the <code>WEEKLY-DisclosureGroupsRefresh</code> chain.</li>
+        <li><strong>Why:</strong> The TRANSACTION_TYPE table is a core reference data table. New transaction categories, renamed descriptions, or deprecated types must be propagated to DB2 before the next business cycle to ensure accurate transaction classification across all online and batch flows.</li>
+        <li><strong>Outcome:</strong> The DB2 TRANSACTION_TYPE table is synchronized with the authoritative input file; any errors (SQL failures, invalid action codes) terminate processing with RETURN-CODE 4 and a diagnostic message.</li>
+      </ul>
+    </div>
+
+    <!-- 1.2 -->
+    <div class="subsection" id="s1-2">
+      <h3><span class="dot"></span> 1.2 Business Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────────┐
+  │       WEEKLY TRANSACTION TYPES DB2 REFRESH FLOW                 │
+  └─────────────────────────────────────────────────────────────────┘
+
+  Saturday Maintenance Window
+       │
+       ▼
+  ┌──────────────────────┐
+  │  Control-M triggers  │  WEEKLY-TransactionTypesDBRefresh folder
+  │  MNTTRDB2 job        │  DAYS="SA" (Saturdays only)
+  └──────────┬───────────┘
+             │
+             ▼
+  ┌──────────────────────┐     ┌──────────────────────────────┐
+  │ IKJEFT01 (TSO batch) │────▶│ COBTUPDT via DSN RUN         │
+  │ Invokes DB2 program  │     │ PLAN(CARDDEMO)               │
+  └──────────┬───────────┘     │ SYSTEM(DAZ1)                 │
+             │                 └──────────────────────────────┘
+             ▼
+  ┌──────────────────────┐
+  │ Read INPFILE          │  Sequential control file
+  │ (53-byte records)     │  Col 1: Action (A/U/D/*)
+  └──────────┬───────────┘  Col 2-3: Type code
+             │               Col 4-53: Description
+        ┌────┴────┐
+        │Evaluate │
+        │ Action  │
+        └────┬────┘
+          ╱  │  ╲  ╲
+         ╱   │   ╲   ╲
+        ▼    ▼    ▼    ▼
+     ┌────┐┌────┐┌────┐┌────┐
+     │ A  ││ U  ││ D  ││ *  │
+     │ADD ││UPD ││DEL ││SKIP│
+     └──┬─┘└──┬─┘└──┬─┘└────┘
+        │     │     │
+        ▼     ▼     ▼
+  ┌─────────────────────────┐
+  │  DB2 TRANSACTION_TYPE   │
+  │  CARDDEMO schema        │
+  │  ┌────────┬────────────┐│
+  │  │TR_TYPE │TR_DESCRIP. ││
+  │  │CHAR(2) │VARCHAR(50) ││
+  │  └────────┴────────────┘│
+  └─────────────────────────┘
+             │
+             ▼
+  ┌──────────────────────┐
+  │ Set OUTCOND           │  Signals downstream jobs
+  │ WEEKLY-...-MNTTRDB2   │  (DisclosureGroupsRefresh)
+  └──────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 1.3 -->
+    <div class="subsection" id="s1-3">
+      <h3><span class="dot"></span> 1.3 Business Rules</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Rule</th><th>Source (Line)</th><th>Enforcement</th></tr></thead>
+          <tbody>
+            <tr><td>BR-001</td><td>Action code <code>A</code> inserts a new transaction type with the given 2-digit code and 50-character description</td><td>COBTUPDT.cbl:111&ndash;113</td><td>EXEC SQL INSERT</td></tr>
+            <tr><td>BR-002</td><td>Action code <code>U</code> updates the description for an existing transaction type code; if no matching row exists (SQLCODE +100), the job ABENDs with RC=4</td><td>COBTUPDT.cbl:114&ndash;116, 180&ndash;184</td><td>EXEC SQL UPDATE + SQLCODE check</td></tr>
+            <tr><td>BR-003</td><td>Action code <code>D</code> deletes the row matching the 2-digit type code; if no matching row exists (SQLCODE +100), the job ABENDs with RC=4</td><td>COBTUPDT.cbl:117&ndash;119, 210&ndash;214</td><td>EXEC SQL DELETE + SQLCODE check</td></tr>
+            <tr><td>BR-004</td><td>Action code <code>*</code> (comment) &mdash; the record is skipped with a DISPLAY message</td><td>COBTUPDT.cbl:120&ndash;121</td><td>EVALUATE WHEN &lsquo;*&rsquo;</td></tr>
+            <tr><td>BR-005</td><td>Any other action code triggers an immediate ABEND with RC=4 and message &ldquo;ERROR: TYPE NOT VALID&rdquo;</td><td>COBTUPDT.cbl:122&ndash;128</td><td>EVALUATE WHEN OTHER</td></tr>
+            <tr><td>BR-006</td><td>Any negative SQLCODE on INSERT, UPDATE, or DELETE triggers an ABEND with RC=4 and a formatted error message containing the SQLCODE</td><td>COBTUPDT.cbl:154&ndash;162, 185&ndash;193, 216&ndash;224</td><td>EVALUATE SQLCODE &lt; 0</td></tr>
+            <tr><td>BR-007</td><td>The input file is opened as sequential; a non-zero file status on OPEN causes a &ldquo;OPEN FILE NOT OK&rdquo; DISPLAY but does <strong>not</strong> halt processing</td><td>COBTUPDT.cbl:82&ndash;88</td><td>IF WS-INF-STATUS = &lsquo;00&rsquo;</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 1.4 -->
+    <div class="subsection" id="s1-4">
+      <h3><span class="dot"></span> 1.4 Inputs / Outputs</h3>
+      <div class="kpi-strip">
+        <div class="kpi-card"><div class="kpi-value">1</div><div class="kpi-label">Input File</div></div>
+        <div class="kpi-card"><div class="kpi-value">1</div><div class="kpi-label">DB2 Table</div></div>
+        <div class="kpi-card"><div class="kpi-value">3</div><div class="kpi-label">SQL Operations</div></div>
+        <div class="kpi-card"><div class="kpi-value">4</div><div class="kpi-label">Action Codes</div></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Direction</th><th>Name</th><th>Type</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-navy">Input</span></td><td><code>INPFILE</code></td><td>Sequential (PS), Fixed 53-byte records</td><td>Control file with action code, 2-digit type code, and 50-character description per record</td></tr>
+            <tr><td><span class="badge badge-red">Output</span></td><td><code>CARDDEMO.TRANSACTION_TYPE</code></td><td>DB2 Table</td><td>Reference table updated via INSERT/UPDATE/DELETE operations</td></tr>
+            <tr><td><span class="badge badge-gray">Spool</span></td><td><code>SYSTSPRT</code></td><td>SYSOUT=*</td><td>TSO/DB2 batch output (DSN command output)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 2 — Technical Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">2</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 2.1 -->
+    <div class="subsection" id="s2-1">
+      <h3><span class="dot"></span> 2.1 Overview Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌────────────────────────────────────────────────────────┐
+  │                    JCL: MNTTRDB2                        │
+  │                    STEP1: IKJEFT01                      │
+  │                                                        │
+  │  SYSTSIN:  DSN SYSTEM(DAZ1)                             │
+  │            RUN PROGRAM(COBTUPDT) PLAN(CARDDEMO)         │
+  └───────────────────────┬────────────────────────────────┘
+                          │
+                          ▼
+  ┌────────────────────────────────────────────────────────┐
+  │                  COBTUPDT.CBL                           │
+  │                                                        │
+  │  0001-OPEN-FILES                                       │
+  │       │                                                │
+  │       ▼                                                │
+  │  1001-READ-NEXT-RECORDS                                │
+  │       │                                                │
+  │       ├──▶ 1002-READ-RECORDS ──▶ READ NEXT INTO WS     │
+  │       │                                                │
+  │       ├──▶ 1003-TREAT-RECORD                           │
+  │       │       │                                        │
+  │       │       ├── 'A' ──▶ 10031-INSERT-DB              │
+  │       │       ├── 'U' ──▶ 10032-UPDATE-DB              │
+  │       │       ├── 'D' ──▶ 10033-DELETE-DB              │
+  │       │       ├── '*' ──▶ (skip/display)               │
+  │       │       └── OTHER ──▶ 9999-ABEND (RC=4)          │
+  │       │                                                │
+  │       └──▶ (loop until EOF)                            │
+  │                                                        │
+  │  2001-CLOSE-STOP                                       │
+  │       │                                                │
+  │       ▼                                                │
+  │  STOP RUN                                              │
+  └────────────────────────────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.2 -->
+    <div class="subsection" id="s2-2">
+      <h3><span class="dot"></span> 2.2 Detailed Step-by-Step</h3>
+      <ol>
+        <li><strong>0001-OPEN-FILES</strong> (line 82&ndash;89): Opens <code>TR-RECORD</code> (INPFILE) for sequential input. Checks <code>WS-INF-STATUS</code>; displays &ldquo;OPEN FILE OK&rdquo; or &ldquo;OPEN FILE NOT OK&rdquo; but continues regardless.</li>
+        <li><strong>1001-READ-NEXT-RECORDS</strong> (line 91&ndash;99): Priming read via <code>1002-READ-RECORDS</code>, then loops: process record via <code>1003-TREAT-RECORD</code>, read next record, repeat until <code>LASTREC = 'Y'</code>. After loop, performs <code>2001-CLOSE-STOP</code> then <code>STOP RUN</code>.</li>
+        <li><strong>1002-READ-RECORDS</strong> (line 100&ndash;107): Reads next record from <code>TR-RECORD</code> into <code>WS-INPUT-REC</code>. On AT END, sets <code>LASTREC = 'Y'</code>. Otherwise displays the record being processed.</li>
+        <li><strong>1003-TREAT-RECORD</strong> (line 109&ndash;130): EVALUATEs <code>INPUT-REC-TYPE</code>:
+          <ul>
+            <li><code>'A'</code> &rarr; PERFORM 10031-INSERT-DB</li>
+            <li><code>'U'</code> &rarr; PERFORM 10032-UPDATE-DB</li>
+            <li><code>'D'</code> &rarr; PERFORM 10033-DELETE-DB</li>
+            <li><code>'*'</code> &rarr; DISPLAY &ldquo;IGNORING COMMENTED LINE&rdquo;</li>
+            <li>OTHER &rarr; STRING &ldquo;ERROR: TYPE NOT VALID&rdquo; into WS-RETURN-MSG, PERFORM 9999-ABEND</li>
+          </ul>
+        </li>
+        <li><strong>10031-INSERT-DB</strong> (line 132&ndash;164): Executes <code>INSERT INTO CARDDEMO.TRANSACTION_TYPE (TR_TYPE, TR_DESCRIPTION) VALUES (:INPUT-REC-NUMBER, :INPUT-REC-DESC)</code>. On SQLCODE = 0, displays success. On SQLCODE &lt; 0, formats error message and ABENDs.</li>
+        <li><strong>10032-UPDATE-DB</strong> (line 166&ndash;195): Executes <code>UPDATE CARDDEMO.TRANSACTION_TYPE SET TR_DESCRIPTION = :INPUT-REC-DESC WHERE TR_TYPE = :INPUT-REC-NUMBER</code>. On SQLCODE = 0, displays success. On SQLCODE = +100 (no rows), ABENDs with &ldquo;No records found.&rdquo; On SQLCODE &lt; 0, ABENDs with error message.</li>
+        <li><strong>10033-DELETE-DB</strong> (line 196&ndash;226): Executes <code>DELETE FROM CARDDEMO.TRANSACTION_TYPE WHERE TR_TYPE = :INPUT-REC-NUMBER</code>. On SQLCODE = 0, displays success. On SQLCODE = +100 (no rows), ABENDs with &ldquo;No records found.&rdquo; On SQLCODE &lt; 0, ABENDs with error message.</li>
+        <li><strong>9999-ABEND</strong> (line 230&ndash;233): Displays <code>WS-RETURN-MSG</code> and sets <code>RETURN-CODE = 4</code>. Note: does <strong>not</strong> STOP RUN &mdash; execution continues to the next record.</li>
+        <li><strong>2001-CLOSE-STOP</strong> (line 234&ndash;236): Closes <code>TR-RECORD</code>.</li>
+      </ol>
+    </div>
+
+    <!-- 2.3 -->
+    <div class="subsection" id="s2-3">
+      <h3><span class="dot"></span> 2.3 Condition Code Logic</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Return Code</th><th>Meaning</th><th>Set By</th></tr></thead>
+          <tbody>
+            <tr><td><code>0</code></td><td>All records processed successfully (default)</td><td>System default</td></tr>
+            <tr><td><code>4</code></td><td>One or more records caused an error (invalid action code, SQLCODE +100 on UPDATE/DELETE, negative SQLCODE)</td><td><code>9999-ABEND</code> paragraph: <code>MOVE 4 TO RETURN-CODE</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-red">
+        <strong>Design Note:</strong> The 9999-ABEND paragraph sets RC=4 but does <strong>not</strong> issue STOP RUN. This means processing continues with the next input record. If multiple records fail, RC=4 is set repeatedly but only the last DISPLAY message may be visible. The final RETURN-CODE will be 4 if <em>any</em> record failed.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 3 — JCL Job Stream Specification
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">3</span>
+    <h2>JCL Job Stream Specification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 3.1 -->
+    <div class="subsection" id="s3-1">
+      <h3><span class="dot"></span> 3.1 JCL Overview</h3>
+      <div class="callout">
+        <strong>Job:</strong> <code>MNTTRDB2</code> &mdash; Single-step job using <code>IKJEFT01</code> (TSO batch) to invoke DB2 program <code>COBTUPDT</code> under plan <code>CARDDEMO</code> on DB2 subsystem <code>DAZ1</code>.
+      </div>
+<pre><code>//MNTTRDB2 JOB (COBOL),'MNTTRDB2',CLASS=A,MSGCLASS=H,MSGLEVEL=(1,1),
+//         NOTIFY=&amp;SYSUID,TIME=1440
+//*
+//* MAINTAIN DB2 TRANSACTION TABLE: INSERT, UPDATE, DELETE
+//*
+//STEP1   EXEC PGM=IKJEFT01,REGION=0M
+//STEPLIB  DD DISP=SHR,DSN=OEM.DB2.DAZ1.SDSNEXIT
+//         DD DISP=SHR,DSN=OEMA.DB2.VERSIONA.SDSNLOAD
+//         DD DISP=SHR,DSN=AWS.M2.CARDDEMO.LOADLIB
+//DBRMLIB  DD DISP=SHR,DSN=AWS.M2.CARDDEMO.DBRMLIB
+//SYSTSPRT DD  SYSOUT=*
+//INPFILE  DD  DSN=INPFILE,DISP=SHR
+//SYSTSIN DD *
+     DSN SYSTEM(DAZ1)
+          RUN PROGRAM(COBTUPDT) PLAN(CARDDEMO)</code></pre>
+    </div>
+
+    <!-- 3.2 -->
+    <div class="subsection" id="s3-2">
+      <h3><span class="dot"></span> 3.2 DD Statement Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>DD Name</th><th>Disposition</th><th>Dataset Name</th><th>Type</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>STEP1</td><td>STEPLIB (1)</td><td>SHR</td><td>OEM.DB2.DAZ1.SDSNEXIT</td><td>PDS</td><td>DB2 exit routines for subsystem DAZ1</td></tr>
+            <tr><td>STEP1</td><td>STEPLIB (2)</td><td>SHR</td><td>OEMA.DB2.VERSIONA.SDSNLOAD</td><td>PDS</td><td>DB2 load modules</td></tr>
+            <tr><td>STEP1</td><td>STEPLIB (3)</td><td>SHR</td><td>AWS.M2.CARDDEMO.LOADLIB</td><td>PDS</td><td>Application load library (COBTUPDT)</td></tr>
+            <tr><td>STEP1</td><td>DBRMLIB</td><td>SHR</td><td>AWS.M2.CARDDEMO.DBRMLIB</td><td>PDS</td><td>Database Request Modules (pre-compiled SQL)</td></tr>
+            <tr><td>STEP1</td><td>SYSTSPRT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>TSO/IKJEFT01 print output</td></tr>
+            <tr><td>STEP1</td><td>INPFILE</td><td>SHR</td><td>INPFILE</td><td>Sequential (PS)</td><td>Input control file with A/U/D/* records</td></tr>
+            <tr><td>STEP1</td><td>SYSTSIN</td><td>* (instream)</td><td>&mdash;</td><td>Instream</td><td>TSO commands: DSN SYSTEM(DAZ1) RUN PROGRAM(COBTUPDT) PLAN(CARDDEMO)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.3 -->
+    <div class="subsection" id="s3-3">
+      <h3><span class="dot"></span> 3.3 GDG Usage</h3>
+      <div class="callout">
+        <strong>N/A</strong> &mdash; This job does not use Generation Data Groups. All output goes to the DB2 table and spool.
+      </div>
+    </div>
+
+    <!-- 3.4 -->
+    <div class="subsection" id="s3-4">
+      <h3><span class="dot"></span> 3.4 Scheduler Dependencies</h3>
+      <div class="callout">
+        <strong>Control-M:</strong> Job <code>MNTTRDB2</code> is defined in the <code>WEEKLY-TransactionTypesDBRefresh</code> folder, scheduled for Saturdays (DAYS=&ldquo;SA&rdquo; via SMART_FOLDER). It produces the output condition <code>WEEKLY-TransactionTypesDBRefresh-MNTTRDB2</code> which gates two downstream SMART_FOLDERs.
+      </div>
+      <div class="diagram-box">
+<pre>
+  WEEKLY-TransactionTypesDBRefresh (Control-M)
+  ─────────────────────────────────────────────
+          MNTTRDB2
+              │
+              │ OUTCOND: WEEKLY-TransactionTypesDBRefresh-MNTTRDB2
+              │
+       ┌──────┴──────┐
+       ▼              ▼
+  DisclosureGroups    TransactionTypes
+  Refresh (SMART)     DBRefresh (SMART)
+       │                    │
+       ▼                    ▼
+  CLOSEFIL ──▶           TRANEXTR
+  DISCGRP  ──▶
+  WAITSTEP ──▶
+  OPENFIL
+</pre>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Condition</th><th>Direction</th><th>Sign</th><th>Consumer</th></tr></thead>
+          <tbody>
+            <tr><td><code>WEEKLY-TransactionTypesDBRefresh-MNTTRDB2</code></td><td>OUT</td><td>+</td><td>WEEKLY-DisclosureGroupsRefresh (CLOSEFIL INCOND)</td></tr>
+            <tr><td><code>WEEKLY-TransactionTypesDBRefresh-MNTTRDB2</code></td><td>OUT</td><td>+</td><td>WEEKLY-TransactionTypesDBRefresh SMART_FOLDER (TRANEXTR INCOND)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 4 — Program Inventory and Call Chain
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">4</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 4.1 -->
+    <div class="subsection" id="s4-1">
+      <h3><span class="dot"></span> 4.1 Program Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Program</th><th>Language</th><th>LOC</th><th>Type</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>IKJEFT01</code></td><td>System (TSO)</td><td>&mdash;</td><td>IBM utility</td><td>TSO batch processor; invokes DB2 DSN command to run COBTUPDT</td></tr>
+            <tr><td><code>COBTUPDT</code></td><td>COBOL + Embedded SQL</td><td>237</td><td>Application</td><td>Reads input file, performs Add/Update/Delete on TRANSACTION_TYPE table</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4.2 -->
+    <div class="subsection" id="s4-2">
+      <h3><span class="dot"></span> 4.2 Call / Paragraph Hierarchy</h3>
+      <div class="diagram-box">
+<pre>
+  IKJEFT01 (TSO Batch)
+    └── DSN SYSTEM(DAZ1) RUN PROGRAM(COBTUPDT) PLAN(CARDDEMO)
+          │
+          ▼
+        COBTUPDT (PROCEDURE DIVISION)
+          │
+          ├── 0001-OPEN-FILES
+          │     └── OPEN INPUT TR-RECORD
+          │
+          ├── 1001-READ-NEXT-RECORDS
+          │     ├── 1002-READ-RECORDS  (priming read)
+          │     └── PERFORM UNTIL LASTREC = 'Y'
+          │           ├── 1003-TREAT-RECORD
+          │           │     ├── 'A' ──▶ 10031-INSERT-DB
+          │           │     │             └── EXEC SQL INSERT
+          │           │     ├── 'U' ──▶ 10032-UPDATE-DB
+          │           │     │             └── EXEC SQL UPDATE
+          │           │     ├── 'D' ──▶ 10033-DELETE-DB
+          │           │     │             └── EXEC SQL DELETE
+          │           │     ├── '*' ──▶ DISPLAY (skip)
+          │           │     └── OTHER ──▶ 9999-ABEND
+          │           └── 1002-READ-RECORDS
+          │
+          ├── 2001-CLOSE-STOP
+          │     └── CLOSE TR-RECORD
+          │
+          └── STOP RUN
+</pre>
+      </div>
+    </div>
+
+    <!-- 4.3 -->
+    <div class="subsection" id="s4-3">
+      <h3><span class="dot"></span> 4.3 Copybooks / Includes</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Include</th><th>Source</th><th>Type</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>SQLCA</code></td><td>System (DB2)</td><td>SQL Include</td><td>SQL Communication Area &mdash; SQLCODE, SQLERRM, SQLSTATE, etc.</td></tr>
+            <tr><td><code>DCLTRTYP</code></td><td><code>app/app-transaction-type-db2/dcl/DCLTRTYP.dcl</code></td><td>DCLGEN</td><td>DB2 declaration for <code>CARDDEMO.TRANSACTION_TYPE</code> table: <code>TR_TYPE CHAR(2)</code>, <code>TR_DESCRIPTION VARCHAR(50)</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>Note:</strong> Copybooks <code>CSDB2RPY.cpy</code> and <code>CSDB2RWY.cpy</code> exist in the <code>app/app-transaction-type-db2/cpy/</code> directory but are <strong>not</strong> referenced by COBTUPDT.cbl via COPY statements. They are shared DB2 utility procedures (priming query, DSNTIAC message formatting) likely used by the online CICS counterpart.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 5 — File and Dataset Inventory
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">5</span>
+    <h2>File and Dataset Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 5.1 -->
+    <div class="subsection" id="s5-1">
+      <h3><span class="dot"></span> 5.1 Complete Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Type</th><th>Access</th><th>RECFM / LRECL</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>INPFILE</code></td><td>Sequential (PS)</td><td>INPUT</td><td>F / 53</td><td>Control file: Col 1 = action (A/U/D/*), Col 2&ndash;3 = type code, Col 4&ndash;53 = description</td></tr>
+            <tr><td><code>CARDDEMO.TRANSACTION_TYPE</code></td><td>DB2 Table</td><td>INSERT / UPDATE / DELETE</td><td>2 columns</td><td>Reference table: TR_TYPE CHAR(2) NOT NULL, TR_DESCRIPTION VARCHAR(50) NOT NULL</td></tr>
+            <tr><td><code>OEM.DB2.DAZ1.SDSNEXIT</code></td><td>PDS</td><td>SHR (STEPLIB)</td><td>&mdash;</td><td>DB2 subsystem exit routines</td></tr>
+            <tr><td><code>OEMA.DB2.VERSIONA.SDSNLOAD</code></td><td>PDS</td><td>SHR (STEPLIB)</td><td>&mdash;</td><td>DB2 load modules</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.LOADLIB</code></td><td>PDS</td><td>SHR (STEPLIB)</td><td>&mdash;</td><td>Application load library containing COBTUPDT</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.DBRMLIB</code></td><td>PDS</td><td>SHR (DBRMLIB)</td><td>&mdash;</td><td>Database Request Modules for pre-compiled SQL</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.2 -->
+    <div class="subsection" id="s5-2">
+      <h3><span class="dot"></span> 5.2 Record Layouts</h3>
+
+      <h4>INPFILE &mdash; Input Control Record (FD TR-RECORD / WS-INPUT-REC)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>Offset</th><th>Length</th><th>PIC</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>INPUT-REC-TYPE</code></td><td>1</td><td>1</td><td>X(1)</td><td>Action code: A=Add, U=Update, D=Delete, *=Comment</td></tr>
+            <tr><td><code>INPUT-REC-NUMBER</code></td><td>2</td><td>2</td><td>X(2)</td><td>Transaction type code (numeric, used as TR_TYPE key)</td></tr>
+            <tr><td><code>INPUT-REC-DESC</code></td><td>4</td><td>50</td><td>X(50)</td><td>Transaction type description</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>DB2 Table: CARDDEMO.TRANSACTION_TYPE (from DCLTRTYP.dcl)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Column</th><th>DB2 Type</th><th>COBOL Host Variable</th><th>Nullable</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>TR_TYPE</code></td><td>CHAR(2)</td><td><code>DCL-TR-TYPE PIC X(2)</code></td><td>NOT NULL</td><td>Primary key &mdash; 2-digit transaction type code</td></tr>
+            <tr><td><code>TR_DESCRIPTION</code></td><td>VARCHAR(50)</td><td><code>DCL-TR-DESCRIPTION-LEN PIC S9(4) COMP</code> + <code>DCL-TR-DESCRIPTION-TEXT PIC X(50)</code></td><td>NOT NULL</td><td>Human-readable description of the transaction type</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>FD Record vs. Working-Storage Record</h4>
+      <div class="callout">
+        <strong>Note:</strong> The program defines the input record layout twice: once in the FD section (<code>WS-INPUT-VARS</code> with fields <code>INPUT-TYPE</code>, <code>INPUT-TR-NUMBER</code>, <code>INPUT-TR-DESC</code>) and once in WORKING-STORAGE (<code>WS-INPUT-REC</code> with fields <code>INPUT-REC-TYPE</code>, <code>INPUT-REC-NUMBER</code>, <code>INPUT-REC-DESC</code>). The READ INTO clause copies data into the WS copy; only the WS fields are used in EVALUATE and SQL statements.
+      </div>
+    </div>
+
+    <!-- 5.3 -->
+    <div class="subsection" id="s5-3">
+      <h3><span class="dot"></span> 5.3 File Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌──────────────┐          ┌──────────────────────────┐
+  │   INPFILE     │          │  DB2 Subsystem DAZ1      │
+  │ (Sequential)  │          │                          │
+  │               │          │  CARDDEMO.               │
+  │ A01Purchase.. │──READ──▶ │  TRANSACTION_TYPE        │
+  │ U02Updated..  │          │  ┌────────┬─────────────┐│
+  │ D03           │          │  │TR_TYPE │TR_DESCRIPTION││
+  │ *Comment line │          │  │  01    │ Purchase     ││
+  │               │          │  │  02    │ Updated Desc ││
+  └──────────────┘          │  │  (03)  │ (deleted)    ││
+                            │  └────────┴─────────────┘│
+                            └──────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 5.4 -->
+    <div class="subsection" id="s5-4">
+      <h3><span class="dot"></span> 5.4 Dependency Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Resource</th><th>COBTUPDT Reads</th><th>COBTUPDT Writes</th><th>Shared With</th></tr></thead>
+          <tbody>
+            <tr><td><code>INPFILE</code></td><td>Yes</td><td>&mdash;</td><td>Prepared by operations team or upstream extract</td></tr>
+            <tr><td><code>CARDDEMO.TRANSACTION_TYPE</code></td><td>&mdash;</td><td>Yes (INSERT/UPDATE/DELETE)</td><td>CICS online programs, Transaction Report, Statement Generation</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 6 — Data Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">6</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 6.1 -->
+    <div class="subsection" id="s6-1">
+      <h3><span class="dot"></span> 6.1 Transformation Map</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Source Field</th><th>Transformation</th><th>Target</th></tr></thead>
+          <tbody>
+            <tr><td><code>INPUT-REC-TYPE</code> (Col 1)</td><td>EVALUATE to determine SQL operation (INSERT/UPDATE/DELETE/SKIP)</td><td>Controls which SQL statement is executed</td></tr>
+            <tr><td><code>INPUT-REC-NUMBER</code> (Col 2&ndash;3)</td><td>Direct pass-through as host variable <code>:INPUT-REC-NUMBER</code></td><td><code>TR_TYPE</code> column (INSERT key / WHERE clause)</td></tr>
+            <tr><td><code>INPUT-REC-DESC</code> (Col 4&ndash;53)</td><td>Direct pass-through as host variable <code>:INPUT-REC-DESC</code></td><td><code>TR_DESCRIPTION</code> column (INSERT value / SET value)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>No data transformation:</strong> The input fields are passed directly to DB2 SQL statements as host variables without any reformatting, trimming, or validation beyond the action-code dispatch. The 2-byte type code is treated as character data (PIC X(2)) mapped to CHAR(2) in DB2.
+      </div>
+    </div>
+
+    <!-- 6.2 -->
+    <div class="subsection" id="s6-2">
+      <h3><span class="dot"></span> 6.2 Lineage Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  INPFILE (Sequential)
+  ┌───────────────────────────────────────────────────┐
+  │  Col 1       Col 2-3         Col 4-53             │
+  │  ACTION      TYPE-CODE       DESCRIPTION          │
+  └──┬──────────┬───────────────┬─────────────────────┘
+     │          │               │
+     │          │               │
+     ▼          ▼               ▼
+  EVALUATE   :INPUT-REC-     :INPUT-REC-DESC
+  dispatch    NUMBER          │
+     │          │              │
+     │          ▼              ▼
+     │     ┌────────────────────────┐
+     │     │ DB2 TRANSACTION_TYPE   │
+     │     │ TR_TYPE  TR_DESCRIPTION│
+     │     └────────────────────────┘
+     │
+     ▼
+  SQLCODE ──▶ WS-VAR-SQLCODE ──▶ WS-RETURN-MSG ──▶ DISPLAY
+</pre>
+      </div>
+    </div>
+
+    <!-- 6.3 -->
+    <div class="subsection" id="s6-3">
+      <h3><span class="dot"></span> 6.3 Control Totals</h3>
+      <div class="callout callout-red">
+        <strong>Gap:</strong> The program does <strong>not</strong> maintain any control totals. There is no counter for records read, inserted, updated, deleted, skipped, or errored. The only evidence of processing is the individual DISPLAY statements per record. This is a significant operational gap for audit and reconciliation purposes.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 7 — Sort/Merge and Utility Processing
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">7</span>
+    <h2>Sort/Merge and Utility Processing</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="callout">
+      <strong>N/A</strong> &mdash; This job does not use SORT, MERGE, DFSORT, ICETOOL, or any other utility programs. The JCL has a single step executing IKJEFT01 (TSO batch) to invoke the COBOL/DB2 program directly.
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 8 — Checkpoint, Restart, and Recovery
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">8</span>
+    <h2>Checkpoint, Restart, and Recovery</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s8-1">
+      <h3><span class="dot"></span> 8.1 Checkpointing Strategy</h3>
+      <div class="callout callout-red">
+        <strong>No checkpointing implemented.</strong> The program does not issue any DB2 COMMIT statements between records. All SQL operations run under a single unit of work (UOW). This means:
+      </div>
+      <ul>
+        <li>If the job abends mid-way through the input file, DB2 will <strong>rollback all changes</strong> from the current UOW.</li>
+        <li>For small reference data files (typical for transaction type maintenance), this is generally acceptable.</li>
+        <li>For large files, the lack of intermediate COMMITs could lead to DB2 log space issues and long rollback times.</li>
+      </ul>
+    </div>
+
+    <div class="subsection" id="s8-2">
+      <h3><span class="dot"></span> 8.2 Restart Procedures</h3>
+      <ul>
+        <li><strong>Clean restart:</strong> Re-submit the job with the same input file. Because the program does not COMMIT between records and DB2 rolls back on failure, a restart from the beginning is safe (idempotent for the failure case).</li>
+        <li><strong>Partial success scenario:</strong> If the program completes (RC=0 or RC=4), a single implicit COMMIT occurs at program end. Re-running would cause duplicate key errors for already-inserted rows or redundant updates. The input file would need to be adjusted to remove already-processed records.</li>
+      </ul>
+    </div>
+
+    <div class="subsection" id="s8-3">
+      <h3><span class="dot"></span> 8.3 Recovery Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  Job Failure Scenarios:
+  ──────────────────────
+
+  Case 1: Abend during processing
+  ┌─────────┐     ┌─────────┐     ┌──────────────┐
+  │ COBTUPDT │────▶│ S0C7/S0C4│────▶│ DB2 ROLLBACK  │
+  │ abends   │     │ etc.     │     │ All changes   │
+  └─────────┘     └─────────┘     │ undone         │
+                                   └──────────────┘
+                                          │
+                                          ▼
+                                   ┌──────────────┐
+                                   │ Fix root cause│
+                                   │ Resubmit job  │
+                                   └──────────────┘
+
+  Case 2: Completed with RC=4 (some records failed)
+  ┌─────────┐     ┌──────────┐     ┌──────────────┐
+  │ COBTUPDT │────▶│ RC=4      │────▶│ Implicit      │
+  │ completes│     │ (errors)  │     │ COMMIT at end │
+  └─────────┘     └──────────┘     └──────────────┘
+                                          │
+                                          ▼
+                                   ┌──────────────┐
+                                   │ Review SYSOUT │
+                                   │ Fix input file│
+                                   │ Resubmit      │
+                                   └──────────────┘
+</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 9 — Error Handling and Abend Resolution
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">9</span>
+    <h2>Error Handling and Abend Resolution</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 9.1 -->
+    <div class="subsection" id="s9-1">
+      <h3><span class="dot"></span> 9.1 Error Flow</h3>
+      <div class="diagram-box">
+<pre>
+  Record Processing
+       │
+       ▼
+  ┌─────────────┐
+  │ EVALUATE     │
+  │ INPUT-REC-   │
+  │ TYPE         │
+  └──────┬──────┘
+         │
+    ┌────┴────┐──── OTHER ──▶ "ERROR: TYPE NOT VALID" ──▶ 9999-ABEND
+    │         │
+    ▼         ▼
+  SQL OP    '*' skip
+    │
+    ▼
+  ┌─────────────┐
+  │ EVALUATE     │
+  │ SQLCODE      │
+  └──────┬──────┘
+         │
+    ┌────┼────┐
+    ▼    ▼    ▼
+   =0  =+100  &lt;0
+   OK   │     │
+        ▼     ▼
+      "No    "Error accessing:
+      records TRANSACTION_TYPE
+      found." table. SQLCODE: nnn"
+        │     │
+        ▼     ▼
+    9999-ABEND
+    DISPLAY WS-RETURN-MSG
+    MOVE 4 TO RETURN-CODE
+    (continues processing)
+</pre>
+      </div>
+    </div>
+
+    <!-- 9.2 -->
+    <div class="subsection" id="s9-2">
+      <h3><span class="dot"></span> 9.2 Return Codes and Messages</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Condition</th><th>Message</th><th>RC</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td>File open success</td><td><code>OPEN FILE OK</code></td><td>0</td><td>Continue</td></tr>
+            <tr><td>File open failure</td><td><code>OPEN FILE NOT OK</code></td><td>0 (no RC set)</td><td>Continue (potential data issue)</td></tr>
+            <tr><td>INSERT success</td><td><code>RECORD INSERTED SUCCESSFULLY</code></td><td>0</td><td>Continue</td></tr>
+            <tr><td>UPDATE success</td><td><code>RECORD UPDATED SUCCESSFULLY</code></td><td>0</td><td>Continue</td></tr>
+            <tr><td>DELETE success</td><td><code>RECORD DELETED SUCCESSFULLY</code></td><td>0</td><td>Continue</td></tr>
+            <tr><td>UPDATE/DELETE: no rows</td><td><code>No records found.</code></td><td>4</td><td>9999-ABEND, continue</td></tr>
+            <tr><td>Any SQL error (SQLCODE &lt; 0)</td><td><code>Error accessing: TRANSACTION_TYPE table. SQLCODE: nnn</code></td><td>4</td><td>9999-ABEND, continue</td></tr>
+            <tr><td>Invalid action code</td><td><code>ERROR: TYPE NOT VALID</code></td><td>4</td><td>9999-ABEND, continue</td></tr>
+            <tr><td>Comment record (*)</td><td><code>IGNORING COMMENTED LINE</code></td><td>0</td><td>Skip</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 9.3 -->
+    <div class="subsection" id="s9-3">
+      <h3><span class="dot"></span> 9.3 Common Abend Scenarios</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Scenario</th><th>SQLCODE</th><th>Cause</th><th>Resolution</th></tr></thead>
+          <tbody>
+            <tr><td>Duplicate INSERT</td><td>-803</td><td>TR_TYPE already exists in TRANSACTION_TYPE table</td><td>Change action code to &lsquo;U&rsquo; (update) or remove duplicate from input file</td></tr>
+            <tr><td>UPDATE row not found</td><td>+100</td><td>TR_TYPE code does not exist</td><td>Change action code to &lsquo;A&rsquo; (add) or verify type code</td></tr>
+            <tr><td>DELETE row not found</td><td>+100</td><td>TR_TYPE code does not exist or was already deleted</td><td>Remove the delete directive from the input file</td></tr>
+            <tr><td>DB2 authorization failure</td><td>-551</td><td>Plan CARDDEMO not authorized for table access</td><td>GRANT appropriate privileges on CARDDEMO.TRANSACTION_TYPE</td></tr>
+            <tr><td>DB2 subsystem unavailable</td><td>-923</td><td>DB2 subsystem DAZ1 not started</td><td>Start DB2 subsystem, resubmit job</td></tr>
+            <tr><td>Tablespace full</td><td>-904</td><td>TRANSACTION_TYPE tablespace out of extents</td><td>Extend tablespace, REORG, resubmit</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 9.4 -->
+    <div class="subsection" id="s9-4">
+      <h3><span class="dot"></span> 9.4 File Status Handling</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Operation</th><th>Status Check</th><th>Handling</th></tr></thead>
+          <tbody>
+            <tr><td>OPEN INPUT</td><td><code>WS-INF-STATUS = '00'</code></td><td>Display &ldquo;OK&rdquo; or &ldquo;NOT OK&rdquo;; no abort on failure</td></tr>
+            <tr><td>READ NEXT</td><td>AT END clause</td><td>Sets <code>LASTREC = 'Y'</code> to exit loop</td></tr>
+            <tr><td>CLOSE</td><td>(none)</td><td>No file status check on close</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 10 — Security and Authorization
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s10-1">
+      <h3><span class="dot"></span> 10.1 Dataset Access Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Resource</th><th>Type</th><th>Access Required</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><code>OEM.DB2.DAZ1.SDSNEXIT</code></td><td>PDS</td><td>READ</td><td>DB2 exit routines; protected by RACF</td></tr>
+            <tr><td><code>OEMA.DB2.VERSIONA.SDSNLOAD</code></td><td>PDS</td><td>READ</td><td>DB2 load modules; protected by RACF</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.LOADLIB</code></td><td>PDS</td><td>READ</td><td>Application load modules</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.DBRMLIB</code></td><td>PDS</td><td>READ</td><td>DBRM library for pre-compiled SQL</td></tr>
+            <tr><td><code>INPFILE</code></td><td>Sequential</td><td>READ</td><td>Input control file</td></tr>
+            <tr><td><code>CARDDEMO.TRANSACTION_TYPE</code></td><td>DB2 Table</td><td>SELECT, INSERT, UPDATE, DELETE</td><td>Full DML access required via PLAN(CARDDEMO)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s10-2">
+      <h3><span class="dot"></span> 10.2 DB2 Authorization</h3>
+      <ul>
+        <li>Program runs under DB2 plan <code>CARDDEMO</code> on subsystem <code>DAZ1</code></li>
+        <li>The plan must have EXECUTE authority for the COBTUPDT package</li>
+        <li>The plan owner (or bound authorization) must have INSERT, UPDATE, DELETE privileges on <code>CARDDEMO.TRANSACTION_TYPE</code></li>
+        <li>Job runs as <code>&amp;SYSUID</code> (NOTIFY); the submitting user ID must be authorized to the plan</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 11 — Performance and Batch Window Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Performance and Batch Window Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s11-1">
+      <h3><span class="dot"></span> 11.1 I/O Characteristics</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Aspect</th><th>Detail</th></tr></thead>
+          <tbody>
+            <tr><td>Input I/O</td><td>Sequential read of INPFILE; one READ per record (53 bytes each)</td></tr>
+            <tr><td>DB2 I/O</td><td>One SQL statement (INSERT, UPDATE, or DELETE) per non-comment input record</td></tr>
+            <tr><td>Expected Volume</td><td>Low &mdash; transaction type reference table typically has 10&ndash;50 entries; weekly changes are usually &lt;10 records</td></tr>
+            <tr><td>Commit Frequency</td><td>Single implicit COMMIT at program end (no intermediate COMMITs)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s11-2">
+      <h3><span class="dot"></span> 11.2 Batch Window Fit</h3>
+      <ul>
+        <li><strong>Estimated Runtime:</strong> &lt; 1 second for typical input volumes (under 50 records)</li>
+        <li><strong>Batch Window:</strong> Saturday maintenance window; well within SLA</li>
+        <li><strong>Concurrency:</strong> No explicit table locking. DB2 row-level locking applies. Minimal contention risk given Saturday scheduling when online activity is low.</li>
+        <li><strong>Region:</strong> <code>REGION=0M</code> (unlimited) &mdash; overspecified for this lightweight program but harmless</li>
+        <li><strong>TIME:</strong> <code>TIME=1440</code> (24 hours) &mdash; excessively generous; could be reduced to TIME=5</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 12 — Testing Approach
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s12-1">
+      <h3><span class="dot"></span> 12.1 Test Scenarios</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Scenario</th><th>Input</th><th>Expected Result</th><th>Rule</th></tr></thead>
+          <tbody>
+            <tr><td>TC-001</td><td>Add new transaction type</td><td><code>A01Purchase of goods or services</code></td><td>Row inserted; RC=0; DISPLAY &ldquo;RECORD INSERTED SUCCESSFULLY&rdquo;</td><td>BR-001</td></tr>
+            <tr><td>TC-002</td><td>Add duplicate type (row already exists)</td><td><code>A01Purchase duplicate</code></td><td>SQLCODE -803; RC=4; error message displayed</td><td>BR-006</td></tr>
+            <tr><td>TC-003</td><td>Update existing type description</td><td><code>U01Revised purchase description</code></td><td>Row updated; RC=0; DISPLAY &ldquo;RECORD UPDATED SUCCESSFULLY&rdquo;</td><td>BR-002</td></tr>
+            <tr><td>TC-004</td><td>Update non-existent type</td><td><code>U99Non existent type</code></td><td>SQLCODE +100; RC=4; &ldquo;No records found.&rdquo;</td><td>BR-002</td></tr>
+            <tr><td>TC-005</td><td>Delete existing type</td><td><code>D01</code></td><td>Row deleted; RC=0; DISPLAY &ldquo;RECORD DELETED SUCCESSFULLY&rdquo;</td><td>BR-003</td></tr>
+            <tr><td>TC-006</td><td>Delete non-existent type</td><td><code>D99</code></td><td>SQLCODE +100; RC=4; &ldquo;No records found.&rdquo;</td><td>BR-003</td></tr>
+            <tr><td>TC-007</td><td>Comment record</td><td><code>*This is a comment line</code></td><td>Skipped; DISPLAY &ldquo;IGNORING COMMENTED LINE&rdquo;; RC=0</td><td>BR-004</td></tr>
+            <tr><td>TC-008</td><td>Invalid action code</td><td><code>X01Bad action</code></td><td>RC=4; &ldquo;ERROR: TYPE NOT VALID&rdquo;</td><td>BR-005</td></tr>
+            <tr><td>TC-009</td><td>Mixed file: add + update + delete + comment</td><td>Multiple records with A, U, D, * actions</td><td>Each processed per its rule; final RC=0 if all succeed</td><td>All</td></tr>
+            <tr><td>TC-010</td><td>Empty input file</td><td>(empty file)</td><td>Immediate EOF; file closed; RC=0</td><td>&mdash;</td></tr>
+            <tr><td>TC-011</td><td>Input file OPEN failure (missing DD)</td><td>(omit INPFILE DD)</td><td>&ldquo;OPEN FILE NOT OK&rdquo; displayed; program attempts READ and likely abends on I/O error</td><td>BR-007</td></tr>
+            <tr><td>TC-012</td><td>Error on one record, success on others</td><td>A01Valid + A01Duplicate + A02Valid</td><td>First insert succeeds, second fails (RC=4), third succeeds; final RC=4</td><td>BR-006</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s12-2">
+      <h3><span class="dot"></span> 12.2 Test Data Requirements</h3>
+      <ul>
+        <li>Pre-populate <code>CARDDEMO.TRANSACTION_TYPE</code> with known rows (e.g., TR_TYPE=&lsquo;01&rsquo; through &lsquo;05&rsquo;) for UPDATE and DELETE testing</li>
+        <li>Create an INPFILE dataset with fixed 53-byte records covering all action codes</li>
+        <li>Ensure DB2 subsystem DAZ1 is available and plan CARDDEMO is bound</li>
+        <li>Verify RACF authorization for the test user ID to all STEPLIB datasets</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 13 — Known Issues and Modernization Considerations
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s13">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">13</span>
+    <h2>Known Issues and Modernization Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s13-1">
+      <h3><span class="dot"></span> 13.1 Known Issues</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Issue</th><th>Severity</th><th>Recommendation</th></tr></thead>
+          <tbody>
+            <tr><td>KI-001</td><td><strong>9999-ABEND does not stop processing:</strong> The paragraph sets RC=4 and DISPLAYs an error but does <em>not</em> issue STOP RUN or GOBACK. Processing continues to the next record, potentially executing further SQL operations after an error. This is misleading because the paragraph name contains &ldquo;ABEND&rdquo; but it does not actually abend.</td><td>Medium &mdash; can cause cascading errors if input file has dependent operations (e.g., ADD then UPDATE on same type)</td><td>Add STOP RUN or GOBACK after MOVE 4 TO RETURN-CODE if fail-fast semantics are desired, or rename paragraph to reflect its true behavior</td></tr>
+            <tr><td>KI-002</td><td><strong>No COMMIT between records:</strong> All SQL runs under a single implicit UOW. Successful changes are committed only when the program terminates normally. A mid-stream abend rolls back <em>all</em> changes, even those for records that were individually successful.</td><td>Low for typical volumes; High for large batch loads</td><td>Add periodic EXEC SQL COMMIT after each record or after every N records</td></tr>
+            <tr><td>KI-003</td><td><strong>File OPEN failure does not halt execution:</strong> If WS-INF-STATUS &ne; &lsquo;00&rsquo;, the program displays &ldquo;OPEN FILE NOT OK&rdquo; but continues. The subsequent READ will likely cause an I/O error or unpredictable behavior.</td><td>Medium &mdash; could lead to abend S013 or incorrect processing</td><td>Add STOP RUN after file open failure</td></tr>
+            <tr><td>KI-004</td><td><strong>Duplicate record layout:</strong> The FD section defines <code>WS-INPUT-VARS</code> (INPUT-TYPE, INPUT-TR-NUMBER, INPUT-TR-DESC) and WORKING-STORAGE defines <code>WS-INPUT-REC</code> (INPUT-REC-TYPE, INPUT-REC-NUMBER, INPUT-REC-DESC) with identical structures. Only the WS copy is used; the FD fields are never referenced after the READ INTO.</td><td>Low &mdash; cosmetic / maintainability</td><td>Remove the FD-level field names or unify the layouts</td></tr>
+            <tr><td>KI-005</td><td><strong>No control totals or summary report:</strong> The program does not count records read, inserted, updated, deleted, skipped, or errored. The only output is individual DISPLAY messages interleaved with TSO output in SYSTSPRT.</td><td>Medium &mdash; impacts auditability and operational monitoring</td><td>Add counters and a summary DISPLAY at end-of-job</td></tr>
+            <tr><td>KI-006</td><td><strong>No input validation on type code:</strong> <code>INPUT-REC-NUMBER</code> is PIC X(2) and mapped to CHAR(2). There is no validation that the value is numeric, even though the JCL comment says &ldquo;NUMERIC VALUE.&rdquo; Non-numeric codes would be inserted into DB2 without error.</td><td>Low &mdash; DB2 column is CHAR(2), so non-numeric values are valid at the DB2 level</td><td>Add NUMERIC test if business rule requires numeric-only type codes</td></tr>
+            <tr><td>KI-007</td><td><strong>INSERT does not handle SQLCODE +100:</strong> The INSERT paragraph only checks SQLCODE = 0 and SQLCODE &lt; 0. SQLCODE +100 on INSERT (unusual but possible with certain DB2 configurations) would fall through with no error handling.</td><td>Low &mdash; unlikely scenario</td><td>Add WHEN OTHER clause to INSERT EVALUATE</td></tr>
+            <tr><td>KI-008</td><td><strong>DELETE paragraph indentation error:</strong> At line 211, the STRING statement for &ldquo;No records found.&rdquo; is not properly indented under WHEN SQLCODE = +100, making the code harder to maintain and potentially confusing for code analysis tools.</td><td>Low &mdash; cosmetic, does not affect execution</td><td>Fix indentation to align with WHEN clause</td></tr>
+            <tr><td>KI-009</td><td><strong>DCLTRTYP include is unused:</strong> The EXEC SQL INCLUDE DCLTRTYP brings in the DCLTRANSACTION-TYPE group item (DCL-TR-TYPE, DCL-TR-DESCRIPTION), but the program never references these fields. SQL host variables use the input record fields directly (INPUT-REC-NUMBER, INPUT-REC-DESC).</td><td>Low &mdash; dead code, no runtime impact</td><td>Remove the INCLUDE or use the DCL fields as host variables for type safety</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s13-2">
+      <h3><span class="dot"></span> 13.2 Modernization Considerations</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Area</th><th>Current State</th><th>Target State</th><th>Complexity</th></tr></thead>
+          <tbody>
+            <tr><td>Data Access</td><td>Embedded SQL in COBOL via IKJEFT01/DSN RUN</td><td>REST API or microservice with JPA/JDBC, standard CRUD endpoints</td><td>Low</td></tr>
+            <tr><td>Input Format</td><td>Fixed-width 53-byte sequential file with single-character action codes</td><td>JSON or CSV payload via API, or database change-data-capture (CDC)</td><td>Low</td></tr>
+            <tr><td>Error Handling</td><td>DISPLAY messages + RC=4; no structured error log</td><td>Structured logging (JSON), error response codes, dead-letter queue for failed records</td><td>Low</td></tr>
+            <tr><td>Scheduling</td><td>Control-M weekly Saturday job</td><td>Event-driven trigger (e.g., file arrival via S3 event, API call) or lightweight scheduler (cron, Step Functions)</td><td>Low</td></tr>
+            <tr><td>Transaction Management</td><td>Single implicit UOW; no intermediate COMMITs</td><td>Per-record or batch-of-N transaction boundaries with retry logic</td><td>Low</td></tr>
+            <tr><td>Observability</td><td>SYSTSPRT spool output only</td><td>Application metrics (records processed, errors), centralized logging, alerting</td><td>Low</td></tr>
+            <tr><td>Reference Data Management</td><td>Manual file preparation + batch load</td><td>Admin UI or self-service portal for reference data CRUD with approval workflows</td><td>Medium</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /page-wrap-single -->
+
+<!-- ════════════════════  FOOTER  ════════════════════ -->
+<footer class="footer">
+  <p><strong>UniCredit CardDemo</strong> &mdash; Batch Process Analysis &mdash; MNTTRDB2 / COBTUPDT</p>
+  <p>Generated from source: <code>app/app-transaction-type-db2/jcl/MNTTRDB2.jcl</code> &middot; <code>app/app-transaction-type-db2/cbl/COBTUPDT.cbl</code> &middot; Includes: SQLCA, DCLTRTYP</p>
+</footer>
+
+</body>
+</html>

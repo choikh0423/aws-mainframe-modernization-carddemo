@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Credit Card List (CCLI) – CICS Transaction Analysis | UniCredit CardDemo</title>
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  /* Minor page-specific override for toggle icon */
+  .section-toggle svg { fill: currentColor; }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. — Milano</div>
+    </div>
+    <h1>Credit Card List – <span>CICS Transaction Analysis</span></h1>
+    <p class="hero-subtitle">
+      Transaction <code>CCLI</code> · Program <code>COCRDLIC</code> · Browse and filter credit cards with STARTBR/READNEXT pagination on CARDDAT
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Transaction ID</dt><dd>CCLI</dd></div>
+      <div><dt>Entry Program</dt><dd>COCRDLIC</dd></div>
+      <div><dt>BMS Mapset</dt><dd>COCRDLI</dd></div>
+      <div><dt>Design Pattern</dt><dd>Pseudo-conversational</dd></div>
+      <div><dt>LOC</dt><dd>1,459</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">›</span>
+  <a href="index.html">CICS Flows</a>
+  <span class="sep">›</span>
+  Credit Card List (CCLI)
+</div>
+
+<!-- Body -->
+<div class="page-wrap-single">
+
+<!-- ════════════════════════════════════════════════════════════════
+     SECTION 1 — Business Flow Analysis
+     ════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">1</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 1.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>1.1 Business Context</h3>
+      <p>The <strong>Credit Card List</strong> transaction (<code>CCLI</code>) enables customer-service representatives and cardholders to browse all credit cards on file. It provides:</p>
+      <ul>
+        <li><strong>Unfiltered browsing</strong> — when no account or card filter is entered, all cards in the <code>CARDDAT</code> VSAM file are listed (admin users).</li>
+        <li><strong>Account-filtered browsing</strong> — the user may enter an 11-digit account number in <code>ACCTSID</code> to narrow the list to cards belonging to that account.</li>
+        <li><strong>Card-filtered browsing</strong> — the user may enter a 16-digit card number in <code>CARDSID</code> to locate a specific card.</li>
+        <li><strong>Navigation to detail/update</strong> — the user selects a row with <code>S</code> (view) or <code>U</code> (update) to transfer control to <code>COCRDSLC</code> (Credit Card View) or <code>COCRDUPC</code> (Credit Card Update) respectively.</li>
+      </ul>
+      <p>The program header states: <em>"List Credit Cards — (a) All cards if no context passed and admin user; (b) Only the ones associated with ACCT in COMMAREA if user is not admin."</em></p>
+    </div>
+
+    <!-- 1.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>1.2 Business Flow Diagram</h3>
+      <div class="diagram-box"><pre>
+   ┌──────────────────────────────────┐
+   │  User enters CCLI from menu      │
+   │  (or XCTL from another program)  │
+   └──────────────┬───────────────────┘
+                  ▼
+   ┌──────────────────────────────────┐
+   │  Display card list screen        │
+   │  (CCRDLIA map, page 1)          │
+   └──────────────┬───────────────────┘
+                  ▼
+   ┌──────────────────────────────────┐
+   │  User optionally enters filter:  │
+   │  · Account Number (11 digits)    │
+   │  · Card Number   (16 digits)     │
+   └──────────────┬───────────────────┘
+                  ▼
+   ┌──────────────────────────────────┐
+   │  ENTER → Validate filters        │
+   │  STARTBR/READNEXT on CARDDAT     │
+   │  Display up to 7 rows per page   │
+   └──────────────┬───────────────────┘
+                  ▼
+       ┌──────────┴──────────┐
+       │                     │
+  PF7 Page Up          PF8 Page Down
+       │                     │
+       ▼                     ▼
+  ┌────────────┐     ┌────────────┐
+  │ READPREV   │     │ READNEXT   │
+  │ backwards  │     │ forward    │
+  └────────────┘     └────────────┘
+                  ▼
+   ┌──────────────────────────────────┐
+   │  User selects row:               │
+   │  'S' → XCTL to COCRDSLC (View)  │
+   │  'U' → XCTL to COCRDUPC (Update)│
+   └──────────────┬───────────────────┘
+                  ▼
+   ┌──────────────────────────────────┐
+   │  PF3 → XCTL back to Main Menu   │
+   │        (COMEN01C / CM00)         │
+   └──────────────────────────────────┘
+      </pre></div>
+    </div>
+
+    <!-- 1.3 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>1.3 Business Rules</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Rule</th><th>Source / Logic</th></tr></thead>
+        <tbody>
+          <tr><td>BR-1</td><td>Account filter must be an 11-digit numeric value (if supplied)</td><td><code>2210-EDIT-ACCOUNT</code>: <code>CC-ACCT-ID IS NOT NUMERIC</code> → error</td></tr>
+          <tr><td>BR-2</td><td>Card filter must be a 16-digit numeric value (if supplied)</td><td><code>2220-EDIT-CARD</code>: <code>CC-CARD-NUM IS NOT NUMERIC</code> → error</td></tr>
+          <tr><td>BR-3</td><td>Only one row selection (<code>S</code> or <code>U</code>) may be active at a time</td><td><code>2250-EDIT-ARRAY</code>: INSPECT tallying S/U &gt; 1 → <code>WS-MORE-THAN-1-ACTION</code></td></tr>
+          <tr><td>BR-4</td><td>Valid selection codes are <code>S</code> (view) and <code>U</code> (update) only</td><td><code>SELECT-OK</code> 88-level VALUES <code>'S'</code>, <code>'U'</code>; else <code>WS-INVALID-ACTION-CODE</code></td></tr>
+          <tr><td>BR-5</td><td>Maximum 7 records displayed per page</td><td><code>WS-MAX-SCREEN-LINES = 7</code></td></tr>
+          <tr><td>BR-6</td><td>Records matching account/card filter are shown; non-matching records are excluded</td><td><code>9500-FILTER-RECORDS</code>: compares <code>CARD-ACCT-ID</code> and <code>CARD-NUM</code></td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 1.4 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>1.4 User Interactions</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Step</th><th>User Action</th><th>System Response</th><th>Business Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Select option 3 from Main Menu</td><td>XCTL to <code>COCRDLIC</code>; first page of cards displayed</td><td>Enter the card list browser</td></tr>
+          <tr><td>2</td><td>Enter account number filter and press ENTER</td><td>STARTBR/READNEXT with filter; matching cards listed</td><td>Narrow list to specific account</td></tr>
+          <tr><td>3</td><td>Enter card number filter and press ENTER</td><td>STARTBR/READNEXT with filter; matching card listed</td><td>Locate a specific card</td></tr>
+          <tr><td>4</td><td>Press PF8 (Forward)</td><td>Next 7 records displayed via READNEXT</td><td>Page down through card list</td></tr>
+          <tr><td>5</td><td>Press PF7 (Backward)</td><td>Previous 7 records displayed via READPREV</td><td>Page up through card list</td></tr>
+          <tr><td>6</td><td>Type <code>S</code> next to a row, press ENTER</td><td>XCTL to <code>COCRDSLC</code> with card number in COMMAREA</td><td>View card details</td></tr>
+          <tr><td>7</td><td>Type <code>U</code> next to a row, press ENTER</td><td>XCTL to <code>COCRDUPC</code> with card number in COMMAREA</td><td>Update card details</td></tr>
+          <tr><td>8</td><td>Press PF3</td><td>XCTL back to <code>COMEN01C</code> (Main Menu)</td><td>Exit card list</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SECTION 2 — Technical Flow Analysis
+     ════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">2</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 2.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>2.1 Technical Flow Diagram — Overview</h3>
+      <div class="diagram-box"><pre>
+  ┌─────────┐     ┌──────────────────────┐     ┌──────────┐
+  │ 3270     │────▶│  CICS Region          │────▶│ CARDDAT  │
+  │ Terminal │◀────│                        │◀────│ VSAM KSDS│
+  └─────────┘     │  COCRDLIC (CCLI)       │     └──────────┘
+                  │    │                    │     ┌──────────┐
+                  │    ├─ XCTL → COCRDSLC   │     │ CARDAIX  │
+                  │    │         (CCDL)     │     │ VSAM AIX │
+                  │    ├─ XCTL → COCRDUPC   │     └──────────┘
+                  │    │         (CCUP)     │
+                  │    └─ XCTL → COMEN01C   │
+                  │              (CM00)     │
+                  │                        │
+                  │  MAP: CCRDLIA           │
+                  │  MAPSET: COCRDLI        │
+                  └────────────────────────┘
+      </pre></div>
+    </div>
+
+    <!-- 2.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>2.2 Technical Flow Diagram — Detailed</h3>
+      <div class="diagram-box"><pre>
+  0000-MAIN
+    │
+    ├─ INITIALIZE CC-WORK-AREA, WS-MISC-STORAGE, WS-COMMAREA
+    │
+    ├─ IF EIBCALEN = 0  (first entry)
+    │    └─ INITIALIZE CARDDEMO-COMMAREA, WS-THIS-PROGCOMMAREA
+    │       SET CA-FIRST-PAGE, CA-LAST-PAGE-NOT-SHOWN
+    ├─ ELSE
+    │    └─ Restore CARDDEMO-COMMAREA + WS-THIS-PROGCOMMAREA from DFHCOMMAREA
+    │
+    ├─ IF coming from menu (CDEMO-PGM-ENTER, different program)
+    │    └─ INITIALIZE WS-THIS-PROGCOMMAREA; reset page tracking
+    │
+    ├─ YYYY-STORE-PFKEY   (map EIBAID → CCARD-AID-*)
+    │
+    ├─ IF EIBCALEN &gt; 0 AND CDEMO-FROM-PROGRAM = 'COCRDLIC'
+    │    ├─ 2000-RECEIVE-MAP
+    │    │    ├─ 2100-RECEIVE-SCREEN  →  EXEC CICS RECEIVE MAP('CCRDLIA')
+    │    │    │                            INTO(CCRDLIAI)
+    │    │    └─ 2200-EDIT-INPUTS
+    │    │         ├─ 2210-EDIT-ACCOUNT   (validate CC-ACCT-ID)
+    │    │         ├─ 2220-EDIT-CARD      (validate CC-CARD-NUM)
+    │    │         └─ 2250-EDIT-ARRAY     (validate S/U selections)
+    │
+    ├─ EVALUATE TRUE (main decision)
+    │    ├─ INPUT-ERROR        → show error, re-send map
+    │    ├─ PFK07 + FIRST-PAGE → re-read forward from first key
+    │    ├─ PFK03              → XCTL to COMEN01C (exit)
+    │    ├─ PFK08 + NEXT-EXISTS → 9000-READ-FORWARD (page down)
+    │    ├─ PFK07 + NOT FIRST  → 9100-READ-BACKWARDS (page up)
+    │    ├─ ENTER + 'S'        → XCTL to COCRDSLC (card view)
+    │    ├─ ENTER + 'U'        → XCTL to COCRDUPC (card update)
+    │    └─ OTHER              → re-read forward from first key
+    │
+    └─ COMMON-RETURN
+         ├─ Merge CARDDEMO-COMMAREA + WS-THIS-PROGCOMMAREA → WS-COMMAREA
+         └─ EXEC CICS RETURN TRANSID('CCLI') COMMAREA(WS-COMMAREA)
+      </pre></div>
+    </div>
+
+    <!-- 2.3 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>2.3 Pseudo-Conversational Flow</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Iteration</th><th>EIBCALEN</th><th>User Action</th><th>Entry Point</th><th>Screen Sent</th><th>Next TRANSID</th></tr></thead>
+        <tbody>
+          <tr><td>1 (first)</td><td>0</td><td>Select from menu</td><td><code>0000-MAIN</code> (EIBCALEN=0 path)</td><td>CCRDLIA — page 1, all cards</td><td>CCLI</td></tr>
+          <tr><td>2+</td><td>&gt;0</td><td>ENTER / PF7 / PF8</td><td><code>0000-MAIN</code> (restore COMMAREA, RECEIVE MAP, EVALUATE)</td><td>CCRDLIA — filtered/paged results</td><td>CCLI</td></tr>
+          <tr><td>Exit</td><td>&gt;0</td><td>PF3</td><td><code>0000-MAIN</code> → PFK03 path</td><td>—</td><td>XCTL to CM00</td></tr>
+          <tr><td>Drill-down</td><td>&gt;0</td><td>ENTER + S/U</td><td><code>0000-MAIN</code> → ENTER path</td><td>—</td><td>XCTL to CCDL/CCUP</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 2.4 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>2.4 CICS Command Flow</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>CICS Command</th><th>Paragraph</th><th>Purpose</th><th>RESP Handling</th></tr></thead>
+        <tbody>
+          <tr><td><code>RECEIVE MAP('CCRDLIA')</code></td><td><code>2100-RECEIVE-SCREEN</code></td><td>Receive user input from card list screen</td><td><code>WS-RESP-CD</code></td></tr>
+          <tr><td><code>SEND MAP('CCRDLIA')</code></td><td><code>1500-SEND-SCREEN</code></td><td>Send card list screen with data and messages</td><td><code>WS-RESP-CD</code></td></tr>
+          <tr><td><code>STARTBR DATASET('CARDDAT') GTEQ</code></td><td><code>9000-READ-FORWARD</code></td><td>Start forward browse on CARDDAT at given key</td><td><code>WS-RESP-CD</code>, <code>WS-REAS-CD</code></td></tr>
+          <tr><td><code>READNEXT DATASET('CARDDAT')</code></td><td><code>9000-READ-FORWARD</code></td><td>Read next card record during forward pagination</td><td>NORMAL, DUPREC, ENDFILE, OTHER</td></tr>
+          <tr><td><code>ENDBR FILE('CARDDAT')</code></td><td><code>9000-READ-FORWARD</code></td><td>End forward browse session</td><td>—</td></tr>
+          <tr><td><code>STARTBR DATASET('CARDDAT') GTEQ</code></td><td><code>9100-READ-BACKWARDS</code></td><td>Start browse for backward pagination</td><td><code>WS-RESP-CD</code>, <code>WS-REAS-CD</code></td></tr>
+          <tr><td><code>READPREV DATASET('CARDDAT')</code></td><td><code>9100-READ-BACKWARDS</code></td><td>Read previous card record during backward pagination</td><td>NORMAL, DUPREC, OTHER</td></tr>
+          <tr><td><code>ENDBR FILE('CARDDAT')</code></td><td><code>9100-READ-BACKWARDS</code></td><td>End backward browse session</td><td>—</td></tr>
+          <tr><td><code>XCTL PROGRAM('COMEN01C')</code></td><td><code>0000-MAIN</code> (PF3)</td><td>Transfer control to Main Menu</td><td>—</td></tr>
+          <tr><td><code>XCTL PROGRAM(CCARD-NEXT-PROG)</code></td><td><code>0000-MAIN</code> (S selection)</td><td>Transfer to Credit Card View (<code>COCRDSLC</code>)</td><td>—</td></tr>
+          <tr><td><code>XCTL PROGRAM(CCARD-NEXT-PROG)</code></td><td><code>0000-MAIN</code> (U selection)</td><td>Transfer to Credit Card Update (<code>COCRDUPC</code>)</td><td>—</td></tr>
+          <tr><td><code>RETURN TRANSID('CCLI')</code></td><td><code>COMMON-RETURN</code></td><td>Return to CICS with next TRANSID for pseudo-conversational loop</td><td>—</td></tr>
+          <tr><td><code>SEND TEXT FROM(WS-ERROR-MSG)</code></td><td><code>SEND-PLAIN-TEXT</code></td><td>Debug-only plain text error display</td><td>—</td></tr>
+          <tr><td><code>SEND TEXT FROM(WS-LONG-MSG)</code></td><td><code>SEND-LONG-TEXT</code></td><td>Debug-only long text display</td><td>—</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SECTION 3 — Screen Flow and BMS Maps
+     ════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">3</span>
+    <h2>Screen Flow and BMS Maps</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 3.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>3.1 Screen Flow Diagram</h3>
+      <div class="diagram-box"><pre>
+  ┌─────────────────┐   PF3    ┌─────────────────┐
+  │  Main Menu      │◀─────────│  CCRDLIA         │
+  │  (COMEN1A)      │─────────▶│  Card List Screen│
+  │  CM00           │  Opt 3   │  CCLI            │
+  └─────────────────┘          └─────┬───┬────────┘
+                                     │   │
+                           S + ENTER │   │ U + ENTER
+                                     ▼   ▼
+                          ┌──────────┐   ┌──────────┐
+                          │ CCRDSLA  │   │ CCRDUPA  │
+                          │ Card View│   │ Card Upd │
+                          │ CCDL     │   │ CCUP     │
+                          └──────────┘   └──────────┘
+                                     │
+                         PF7 / PF8   │  (self-loop pagination)
+                              ◀──────┘
+      </pre></div>
+    </div>
+
+    <!-- 3.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>3.2 BMS Map Inventory</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Map Name</th><th>Mapset</th><th>Purpose</th><th>Key Fields</th></tr></thead>
+        <tbody>
+          <tr><td><code>CCRDLIA</code></td><td><code>COCRDLI</code></td><td>Credit Card List — main listing screen (24×80)</td><td>ACCTSID (account filter), CARDSID (card filter), CRDSELn (row selection), ACCTNOn (account), CRDNUMn (card#), CRDSTSn (status)</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 3.3 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>3.3 Screen Field Details</h3>
+      <h4>Map: CCRDLIA (24 × 80)</h4>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>Row,Col</th><th>Len</th><th>Attr</th><th>Color</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>TRNNAME</code></td><td>1,7</td><td>4</td><td>ASKIP,FSET,NORM</td><td>BLUE</td><td>Transaction ID display</td></tr>
+          <tr><td><code>TITLE01</code></td><td>1,21</td><td>40</td><td>ASKIP,NORM</td><td>YELLOW</td><td>Title line 1</td></tr>
+          <tr><td><code>CURDATE</code></td><td>1,71</td><td>8</td><td>ASKIP,NORM</td><td>BLUE</td><td>Current date (mm/dd/yy)</td></tr>
+          <tr><td><code>PGMNAME</code></td><td>2,7</td><td>8</td><td>ASKIP,NORM</td><td>BLUE</td><td>Program name display</td></tr>
+          <tr><td><code>TITLE02</code></td><td>2,21</td><td>40</td><td>ASKIP,NORM</td><td>YELLOW</td><td>Title line 2</td></tr>
+          <tr><td><code>CURTIME</code></td><td>2,71</td><td>8</td><td>ASKIP,NORM</td><td>BLUE</td><td>Current time (hh:mm:ss)</td></tr>
+          <tr><td><code>PAGENO</code></td><td>4,76</td><td>3</td><td>—</td><td>—</td><td>Page number</td></tr>
+          <tr><td><code>ACCTSID</code></td><td>6,44</td><td>11</td><td>FSET,IC,NORM,UNPROT</td><td>GREEN</td><td>Account number filter (input)</td></tr>
+          <tr><td><code>CARDSID</code></td><td>7,44</td><td>16</td><td>FSET,NORM,UNPROT</td><td>GREEN</td><td>Card number filter (input)</td></tr>
+          <tr><td><code>CRDSEL1–7</code></td><td>11–17,12</td><td>1</td><td>FSET,NORM,PROT *</td><td>DEFAULT</td><td>Row selection (S/U input; protected when empty)</td></tr>
+          <tr><td><code>ACCTNO1–7</code></td><td>11–17,22</td><td>11</td><td>NORM,PROT</td><td>DEFAULT</td><td>Account number (display)</td></tr>
+          <tr><td><code>CRDNUM1–7</code></td><td>11–17,43</td><td>16</td><td>NORM,PROT</td><td>DEFAULT</td><td>Card number (display)</td></tr>
+          <tr><td><code>CRDSTS1–7</code></td><td>11–17,67</td><td>1</td><td>NORM,PROT</td><td>DEFAULT</td><td>Active status flag (display)</td></tr>
+          <tr><td><code>INFOMSG</code></td><td>20,19</td><td>45</td><td>PROT</td><td>NEUTRAL</td><td>Informational message</td></tr>
+          <tr><td><code>ERRMSG</code></td><td>23,1</td><td>78</td><td>ASKIP,BRT,FSET</td><td>RED</td><td>Error message line</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p>* Selection fields become UNPROT (<code>DFHBMFSE</code>) when the row contains data and <code>FLG-PROTECT-SELECT-ROWS-YES</code> is not set. Hidden stopper fields (<code>CRDSTPn</code>) overlay at the same position with <code>DRK</code> attribute for rows 2–7.</p>
+    </div>
+
+    <!-- 3.4 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>3.4 PF Key / AID Key Handling</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Key</th><th>CCARD-AID Value</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td>ENTER</td><td><code>CCARD-AID-ENTER</code></td><td>Validate input; if row selected ('S') → XCTL to COCRDSLC; if ('U') → XCTL to COCRDUPC; otherwise re-read and display</td></tr>
+          <tr><td>PF3</td><td><code>CCARD-AID-PFK03</code></td><td>Exit — XCTL to COMEN01C (Main Menu) with COMMAREA</td></tr>
+          <tr><td>PF7</td><td><code>CCARD-AID-PFK07</code></td><td>Page Up — if <code>CA-FIRST-PAGE</code>, re-display page 1; else <code>9100-READ-BACKWARDS</code></td></tr>
+          <tr><td>PF8</td><td><code>CCARD-AID-PFK08</code></td><td>Page Down — if <code>CA-NEXT-PAGE-EXISTS</code>, <code>9000-READ-FORWARD</code> from last key; else 'NO MORE PAGES'</td></tr>
+          <tr><td>Any other</td><td>—</td><td>Treated as ENTER (<code>SET PFK-INVALID → SET CCARD-AID-ENTER TO TRUE</code>)</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SECTION 4 — Program Inventory and Call Chain
+     ════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">4</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 4.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>4.1 Program Inventory</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Program</th><th>Trans ID</th><th>Purpose</th><th>Entry Mechanism</th><th>LOC</th></tr></thead>
+        <tbody>
+          <tr><td><code>COCRDLIC</code></td><td>CCLI</td><td>Credit Card List — entry program</td><td>CICS TRANSID / XCTL from menu</td><td>1,459</td></tr>
+          <tr><td><code>COCRDSLC</code></td><td>CCDL</td><td>Credit Card View (detail)</td><td>XCTL from COCRDLIC (S selection)</td><td>—</td></tr>
+          <tr><td><code>COCRDUPC</code></td><td>CCUP</td><td>Credit Card Update</td><td>XCTL from COCRDLIC (U selection)</td><td>—</td></tr>
+          <tr><td><code>COMEN01C</code></td><td>CM00</td><td>Main Menu</td><td>XCTL from COCRDLIC (PF3 exit)</td><td>—</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 4.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>4.2 Call Chain Diagram</h3>
+      <div class="diagram-box"><pre>
+  CCLI (TRANSID)
+    │
+    └─▶ COCRDLIC (entry program)
+           │
+           ├─ XCTL → COCRDSLC  (CCDL — Card View)
+           │           COMMAREA: CDEMO-ACCT-ID, CDEMO-CARD-NUM
+           │
+           ├─ XCTL → COCRDUPC  (CCUP — Card Update)
+           │           COMMAREA: CDEMO-ACCT-ID, CDEMO-CARD-NUM
+           │
+           └─ XCTL → COMEN01C  (CM00 — Main Menu)
+                       COMMAREA: CARDDEMO-COMMAREA
+           │
+           └─ RETURN TRANSID('CCLI')
+                       COMMAREA: WS-COMMAREA (2000 bytes)
+      </pre></div>
+    </div>
+
+    <!-- 4.3 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>4.3 Call Details</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Caller</th><th>Called</th><th>Mechanism</th><th>Data Passed</th><th>When</th></tr></thead>
+        <tbody>
+          <tr><td><code>COCRDLIC</code></td><td><code>COCRDSLC</code></td><td>EXEC CICS XCTL</td><td><code>CARDDEMO-COMMAREA</code> with <code>CDEMO-ACCT-ID</code>, <code>CDEMO-CARD-NUM</code> populated from selected row</td><td>User types 'S' next to a row and presses ENTER</td></tr>
+          <tr><td><code>COCRDLIC</code></td><td><code>COCRDUPC</code></td><td>EXEC CICS XCTL</td><td><code>CARDDEMO-COMMAREA</code> with <code>CDEMO-ACCT-ID</code>, <code>CDEMO-CARD-NUM</code> populated from selected row</td><td>User types 'U' next to a row and presses ENTER</td></tr>
+          <tr><td><code>COCRDLIC</code></td><td><code>COMEN01C</code></td><td>EXEC CICS XCTL</td><td><code>CARDDEMO-COMMAREA</code> (general info only)</td><td>User presses PF3 to exit</td></tr>
+          <tr><td><code>COCRDLIC</code></td><td><code>COCRDLIC</code></td><td>EXEC CICS RETURN TRANSID</td><td><code>WS-COMMAREA</code> (CARDDEMO-COMMAREA + WS-THIS-PROGCOMMAREA)</td><td>Every pseudo-conversational iteration</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SECTION 5 — File and Data Store Inventory
+     ════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">5</span>
+    <h2>File and Data Store Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 5.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>5.1 File Inventory</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>FCT Name</th><th>Type</th><th>Access Mode</th><th>Program</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>CARDDAT</code></td><td>VSAM KSDS</td><td>Browse (STARTBR, READNEXT, READPREV, ENDBR)</td><td><code>COCRDLIC</code></td><td>Primary credit card master file — contains card records keyed by card number</td></tr>
+          <tr><td><code>CARDAIX</code></td><td>VSAM AIX</td><td>Defined but <strong>not used in browse operations</strong> (reserved for alternate index path by account)</td><td><code>COCRDLIC</code></td><td>Alternate index for CARDDAT by account ID — declared as <code>LIT-CARD-FILE-ACCT-PATH</code> but not referenced in active CICS commands</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 5.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>5.2 File Access Details</h3>
+      <h4>CARDDAT</h4>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Property</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>Dataset Name</td><td><code>CARDDAT</code> (FCT entry)</td></tr>
+          <tr><td>Record Layout</td><td><code>CVACT02Y.cpy</code> → <code>CARD-RECORD</code> (150 bytes)</td></tr>
+          <tr><td>Primary Key</td><td><code>CARD-NUM</code> (16 bytes, alphanumeric)</td></tr>
+          <tr><td>Key Length</td><td>16 bytes (<code>LENGTH OF WS-CARD-RID-CARDNUM</code>)</td></tr>
+          <tr><td>Access Mode</td><td>Browse only — STARTBR (GTEQ), READNEXT, READPREV, ENDBR</td></tr>
+          <tr><td>Locking</td><td>No update locking (read-only browse)</td></tr>
+          <tr><td>Access Pattern</td><td>Sequential browse with optional application-level filtering by <code>CARD-ACCT-ID</code> and/or <code>CARD-NUM</code> in <code>9500-FILTER-RECORDS</code></td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <h4>Record Layout: CARD-RECORD (CVACT02Y)</h4>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>CARD-NUM</code></td><td>X(16)</td><td>16</td><td>Credit card number (primary key)</td></tr>
+          <tr><td><code>CARD-ACCT-ID</code></td><td>9(11)</td><td>11</td><td>Associated account ID</td></tr>
+          <tr><td><code>CARD-CVV-CD</code></td><td>9(03)</td><td>3</td><td>CVV security code</td></tr>
+          <tr><td><code>CARD-EMBOSSED-NAME</code></td><td>X(50)</td><td>50</td><td>Cardholder name as embossed</td></tr>
+          <tr><td><code>CARD-EXPIRAION-DATE</code></td><td>X(10)</td><td>10</td><td>Expiration date</td></tr>
+          <tr><td><code>CARD-ACTIVE-STATUS</code></td><td>X(01)</td><td>1</td><td>Active/inactive status flag</td></tr>
+          <tr><td><code>FILLER</code></td><td>X(59)</td><td>59</td><td>Reserved</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 5.3 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>5.3 TSQ Usage</h3>
+      <p><em>N/A — No Temporary Storage Queue usage in this transaction.</em></p>
+    </div>
+
+    <!-- 5.4 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>5.4 TDQ Usage</h3>
+      <p><em>N/A — No Transient Data Queue usage in this transaction.</em></p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SECTION 6 — Data Flow Analysis
+     ════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">6</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 6.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>6.1 Data Flow Through Transaction</h3>
+      <div class="diagram-box"><pre>
+  ┌───────────────┐        ┌──────────────────────┐        ┌──────────────┐
+  │ Terminal Input │───────▶│  Working Storage      │───────▶│ CARDDAT File │
+  │ (CCRDLIAI)    │        │                        │        │ (VSAM KSDS) │
+  │               │        │  CC-ACCT-ID (filter)   │        │              │
+  │  ACCTSIDI ────┼───────▶│  CC-CARD-NUM (filter)  │        │  STARTBR     │
+  │  CARDSIDI ────┼───────▶│                        │───────▶│  READNEXT    │
+  │  CRDSELnI ───┼───────▶│  WS-EDIT-SELECT(1-7)  │        │  READPREV    │
+  └───────────────┘        │                        │        └──────┬───────┘
+                           │  CARD-RECORD ◀─────────┼───────────────┘
+                           │    CARD-NUM             │
+                           │    CARD-ACCT-ID         │
+                           │    CARD-ACTIVE-STATUS   │
+                           │                        │
+                           │  9500-FILTER-RECORDS   │
+                           │    ↓ (pass/exclude)    │
+                           │                        │
+                           │  WS-SCREEN-ROWS(1-7)  │        ┌───────────────┐
+                           │    WS-ROW-ACCTNO       │───────▶│ Terminal Out  │
+                           │    WS-ROW-CARD-NUM     │        │ (CCRDLIAO)   │
+                           │    WS-ROW-CARD-STATUS  │        │              │
+                           └────────────────────────┘        │  ACCTNOnO    │
+                                                             │  CRDNUMnO    │
+                                                             │  CRDSTSnO    │
+                                                             └──────────────┘
+      </pre></div>
+    </div>
+
+    <!-- 6.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>6.2 Data Transformation Map</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Source</th><th>Transformation</th><th>Target</th></tr></thead>
+        <tbody>
+          <tr><td><code>ACCTSIDI</code> (map input)</td><td>Move to <code>CC-ACCT-ID</code>; numeric validation</td><td><code>CDEMO-ACCT-ID</code> (COMMAREA)</td></tr>
+          <tr><td><code>CARDSIDI</code> (map input)</td><td>Move to <code>CC-CARD-NUM</code>; numeric validation</td><td><code>CDEMO-CARD-NUM</code> (COMMAREA)</td></tr>
+          <tr><td><code>CRDSELnI</code> (map input)</td><td>Move to <code>WS-EDIT-SELECT(n)</code>; validate S/U</td><td><code>I-SELECTED</code> (index of selected row)</td></tr>
+          <tr><td><code>CARD-ACCT-ID</code> (VSAM)</td><td>Move after filter check</td><td><code>WS-ROW-ACCTNO(n)</code> → <code>ACCTNOnO</code> (screen)</td></tr>
+          <tr><td><code>CARD-NUM</code> (VSAM)</td><td>Move after filter check</td><td><code>WS-ROW-CARD-NUM(n)</code> → <code>CRDNUMnO</code> (screen)</td></tr>
+          <tr><td><code>CARD-ACTIVE-STATUS</code> (VSAM)</td><td>Move after filter check</td><td><code>WS-ROW-CARD-STATUS(n)</code> → <code>CRDSTSnO</code> (screen)</td></tr>
+          <tr><td><code>WS-CA-FIRST-CARD-NUM/ACCT-ID</code></td><td>Captured from 1st record on page</td><td><code>WS-THIS-PROGCOMMAREA</code> (pagination state)</td></tr>
+          <tr><td><code>WS-CA-LAST-CARD-NUM/ACCT-ID</code></td><td>Captured from last record on page</td><td><code>WS-THIS-PROGCOMMAREA</code> (pagination state)</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SECTION 7 — COMMAREA and Interface Contracts
+     ════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">7</span>
+    <h2>COMMAREA and Interface Contracts</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 7.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>7.1 COMMAREA Layout</h3>
+      <p>The COMMAREA passed on <code>RETURN TRANSID</code> is <code>WS-COMMAREA</code> (2000 bytes), which is a concatenation of two structures:</p>
+
+      <h4>Part 1: CARDDEMO-COMMAREA (COCOM01Y — shared)</h4>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Dir</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>CDEMO-FROM-TRANID</code></td><td>X(04)</td><td>4</td><td>IN/OUT</td><td>Originating transaction ID (<code>'CCLI'</code>)</td></tr>
+          <tr><td><code>CDEMO-FROM-PROGRAM</code></td><td>X(08)</td><td>8</td><td>IN/OUT</td><td>Originating program (<code>'COCRDLIC'</code>)</td></tr>
+          <tr><td><code>CDEMO-TO-TRANID</code></td><td>X(04)</td><td>4</td><td>OUT</td><td>Target transaction for XCTL</td></tr>
+          <tr><td><code>CDEMO-TO-PROGRAM</code></td><td>X(08)</td><td>8</td><td>OUT</td><td>Target program for XCTL</td></tr>
+          <tr><td><code>CDEMO-USER-ID</code></td><td>X(08)</td><td>8</td><td>IN</td><td>Signed-on user ID</td></tr>
+          <tr><td><code>CDEMO-USER-TYPE</code></td><td>X(01)</td><td>1</td><td>IN</td><td>'A' = admin, 'U' = regular user</td></tr>
+          <tr><td><code>CDEMO-PGM-CONTEXT</code></td><td>9(01)</td><td>1</td><td>IN/OUT</td><td>0 = first entry, 1 = re-entry</td></tr>
+          <tr><td><code>CDEMO-ACCT-ID</code></td><td>9(11)</td><td>11</td><td>IN/OUT</td><td>Account filter / selected account</td></tr>
+          <tr><td><code>CDEMO-CARD-NUM</code></td><td>9(16)</td><td>16</td><td>IN/OUT</td><td>Card filter / selected card number</td></tr>
+          <tr><td><code>CDEMO-LAST-MAP</code></td><td>X(7)</td><td>7</td><td>OUT</td><td>Last map displayed (<code>'CCRDLIA'</code>)</td></tr>
+          <tr><td><code>CDEMO-LAST-MAPSET</code></td><td>X(7)</td><td>7</td><td>OUT</td><td>Last mapset used (<code>'COCRDLI'</code>)</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <h4>Part 2: WS-THIS-PROGCOMMAREA (program-private pagination state)</h4>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>WS-CA-LAST-CARD-NUM</code></td><td>X(16)</td><td>16</td><td>Card number of last record on current page (READNEXT resume key)</td></tr>
+          <tr><td><code>WS-CA-LAST-CARD-ACCT-ID</code></td><td>9(11)</td><td>11</td><td>Account ID of last record on current page</td></tr>
+          <tr><td><code>WS-CA-FIRST-CARD-NUM</code></td><td>X(16)</td><td>16</td><td>Card number of first record on current page (READPREV resume key)</td></tr>
+          <tr><td><code>WS-CA-FIRST-CARD-ACCT-ID</code></td><td>9(11)</td><td>11</td><td>Account ID of first record on current page</td></tr>
+          <tr><td><code>WS-CA-SCREEN-NUM</code></td><td>9(1)</td><td>1</td><td>Current page number</td></tr>
+          <tr><td><code>WS-CA-LAST-PAGE-DISPLAYED</code></td><td>9(1)</td><td>1</td><td>0 = last page was shown, 9 = last page not yet shown</td></tr>
+          <tr><td><code>WS-CA-NEXT-PAGE-IND</code></td><td>X(1)</td><td>1</td><td>'Y' = more pages exist, LOW-VALUES = no more</td></tr>
+          <tr><td><code>WS-RETURN-FLAG</code></td><td>X(1)</td><td>1</td><td>Return flag for called programs</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 7.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>7.2 Return Code Conventions</h3>
+      <p>COCRDLIC does not use numeric return codes. State is communicated through:</p>
+      <ul>
+        <li><code>CDEMO-PGM-CONTEXT</code>: 0 = enter (fresh start), 1 = re-enter (subsequent interaction)</li>
+        <li><code>WS-RETURN-FLAG</code>: <code>'1'</code> = returning from a called program, LOW-VALUES = normal</li>
+        <li><code>CA-NEXT-PAGE-EXISTS</code> / <code>CA-NEXT-PAGE-NOT-EXISTS</code>: pagination boundary flags</li>
+      </ul>
+    </div>
+
+    <!-- 7.3 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>7.3 Conversation State Management</h3>
+      <p>State is preserved via the merged COMMAREA passed on <code>EXEC CICS RETURN TRANSID('CCLI')</code>:</p>
+      <ul>
+        <li><strong>Save</strong>: At <code>COMMON-RETURN</code>, <code>CARDDEMO-COMMAREA</code> is moved to the first part of <code>WS-COMMAREA</code>, followed by <code>WS-THIS-PROGCOMMAREA</code> appended at offset <code>LENGTH OF CARDDEMO-COMMAREA + 1</code>.</li>
+        <li><strong>Restore</strong>: On re-entry (EIBCALEN &gt; 0), <code>DFHCOMMAREA</code> is split back into the two structures at the same offset.</li>
+        <li><strong>Pagination keys</strong>: <code>WS-CA-FIRST-CARDKEY</code> and <code>WS-CA-LAST-CARDKEY</code> carry the VSAM browse resume positions between iterations.</li>
+        <li><strong>Fresh start detection</strong>: If <code>CDEMO-PGM-ENTER</code> is true and <code>CDEMO-FROM-PROGRAM</code> ≠ <code>'COCRDLIC'</code>, the program reinitializes <code>WS-THIS-PROGCOMMAREA</code>, resetting pagination to page 1.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SECTION 8 — Error Handling and User Feedback
+     ════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">8</span>
+    <h2>Error Handling and User Feedback</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 8.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>8.1 Error Flow Diagram</h3>
+      <div class="diagram-box"><pre>
+  User Input
+      │
+      ▼
+  ┌──────────────────────┐
+  │  2200-EDIT-INPUTS     │
+  │  ├ 2210-EDIT-ACCOUNT  │──▶ NOT NUMERIC? → INPUT-ERROR
+  │  ├ 2220-EDIT-CARD     │──▶ NOT NUMERIC? → INPUT-ERROR
+  │  └ 2250-EDIT-ARRAY    │──▶ Multiple S/U? → INPUT-ERROR
+  │                        │──▶ Invalid code? → INPUT-ERROR
+  └──────────┬─────────────┘
+             │
+     ┌───────┴───────┐
+     │               │
+  INPUT-OK      INPUT-ERROR
+     │               │
+     ▼               ▼
+  Normal Flow    Set WS-ERROR-MSG
+  (browse/xctl)  Re-SEND MAP with
+                 error in ERRMSG
+                 (red, bright)
+      </pre></div>
+    </div>
+
+    <!-- 8.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>8.2 Error Handling Matrix</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Condition</th><th>RESP Code</th><th>Program Action</th><th>User Message</th></tr></thead>
+        <tbody>
+          <tr><td>Account filter not numeric</td><td>—</td><td><code>SET INPUT-ERROR</code>, <code>SET FLG-ACCTFILTER-NOT-OK</code>, protect selection rows</td><td><code>ACCOUNT FILTER,IF SUPPLIED MUST BE A 11 DIGIT NUMBER</code></td></tr>
+          <tr><td>Card filter not numeric</td><td>—</td><td><code>SET INPUT-ERROR</code>, <code>SET FLG-CARDFILTER-NOT-OK</code>, protect selection rows</td><td><code>CARD ID FILTER,IF SUPPLIED MUST BE A 16 DIGIT NUMBER</code></td></tr>
+          <tr><td>Multiple rows selected</td><td>—</td><td><code>SET INPUT-ERROR</code>, <code>SET WS-MORE-THAN-1-ACTION</code></td><td><code>PLEASE SELECT ONLY ONE RECORD TO VIEW OR UPDATE</code></td></tr>
+          <tr><td>Invalid action code (not S/U/blank)</td><td>—</td><td><code>SET INPUT-ERROR</code>, flag row error</td><td><code>INVALID ACTION CODE</code></td></tr>
+          <tr><td>READNEXT returns ENDFILE</td><td><code>DFHRESP(ENDFILE)</code></td><td><code>SET READ-LOOP-EXIT</code>, <code>SET CA-NEXT-PAGE-NOT-EXISTS</code></td><td><code>NO MORE RECORDS TO SHOW</code></td></tr>
+          <tr><td>READNEXT returns unexpected RESP</td><td>OTHER</td><td><code>SET READ-LOOP-EXIT</code>, build <code>WS-FILE-ERROR-MESSAGE</code></td><td><code>File Error: READ on CARDDAT returned RESP …,RESP2 …</code></td></tr>
+          <tr><td>No records found (page 1, 0 records)</td><td><code>DFHRESP(ENDFILE)</code></td><td><code>SET WS-NO-RECORDS-FOUND</code></td><td><code>NO RECORDS FOUND FOR THIS SEARCH CONDITION.</code></td></tr>
+          <tr><td>PF7 on first page</td><td>—</td><td>Re-display first page</td><td><code>NO PREVIOUS PAGES TO DISPLAY</code></td></tr>
+          <tr><td>PF8 on last page (already shown)</td><td>—</td><td>Re-display current page</td><td><code>NO MORE PAGES TO DISPLAY</code></td></tr>
+          <tr><td>PF3 exit</td><td>—</td><td>XCTL to main menu</td><td><code>PF03 PRESSED.EXITING</code></td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 8.3 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>8.3 HANDLE ABEND / HANDLE CONDITION</h3>
+      <p><em>No <code>HANDLE ABEND</code> or <code>HANDLE CONDITION</code> statements are used in COCRDLIC.</em> All error conditions are handled through <code>RESP</code>/<code>RESP2</code> options on CICS commands and evaluated with <code>DFHRESP</code> macros.</p>
+    </div>
+
+    <!-- 8.4 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>8.4 User Error Messages</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>88-Level / Source</th><th>Message Text</th><th>Context</th></tr></thead>
+        <tbody>
+          <tr><td><code>WS-EXIT-MESSAGE</code></td><td><code>PF03 PRESSED.EXITING</code></td><td>PF3 key pressed</td></tr>
+          <tr><td><code>WS-NO-RECORDS-FOUND</code></td><td><code>NO RECORDS FOUND FOR THIS SEARCH CONDITION.</code></td><td>ENDFILE on page 1 with 0 records</td></tr>
+          <tr><td><code>WS-MORE-THAN-1-ACTION</code></td><td><code>PLEASE SELECT ONLY ONE RECORD TO VIEW OR UPDATE</code></td><td>Multiple S/U selections</td></tr>
+          <tr><td><code>WS-INVALID-ACTION-CODE</code></td><td><code>INVALID ACTION CODE</code></td><td>Selection is not S, U, or blank</td></tr>
+          <tr><td><code>WS-INFORM-REC-ACTIONS</code></td><td><code>TYPE S FOR DETAIL, U TO UPDATE ANY RECORD</code></td><td>Informational — displayed in <code>INFOMSG</code> field</td></tr>
+          <tr><td>Inline literal</td><td><code>ACCOUNT FILTER,IF SUPPLIED MUST BE A 11 DIGIT NUMBER</code></td><td>Account filter validation failure</td></tr>
+          <tr><td>Inline literal</td><td><code>CARD ID FILTER,IF SUPPLIED MUST BE A 16 DIGIT NUMBER</code></td><td>Card filter validation failure</td></tr>
+          <tr><td>Inline literal</td><td><code>NO MORE RECORDS TO SHOW</code></td><td>ENDFILE during browse</td></tr>
+          <tr><td>Inline literal</td><td><code>NO PREVIOUS PAGES TO DISPLAY</code></td><td>PF7 on first page</td></tr>
+          <tr><td>Inline literal</td><td><code>NO MORE PAGES TO DISPLAY</code></td><td>PF8 when last page already shown</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SECTION 9 — Security and Authorization
+     ════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">9</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 9.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>9.1 Transaction Security</h3>
+      <p>COCRDLIC does not perform its own authentication or transaction-level security checks. Access control relies on:</p>
+      <ul>
+        <li><strong>Menu routing</strong>: The Credit Card List option (#3) is available from the Main Menu (<code>COMEN01C</code>), which is reached only after successful sign-on via <code>COSGN00C</code> (CC00).</li>
+        <li><strong>User type</strong>: The program defaults to <code>SET CDEMO-USRTYP-USER TO TRUE</code>. The <code>CDEMO-USER-TYPE</code> field in COMMAREA carries <code>'A'</code> (admin) or <code>'U'</code> (regular user) from the sign-on program.</li>
+        <li><strong>CICS transaction security</strong>: Standard RACF/ESM transaction-level security may restrict which users can invoke CCLI.</li>
+      </ul>
+    </div>
+
+    <!-- 9.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>9.2 Data Access Authorization</h3>
+      <p>The program header notes that admin users see all cards, while regular users see only cards associated with their account (via the COMMAREA <code>CDEMO-ACCT-ID</code>). However, the current implementation applies application-level filtering in <code>9500-FILTER-RECORDS</code> based on the user-entered filter fields, not the user type. True account-based restriction would require additional logic beyond what is currently coded.</p>
+    </div>
+
+    <!-- 9.3 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>9.3 Audit Trail</h3>
+      <p><em>No explicit audit logging or journaling is performed by COCRDLIC.</em> Standard CICS SMF/journal records provide the only audit trail for browse operations.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SECTION 10 — Performance Characteristics
+     ════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Performance Characteristics</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 10.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>10.1 Performance Profile</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Metric</th><th>Estimated Value</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>File I/Os per page (forward)</td><td>8 READNEXT (7 display + 1 look-ahead)</td><td>Plus filtered/excluded records if filters active</td></tr>
+          <tr><td>File I/Os per page (backward)</td><td>8+ READPREV</td><td>1 initial READPREV + 7 data reads (plus excluded)</td></tr>
+          <tr><td>STARTBR per iteration</td><td>1</td><td>One STARTBR per pagination action</td></tr>
+          <tr><td>ENDBR per iteration</td><td>1</td><td>Paired with each STARTBR</td></tr>
+          <tr><td>MAP SEND per iteration</td><td>1</td><td>Single SEND MAP per interaction</td></tr>
+          <tr><td>MAP RECEIVE per iteration</td><td>0–1</td><td>Only on re-entry (EIBCALEN &gt; 0)</td></tr>
+          <tr><td>COMMAREA size</td><td>~2,000 bytes</td><td><code>LENGTH OF WS-COMMAREA</code></td></tr>
+          <tr><td>Record length</td><td>150 bytes</td><td>CARD-RECORD in CVACT02Y</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 10.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>10.2 Performance Considerations</h3>
+      <ul>
+        <li><strong>Application-level filtering</strong>: When an account filter is active, the program reads and discards non-matching records via <code>9500-FILTER-RECORDS</code>. If matching records are sparse, many READNEXTs may be needed to fill 7 screen rows, increasing I/O cost.</li>
+        <li><strong>CARDAIX unused</strong>: The <code>LIT-CARD-FILE-ACCT-PATH</code> alternate index (<code>CARDAIX</code>) is defined but never used for browse. Using it for account-filtered browses would significantly reduce I/O for large files.</li>
+        <li><strong>No skip-sequential optimization</strong>: The browse always reads from the beginning of the matching key range; there is no optimization for skipping to a specific account's cards.</li>
+        <li><strong>COMMAREA size</strong>: At ~2,000 bytes, the COMMAREA is moderately sized and should not cause performance concerns.</li>
+        <li><strong>Repetitive code</strong>: The program uses hardcoded references for 7 screen rows (e.g., <code>CRDSEL1O</code>–<code>CRDSEL7O</code>) instead of BMS arrays, which increases program size but has no runtime performance impact.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SECTION 11 — Testing Approach
+     ════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 11.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>11.1 Test Scenarios</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Scenario</th><th>Input</th><th>Expected Result</th></tr></thead>
+        <tbody>
+          <tr><td>TC-01</td><td>Initial entry — no filters</td><td>Select option 3 from main menu</td><td>First 7 cards displayed, page 1, info message shown</td></tr>
+          <tr><td>TC-02</td><td>Account filter — valid</td><td>Enter 11-digit account number, press ENTER</td><td>Only cards matching that account displayed</td></tr>
+          <tr><td>TC-03</td><td>Account filter — non-numeric</td><td>Enter 'ABC' in account field, press ENTER</td><td>Error: <code>ACCOUNT FILTER,IF SUPPLIED MUST BE A 11 DIGIT NUMBER</code></td></tr>
+          <tr><td>TC-04</td><td>Card filter — valid</td><td>Enter 16-digit card number, press ENTER</td><td>Matching card displayed</td></tr>
+          <tr><td>TC-05</td><td>Card filter — non-numeric</td><td>Enter 'XXXX' in card field, press ENTER</td><td>Error: <code>CARD ID FILTER,IF SUPPLIED MUST BE A 16 DIGIT NUMBER</code></td></tr>
+          <tr><td>TC-06</td><td>Page down (PF8)</td><td>Press PF8 on page with more records</td><td>Next 7 records displayed, page number incremented</td></tr>
+          <tr><td>TC-07</td><td>Page down — last page</td><td>Press PF8 when no more records</td><td>Message: <code>NO MORE PAGES TO DISPLAY</code></td></tr>
+          <tr><td>TC-08</td><td>Page up (PF7)</td><td>Press PF7 on page &gt; 1</td><td>Previous 7 records displayed, page number decremented</td></tr>
+          <tr><td>TC-09</td><td>Page up — first page</td><td>Press PF7 on page 1</td><td>Message: <code>NO PREVIOUS PAGES TO DISPLAY</code></td></tr>
+          <tr><td>TC-10</td><td>Select card for view</td><td>Type 'S' next to row 3, press ENTER</td><td>XCTL to COCRDSLC with that card's ACCT-ID and CARD-NUM</td></tr>
+          <tr><td>TC-11</td><td>Select card for update</td><td>Type 'U' next to row 5, press ENTER</td><td>XCTL to COCRDUPC with that card's ACCT-ID and CARD-NUM</td></tr>
+          <tr><td>TC-12</td><td>Multiple selections</td><td>Type 'S' on row 1 and 'U' on row 3, press ENTER</td><td>Error: <code>PLEASE SELECT ONLY ONE RECORD TO VIEW OR UPDATE</code></td></tr>
+          <tr><td>TC-13</td><td>Invalid action code</td><td>Type 'X' next to a row, press ENTER</td><td>Error: <code>INVALID ACTION CODE</code></td></tr>
+          <tr><td>TC-14</td><td>No records found</td><td>Enter account number with no associated cards</td><td>Message: <code>NO RECORDS FOUND FOR THIS SEARCH CONDITION.</code></td></tr>
+          <tr><td>TC-15</td><td>Exit (PF3)</td><td>Press PF3</td><td>XCTL to COMEN01C (Main Menu)</td></tr>
+          <tr><td>TC-16</td><td>Invalid key handling</td><td>Press PF5</td><td>Treated as ENTER (default behavior)</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 11.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>11.2 Test Data Requirements</h3>
+      <ul>
+        <li><strong>CARDDAT file</strong>: Populated VSAM KSDS with at least 15+ card records across multiple accounts to test pagination (7 per page + overflow).</li>
+        <li><strong>Multiple accounts</strong>: At least 3 different account IDs to test account filtering.</li>
+        <li><strong>Active/inactive cards</strong>: Mix of active (<code>'Y'</code>) and inactive cards to verify status display.</li>
+        <li><strong>Edge cases</strong>: An account with exactly 7 cards (full page), one with 0 cards (no records), one with 1 card.</li>
+        <li><strong>User account</strong>: Signed-on user with access to CCLI transaction.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SECTION 12 — Known Issues and Considerations
+     ════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Known Issues and Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 12.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>12.1 Known Issues</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Issue</th><th>Severity</th><th>Details</th></tr></thead>
+        <tbody>
+          <tr><td>KI-1</td><td>CARDAIX alternate index declared but unused</td><td>Low</td><td><code>LIT-CARD-FILE-ACCT-PATH</code> = <code>'CARDAIX'</code> is defined but never referenced in any CICS command. Using it for account-filtered browses would improve performance.</td></tr>
+          <tr><td>KI-2</td><td>User type not enforced for data visibility</td><td>Medium</td><td>Program header states admin users see all cards and regular users see only their account's cards, but the code applies the same filter logic for both. <code>CDEMO-USER-TYPE</code> is set but never checked in <code>9500-FILTER-RECORDS</code>.</td></tr>
+          <tr><td>KI-3</td><td>Hardcoded screen row handling</td><td>Low</td><td>All 7 row mappings (<code>CRDSEL1O</code>–<code>CRDSEL7O</code>, <code>ACCTNO1O</code>–<code>ACCTNO7O</code>, etc.) are coded individually rather than using BMS array processing, resulting in ~350 lines of repetitive code.</td></tr>
+          <tr><td>KI-4</td><td>Missing ENDFILE handling in backward read</td><td>Medium</td><td><code>9100-READ-BACKWARDS</code> does not explicitly handle <code>DFHRESP(ENDFILE)</code> in the READPREV loop — only NORMAL/DUPREC and OTHER are evaluated. Reaching the beginning of the file falls into the OTHER path, which sets an error message instead of gracefully stopping.</td></tr>
+          <tr><td>KI-5</td><td>Stray <code>I</code> statement at line 790</td><td>Low</td><td>Line 790 contains a standalone <code>I</code> which appears to be a stray character (possibly a leftover from the subscript variable). This may cause a compilation warning.</td></tr>
+          <tr><td>KI-6</td><td>Debug paragraphs in production code</td><td>Low</td><td><code>SEND-PLAIN-TEXT</code> and <code>SEND-LONG-TEXT</code> paragraphs are present with a comment "Don't use in production" — these should be removed or conditionally compiled.</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 12.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>12.2 Modernization Considerations</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Aspect</th><th>Current State</th><th>Target State</th></tr></thead>
+        <tbody>
+          <tr><td>Screen I/O</td><td>BMS SEND/RECEIVE MAP (3270 terminal)</td><td>REST API returning JSON; React/Angular frontend with paginated table</td></tr>
+          <tr><td>Data Access</td><td>VSAM KSDS browse via STARTBR/READNEXT/READPREV</td><td>SQL SELECT with LIMIT/OFFSET or cursor-based pagination on RDS/Aurora</td></tr>
+          <tr><td>Filtering</td><td>Application-level post-read filtering in <code>9500-FILTER-RECORDS</code></td><td>SQL WHERE clause with indexed columns</td></tr>
+          <tr><td>State Management</td><td>COMMAREA-based pseudo-conversational (2000 bytes)</td><td>Stateless REST with query parameters (page, accountId, cardNum)</td></tr>
+          <tr><td>Navigation</td><td>PF key-based (PF3 exit, PF7/PF8 pagination)</td><td>UI buttons / infinite scroll / pagination controls</td></tr>
+          <tr><td>Inter-program Communication</td><td>XCTL with COMMAREA passing account/card IDs</td><td>Client-side routing with URL parameters</td></tr>
+          <tr><td>Pagination</td><td>Sequential VSAM browse with first/last key tracking</td><td>Keyset pagination or offset pagination in SQL</td></tr>
+          <tr><td>Security</td><td>RACF transaction security + menu-based access</td><td>OAuth2/JWT with role-based API authorization</td></tr>
+          <tr><td>Error Handling</td><td>RESP/RESP2 codes with inline error messages</td><td>Structured error responses (HTTP status codes, JSON error bodies)</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /page-wrap-single -->
+
+<footer class="footer">
+  <strong>UniCredit S.p.A.</strong> — CardDemo CICS Transaction Analysis · Auto-generated
+</footer>
+
+</body>
+</html>

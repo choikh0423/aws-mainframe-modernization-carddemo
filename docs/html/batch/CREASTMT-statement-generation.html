@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CREASTMT – Statement Generation | Batch Process Analysis | UniCredit CardDemo</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   UniCredit CardDemo — Shared Theme (inlined for standalone viewing)
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --uc-red:        #E4002B;
+  --uc-red-dark:   #B8001F;
+  --uc-red-light:  #FF3354;
+  --uc-navy:       #1D2B4E;
+  --uc-navy-light: #2A3D6B;
+  --uc-gold:       #C5A44E;
+  --uc-gold-light: #E2C97A;
+  --uc-white:      #FFFFFF;
+  --uc-gray-50:    #F8F9FA;
+  --uc-gray-100:   #F0F1F3;
+  --uc-gray-200:   #E2E4E8;
+  --uc-gray-400:   #9EA3AE;
+  --uc-gray-600:   #6B7280;
+  --uc-gray-800:   #374151;
+  --uc-text:       #1F2937;
+  --uc-shadow:     0 4px 24px rgba(29,43,78,.08);
+  --uc-shadow-lg:  0 12px 48px rgba(29,43,78,.12);
+  --uc-radius:     12px;
+  --uc-radius-sm:  8px;
+  --uc-transition: .25s cubic-bezier(.4,0,.2,1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--uc-text);
+  background: var(--uc-gray-50);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+.hero {
+  background: linear-gradient(135deg, var(--uc-navy) 0%, var(--uc-navy-light) 50%, var(--uc-red-dark) 100%);
+  color: var(--uc-white);
+  padding: 3rem 2rem 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -60%; right: -20%;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(228,0,43,.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute; bottom: -30%; left: -10%;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(197,164,78,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-inner { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+.hero-brand { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.hero-logo { height: 48px; flex-shrink: 0; }
+.hero-logo img { height: 100%; width: auto; display: block; }
+.hero-brand-text { font-size: .95rem; opacity: .85; letter-spacing: .04em; text-transform: uppercase; }
+.hero h1 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; letter-spacing: -.02em; line-height: 1.15; margin-bottom: .75rem; }
+.hero h1 span { color: var(--uc-gold-light); }
+.hero-subtitle { font-size: 1.15rem; opacity: .88; max-width: 720px; }
+.hero-meta { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,.15); }
+.hero-meta dt { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin-bottom: .15rem; }
+.hero-meta dd { font-size: .95rem; font-weight: 600; }
+.breadcrumb { max-width: 1200px; margin: 1.25rem auto .5rem; padding: 0 2rem; font-size: .8rem; color: var(--uc-gray-400); }
+.breadcrumb a { color: var(--uc-red); text-decoration: none; font-weight: 600; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb .sep { margin: 0 .4rem; opacity: .5; }
+.page-wrap-single { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+.section { background: var(--uc-white); border-radius: var(--uc-radius); box-shadow: var(--uc-shadow); margin-bottom: 2rem; overflow: hidden; }
+.section-header { display: flex; align-items: center; gap: .75rem; padding: 1.25rem 1.5rem; background: linear-gradient(90deg, var(--uc-navy) 0%, var(--uc-navy-light) 100%); color: var(--uc-white); cursor: pointer; user-select: none; }
+.section-header:hover { filter: brightness(1.1); }
+.section-num { background: var(--uc-red); color: var(--uc-white); font-size: .72rem; font-weight: 700; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.section-header h2 { font-size: 1.1rem; font-weight: 700; letter-spacing: -.01em; flex: 1; }
+.section-toggle { width: 24px; height: 24px; transition: transform var(--uc-transition); opacity: .7; }
+.section.collapsed .section-toggle { transform: rotate(-90deg); }
+.section-body { padding: 1.5rem; }
+.section.collapsed .section-body { display: none; }
+.subsection { margin-bottom: 1.75rem; }
+.subsection:last-child { margin-bottom: 0; }
+.subsection h3 { font-size: .95rem; font-weight: 700; color: var(--uc-navy); margin-bottom: .75rem; padding-bottom: .4rem; border-bottom: 2px solid var(--uc-gray-200); display: flex; align-items: center; gap: .5rem; }
+.subsection h3 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--uc-red); flex-shrink: 0; }
+.subsection h4 { font-size: .88rem; font-weight: 600; color: var(--uc-gray-800); margin: 1rem 0 .5rem; }
+.subsection p, .subsection li { font-size: .88rem; color: var(--uc-gray-800); line-height: 1.7; }
+.subsection ul, .subsection ol { padding-left: 1.4rem; margin-top: .35rem; }
+.subsection li { margin-bottom: .25rem; }
+.table-wrap { overflow-x: auto; margin: .75rem 0; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .82rem; }
+thead th { background: var(--uc-navy); color: var(--uc-white); text-align: left; padding: .6rem .75rem; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
+thead th:first-child { border-radius: var(--uc-radius-sm) 0 0 0; }
+thead th:last-child  { border-radius: 0 var(--uc-radius-sm) 0 0; }
+tbody td { padding: .55rem .75rem; border-bottom: 1px solid var(--uc-gray-200); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:nth-child(even) { background: var(--uc-gray-50); }
+tbody tr:hover { background: rgba(228,0,43,.04); }
+pre { background: var(--uc-navy); color: #E2E8F0; border-radius: var(--uc-radius-sm); padding: 1rem 1.25rem; font-size: .78rem; font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; overflow-x: auto; line-height: 1.65; margin: .75rem 0; }
+code { font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; font-size: .82em; background: var(--uc-gray-100); padding: .1em .35em; border-radius: 4px; color: var(--uc-red-dark); }
+pre code { background: none; padding: 0; color: inherit; }
+.callout { border-left: 4px solid var(--uc-gold); background: rgba(197,164,78,.08); padding: .85rem 1rem; border-radius: 0 var(--uc-radius-sm) var(--uc-radius-sm) 0; margin: .75rem 0; font-size: .85rem; }
+.callout-red { border-left-color: var(--uc-red); background: rgba(228,0,43,.05); }
+.callout strong { color: var(--uc-navy); }
+.diagram-box { background: var(--uc-gray-100); border: 2px dashed var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1.5rem; text-align: center; margin: .75rem 0; }
+.diagram-box pre { text-align: left; background: var(--uc-navy); display: inline-block; max-width: 100%; }
+.badge { display: inline-block; font-size: .68rem; font-weight: 700; padding: .15em .55em; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; line-height: 1.6; }
+.badge-red    { background: var(--uc-red);   color: #fff; }
+.badge-navy   { background: var(--uc-navy);  color: #fff; }
+.badge-gold   { background: var(--uc-gold);  color: var(--uc-navy); }
+.badge-gray   { background: var(--uc-gray-200); color: var(--uc-gray-800); }
+.kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin: 1rem 0; }
+.kpi-card { background: var(--uc-gray-50); border: 1px solid var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1rem; text-align: center; transition: var(--uc-transition); }
+.kpi-card:hover { border-color: var(--uc-red); box-shadow: var(--uc-shadow); transform: translateY(-2px); }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--uc-red); line-height: 1.2; }
+.kpi-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--uc-gray-600); margin-top: .25rem; }
+.footer { background: var(--uc-navy); color: rgba(255,255,255,.6); text-align: center; padding: 2rem; font-size: .78rem; }
+.footer strong { color: var(--uc-gold-light); }
+@media print {
+  .section.collapsed .section-body { display: block; }
+  .hero { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════  HERO  ════════════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. &mdash; Milano</div>
+    </div>
+    <h1>CREASTMT &ndash; <span>Batch Process Analysis</span></h1>
+    <p class="hero-subtitle">
+      Job <code>CREASTMT</code> &middot; Program <code>CBSTM03A</code> &middot; Generate account statements in plain-text and HTML format from sorted transaction data, cross-referenced with customer and account master files
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Job Name</dt><dd>CREASTMT</dd></div>
+      <div><dt>Entry Program</dt><dd>CBSTM03A</dd></div>
+      <div><dt>Frequency</dt><dd>On-demand</dd></div>
+      <div><dt>LOC</dt><dd>1,154 (924 + 230)</dd></div>
+      <div><dt>Files Touched</dt><dd>8</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ════════════════════  BREADCRUMB  ════════════════════ -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">&rsaquo;</span>
+  <a href="index.html">Batch Flows</a>
+  <span class="sep">&rsaquo;</span>
+  CREASTMT &ndash; Statement Generation
+</div>
+
+<!-- ════════════════════  BODY  ════════════════════ -->
+<div class="page-wrap-single">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     IDENTIFICATION
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s0">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">ID</span>
+    <h2>Identification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <tbody>
+          <tr><td><strong>Job Name</strong></td><td><code>CREASTMT</code></td></tr>
+          <tr><td><strong>Job Stream / Schedule</strong></td><td>On-demand (not in Control-M scheduler; triggered as needed after POSTTRAN populates transaction data)</td></tr>
+          <tr><td><strong>Business Domain</strong></td><td>Customer Statement Generation / Card Account Lifecycle</td></tr>
+          <tr><td><strong>Owning Team</strong></td><td>CardDemo Batch Operations</td></tr>
+          <tr><td><strong>Frequency</strong></td><td>On-demand (business process)</td></tr>
+          <tr><td><strong>Batch Window</strong></td><td>After POSTTRAN completes and transaction data is current</td></tr>
+          <tr><td><strong>Criticality</strong></td><td><span class="badge badge-navy">Medium</span></td></tr>
+          <tr><td><strong>Elapsed Time SLA</strong></td><td>No hard SLA; must complete before statements are distributed</td></tr>
+          <tr><td><strong>Primary Program</strong></td><td><code>CBSTM03A</code> (COBOL Batch, 924 LOC) + <code>CBSTM03B</code> (Subroutine, 230 LOC)</td></tr>
+          <tr><td><strong>Source Location</strong></td><td><code>app/cbl/CBSTM03A.CBL</code> &middot; <code>app/cbl/CBSTM03B.CBL</code> &middot; JCL: <code>app/jcl/CREASTMT.JCL</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 1 — Business Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">1</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 1.1 -->
+    <div class="subsection" id="s1-1">
+      <h3><span class="dot"></span> 1.1 Business Context</h3>
+      <ul>
+        <li><strong>What:</strong> Generates per-card account statements in two formats (plain-text PS and HTML) by reading all posted transactions from a sorted VSAM copy, enriching them with customer demographics and account details, and producing formatted output suitable for printing or web delivery.</li>
+        <li><strong>Who:</strong> Downstream consumers include statement distribution (print/mail), customer self-service portals (HTML format), and audit/compliance review teams.</li>
+        <li><strong>When:</strong> Runs on-demand after the <em>Daily Transaction Posting</em> job (POSTTRAN/CBTRN02C) has populated the Transaction Master VSAM with the current period&rsquo;s transactions.</li>
+        <li><strong>Why:</strong> Regulatory and customer-service requirement&mdash;cardholders must receive periodic statements showing all transactions, balances, and account identification.</li>
+        <li><strong>Outcome:</strong> Two output files produced: <code>STATEMNT.PS</code> (plain-text, 80-byte LRECL) and <code>STATEMNT.HTML</code> (HTML table format, 100-byte LRECL), each containing one statement block per card number found in the Cross-Reference file.</li>
+      </ul>
+    </div>
+
+    <!-- 1.2 -->
+    <div class="subsection" id="s1-2">
+      <h3><span class="dot"></span> 1.2 Business Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────────┐
+  │             STATEMENT GENERATION FLOW (CREASTMT)                │
+  └─────────────────────────────────────────────────────────────────┘
+
+  POSTTRAN completes (Transaction Master populated)
+       │
+       ▼
+  ┌──────────────────────┐
+  │ DELDEF01: IDCAMS      │  Delete/Define temp TRXFL VSAM cluster
+  │ (housekeeping)        │
+  └──────────┬───────────┘
+             │
+             ▼
+  ┌──────────────────────┐
+  │ STEP010: SORT         │  Sort TRANSACT VSAM by Card# + Tran ID
+  │ Reformat keys →       │  Output: TRXFL.SEQ (sequential)
+  │ Card#(1:16)+Rest      │
+  └──────────┬───────────┘
+             │
+             ▼
+  ┌──────────────────────┐
+  │ STEP020: IDCAMS REPRO │  Load sorted sequential → TRXFL VSAM
+  └──────────┬───────────┘
+             │
+             ▼
+  ┌──────────────────────┐
+  │ STEP030: IEFBR14      │  Delete previous STATEMNT.PS &amp;
+  │ (cleanup)             │  STATEMNT.HTML output files
+  └──────────┬───────────┘
+             │
+             ▼
+  ┌──────────────────────────────────────────────────────────┐
+  │ STEP040: CBSTM03A                                        │
+  │                                                          │
+  │  For each Card in XREFFILE:                              │
+  │    ├── Lookup Customer (CUSTFILE)                         │
+  │    ├── Lookup Account (ACCTFILE)                          │
+  │    ├── Write Statement Header (name, address, balance)   │
+  │    ├── Match transactions from TRXFL by card number      │
+  │    ├── Write each transaction line                       │
+  │    └── Write Statement Footer (total, end marker)        │
+  │                                                          │
+  │  Output: STATEMNT.PS + STATEMNT.HTML                     │
+  └──────────────────────────────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 1.3 -->
+    <div class="subsection" id="s1-3">
+      <h3><span class="dot"></span> 1.3 Business Rules Applied in This Process</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Rule ID</th><th>Description</th><th>Applied At</th><th>Exception Handling</th></tr></thead>
+          <tbody>
+            <tr><td>BR-001</td><td>One statement is generated per card number in the Cross-Reference file (XREFFILE), regardless of whether transactions exist for that card</td><td>1000-MAINLINE loop</td><td>If no matching transactions in TRXFL, statement shows zero total</td></tr>
+            <tr><td>BR-002</td><td>Transactions are pre-sorted by Card Number (ascending) + Transaction ID (ascending) via SORT in STEP010</td><td>STEP010 SORT FIELDS</td><td>N/A &mdash; enforced by JCL</td></tr>
+            <tr><td>BR-003</td><td>Customer record must exist for XREF-CUST-ID; ABEND on failure</td><td>2000-CUSTFILE-GET</td><td>DISPLAY error + CALL CEE3ABD (fatal)</td></tr>
+            <tr><td>BR-004</td><td>Account record must exist for XREF-ACCT-ID; ABEND on failure</td><td>3000-ACCTFILE-GET</td><td>DISPLAY error + CALL CEE3ABD (fatal)</td></tr>
+            <tr><td>BR-005</td><td>Statement includes: customer full name (first + middle + last), address lines 1&ndash;3 + state + country + zip, account ID, current balance, FICO credit score</td><td>5000-CREATE-STATEMENT</td><td>N/A</td></tr>
+            <tr><td>BR-006</td><td>Transaction total is accumulated per card (WS-TOTAL-AMT) and displayed at statement footer</td><td>4000-TRNXFILE-GET</td><td>N/A</td></tr>
+            <tr><td>BR-007</td><td>Maximum 51 distinct cards and 10 transactions per card can be held in memory simultaneously (2D array WS-TRNX-TABLE)</td><td>8500-READTRNX-READ</td><td>No bounds checking &mdash; potential data corruption if exceeded</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 1.4 -->
+    <div class="subsection" id="s1-4">
+      <h3><span class="dot"></span> 1.4 Business Inputs and Outputs</h3>
+      <h4>Inputs</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Input</th><th>Source System</th><th>Business Description</th><th>Timing</th></tr></thead>
+          <tbody>
+            <tr><td>Transaction VSAM (<code>TRANSACT.VSAM.KSDS</code>)</td><td>POSTTRAN batch job</td><td>All posted credit-card transactions for the current cycle</td><td>Available after POSTTRAN completes</td></tr>
+            <tr><td>Card Cross-Reference (<code>CARDXREF.VSAM.KSDS</code>)</td><td>Account setup</td><td>Maps card numbers to customer and account IDs</td><td>Static reference</td></tr>
+            <tr><td>Customer Master (<code>CUSTDATA.VSAM.KSDS</code>)</td><td>Customer management</td><td>Customer demographics (name, address, FICO score)</td><td>Static reference</td></tr>
+            <tr><td>Account Master (<code>ACCTDATA.VSAM.KSDS</code>)</td><td>Account management</td><td>Account balances and identification</td><td>Updated by POSTTRAN</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h4>Outputs</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Output</th><th>Destination</th><th>Business Description</th><th>Timing</th></tr></thead>
+          <tbody>
+            <tr><td>Statement Text (<code>STATEMNT.PS</code>)</td><td>Print/mail distribution</td><td>Plain-text account statements (80-byte lines), one per card</td><td>Available immediately after job</td></tr>
+            <tr><td>Statement HTML (<code>STATEMNT.HTML</code>)</td><td>Web portal / electronic delivery</td><td>HTML table-formatted account statements for browser viewing</td><td>Available immediately after job</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 2 — Technical Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">2</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 2.1 -->
+    <div class="subsection" id="s2-1">
+      <h3><span class="dot"></span> 2.1 Technical Flow Diagram &ndash; Overview</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ JOB: CREASTMT                                                   │
+  │                                                                 │
+  │  DELDEF01: PGM=IDCAMS                                           │
+  │    Delete/Define TRXFL.VSAM.KSDS (KEYS 32 0, RECSIZE 350)      │
+  │                                                                 │
+  │  STEP010: PGM=SORT                                              │
+  │    SORTIN=TRANSACT.VSAM.KSDS                                    │
+  │    SORTOUT=TRXFL.SEQ (FB, LRECL=350)                            │
+  │    SORT FIELDS=(263,16,CH,A,1,16,CH,A)                          │
+  │    OUTREC FIELDS=(1:263,16,17:1,262,279:279,50)                 │
+  │                                                                 │
+  │  STEP020: PGM=IDCAMS                                            │
+  │    REPRO TRXFL.SEQ → TRXFL.VSAM.KSDS                           │
+  │                                                                 │
+  │  STEP030: PGM=IEFBR14                                           │
+  │    Delete STATEMNT.HTML + STATEMNT.PS (previous run)            │
+  │                                                                 │
+  │  STEP040: PGM=CBSTM03A                                          │
+  │  ┌─────────────────────────────────────────────────────────┐   │
+  │  │  TRXFL.VSAM ──(Sequential + Random READ)──┐             │   │
+  │  │  XREFFILE ──(Sequential READ)─────────────┼──▶ GENERATE │   │
+  │  │  CUSTFILE ──(Random READ by CUST-ID)──────┘    STMTS    │   │
+  │  │  ACCTFILE ──(Random READ by ACCT-ID)──────┘             │   │
+  │  │                                                         │   │
+  │  │  Output:                                                │   │
+  │  │    STATEMNT.PS  (80-byte text statements)               │   │
+  │  │    STATEMNT.HTML (100-byte HTML statements)             │   │
+  │  └─────────────────────────────────────────────────────────┘   │
+  └─────────────────────────────────────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.2 -->
+    <div class="subsection" id="s2-2">
+      <h3><span class="dot"></span> 2.2 Technical Flow Diagram &ndash; Detailed (Step-by-Step)</h3>
+      <div class="diagram-box">
+<pre>
+  STEP040 - EXEC PGM=CBSTM03A (CALL CBSTM03B for all file I/O)
+    INPUTS (via CBSTM03B):
+      - TRNXFILE: AWS.M2.CARDDEMO.TRXFL.VSAM.KSDS      (indexed sequential read)
+      - XREFFILE: AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS    (indexed sequential read)
+      - CUSTFILE: AWS.M2.CARDDEMO.CUSTDATA.VSAM.KSDS    (indexed random read)
+      - ACCTFILE: AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS    (indexed random read)
+    OUTPUTS (direct WRITE in CBSTM03A):
+      - STMTFILE: AWS.M2.CARDDEMO.STATEMNT.PS           (sequential output)
+      - HTMLFILE: AWS.M2.CARDDEMO.STATEMNT.HTML          (sequential output)
+
+    PROCESSING:
+      1. Access PSA → TCB → TIOT control blocks; display job/step/DD info
+      2. OPEN OUTPUT STMT-FILE, HTML-FILE
+      3. Open TRNXFILE via CBSTM03B (ALTER jump to 8100-TRNXFILE-OPEN)
+         a. Read first record, save card number
+         b. 8500-READTRNX-READ: Load ALL transactions into WS-TRNX-TABLE
+            (2D array: 51 cards × 10 transactions each)
+            Loop until EOF on TRNXFILE; group by card number
+      4. Open XREFFILE via CBSTM03B (ALTER jump to 8200-XREFFILE-OPEN)
+      5. Open CUSTFILE via CBSTM03B (ALTER jump to 8300-CUSTFILE-OPEN)
+      6. Open ACCTFILE via CBSTM03B (ALTER jump to 8400-ACCTFILE-OPEN)
+      7. 1000-MAINLINE: PERFORM UNTIL END-OF-FILE = 'Y'
+         a. 1000-XREFFILE-GET-NEXT: Read next XREF record (sequential)
+         b. 2000-CUSTFILE-GET: READ CUSTFILE by XREF-CUST-ID (random)
+         c. 3000-ACCTFILE-GET: READ ACCTFILE by XREF-ACCT-ID (random)
+         d. 5000-CREATE-STATEMENT: Write header (name, address, acct, bal, FICO)
+            - Plain-text: ST-LINE0 through ST-LINE13
+            - HTML: Full HTML document header with table structure
+         e. 4000-TRNXFILE-GET: Match card in WS-TRNX-TABLE
+            - For each matching transaction:
+              6000-WRITE-TRANS: Write tran ID, description, amount
+            - Accumulate WS-TOTAL-AMT
+            - Write footer (total + end-of-statement marker)
+      8. Close all files (TRNXFILE, XREFFILE, CUSTFILE, ACCTFILE, STMT, HTML)
+      9. GOBACK
+
+    RC: 0 = Success (no explicit RC setting; ABEND on any I/O error)
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.3 -->
+    <div class="subsection" id="s2-3">
+      <h3><span class="dot"></span> 2.3 Step Dependency and Condition Code Logic</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>Program</th><th>Executes If</th><th>Condition Code Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>DELDEF01</td><td>IDCAMS</td><td>Always</td><td>SET MAXCC=0 (forced); deletes/defines TRXFL cluster</td></tr>
+            <tr><td>STEP010</td><td>SORT</td><td>Always</td><td>0 = Sort successful<br>16 = Sort failed</td></tr>
+            <tr><td>STEP020</td><td>IDCAMS</td><td>COND=(0,NE) &mdash; only if all prior steps RC=0</td><td>0 = REPRO successful<br>12 = Logical error</td></tr>
+            <tr><td>STEP030</td><td>IEFBR14</td><td>COND=(0,NE) &mdash; only if all prior steps RC=0</td><td>0 = Always (no-op program; file deletion via DD DISP)</td></tr>
+            <tr><td>STEP040</td><td>CBSTM03A</td><td>COND=(0,NE) &mdash; only if all prior steps RC=0</td><td>0 = Statements generated successfully<br>ABEND = Fatal file I/O error (CEE3ABD)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 3 — JCL Job Stream Specification
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">3</span>
+    <h2>JCL Job Stream Specification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 3.1 -->
+    <div class="subsection" id="s3-1">
+      <h3><span class="dot"></span> 3.1 JCL Overview</h3>
+<pre><code>//CREASTMT JOB 'Create Statement',CLASS=A,MSGCLASS=H,MSGLEVEL=(1,1),
+//         NOTIFY=&amp;SYSUID,TIME=1440
+//*
+//* Create statement for each CARD present in the XREF file
+//*
+//DELDEF01 EXEC PGM=IDCAMS
+//SYSIN    DD  *
+  DELETE    AWS.M2.CARDDEMO.TRXFL.SEQ
+  DELETE    AWS.M2.CARDDEMO.TRXFL.VSAM.KSDS  CLUSTER
+  SET       MAXCC = 0
+  DEFINE    CLUSTER (NAME(AWS.M2.CARDDEMO.TRXFL.VSAM.KSDS)
+                     KEYS(32 0) VOLUMES(TSU023) RECORDSIZE(350 350)
+                     SHAREOPTIONS(2 3) ERASE INDEXED CYL(1 5))
+            DATA   (NAME(AWS.M2.CARDDEMO.TRXFL.DATA) CISZ(4096))
+            INDEX  (NAME(AWS.M2.CARDDEMO.TRXFL.INDEX))
+//*
+//STEP010  EXEC PGM=SORT
+//SORTIN   DD  DISP=SHR,DSN=AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS
+//SORTOUT  DD  DSN=AWS.M2.CARDDEMO.TRXFL.SEQ,
+//             DISP=(NEW,CATLG,DELETE),UNIT=SYSDA,
+//             DCB=(LRECL=350,BLKSIZE=3500,RECFM=FB),SPACE=(CYL,(1,1),RLSE)
+//SYSIN    DD *
+  SORT FIELDS=(263,16,CH,A,1,16,CH,A)
+  OUTREC FIELDS=(1:263,16,17:1,262,279:279,50)
+//*
+//STEP020  EXEC PGM=IDCAMS,COND=(0,NE)
+//INFILE   DD  DISP=SHR,DSN=AWS.M2.CARDDEMO.TRXFL.SEQ
+//OUTFILE  DD  DISP=SHR,DSN=AWS.M2.CARDDEMO.TRXFL.VSAM.KSDS
+//SYSIN    DD *
+  REPRO INFILE(INFILE) OUTFILE(OUTFILE)
+//*
+//STEP030  EXEC PGM=IEFBR14,COND=(0,NE)
+//HTMLFILE DD DISP=(MOD,DELETE,DELETE),UNIT=SYSDA,
+//         DCB=(LRECL=80,BLKSIZE=3200,RECFM=FB),SPACE=(CYL,(1,1),RLSE),
+//         DSN=AWS.M2.CARDDEMO.STATEMNT.HTML
+//STMTFILE DD DISP=(MOD,DELETE,DELETE),
+//         DCB=(LRECL=80,BLKSIZE=8000,RECFM=FB),SPACE=(CYL,(1,1),RLSE),
+//         DSN=AWS.M2.CARDDEMO.STATEMNT.PS
+//*
+//STEP040  EXEC PGM=CBSTM03A,COND=(0,NE)
+//STEPLIB  DD  DISP=SHR,DSN=AWS.M2.CARDDEMO.LOADLIB
+//TRNXFILE DD  DISP=SHR,DSN=AWS.M2.CARDDEMO.TRXFL.VSAM.KSDS
+//XREFFILE DD  DISP=SHR,DSN=AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS
+//ACCTFILE DD  DISP=SHR,DSN=AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS
+//CUSTFILE DD  DISP=SHR,DSN=AWS.M2.CARDDEMO.CUSTDATA.VSAM.KSDS
+//STMTFILE DD  DISP=(NEW,CATLG,DELETE),UNIT=SYSDA,
+//         DCB=(LRECL=80,BLKSIZE=8000,RECFM=FB),SPACE=(CYL,(1,1),RLSE),
+//         DSN=AWS.M2.CARDDEMO.STATEMNT.PS
+//HTMLFILE DD  DISP=(NEW,CATLG,DELETE),UNIT=SYSDA,
+//         DCB=(LRECL=100,BLKSIZE=800,RECFM=FB),SPACE=(CYL,(1,1),RLSE),
+//         DSN=AWS.M2.CARDDEMO.STATEMNT.HTML</code></pre>
+    </div>
+
+    <!-- 3.2 -->
+    <div class="subsection" id="s3-2">
+      <h3><span class="dot"></span> 3.2 DD Statement Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>DD Name</th><th>Disposition</th><th>Dataset Name</th><th>Type</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>DELDEF01</td><td>SYSPRINT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>IDCAMS messages</td></tr>
+            <tr><td>DELDEF01</td><td>SYSIN</td><td>Inline (*)</td><td>&mdash;</td><td>Control</td><td>IDCAMS commands</td></tr>
+            <tr><td>STEP010</td><td>SORTIN</td><td>SHR</td><td>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</td><td>VSAM KSDS</td><td>Input: Transaction Master</td></tr>
+            <tr><td>STEP010</td><td>SORTOUT</td><td>(NEW,CATLG,DELETE)</td><td>AWS.M2.CARDDEMO.TRXFL.SEQ</td><td>Sequential (FB)</td><td>Output: sorted transactions</td></tr>
+            <tr><td>STEP010</td><td>SYSPRINT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>SORT messages</td></tr>
+            <tr><td>STEP010</td><td>SYSIN</td><td>Inline (*)</td><td>&mdash;</td><td>Control</td><td>SORT control statements</td></tr>
+            <tr><td>STEP020</td><td>INFILE</td><td>SHR</td><td>AWS.M2.CARDDEMO.TRXFL.SEQ</td><td>Sequential</td><td>Input: sorted sequential file</td></tr>
+            <tr><td>STEP020</td><td>OUTFILE</td><td>SHR</td><td>AWS.M2.CARDDEMO.TRXFL.VSAM.KSDS</td><td>VSAM KSDS</td><td>Output: loaded VSAM cluster</td></tr>
+            <tr><td>STEP030</td><td>HTMLFILE</td><td>(MOD,DELETE,DELETE)</td><td>AWS.M2.CARDDEMO.STATEMNT.HTML</td><td>Sequential</td><td>Delete previous HTML output</td></tr>
+            <tr><td>STEP030</td><td>STMTFILE</td><td>(MOD,DELETE,DELETE)</td><td>AWS.M2.CARDDEMO.STATEMNT.PS</td><td>Sequential</td><td>Delete previous text output</td></tr>
+            <tr><td>STEP040</td><td>STEPLIB</td><td>SHR</td><td>AWS.M2.CARDDEMO.LOADLIB</td><td>PDS</td><td>Program load library</td></tr>
+            <tr><td>STEP040</td><td>TRNXFILE</td><td>SHR</td><td>AWS.M2.CARDDEMO.TRXFL.VSAM.KSDS</td><td>VSAM KSDS</td><td>Input: sorted transactions by card</td></tr>
+            <tr><td>STEP040</td><td>XREFFILE</td><td>SHR</td><td>AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</td><td>VSAM KSDS</td><td>Input: card cross-reference</td></tr>
+            <tr><td>STEP040</td><td>ACCTFILE</td><td>SHR</td><td>AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS</td><td>VSAM KSDS</td><td>Input: account master</td></tr>
+            <tr><td>STEP040</td><td>CUSTFILE</td><td>SHR</td><td>AWS.M2.CARDDEMO.CUSTDATA.VSAM.KSDS</td><td>VSAM KSDS</td><td>Input: customer master</td></tr>
+            <tr><td>STEP040</td><td>STMTFILE</td><td>(NEW,CATLG,DELETE)</td><td>AWS.M2.CARDDEMO.STATEMNT.PS</td><td>Sequential (FB)</td><td>Output: text statements</td></tr>
+            <tr><td>STEP040</td><td>HTMLFILE</td><td>(NEW,CATLG,DELETE)</td><td>AWS.M2.CARDDEMO.STATEMNT.HTML</td><td>Sequential (FB)</td><td>Output: HTML statements</td></tr>
+            <tr><td>STEP040</td><td>SYSPRINT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>COBOL DISPLAY output</td></tr>
+            <tr><td>STEP040</td><td>SYSOUT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>System output</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.3 -->
+    <div class="subsection" id="s3-3">
+      <h3><span class="dot"></span> 3.3 GDG Usage</h3>
+      <div class="callout">
+        <strong>Not applicable.</strong> CREASTMT does not use Generation Data Groups. Output files (STATEMNT.PS, STATEMNT.HTML) are simple catalogued datasets that are deleted and recreated each run.
+      </div>
+    </div>
+
+    <!-- 3.4 -->
+    <div class="subsection" id="s3-4">
+      <h3><span class="dot"></span> 3.4 Scheduler Dependencies</h3>
+      <div class="callout">
+        <strong>Note:</strong> CREASTMT is not in the Control-M schedule (<code>app/scheduler/CardDemo.controlm</code>). It is an on-demand job triggered manually after POSTTRAN has populated the Transaction Master with current-cycle data. It must run <strong>after</strong> POSTTRAN completes and the TRANSACT VSAM contains the transactions to be reported.
+      </div>
+      <div class="diagram-box">
+<pre>
+  POSTTRAN (post daily transactions)
+       │
+       ▼
+  CREASTMT (on-demand, triggered by operations)
+       │
+       ├── DELDEF01: Define temp TRXFL cluster
+       ├── STEP010:  SORT TRANSACT → TRXFL.SEQ (by card#)
+       ├── STEP020:  REPRO → TRXFL VSAM
+       ├── STEP030:  Delete old outputs
+       └── STEP040:  Generate statements
+                │
+                ▼
+         STATEMNT.PS + STATEMNT.HTML → Distribution
+</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 4 — Program Inventory and Call Chain
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">4</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 4.1 -->
+    <div class="subsection" id="s4-1">
+      <h3><span class="dot"></span> 4.1 Program Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Program ID</th><th>Step</th><th>Purpose</th><th>Language</th><th>LOC</th><th>Source Location</th></tr></thead>
+          <tbody>
+            <tr><td><code>IDCAMS</code></td><td>DELDEF01</td><td>Delete/define TRXFL VSAM cluster</td><td>System Utility</td><td>&mdash;</td><td>System</td></tr>
+            <tr><td><code>SORT</code></td><td>STEP010</td><td>Sort TRANSACT by card number + transaction ID; reformat record keys</td><td>System Utility</td><td>&mdash;</td><td>System</td></tr>
+            <tr><td><code>IDCAMS</code></td><td>STEP020</td><td>REPRO sorted sequential file into TRXFL VSAM</td><td>System Utility</td><td>&mdash;</td><td>System</td></tr>
+            <tr><td><code>IEFBR14</code></td><td>STEP030</td><td>No-op; file deletion via DD DISP parameters</td><td>System Utility</td><td>&mdash;</td><td>System</td></tr>
+            <tr><td><code>CBSTM03A</code></td><td>STEP040</td><td>Main statement generation driver &mdash; reads cross-ref, customer, account; generates text and HTML statements</td><td>COBOL</td><td>924</td><td><code>app/cbl/CBSTM03A.CBL</code></td></tr>
+            <tr><td><code>CBSTM03B</code></td><td>STEP040 (called)</td><td>File I/O subroutine &mdash; handles OPEN, READ, CLOSE for TRNXFILE, XREFFILE, CUSTFILE, ACCTFILE</td><td>COBOL</td><td>230</td><td><code>app/cbl/CBSTM03B.CBL</code></td></tr>
+            <tr><td><code>CEE3ABD</code></td><td>STEP040 (called)</td><td>LE abend service &mdash; invoked on fatal I/O errors</td><td>System</td><td>&mdash;</td><td>Language Environment runtime</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4.2 -->
+    <div class="subsection" id="s4-2">
+      <h3><span class="dot"></span> 4.2 Paragraph Call Hierarchy</h3>
+      <div class="diagram-box">
+<pre>
+CBSTM03A (PROCEDURE DIVISION)
+│
+├── [Control Block Access: PSA → TCB → TIOT]
+│   └── DISPLAY job name, step name, DD names
+│
+├── OPEN OUTPUT STMT-FILE, HTML-FILE
+│
+├── 0000-START (ALTER/GO TO dispatch)
+│   ├── 8100-FILE-OPEN (altered target)
+│   │   ├── 8100-TRNXFILE-OPEN → CALL CBSTM03B ('TRNXFILE','O')
+│   │   │   └── 8500-READTRNX-READ (recursive loop: load all TRNXs into table)
+│   │   │       └── CALL CBSTM03B ('TRNXFILE','R') [until EOF]
+│   │   ├── 8200-XREFFILE-OPEN → CALL CBSTM03B ('XREFFILE','O')
+│   │   ├── 8300-CUSTFILE-OPEN → CALL CBSTM03B ('CUSTFILE','O')
+│   │   └── 8400-ACCTFILE-OPEN → CALL CBSTM03B ('ACCTFILE','O')
+│   └── 8500-READTRNX-READ (via 'READTRNX' dispatch)
+│
+├── 1000-MAINLINE [PERFORM UNTIL END-OF-FILE = 'Y']
+│   ├── 1000-XREFFILE-GET-NEXT → CALL CBSTM03B ('XREFFILE','R')
+│   ├── 2000-CUSTFILE-GET → CALL CBSTM03B ('CUSTFILE','K')
+│   ├── 3000-ACCTFILE-GET → CALL CBSTM03B ('ACCTFILE','K')
+│   ├── 5000-CREATE-STATEMENT
+│   │   ├── 5100-WRITE-HTML-HEADER (HTML document structure + account header)
+│   │   └── 5200-WRITE-HTML-NMADBS (customer name, address, basic details)
+│   │   └── WRITE FD-STMTFILE-REC (ST-LINE0 through ST-LINE13)
+│   ├── 4000-TRNXFILE-GET (match transactions from 2D array by card#)
+│   │   └── 6000-WRITE-TRANS (per-transaction line: ID, desc, amount)
+│   └── [Write footer: total amount, end-of-statement, close HTML tags]
+│
+├── 9100-TRNXFILE-CLOSE → CALL CBSTM03B ('TRNXFILE','C')
+├── 9200-XREFFILE-CLOSE → CALL CBSTM03B ('XREFFILE','C')
+├── 9300-CUSTFILE-CLOSE → CALL CBSTM03B ('CUSTFILE','C')
+├── 9400-ACCTFILE-CLOSE → CALL CBSTM03B ('ACCTFILE','C')
+├── CLOSE STMT-FILE, HTML-FILE
+│
+└── 9999-ABEND-PROGRAM → CALL CEE3ABD (fatal error handler)
+
+CBSTM03B (PROCEDURE DIVISION USING LK-M03B-AREA)
+│
+├── 0000-START (EVALUATE LK-M03B-DD)
+│   ├── 'TRNXFILE' → 1000-TRNXFILE-PROC (OPEN/READ/CLOSE)
+│   ├── 'XREFFILE' → 2000-XREFFILE-PROC (OPEN/READ/CLOSE)
+│   ├── 'CUSTFILE' → 3000-CUSTFILE-PROC (OPEN/READ-KEY/CLOSE)
+│   └── 'ACCTFILE' → 4000-ACCTFILE-PROC (OPEN/READ-KEY/CLOSE)
+└── 9999-GOBACK
+</pre>
+      </div>
+    </div>
+
+    <!-- 4.3 -->
+    <div class="subsection" id="s4-3">
+      <h3><span class="dot"></span> 4.3 Copybooks Used</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Copybook</th><th>Record</th><th>LRECL</th><th>Key Fields</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>COSTM01</code></td><td>TRNX-RECORD</td><td>350</td><td>TRNX-CARD-NUM (X(16)) + TRNX-ID (X(16))</td><td>Transaction record layout (reformatted for statement use)</td></tr>
+            <tr><td><code>CVACT03Y</code></td><td>CARD-XREF-RECORD</td><td>50</td><td>XREF-CARD-NUM (X(16))</td><td>Card cross-reference: maps card → customer + account</td></tr>
+            <tr><td><code>CUSTREC</code></td><td>CUSTOMER-RECORD</td><td>500</td><td>CUST-ID (9(09))</td><td>Customer demographics (name, address, FICO)</td></tr>
+            <tr><td><code>CVACT01Y</code></td><td>ACCOUNT-RECORD</td><td>300</td><td>ACCT-ID (9(11))</td><td>Account master (balances, limits, dates)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 5 — File and Dataset Inventory
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">5</span>
+    <h2>File and Dataset Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 5.1 -->
+    <div class="subsection" id="s5-1">
+      <h3><span class="dot"></span> 5.1 Complete File Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File/Dataset</th><th>Type</th><th>Access</th><th>LRECL</th><th>Key</th><th>Purpose in Flow</th></tr></thead>
+          <tbody>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>INPUT (SORT)</td><td>350</td><td>TRAN-ID (16 bytes, offset 0)</td><td>Source transaction data (STEP010 input)</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRXFL.SEQ</code></td><td>Sequential (FB)</td><td>WORK</td><td>350</td><td>&mdash;</td><td>Intermediate sorted sequential file</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRXFL.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>WORK/INPUT</td><td>350</td><td>Card# + TranID (32 bytes, offset 0)</td><td>Sorted transactions keyed by card number for statement generation</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>INPUT</td><td>50</td><td>XREF-CARD-NUM (16 bytes, offset 0)</td><td>Card-to-customer/account cross-reference</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.CUSTDATA.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>INPUT</td><td>500</td><td>CUST-ID (9 bytes, offset 0)</td><td>Customer demographics for statement header</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>INPUT</td><td>300</td><td>ACCT-ID (11 bytes, offset 0)</td><td>Account details (balance, FICO) for statement header</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.STATEMNT.PS</code></td><td>Sequential (FB)</td><td>OUTPUT</td><td>80</td><td>&mdash;</td><td>Plain-text statement output</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.STATEMNT.HTML</code></td><td>Sequential (FB)</td><td>OUTPUT</td><td>100</td><td>&mdash;</td><td>HTML statement output</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.2 -->
+    <div class="subsection" id="s5-2">
+      <h3><span class="dot"></span> 5.2 Key Record Layouts</h3>
+
+      <h4>TRNX-RECORD (Copybook: COSTM01, 350 bytes &mdash; reformatted key)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Offset</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>TRNX-CARD-NUM</td><td>X(16)</td><td>1</td><td>16</td><td>Card number (primary sort key after OUTREC reformat)</td></tr>
+            <tr><td>TRNX-ID</td><td>X(16)</td><td>17</td><td>16</td><td>Transaction ID (secondary sort key)</td></tr>
+            <tr><td>TRNX-TYPE-CD</td><td>X(02)</td><td>33</td><td>2</td><td>Transaction type code</td></tr>
+            <tr><td>TRNX-CAT-CD</td><td>9(04)</td><td>35</td><td>4</td><td>Transaction category code</td></tr>
+            <tr><td>TRNX-SOURCE</td><td>X(10)</td><td>39</td><td>10</td><td>Transaction source</td></tr>
+            <tr><td>TRNX-DESC</td><td>X(100)</td><td>49</td><td>100</td><td>Transaction description (displayed on statement)</td></tr>
+            <tr><td>TRNX-AMT</td><td>S9(09)V99</td><td>149</td><td>11</td><td>Transaction amount (displayed &amp; accumulated)</td></tr>
+            <tr><td>TRNX-MERCHANT-ID</td><td>9(09)</td><td>160</td><td>9</td><td>Merchant identifier</td></tr>
+            <tr><td>TRNX-MERCHANT-NAME</td><td>X(50)</td><td>169</td><td>50</td><td>Merchant name</td></tr>
+            <tr><td>TRNX-MERCHANT-CITY</td><td>X(50)</td><td>219</td><td>50</td><td>Merchant city</td></tr>
+            <tr><td>TRNX-MERCHANT-ZIP</td><td>X(10)</td><td>269</td><td>10</td><td>Merchant zip code</td></tr>
+            <tr><td>TRNX-ORIG-TS</td><td>X(26)</td><td>279</td><td>26</td><td>Origination timestamp</td></tr>
+            <tr><td>TRNX-PROC-TS</td><td>X(26)</td><td>305</td><td>26</td><td>Processing timestamp</td></tr>
+            <tr><td>FILLER</td><td>X(20)</td><td>331</td><td>20</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>CARD-XREF-RECORD (Copybook: CVACT03Y, 50 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>XREF-CARD-NUM</td><td>X(16)</td><td>16</td><td>Card number (record key)</td></tr>
+            <tr><td>XREF-CUST-ID</td><td>9(09)</td><td>9</td><td>Customer ID (used for CUSTFILE lookup)</td></tr>
+            <tr><td>XREF-ACCT-ID</td><td>9(11)</td><td>11</td><td>Account ID (used for ACCTFILE lookup)</td></tr>
+            <tr><td>FILLER</td><td>X(14)</td><td>14</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>CUSTOMER-RECORD (Copybook: CUSTREC, 500 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>CUST-ID</td><td>9(09)</td><td>9</td><td>Customer identifier (key)</td></tr>
+            <tr><td>CUST-FIRST-NAME</td><td>X(25)</td><td>25</td><td>First name (used in statement header)</td></tr>
+            <tr><td>CUST-MIDDLE-NAME</td><td>X(25)</td><td>25</td><td>Middle name (used in statement header)</td></tr>
+            <tr><td>CUST-LAST-NAME</td><td>X(25)</td><td>25</td><td>Last name (used in statement header)</td></tr>
+            <tr><td>CUST-ADDR-LINE-1</td><td>X(50)</td><td>50</td><td>Address line 1</td></tr>
+            <tr><td>CUST-ADDR-LINE-2</td><td>X(50)</td><td>50</td><td>Address line 2</td></tr>
+            <tr><td>CUST-ADDR-LINE-3</td><td>X(50)</td><td>50</td><td>Address line 3</td></tr>
+            <tr><td>CUST-ADDR-STATE-CD</td><td>X(02)</td><td>2</td><td>State code</td></tr>
+            <tr><td>CUST-ADDR-COUNTRY-CD</td><td>X(03)</td><td>3</td><td>Country code</td></tr>
+            <tr><td>CUST-ADDR-ZIP</td><td>X(10)</td><td>10</td><td>Zip code</td></tr>
+            <tr><td>CUST-PHONE-NUM-1</td><td>X(15)</td><td>15</td><td>Primary phone</td></tr>
+            <tr><td>CUST-PHONE-NUM-2</td><td>X(15)</td><td>15</td><td>Secondary phone</td></tr>
+            <tr><td>CUST-SSN</td><td>9(09)</td><td>9</td><td>Social Security Number</td></tr>
+            <tr><td>CUST-GOVT-ISSUED-ID</td><td>X(20)</td><td>20</td><td>Government-issued ID</td></tr>
+            <tr><td>CUST-DOB-YYYYMMDD</td><td>X(10)</td><td>10</td><td>Date of birth</td></tr>
+            <tr><td>CUST-EFT-ACCOUNT-ID</td><td>X(10)</td><td>10</td><td>EFT account identifier</td></tr>
+            <tr><td>CUST-PRI-CARD-HOLDER-IND</td><td>X(01)</td><td>1</td><td>Primary cardholder indicator</td></tr>
+            <tr><td>CUST-FICO-CREDIT-SCORE</td><td>9(03)</td><td>3</td><td>FICO credit score (displayed on statement)</td></tr>
+            <tr><td>FILLER</td><td>X(168)</td><td>168</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>ACCOUNT-RECORD (Copybook: CVACT01Y, 300 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>ACCT-ID</td><td>9(11)</td><td>11</td><td>Account identifier (key)</td></tr>
+            <tr><td>ACCT-ACTIVE-STATUS</td><td>X(01)</td><td>1</td><td>Active status flag</td></tr>
+            <tr><td>ACCT-CURR-BAL</td><td>S9(10)V99</td><td>12</td><td>Current balance (displayed on statement)</td></tr>
+            <tr><td>ACCT-CREDIT-LIMIT</td><td>S9(10)V99</td><td>12</td><td>Credit limit</td></tr>
+            <tr><td>ACCT-CASH-CREDIT-LIMIT</td><td>S9(10)V99</td><td>12</td><td>Cash credit limit</td></tr>
+            <tr><td>ACCT-OPEN-DATE</td><td>X(10)</td><td>10</td><td>Account open date</td></tr>
+            <tr><td>ACCT-EXPIRAION-DATE</td><td>X(10)</td><td>10</td><td>Account expiration date (note: typo in copybook)</td></tr>
+            <tr><td>ACCT-REISSUE-DATE</td><td>X(10)</td><td>10</td><td>Reissue date</td></tr>
+            <tr><td>ACCT-CURR-CYC-CREDIT</td><td>S9(10)V99</td><td>12</td><td>Current cycle credit total</td></tr>
+            <tr><td>ACCT-CURR-CYC-DEBIT</td><td>S9(10)V99</td><td>12</td><td>Current cycle debit total</td></tr>
+            <tr><td>ACCT-ADDR-ZIP</td><td>X(10)</td><td>10</td><td>Account zip code</td></tr>
+            <tr><td>ACCT-GROUP-ID</td><td>X(10)</td><td>10</td><td>Account group</td></tr>
+            <tr><td>FILLER</td><td>X(178)</td><td>178</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.3 -->
+    <div class="subsection" id="s5-3">
+      <h3><span class="dot"></span> 5.3 File Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌──────────────────┐
+  │ TRANSACT VSAM    │  (Source: POSTTRAN job)
+  │ KSDS, key=16     │
+  │ LRECL=350        │
+  └────────┬─────────┘
+           │ SORT (STEP010)
+           │ Fields: (263,16,CH,A, 1,16,CH,A)
+           │ OUTREC: Card#(1:16) + orig(1:262) + tail(279:50)
+           ▼
+  ┌──────────────────┐
+  │ TRXFL.SEQ        │  (Intermediate sequential)
+  │ FB, LRECL=350    │
+  └────────┬─────────┘
+           │ REPRO (STEP020)
+           ▼
+  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+  │ TRXFL VSAM       │  │ CARDXREF VSAM    │  │ CUSTDATA VSAM    │
+  │ KSDS, key=32     │  │ KSDS, key=16     │  │ KSDS, key=9      │
+  │ LRECL=350        │  │ LRECL=50         │  │ LRECL=500        │
+  └────────┬─────────┘  └────────┬─────────┘  └────────┬─────────┘
+           │ Seq READ             │ Seq READ             │ Random READ
+           │ (load into table)    │ (drive loop)         │ (by CUST-ID)
+           ▼                      ▼                      ▼
+  ┌─────────────────────────────────────────────────────────────────┐
+  │  STEP040: CBSTM03A (calls CBSTM03B)                             │
+  │                                                                 │
+  │  For each XREF card:                                            │
+  │    1. Lookup Customer → name, address                           │
+  │    2. Lookup Account → balance, FICO                            │
+  │    3. Match transactions from in-memory table                   │
+  │    4. Format &amp; write statement (text + HTML)                    │
+  └─────┬────────────────────────────────────┬──────────────────────┘
+        │ WRITE                              │ WRITE
+        ▼                                    ▼
+  ┌──────────────────┐              ┌──────────────────┐
+  │ STATEMNT.PS      │              │ STATEMNT.HTML    │
+  │ FB, LRECL=80     │              │ FB, LRECL=100   │
+  │ (Text format)    │              │ (HTML format)    │
+  └──────────────────┘              └──────────────────┘
+
+  Also reads:
+  ┌──────────────────┐
+  │ ACCTDATA VSAM    │  Random READ by ACCT-ID
+  │ KSDS, key=11     │
+  │ LRECL=300        │
+  └──────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 5.4 -->
+    <div class="subsection" id="s5-4">
+      <h3><span class="dot"></span> 5.4 File Dependency Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>Created In</th><th>Read In</th><th>Updated In</th><th>Must Exist Before Job?</th><th>Consumed Downstream?</th></tr></thead>
+          <tbody>
+            <tr><td>TRANSACT VSAM</td><td>POSTTRAN</td><td>STEP010</td><td>&mdash;</td><td>Yes (populated by POSTTRAN)</td><td>Yes &mdash; TRANREPT, CICS online</td></tr>
+            <tr><td>TRXFL.SEQ</td><td>STEP010</td><td>STEP020</td><td>&mdash;</td><td>No (created by STEP010)</td><td>No (work file)</td></tr>
+            <tr><td>TRXFL VSAM</td><td>DELDEF01</td><td>STEP040</td><td>&mdash;</td><td>No (defined by DELDEF01)</td><td>No (temp work file)</td></tr>
+            <tr><td>CARDXREF VSAM</td><td>XREFFILE job</td><td>STEP040</td><td>&mdash;</td><td>Yes</td><td>Yes &mdash; POSTTRAN, TRANREPT</td></tr>
+            <tr><td>CUSTDATA VSAM</td><td>CUSTFILE job</td><td>STEP040</td><td>&mdash;</td><td>Yes</td><td>Yes &mdash; CICS online</td></tr>
+            <tr><td>ACCTDATA VSAM</td><td>ACCTFILE job</td><td>STEP040</td><td>&mdash;</td><td>Yes</td><td>Yes &mdash; CICS, INTCALC, POSTTRAN</td></tr>
+            <tr><td>STATEMNT.PS</td><td>STEP040</td><td>&mdash;</td><td>&mdash;</td><td>No (created fresh)</td><td>Yes &mdash; print/mail distribution</td></tr>
+            <tr><td>STATEMNT.HTML</td><td>STEP040</td><td>&mdash;</td><td>&mdash;</td><td>No (created fresh)</td><td>Yes &mdash; web portal</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 6 — Data Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">6</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 6.1 -->
+    <div class="subsection" id="s6-1">
+      <h3><span class="dot"></span> 6.1 Data Transformation Map</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Source Field</th><th>Source File</th><th>Transformation</th><th>Target Field</th><th>Target File</th></tr></thead>
+          <tbody>
+            <tr><td>TRNX-CARD-NUM (offset 263)</td><td>TRANSACT VSAM</td><td>SORT OUTREC: moved to offset 1 (becomes new key)</td><td>TRNX-CARD-NUM (offset 1)</td><td>TRXFL.SEQ / TRXFL VSAM</td></tr>
+            <tr><td>Original record (1:262)</td><td>TRANSACT VSAM</td><td>SORT OUTREC: shifted to offset 17</td><td>TRNX-ID + TRNX-REST</td><td>TRXFL.SEQ / TRXFL VSAM</td></tr>
+            <tr><td>CUST-FIRST-NAME, CUST-MIDDLE-NAME, CUST-LAST-NAME</td><td>CUSTDATA VSAM</td><td>STRING concatenation with spaces</td><td>ST-NAME</td><td>STATEMNT.PS line 1</td></tr>
+            <tr><td>CUST-ADDR-LINE-1</td><td>CUSTDATA VSAM</td><td>Direct MOVE</td><td>ST-ADD1</td><td>STATEMNT.PS line 2</td></tr>
+            <tr><td>CUST-ADDR-LINE-2</td><td>CUSTDATA VSAM</td><td>Direct MOVE</td><td>ST-ADD2</td><td>STATEMNT.PS line 3</td></tr>
+            <tr><td>CUST-ADDR-LINE-3 + STATE + COUNTRY + ZIP</td><td>CUSTDATA VSAM</td><td>STRING concatenation</td><td>ST-ADD3</td><td>STATEMNT.PS line 4</td></tr>
+            <tr><td>ACCT-ID</td><td>ACCTDATA VSAM</td><td>Direct MOVE</td><td>ST-ACCT-ID</td><td>STATEMNT.PS (Basic Details)</td></tr>
+            <tr><td>ACCT-CURR-BAL</td><td>ACCTDATA VSAM</td><td>Direct MOVE</td><td>ST-CURR-BAL</td><td>STATEMNT.PS (Basic Details)</td></tr>
+            <tr><td>CUST-FICO-CREDIT-SCORE</td><td>CUSTDATA VSAM</td><td>Direct MOVE</td><td>ST-FICO-SCORE</td><td>STATEMNT.PS (Basic Details)</td></tr>
+            <tr><td>TRNX-ID</td><td>TRXFL VSAM (in-memory table)</td><td>Direct MOVE</td><td>ST-TRANID</td><td>STATEMNT.PS (Transaction lines)</td></tr>
+            <tr><td>TRNX-DESC</td><td>TRXFL VSAM (in-memory table)</td><td>Direct MOVE</td><td>ST-TRANDT</td><td>STATEMNT.PS (Transaction lines)</td></tr>
+            <tr><td>TRNX-AMT</td><td>TRXFL VSAM (in-memory table)</td><td>Direct MOVE + ADD to WS-TOTAL-AMT</td><td>ST-TRANAMT / ST-TOTAL-TRAMT</td><td>STATEMNT.PS</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 6.2 -->
+    <div class="subsection" id="s6-2">
+      <h3><span class="dot"></span> 6.2 Data Lineage Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  TRANSACT.VSAM (source: POSTTRAN posting)
+       │
+       │ SORT by Card#(263,16) + TranID(1,16)
+       │ OUTREC reformats key to position 1
+       ▼
+  TRXFL VSAM (key = Card# + TranID, 32 bytes)
+       │
+       │ All records loaded into WS-TRNX-TABLE
+       │ (2D array: 51 cards × 10 trans)
+       ▼
+  ┌──────────────────────────────────────────────────────┐
+  │  In-Memory Processing (per XREF card)                │
+  │                                                      │
+  │  XREF-CARD-NUM ──→ match in WS-TRNX-TABLE           │
+  │  XREF-CUST-ID ──→ READ CUSTDATA → name, address     │
+  │  XREF-ACCT-ID ──→ READ ACCTDATA → balance, FICO     │
+  │                                                      │
+  │  Formatting:                                         │
+  │    Name = FIRST + MIDDLE + LAST (STRING)             │
+  │    Address = LINE-1 / LINE-2 / LINE-3+STATE+ZIP      │
+  │    Transactions: ID + DESC + $AMT per line           │
+  │    Footer: Total EXP: $sum                           │
+  └──────────────────────────────────────────────────────┘
+       │                    │
+       ▼                    ▼
+  STATEMNT.PS         STATEMNT.HTML
+  (text format)       (HTML table format)
+</pre>
+      </div>
+    </div>
+
+    <!-- 6.3 -->
+    <div class="subsection" id="s6-3">
+      <h3><span class="dot"></span> 6.3 Control Totals and Reconciliation</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Control Point</th><th>What&rsquo;s Counted</th><th>Where Stored</th><th>Reconciled Against</th></tr></thead>
+          <tbody>
+            <tr><td>WS-TOTAL-AMT</td><td>Sum of TRNX-AMT per card (reset per statement)</td><td>ST-TOTAL-TRAMT in output</td><td>Manual reconciliation against account balance</td></tr>
+            <tr><td>CR-CNT</td><td>Number of distinct card groups loaded</td><td>Working storage (not displayed)</td><td>XREFFILE record count</td></tr>
+            <tr><td>WS-TRCT(n)</td><td>Transaction count per card group</td><td>Working storage (not displayed)</td><td>TRXFL VSAM record count per card</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-red">
+        <strong>Gap:</strong> CBSTM03A does not DISPLAY any reconciliation totals (e.g., total statements generated, total transactions processed) to SYSPRINT. There is no audit trail in the job output for reconciliation.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 7 — Sort/Merge and Utility Processing
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">7</span>
+    <h2>Sort/Merge and Utility Processing</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s7-1">
+      <h3><span class="dot"></span> 7.1 SORT Specification (STEP010)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Parameter</th><th>Value</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>SORT FIELDS</td><td><code>(263,16,CH,A, 1,16,CH,A)</code></td><td>Primary: Card number (pos 263, len 16, character, ascending)<br>Secondary: Transaction ID (pos 1, len 16, character, ascending)</td></tr>
+            <tr><td>OUTREC FIELDS</td><td><code>(1:263,16, 17:1,262, 279:279,50)</code></td><td>Reformat output: move card# to pos 1, original data (1:262) to pos 17, tail (279:50) to pos 279. Creates composite key of Card#+TranID at start of record.</td></tr>
+            <tr><td>Input</td><td>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</td><td>Transaction Master VSAM</td></tr>
+            <tr><td>Output</td><td>AWS.M2.CARDDEMO.TRXFL.SEQ</td><td>Sequential FB, LRECL=350, BLKSIZE=3500</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s7-2">
+      <h3><span class="dot"></span> 7.2 IDCAMS Utility Steps</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>Operation</th><th>Dataset</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>DELDEF01</td><td>DELETE + DEFINE CLUSTER</td><td>AWS.M2.CARDDEMO.TRXFL.VSAM.KSDS</td><td>Remove previous temp VSAM and define fresh cluster (KEYS 32 0, RECSIZE 350, INDEXED, CYL(1 5))</td></tr>
+            <tr><td>DELDEF01</td><td>DELETE</td><td>AWS.M2.CARDDEMO.TRXFL.SEQ</td><td>Remove previous sorted sequential work file</td></tr>
+            <tr><td>STEP020</td><td>REPRO</td><td>TRXFL.SEQ &rarr; TRXFL.VSAM.KSDS</td><td>Load sorted sequential file into the VSAM KSDS cluster</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s7-3">
+      <h3><span class="dot"></span> 7.3 IEFBR14 (STEP030)</h3>
+      <p>STEP030 uses <code>IEFBR14</code> (no-op program) with <code>DISP=(MOD,DELETE,DELETE)</code> on both STATEMNT.HTML and STATEMNT.PS to delete output files from any previous run before STEP040 creates new ones.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 8 — Checkpoint, Restart, and Recovery
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">8</span>
+    <h2>Checkpoint, Restart, and Recovery</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s8-1">
+      <h3><span class="dot"></span> 8.1 Checkpoint Strategy</h3>
+      <div class="callout callout-red">
+        <strong>Warning:</strong> CBSTM03A does <em>not</em> implement application-level checkpointing. However, since this job only <em>reads</em> input VSAM files (it does not update them), the recovery impact is lower than for update-oriented jobs like POSTTRAN. A mid-job failure simply results in incomplete output files.
+      </div>
+    </div>
+
+    <div class="subsection" id="s8-2">
+      <h3><span class="dot"></span> 8.2 Restart Procedures</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Failure Scenario</th><th>Restart Step</th><th>Prerequisites</th><th>Data Reset Required</th></tr></thead>
+          <tbody>
+            <tr><td>Abend in DELDEF01 or STEP010</td><td>Resubmit from DELDEF01</td><td>Fix root cause (e.g., VSAM catalog issue)</td><td>None &mdash; DELDEF01 cleans up</td></tr>
+            <tr><td>Abend in STEP020 (REPRO failure)</td><td>Resubmit from DELDEF01</td><td>Fix root cause; TRXFL VSAM may be partially loaded</td><td>DELDEF01 will re-define cluster</td></tr>
+            <tr><td>Abend in STEP040 (mid-processing)</td><td>Resubmit from STEP030</td><td>Fix root cause (file access, data error)<br>STEP030 will delete partial outputs</td><td>No input data reset needed (read-only)</td></tr>
+            <tr><td>JCL error (before any step starts)</td><td>Resubmit</td><td>Fix JCL</td><td>None</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s8-3">
+      <h3><span class="dot"></span> 8.3 Recovery Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  Normal:  DELDEF01 → STEP010 → STEP020 → STEP030 → STEP040 → Done
+
+  Failure in STEP040 (mid-statement generation):
+    1. Identify abend cause (SYSPRINT messages)
+    2. Output files (STATEMNT.PS, STATEMNT.HTML) are incomplete
+       └── No input VSAM files are modified (read-only access)
+    3. Fix root cause
+    4. Resubmit from STEP030 (deletes partial outputs)
+       or resubmit entire job (safe due to DELDEF01 cleanup)
+
+  Failure in STEP010 (SORT):
+    1. Check SORT messages (SYSPRINT)
+    2. Resubmit entire job (DELDEF01 redefines cluster)
+</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 9 — Error Handling and Abend Resolution
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">9</span>
+    <h2>Error Handling and Abend Resolution</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 9.1 -->
+    <div class="subsection" id="s9-1">
+      <h3><span class="dot"></span> 9.1 Error Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  File I/O Errors (all fatal — ABEND immediately):
+  ──────────────────────────────────────────────────
+    TRNXFILE OPEN failure (RC ≠ '00'/'04') → DISPLAY error → 9999-ABEND-PROGRAM
+    TRNXFILE READ error (RC ≠ '00'/'10')   → DISPLAY error → 9999-ABEND-PROGRAM
+    XREFFILE OPEN failure                   → DISPLAY error → 9999-ABEND-PROGRAM
+    XREFFILE READ error                     → DISPLAY error → 9999-ABEND-PROGRAM
+    CUSTFILE OPEN failure                   → DISPLAY error → 9999-ABEND-PROGRAM
+    CUSTFILE READ error                     → DISPLAY error → 9999-ABEND-PROGRAM
+    ACCTFILE OPEN failure                   → DISPLAY error → 9999-ABEND-PROGRAM
+    ACCTFILE READ error                     → DISPLAY error → 9999-ABEND-PROGRAM
+    Any file CLOSE failure (RC ≠ '00'/'04') → DISPLAY error → 9999-ABEND-PROGRAM
+
+  Note: There is NO record-level error handling (no reject file).
+  All errors are fatal. The program either completes fully or ABENDs.
+</pre>
+      </div>
+    </div>
+
+    <!-- 9.2 -->
+    <div class="subsection" id="s9-2">
+      <h3><span class="dot"></span> 9.2 Return Code Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>RC=0</th><th>RC=4/8/12</th><th>ABEND</th></tr></thead>
+          <tbody>
+            <tr><td>DELDEF01</td><td>IDCAMS commands successful (SET MAXCC=0 forces this)</td><td>N/A (forced to 0)</td><td>Unlikely (catalog error)</td></tr>
+            <tr><td>STEP010</td><td>SORT completed successfully</td><td>4=Warning; 16=Sort failed</td><td>Possible if I/O error on VSAM input</td></tr>
+            <tr><td>STEP020</td><td>REPRO successful</td><td>4=Warning; 8/12=Error</td><td>Possible if VSAM cluster full or I/O error</td></tr>
+            <tr><td>STEP030</td><td>Always (IEFBR14 no-op)</td><td>N/A</td><td>N/A</td></tr>
+            <tr><td>STEP040</td><td>All statements generated successfully</td><td>N/A (no explicit RC setting)</td><td>CALL CEE3ABD on any file I/O failure</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 9.3 -->
+    <div class="subsection" id="s9-3">
+      <h3><span class="dot"></span> 9.3 Common Abend Codes and Resolution</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Abend</th><th>Likely Cause</th><th>Resolution</th></tr></thead>
+          <tbody>
+            <tr><td>U0999 (CEE3ABD)</td><td>File I/O error in CBSTM03A or CBSTM03B (file status &ne; &lsquo;00&rsquo;/&lsquo;04&rsquo;)</td><td>Check SYSPRINT for DISPLAY messages showing which file and return code. Common: VSAM not found (35), VSAM CI/CA full (24), record not found (23)</td></tr>
+            <tr><td>S0C7</td><td>Non-numeric data in PIC 9 field (e.g., corrupted ACCT-ID, CUST-ID, or TRNX-AMT in VSAM)</td><td>Check input data quality; verify record layout alignment after SORT OUTREC</td></tr>
+            <tr><td>S0C4</td><td>Invalid storage reference in PSA/TCB/TIOT addressing or array overflow in WS-TRNX-TABLE</td><td>If array overflow: more than 51 cards or 10 transactions per card. Increase OCCURS limits and recompile.</td></tr>
+            <tr><td>S213-04</td><td>VSAM dataset not found (OPEN failure)</td><td>Verify TRXFL VSAM was defined by DELDEF01; check CARDXREF/CUSTDATA/ACCTDATA exist</td></tr>
+            <tr><td>S913</td><td>RACF security violation on dataset access</td><td>Check job userid authority for all VSAM datasets</td></tr>
+            <tr><td>SORT RC=16</td><td>SORT failure in STEP010</td><td>Check SORT SYSPRINT; common causes: SORTIN dataset empty, I/O error, invalid FIELDS spec</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 9.4 -->
+    <div class="subsection" id="s9-4">
+      <h3><span class="dot"></span> 9.4 File Status Code Handling</h3>
+      <p>CBSTM03B returns file status in <code>LK-M03B-RC</code> (2 bytes). CBSTM03A checks this after every CALL:</p>
+      <ul>
+        <li><code>'00'</code> &mdash; Successful operation</li>
+        <li><code>'04'</code> &mdash; Accepted on OPEN (treated as success)</li>
+        <li><code>'10'</code> &mdash; End of file (only on sequential READ; sets END-OF-FILE = 'Y')</li>
+        <li>Any other value &mdash; DISPLAY error message with file name and return code, then PERFORM 9999-ABEND-PROGRAM (CALL CEE3ABD)</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 10 — Security and Authorization
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="subsection" id="s10-1">
+      <h3><span class="dot"></span> 10.1 Dataset Security Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Dataset Pattern</th><th>Access Required</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr><td>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</td><td>READ</td><td>Input to SORT (STEP010)</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.TRXFL.*</td><td>ALTER (DELETE/DEFINE) + UPDATE</td><td>Temp work cluster: defined, loaded, read</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</td><td>READ</td><td>Cross-reference lookup</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.CUSTDATA.VSAM.KSDS</td><td>READ</td><td>Customer demographics lookup</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS</td><td>READ</td><td>Account details lookup</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.STATEMNT.PS</td><td>ALTER (CREATE + DELETE)</td><td>Output text statement file</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.STATEMNT.HTML</td><td>ALTER (CREATE + DELETE)</td><td>Output HTML statement file</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.LOADLIB</td><td>READ (FETCH)</td><td>Program load library</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>PII Sensitivity:</strong> This job reads and outputs customer names, addresses, SSNs (in CUSTDATA), and account balances. Statement output files contain PII and must be protected with appropriate access controls and encryption during transmission.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 11 — Performance and Batch Window Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Performance and Batch Window Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s11-1">
+      <h3><span class="dot"></span> 11.1 Performance Characteristics</h3>
+      <p>The job has two distinct performance phases:</p>
+      <ol>
+        <li><strong>SORT Phase (STEP010):</strong> Reads entire TRANSACT VSAM, sorts by card number + tran ID, reformats keys. Performance depends on TRANSACT volume and available sort work space.</li>
+        <li><strong>Statement Generation (STEP040):</strong> All transactions are loaded into a fixed-size in-memory table (WS-TRNX-TABLE: 51 cards &times; 10 transactions = 510 entries max). For each XREF card: 1 random CUSTFILE read + 1 random ACCTFILE read + in-memory table scan.</li>
+      </ol>
+      <div class="callout callout-red">
+        <strong>Scalability Limitation:</strong> The 2D array <code>WS-TRNX-TABLE</code> is hard-coded to 51 card groups with 10 transactions each. If the TRXFL VSAM contains more than 51 distinct cards or more than 10 transactions for any single card, the program will silently overwrite memory (no bounds checking), leading to data corruption or S0C4 abend.
+      </div>
+    </div>
+
+    <div class="subsection" id="s11-2">
+      <h3><span class="dot"></span> 11.2 Batch Window Fit</h3>
+      <div class="table-wrap">
+        <table>
+          <tbody>
+            <tr><td><strong>Window Opens</strong></td><td>After POSTTRAN completes (Transaction Master populated)</td></tr>
+            <tr><td><strong>Window Closes</strong></td><td>Before statement distribution deadline</td></tr>
+            <tr><td><strong>Predecessor</strong></td><td>POSTTRAN (daily transaction posting)</td></tr>
+            <tr><td><strong>Successor</strong></td><td>Statement distribution (print/mail/web)</td></tr>
+            <tr><td><strong>Critical Path</strong></td><td>No &mdash; does not block CICS operations or other batch jobs</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 12 — Testing Approach
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s12-1">
+      <h3><span class="dot"></span> 12.1 Test Scenarios</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Scenario</th><th>Input Setup</th><th>Expected Output</th><th>Verify Method</th></tr></thead>
+          <tbody>
+            <tr><td>TC-001</td><td>Normal run (single card, multiple transactions)</td><td>TRANSACT with 3 transactions for 1 card; matching XREF, CUST, ACCT records</td><td>RC=0; STATEMNT.PS contains 1 statement with 3 transaction lines + correct total; STATEMNT.HTML has matching HTML table</td><td>Visual inspection of output files; verify total = sum of 3 amounts</td></tr>
+            <tr><td>TC-002</td><td>Multiple cards</td><td>TRANSACT with transactions for 5 different cards</td><td>RC=0; 5 separate statement blocks in output; each with correct customer/account data</td><td>Count &ldquo;START OF STATEMENT&rdquo; markers in PS file = 5</td></tr>
+            <tr><td>TC-003</td><td>Card in XREF with no transactions in TRANSACT</td><td>XREF with card that has no matching TRANSACT records</td><td>Statement generated with header/footer but zero transaction lines and $0.00 total</td><td>Verify statement exists with Total EXP: $0.00</td></tr>
+            <tr><td>TC-004</td><td>Customer record not found</td><td>XREF-CUST-ID points to non-existent CUSTDATA record</td><td>ABEND (CEE3ABD) with DISPLAY &ldquo;ERROR READING CUSTFILE&rdquo;</td><td>Check SYSPRINT for error message; verify job abended</td></tr>
+            <tr><td>TC-005</td><td>Account record not found</td><td>XREF-ACCT-ID points to non-existent ACCTDATA record</td><td>ABEND (CEE3ABD) with DISPLAY &ldquo;ERROR READING ACCTFILE&rdquo;</td><td>Check SYSPRINT for error message; verify job abended</td></tr>
+            <tr><td>TC-006</td><td>Empty TRANSACT VSAM (no transactions)</td><td>Empty TRANSACT file (defined but 0 records)</td><td>SORT may produce 0-record output; STEP040 generates statements with 0 transactions per card</td><td>Verify SORT RC; check output files have headers but no transaction lines</td></tr>
+            <tr><td>TC-007</td><td>Array overflow (&gt;51 cards)</td><td>TRANSACT with 52+ distinct card numbers</td><td>Unpredictable: potential S0C4 or data corruption</td><td>Verify abend or incorrect output (documents known issue)</td></tr>
+            <tr><td>TC-008</td><td>Array overflow (&gt;10 trans per card)</td><td>Single card with 11+ transactions</td><td>Unpredictable: memory overwrite possible</td><td>Verify behavior (documents known issue)</td></tr>
+            <tr><td>TC-009</td><td>HTML output format validation</td><td>Normal run with known data</td><td>Valid HTML structure: DOCTYPE, table tags, correct field values in &lt;p&gt; elements</td><td>Open STATEMNT.HTML in browser; verify rendering</td></tr>
+            <tr><td>TC-010</td><td>Negative transaction amounts</td><td>Mix of positive and negative TRNX-AMT values</td><td>Amounts displayed with trailing minus sign; total correctly sums positives and negatives</td><td>Verify ST-TRANAMT format (Z(9).99-) and total calculation</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s12-2">
+      <h3><span class="dot"></span> 12.2 Test Data Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>Records Needed</th><th>Setup Method</th></tr></thead>
+          <tbody>
+            <tr><td>TRANSACT VSAM</td><td>Variable (5&ndash;50 transactions across 1&ndash;10 cards)</td><td>Run POSTTRAN with test DALYTRAN data, or IDCAMS REPRO from test dataset</td></tr>
+            <tr><td>CARDXREF VSAM</td><td>Must contain card numbers matching TRANSACT</td><td>XREFFILE job (IDCAMS DELETE/DEFINE/REPRO)</td></tr>
+            <tr><td>CUSTDATA VSAM</td><td>Must contain customer IDs referenced by XREF</td><td>CUSTFILE job</td></tr>
+            <tr><td>ACCTDATA VSAM</td><td>Must contain account IDs referenced by XREF</td><td>ACCTFILE job</td></tr>
+            <tr><td>TRXFL work cluster</td><td>Automatically created by job</td><td>DELDEF01 + STEP010 + STEP020</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 13 — Known Issues and Considerations
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s13">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">13</span>
+    <h2>Known Issues and Modernization Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s13-1">
+      <h3><span class="dot"></span> 13.1 Known Issues</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Description</th><th>Impact</th><th>Workaround</th></tr></thead>
+          <tbody>
+            <tr><td>KI-001</td><td>Fixed-size 2D array: <code>WS-CARD-TBL OCCURS 51</code> and <code>WS-TRAN-TBL OCCURS 10</code>. No bounds checking. More than 51 distinct cards or 10 transactions per card will cause silent memory corruption or S0C4.</td><td>High &mdash; production data with realistic volumes will exceed these limits</td><td>Limit TRANSACT volume; or increase OCCURS and recompile</td></tr>
+            <tr><td>KI-002</td><td>Uses obsolete <code>ALTER</code> and <code>GO TO</code> control flow (paragraphs 0000-START, 8100-FILE-OPEN). Makes program logic extremely difficult to trace and maintain.</td><td>Medium &mdash; maintenance risk; modern compilers may flag these</td><td>Refactor to structured PERFORM/EVALUATE</td></tr>
+            <tr><td>KI-003</td><td>PSA/TCB/TIOT control block addressing in PROCEDURE DIVISION is z/OS-specific and will not work on non-mainframe platforms (Micro Focus, AWS Mainframe Modernization).</td><td>Medium &mdash; blocks rehosting without code changes</td><td>Conditionally compile or remove control block access for non-z/OS targets</td></tr>
+            <tr><td>KI-004</td><td>HTML output hardcodes &ldquo;Bank of XYZ&rdquo; and &ldquo;410 Terry Ave N / Seattle WA 99999&rdquo; as the bank identity. Not parameterized.</td><td>Low &mdash; cosmetic; HTML output is demo-quality</td><td>Externalize bank details to a configuration file or PARM</td></tr>
+            <tr><td>KI-005</td><td>Typo in CVACT01Y copybook: <code>ACCT-EXPIRAION-DATE</code> (missing &lsquo;T&rsquo; in EXPIRATION). Carried through to all programs using this copybook.</td><td>Low &mdash; cosmetic, does not affect processing</td><td>None needed (fix would require recompiling all dependent programs)</td></tr>
+            <tr><td>KI-006</td><td>No DISPLAY of reconciliation totals (total statements generated, total transactions processed) to SYSPRINT. No audit trail.</td><td>Medium &mdash; cannot verify completeness without manual inspection of output files</td><td>Add DISPLAY statements for key counts at program end</td></tr>
+            <tr><td>KI-007</td><td>No error handling for WRITE failures on STMT-FILE or HTML-FILE. If output disk is full, no graceful error &mdash; likely S013 or S0C1 system abend.</td><td>Medium &mdash; no diagnostic message for output errors</td><td>Add FILE STATUS checking for output files</td></tr>
+            <tr><td>KI-008</td><td>JCL line 90 has garbage text: <code>00,RECFM=FB), ATA.VSAM.KSDS</code> &mdash; appears to be a copy/paste error in the STMTFILE DD continuation. May cause JCL error on strict parsers.</td><td>Medium &mdash; potential JCL submission failure</td><td>Clean up the DD statement continuation</td></tr>
+            <tr><td>KI-009</td><td><code>WS-M03B-KEY-LN</code> is initialized to ZERO immediately before being COMPUTE&rsquo;d. The MOVE ZERO is redundant and slightly misleading.</td><td>Low &mdash; cosmetic, no functional impact</td><td>Remove redundant MOVE</td></tr>
+            <tr><td>KI-010</td><td>CBSTM03A uses <code>CALL 'CEE3ABD'</code> without parameters in paragraph 9999-ABEND-PROGRAM. The CEE3ABD service normally requires an abend code and timing parameter. Behavior is implementation-dependent.</td><td>Low &mdash; may produce unexpected abend code on some LE implementations</td><td>Pass explicit parameters: <code>CALL 'CEE3ABD' USING abend-code, timing</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s13-2">
+      <h3><span class="dot"></span> 13.2 Modernization Considerations</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Area</th><th>Current State</th><th>Target State</th><th>Complexity</th></tr></thead>
+          <tbody>
+            <tr><td>Statement Generation</td><td>Fixed-format COBOL with in-memory 2D array</td><td>Template engine (e.g., Thymeleaf, Jinja2) with database queries</td><td>Medium</td></tr>
+            <tr><td>Output Format</td><td>80-byte text lines + basic HTML tables with inline styles</td><td>PDF generation (iText/Apache FOP) + responsive HTML/CSS templates</td><td>Medium</td></tr>
+            <tr><td>Data Access</td><td>VSAM KSDS files via COBOL I/O</td><td>SQL queries against relational database (PostgreSQL/Aurora)</td><td>Medium</td></tr>
+            <tr><td>SORT Processing</td><td>External SORT utility (DFSORT/SyncSort) with OUTREC reformatting</td><td>SQL ORDER BY clause or in-application sort</td><td>Low</td></tr>
+            <tr><td>Scalability</td><td>Hard-coded array limits (51 cards, 10 trans)</td><td>Dynamic collections or cursor-based streaming</td><td>Low</td></tr>
+            <tr><td>Control Flow</td><td>ALTER/GO TO pattern (obsolete, non-structured)</td><td>Standard structured programming (PERFORM, IF/ELSE, EVALUATE)</td><td>Medium</td></tr>
+            <tr><td>Platform Dependency</td><td>PSA/TCB/TIOT control block addressing (z/OS only)</td><td>Standard API calls or remove diagnostic code</td><td>Low</td></tr>
+            <tr><td>Subroutine Interface</td><td>CALL CBSTM03B with WS-M03B-AREA (custom protocol)</td><td>Direct database connection or repository pattern</td><td>Medium</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /page-wrap-single -->
+
+<!-- ════════════════════  FOOTER  ════════════════════ -->
+<footer class="footer">
+  <p><strong>UniCredit CardDemo</strong> &mdash; Batch Process Analysis &mdash; CREASTMT / CBSTM03A + CBSTM03B</p>
+  <p>Generated from source: <code>app/jcl/CREASTMT.JCL</code> &middot; <code>app/cbl/CBSTM03A.CBL</code> &middot; <code>app/cbl/CBSTM03B.CBL</code> &middot; Copybooks: COSTM01, CVACT03Y, CUSTREC, CVACT01Y</p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transaction Reports (CR00) – CICS Transaction Analysis | UniCredit CardDemo</title>
+<link rel="stylesheet" href="../shared/theme.css">
+</head>
+<body>
+
+<!-- ════════════════════  HERO  ════════════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. &mdash; Milano</div>
+    </div>
+    <h1>Transaction Reports &ndash; <span>CICS Transaction Analysis</span></h1>
+    <p class="hero-subtitle">
+      Transaction <code>CR00</code> &middot; Program <code>CORPT00C</code> &middot; Submit batch transaction reports via extra-partition TDQ
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Transaction ID</dt><dd>CR00</dd></div>
+      <div><dt>Entry Program</dt><dd>CORPT00C</dd></div>
+      <div><dt>BMS Mapset</dt><dd>CORPT00</dd></div>
+      <div><dt>Design Pattern</dt><dd>Pseudo-conversational</dd></div>
+      <div><dt>LOC</dt><dd>649</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ════════════════════  BREADCRUMB  ════════════════════ -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">&rsaquo;</span>
+  <a href="index.html">CICS Flows</a>
+  <span class="sep">&rsaquo;</span>
+  Transaction Reports (CR00)
+</div>
+
+<!-- ════════════════════  BODY  ════════════════════ -->
+<div class="page-wrap-single">
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 1 — Business Flow Analysis
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">1</span>
+    <h2>Business Flow Analysis</h2>
+    <span class="section-toggle">&#9662;</span>
+  </div>
+  <div class="section-body">
+
+    <h3>1.1 Business Context</h3>
+    <p>
+      The <strong>Transaction Reports</strong> function allows authorized users to request printed
+      transaction reports covering a selectable date range.  The user chooses one of three report
+      types&mdash;Monthly (current month), Yearly (current year), or Custom (user-specified date
+      range)&mdash;and confirms the submission.  The program then assembles JCL for the
+      <code>TRNRPT00</code> batch job and writes it line-by-line to the <code>JOBS</code>
+      extra-partition Transient Data Queue (TDQ), which routes the JCL to the internal reader
+      for batch execution.
+    </p>
+    <p>
+      <strong>Users:</strong> Regular and admin users (menu option 9 on the main menu).<br>
+      <strong>Trigger:</strong> User selects &ldquo;Transaction Reports&rdquo; from the main menu
+      (program <code>COMEN01C</code>).<br>
+      <strong>Business Outcome:</strong> A batch report job is submitted to the JES internal reader,
+      producing a printed transaction report filtered by the requested date range.
+    </p>
+
+    <h3>1.2 Business Flow Diagram</h3>
+<pre>
+┌──────────────┐     ┌─────────────────────┐     ┌──────────────────────┐
+│  Main Menu   │────▶│  Report Selection   │────▶│  Confirm Submission  │
+│  (COMEN01C)  │     │  (Monthly/Yearly/   │     │  (Y/N)               │
+│              │     │   Custom)           │     │                      │
+└──────────────┘     └─────────────────────┘     └──────────┬───────────┘
+                                                            │
+                              ┌──────────────────┐          │ Y
+                              │  Custom Date     │◀─── if Custom
+                              │  Validation      │          │
+                              │  (MM/DD/YYYY ×2) │          │
+                              └──────┬───────────┘          │
+                                     │ valid                │
+                                     ▼                      ▼
+                              ┌──────────────────────────────────┐
+                              │  Assemble JCL with date params   │
+                              │  Write to TDQ 'JOBS' (INTRDR)   │
+                              └──────────────┬───────────────────┘
+                                             │
+                                             ▼
+                              ┌──────────────────────────────────┐
+                              │  Success: "&lt;type&gt; report         │
+                              │  submitted for printing ..."     │
+                              └──────────────────────────────────┘
+</pre>
+
+    <h3>1.3 Business Rules</h3>
+    <table>
+      <thead><tr><th>Rule #</th><th>Rule Description</th><th>Enforcement</th></tr></thead>
+      <tbody>
+        <tr><td>BR-01</td><td>At least one report type must be selected (Monthly, Yearly, or Custom)</td><td>EVALUATE on MONTHLYI / YEARLYI / CUSTOMI; error if none selected</td></tr>
+        <tr><td>BR-02</td><td>For Custom reports, all six date components (Start MM, DD, YYYY; End MM, DD, YYYY) are mandatory</td><td>Individual empty-field checks on SDTMMI, SDTDDI, SDTYYYYI, EDTMMI, EDTDDI, EDTYYYYI</td></tr>
+        <tr><td>BR-03</td><td>Start and End month must be numeric and &le; 12</td><td>IS NOT NUMERIC check + &gt; '12' check</td></tr>
+        <tr><td>BR-04</td><td>Start and End day must be numeric and &le; 31</td><td>IS NOT NUMERIC check + &gt; '31' check</td></tr>
+        <tr><td>BR-05</td><td>Start and End year must be numeric</td><td>IS NOT NUMERIC check</td></tr>
+        <tr><td>BR-06</td><td>Custom dates must be valid calendar dates</td><td>CALL 'CSUTLDTC' date validation utility</td></tr>
+        <tr><td>BR-07</td><td>User must confirm submission with 'Y' or 'y'</td><td>EVALUATE CONFIRMI; 'N'/'n' cancels; other values rejected</td></tr>
+        <tr><td>BR-08</td><td>Monthly report: auto-calculates 1st to last day of current month</td><td>FUNCTION CURRENT-DATE + date arithmetic</td></tr>
+        <tr><td>BR-09</td><td>Yearly report: auto-calculates Jan-01 to Dec-31 of current year</td><td>Hardcoded '01'/'01' to '12'/'31' with current year</td></tr>
+      </tbody>
+    </table>
+
+    <h3>1.4 User Interactions</h3>
+    <table>
+      <thead><tr><th>Step</th><th>User Action</th><th>System Response</th><th>Business Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Select &ldquo;Transaction Reports&rdquo; from main menu</td><td>Display report selection screen (CORPT0A)</td><td>Navigate to reporting function</td></tr>
+        <tr><td>2</td><td>Mark one of: Monthly, Yearly, or Custom</td><td>If Custom: validate date fields; otherwise auto-calculate dates</td><td>Choose reporting period</td></tr>
+        <tr><td>3</td><td>(Custom only) Enter Start Date and End Date (MM/DD/YYYY)</td><td>Validate each component; call CSUTLDTC for calendar validation</td><td>Define custom date range</td></tr>
+        <tr><td>4</td><td>Enter 'Y' in Confirm field, press ENTER</td><td>Assemble JCL, write to TDQ JOBS, display success message</td><td>Submit report to batch queue</td></tr>
+        <tr><td>5</td><td>Press PF3</td><td>Return to Main Menu (COMEN01C)</td><td>Exit reporting</td></tr>
+      </tbody>
+    </table>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 2 — Technical Flow Analysis
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">2</span>
+    <h2>Technical Flow Analysis</h2>
+    <span class="section-toggle">&#9662;</span>
+  </div>
+  <div class="section-body">
+
+    <h3>2.1 Technical Flow Diagram &mdash; Overview</h3>
+<pre>
+  TERMINAL (3270)        CICS REGION              BATCH
+  ┌──────────┐     ┌──────────────────┐     ┌──────────────┐
+  │  User    │────▶│  CORPT00C        │     │  TRNRPT00    │
+  │  Input   │     │  (CR00)          │     │  JOB         │
+  │          │◀────│                  │     │              │
+  │  Screen  │     │  MAP: CORPT0A    │     │  PROC:       │
+  │  Output  │     │  MAPSET: CORPT00 │     │  TRANREPT    │
+  └──────────┘     │                  │     └──────────────┘
+                   │  CALL: CSUTLDTC  │            ▲
+                   │  TDQ:  JOBS      │────────────┘
+                   │  (WRITEQ TD)     │   JCL via INTRDR
+                   └──────────────────┘
+</pre>
+
+    <h3>2.2 Technical Flow Diagram &mdash; Detailed</h3>
+<pre>
+  Entry (EIBCALEN=0)
+    │
+    ├── XCTL to COSGN00C (no COMMAREA = not authenticated)
+    │
+  Entry (EIBCALEN &gt; 0, first time: CDEMO-PGM-CONTEXT = 0)
+    │
+    ├── Set CDEMO-PGM-REENTER = TRUE
+    ├── MOVE LOW-VALUES to CORPT0AO
+    ├── Set cursor to MONTHLY field
+    ├── SEND MAP('CORPT0A') MAPSET('CORPT00') ERASE
+    └── RETURN TRANSID('CR00') COMMAREA(CARDDEMO-COMMAREA)
+
+  Re-entry (EIBCALEN &gt; 0, CDEMO-PGM-REENTER = TRUE)
+    │
+    ├── RECEIVE MAP('CORPT0A') MAPSET('CORPT00')
+    ├── EVALUATE EIBAID
+    │     ├── DFHENTER → PROCESS-ENTER-KEY
+    │     │     ├── EVALUATE report type selected
+    │     │     │     ├── Monthly → calculate 1st-to-last of month
+    │     │     │     │     └── SUBMIT-JOB-TO-INTRDR
+    │     │     │     ├── Yearly → calculate Jan-01 to Dec-31
+    │     │     │     │     └── SUBMIT-JOB-TO-INTRDR
+    │     │     │     ├── Custom → validate 6 date fields
+    │     │     │     │     ├── CALL 'CSUTLDTC' (start date)
+    │     │     │     │     ├── CALL 'CSUTLDTC' (end date)
+    │     │     │     │     └── SUBMIT-JOB-TO-INTRDR
+    │     │     │     └── OTHER → "Select a report type..."
+    │     │     │
+    │     │     └── SUBMIT-JOB-TO-INTRDR
+    │     │           ├── Check CONFIRMI (empty → prompt)
+    │     │           ├── EVALUATE Y/y → proceed
+    │     │           ├── N/n → cancel, reinitialize
+    │     │           ├── OTHER → invalid confirm value
+    │     │           └── PERFORM VARYING WS-IDX 1..1000
+    │     │                 ├── MOVE JOB-LINES(WS-IDX) → JCL-RECORD
+    │     │                 └── WRITEQ TD QUEUE('JOBS')
+    │     │
+    │     ├── DFHPF3 → XCTL to COMEN01C (return to menu)
+    │     └── OTHER → "Invalid key pressed"
+    │
+    └── RETURN TRANSID('CR00') COMMAREA(CARDDEMO-COMMAREA)
+</pre>
+
+    <h3>2.3 Pseudo-Conversational Flow</h3>
+    <table>
+      <thead><tr><th>Iteration</th><th>EIBCALEN</th><th>User Action</th><th>Entry Point</th><th>Screen Sent</th><th>Next TRANSID</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td>= 0</td><td>N/A (direct entry)</td><td>MAIN-PARA</td><td>None (XCTL to COSGN00C)</td><td>N/A</td></tr>
+        <tr><td>1</td><td>&gt; 0</td><td>Menu selection</td><td>MAIN-PARA (first entry)</td><td>CORPT0A (empty form)</td><td>CR00</td></tr>
+        <tr><td>2</td><td>&gt; 0</td><td>Select report type + ENTER</td><td>MAIN-PARA (re-enter)</td><td>CORPT0A (prompt confirm)</td><td>CR00</td></tr>
+        <tr><td>3</td><td>&gt; 0</td><td>Enter Y to confirm + ENTER</td><td>MAIN-PARA (re-enter)</td><td>CORPT0A (success msg)</td><td>CR00</td></tr>
+        <tr><td>n</td><td>&gt; 0</td><td>Press PF3</td><td>MAIN-PARA (re-enter)</td><td>None (XCTL to COMEN01C)</td><td>N/A</td></tr>
+      </tbody>
+    </table>
+
+    <h3>2.4 CICS Command Flow</h3>
+    <table>
+      <thead><tr><th>Command</th><th>Location</th><th>Purpose</th><th>Response Handling</th></tr></thead>
+      <tbody>
+        <tr><td><code>EXEC CICS RETURN TRANSID('CR00') COMMAREA</code></td><td>MAIN-PARA (line 199)</td><td>Pseudo-conversational return</td><td>N/A</td></tr>
+        <tr><td><code>EXEC CICS XCTL PROGRAM(CDEMO-TO-PROGRAM)</code></td><td>RETURN-TO-PREV-SCREEN (line 548)</td><td>Transfer to menu or sign-on</td><td>N/A</td></tr>
+        <tr><td><code>EXEC CICS SEND MAP('CORPT0A') MAPSET('CORPT00') ERASE CURSOR</code></td><td>SEND-TRNRPT-SCREEN (line 563)</td><td>Initial screen send with erase</td><td>N/A</td></tr>
+        <tr><td><code>EXEC CICS SEND MAP('CORPT0A') MAPSET('CORPT00') CURSOR</code></td><td>SEND-TRNRPT-SCREEN (line 571)</td><td>Subsequent screen send (no erase)</td><td>N/A</td></tr>
+        <tr><td><code>EXEC CICS RECEIVE MAP('CORPT0A') MAPSET('CORPT00')</code></td><td>RECEIVE-TRNRPT-SCREEN (line 598)</td><td>Receive user input</td><td>RESP(WS-RESP-CD) RESP2(WS-REAS-CD)</td></tr>
+        <tr><td><code>EXEC CICS WRITEQ TD QUEUE('JOBS')</code></td><td>WIRTE-JOBSUB-TDQ (line 517)</td><td>Write JCL record to TDQ</td><td>RESP(WS-RESP-CD) &mdash; DFHRESP(NORMAL) or error</td></tr>
+        <tr><td><code>EXEC CICS RETURN TRANSID('CR00') COMMAREA</code></td><td>RETURN-TO-CICS (line 587)</td><td>Return after SEND MAP (via GO TO)</td><td>N/A</td></tr>
+      </tbody>
+    </table>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 3 — Screen Flow and BMS Maps
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">3</span>
+    <h2>Screen Flow and BMS Maps</h2>
+    <span class="section-toggle">&#9662;</span>
+  </div>
+  <div class="section-body">
+
+    <h3>3.1 Screen Flow Diagram</h3>
+<pre>
+  ┌───────────────────┐          ┌─────────────────────────────────────┐
+  │  Main Menu        │  XCTL   │  CORPT0A (Transaction Reports)     │
+  │  (COMEN01C)       │────────▶│                                     │
+  │                   │         │  ┌───────────────────────────────┐  │
+  │                   │◀──PF3───│  │ [_] Monthly (Current Month)  │  │
+  │                   │         │  │ [_] Yearly  (Current Year)   │  │
+  └───────────────────┘         │  │ [_] Custom  (Date Range)     │  │
+                                │  │   Start Date: MM/DD/YYYY     │  │
+                                │  │   End Date:   MM/DD/YYYY     │  │
+                                │  │                               │  │
+                                │  │ Confirm: [_] (Y/N)           │  │
+                                │  └───────────────────────────────┘  │
+                                │                                     │
+                                │  ENTER=Continue  F3=Back            │
+                                └─────────────────────────────────────┘
+</pre>
+
+    <h3>3.2 BMS Map Inventory</h3>
+    <table>
+      <thead><tr><th>Map Name</th><th>Mapset</th><th>Purpose</th><th>Key Fields</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>CORPT0A</td>
+          <td>CORPT00</td>
+          <td>Transaction Report selection and confirmation screen (24&times;80)</td>
+          <td>MONTHLY, YEARLY, CUSTOM, SDTMM, SDTDD, SDTYYYY, EDTMM, EDTDD, EDTYYYY, CONFIRM, ERRMSG</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>3.3 Screen Field Details</h3>
+    <table>
+      <thead><tr><th>Field</th><th>Attribute</th><th>Length</th><th>Type</th><th>Position</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>TRNNAME</td><td>ASKIP, FSET, NORM</td><td>4</td><td>Display</td><td>(1,7)</td><td>Transaction ID</td></tr>
+        <tr><td>TITLE01</td><td>ASKIP, FSET, NORM</td><td>40</td><td>Display</td><td>(1,21)</td><td>Application title line 1</td></tr>
+        <tr><td>CURDATE</td><td>ASKIP, FSET, NORM</td><td>8</td><td>Display</td><td>(1,71)</td><td>Current date (mm/dd/yy)</td></tr>
+        <tr><td>PGMNAME</td><td>ASKIP, FSET, NORM</td><td>8</td><td>Display</td><td>(2,7)</td><td>Program name</td></tr>
+        <tr><td>TITLE02</td><td>ASKIP, FSET, NORM</td><td>40</td><td>Display</td><td>(2,21)</td><td>Application title line 2</td></tr>
+        <tr><td>CURTIME</td><td>ASKIP, FSET, NORM</td><td>8</td><td>Display</td><td>(2,71)</td><td>Current time (hh:mm:ss)</td></tr>
+        <tr><td>MONTHLY</td><td>FSET, IC, NORM, UNPROT</td><td>1</td><td>Selection</td><td>(7,10)</td><td>Monthly report checkbox</td></tr>
+        <tr><td>YEARLY</td><td>FSET, NORM, UNPROT</td><td>1</td><td>Selection</td><td>(9,10)</td><td>Yearly report checkbox</td></tr>
+        <tr><td>CUSTOM</td><td>FSET, NORM, UNPROT</td><td>1</td><td>Selection</td><td>(11,10)</td><td>Custom report checkbox</td></tr>
+        <tr><td>SDTMM</td><td>FSET, NORM, NUM, UNPROT</td><td>2</td><td>Numeric</td><td>(13,29)</td><td>Start date &mdash; Month</td></tr>
+        <tr><td>SDTDD</td><td>FSET, NORM, NUM, UNPROT</td><td>2</td><td>Numeric</td><td>(13,34)</td><td>Start date &mdash; Day</td></tr>
+        <tr><td>SDTYYYY</td><td>FSET, NORM, NUM, UNPROT</td><td>4</td><td>Numeric</td><td>(13,39)</td><td>Start date &mdash; Year</td></tr>
+        <tr><td>EDTMM</td><td>FSET, NORM, NUM, UNPROT</td><td>2</td><td>Numeric</td><td>(14,29)</td><td>End date &mdash; Month</td></tr>
+        <tr><td>EDTDD</td><td>FSET, NORM, NUM, UNPROT</td><td>2</td><td>Numeric</td><td>(14,34)</td><td>End date &mdash; Day</td></tr>
+        <tr><td>EDTYYYY</td><td>FSET, NORM, NUM, UNPROT</td><td>4</td><td>Numeric</td><td>(14,39)</td><td>End date &mdash; Year</td></tr>
+        <tr><td>CONFIRM</td><td>FSET, NORM, UNPROT</td><td>1</td><td>Character</td><td>(19,66)</td><td>Submission confirmation (Y/N)</td></tr>
+        <tr><td>ERRMSG</td><td>ASKIP, BRT, FSET</td><td>78</td><td>Display</td><td>(23,1)</td><td>Error/status message</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.4 PF Key / AID Key Handling</h3>
+    <table>
+      <thead><tr><th>Key</th><th>EIBAID Value</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>ENTER</td><td>DFHENTER</td><td>PERFORM PROCESS-ENTER-KEY &mdash; validate selections and submit report</td></tr>
+        <tr><td>PF3</td><td>DFHPF3</td><td>XCTL to COMEN01C (return to Main Menu)</td></tr>
+        <tr><td>Other</td><td>Any other AID</td><td>Display error: &ldquo;Invalid key pressed. Please see below...&rdquo; (CCDA-MSG-INVALID-KEY)</td></tr>
+      </tbody>
+    </table>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 4 — Program Inventory and Call Chain
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">4</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <span class="section-toggle">&#9662;</span>
+  </div>
+  <div class="section-body">
+
+    <h3>4.1 Program Inventory</h3>
+    <table>
+      <thead><tr><th>Program</th><th>Purpose</th><th>Entry Mechanism</th><th>LOC</th></tr></thead>
+      <tbody>
+        <tr><td>CORPT00C</td><td>Transaction Reports &mdash; main entry program</td><td>CICS TRANSID CR00</td><td>649</td></tr>
+        <tr><td>CSUTLDTC</td><td>Date validation utility (validates date against format)</td><td>COBOL CALL</td><td>N/A (shared utility)</td></tr>
+        <tr><td>COMEN01C</td><td>Main Menu &mdash; return target on PF3</td><td>XCTL</td><td>N/A</td></tr>
+        <tr><td>COSGN00C</td><td>Sign-On &mdash; redirect target when EIBCALEN = 0</td><td>XCTL</td><td>N/A</td></tr>
+      </tbody>
+    </table>
+
+    <h3>4.2 Call Chain Diagram</h3>
+<pre>
+  TRANSID CR00
+    │
+    └── CORPT00C  (entry program)
+          │
+          ├── CALL 'CSUTLDTC'  (date validation, Custom reports only)
+          │     └── validates start date
+          │     └── validates end date
+          │
+          ├── WRITEQ TD → JOBS (TDQ → JES Internal Reader)
+          │     └── submits TRNRPT00 batch JCL
+          │
+          ├── XCTL → COMEN01C  (PF3: return to main menu)
+          │
+          └── XCTL → COSGN00C  (EIBCALEN=0: redirect to sign-on)
+</pre>
+
+    <h3>4.3 Call Details</h3>
+    <table>
+      <thead><tr><th>Caller</th><th>Called</th><th>Mechanism</th><th>Data Passed</th><th>When</th></tr></thead>
+      <tbody>
+        <tr><td>CORPT00C</td><td>CSUTLDTC</td><td>COBOL CALL</td><td>CSUTLDTC-DATE (10 bytes), CSUTLDTC-DATE-FORMAT (10 bytes), CSUTLDTC-RESULT (80 bytes)</td><td>Custom report: validate start date</td></tr>
+        <tr><td>CORPT00C</td><td>CSUTLDTC</td><td>COBOL CALL</td><td>Same parameters</td><td>Custom report: validate end date</td></tr>
+        <tr><td>CORPT00C</td><td>COMEN01C</td><td>EXEC CICS XCTL</td><td>CARDDEMO-COMMAREA</td><td>PF3 pressed (return to menu)</td></tr>
+        <tr><td>CORPT00C</td><td>COSGN00C</td><td>EXEC CICS XCTL</td><td>CARDDEMO-COMMAREA</td><td>EIBCALEN = 0 (no COMMAREA)</td></tr>
+      </tbody>
+    </table>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 5 — File and Data Store Inventory
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">5</span>
+    <h2>File and Data Store Inventory</h2>
+    <span class="section-toggle">&#9662;</span>
+  </div>
+  <div class="section-body">
+
+    <h3>5.1 File Inventory</h3>
+    <p><em>N/A &mdash; CORPT00C does not perform any direct VSAM file operations (no READ, WRITE, REWRITE, DELETE, STARTBR, or READNEXT commands). All data access is deferred to the batch job (TRNRPT00) submitted via the TDQ.</em></p>
+    <p>Working storage does define <code>WS-TRANSACT-FILE PIC X(08) VALUE 'TRANSACT'</code>, but this file is not accessed by the online program. The batch job TRNRPT00 (invoked via JCL PROC TRANREPT) reads the TRANSACT file.</p>
+
+    <h3>5.2 File Access Details</h3>
+    <p><em>N/A &mdash; see above.</em></p>
+
+    <h3>5.3 TSQ Usage</h3>
+    <p><em>N/A &mdash; No Temporary Storage Queue usage in CORPT00C.</em></p>
+
+    <h3>5.4 TDQ Usage</h3>
+    <table>
+      <thead><tr><th>Queue Name</th><th>Type</th><th>Operation</th><th>Record</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>JOBS</td>
+          <td>Extra-partition (mapped to JES Internal Reader)</td>
+          <td>WRITEQ TD</td>
+          <td>JCL-RECORD (80 bytes)</td>
+          <td>Submit batch JCL for TRNRPT00 job to the internal reader. Each 80-byte JCL line is written sequentially until <code>/*EOF</code> is encountered.</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 6 — Data Flow Analysis
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">6</span>
+    <h2>Data Flow Analysis</h2>
+    <span class="section-toggle">&#9662;</span>
+  </div>
+  <div class="section-body">
+
+    <h3>6.1 Data Flow Through Transaction</h3>
+<pre>
+  ┌─────────────────┐    ┌──────────────────────────┐    ┌───────────────────┐
+  │  TERMINAL       │    │  CORPT00C Working        │    │  OUTPUT           │
+  │  (CORPT0A map)  │    │  Storage                 │    │                   │
+  │                 │    │                          │    │                   │
+  │  MONTHLYI ──────┼───▶│  WS-REPORT-NAME          │    │                   │
+  │  YEARLYI  ──────┼───▶│  WS-START-DATE           │    │                   │
+  │  CUSTOMI  ──────┼───▶│  WS-END-DATE             │    │                   │
+  │  SDTMMI   ──────┼───▶│  PARM-START-DATE-1/2     │    │                   │
+  │  SDTDDI   ──────┼───▶│  PARM-END-DATE-1/2       │    │                   │
+  │  SDTYYYYI ──────┼───▶│                          │    │                   │
+  │  EDTMMI   ──────┼───▶│  JOB-DATA (JCL template) │    │                   │
+  │  EDTDDI   ──────┼───▶│    ├── JOB card           │    │                   │
+  │  EDTYYYYI ──────┼───▶│    ├── PROC=TRANREPT      │    │                   │
+  │  CONFIRMI ──────┼───▶│    ├── SYMNAMES DD         │───▶│  TDQ 'JOBS'      │
+  │                 │    │    ├── DATEPARM DD          │    │  (JES INTRDR)    │
+  │                 │    │    └── /*EOF                │    │                   │
+  │                 │    │                          │    │                   │
+  │  ERRMSGO  ◀─────┼────│  WS-MESSAGE              │    │                   │
+  └─────────────────┘    └──────────────────────────┘    └───────────────────┘
+</pre>
+
+    <h3>6.2 Data Transformation Map</h3>
+    <table>
+      <thead><tr><th>Source</th><th>Transformation</th><th>Target</th></tr></thead>
+      <tbody>
+        <tr><td>MONTHLYI (screen)</td><td>Non-empty check → compute 1st-of-month to last-of-month via FUNCTION CURRENT-DATE and DATE-OF-INTEGER</td><td>WS-START-DATE, WS-END-DATE → PARM-START-DATE-1/2, PARM-END-DATE-1/2</td></tr>
+        <tr><td>YEARLYI (screen)</td><td>Non-empty check → set Jan-01 to Dec-31 of CURRENT-DATE year</td><td>WS-START-DATE, WS-END-DATE → PARM-START-DATE-1/2, PARM-END-DATE-1/2</td></tr>
+        <tr><td>SDTMMI/SDTDDI/SDTYYYYI (screen)</td><td>NUMVAL-C conversion → numeric validation → CSUTLDTC date validation</td><td>WS-START-DATE-MM/DD/YYYY → PARM-START-DATE-1/2</td></tr>
+        <tr><td>EDTMMI/EDTDDI/EDTYYYYI (screen)</td><td>NUMVAL-C conversion → numeric validation → CSUTLDTC date validation</td><td>WS-END-DATE-MM/DD/YYYY → PARM-END-DATE-1/2</td></tr>
+        <tr><td>JOB-DATA (WS template)</td><td>Date parameters embedded via PARM-START-DATE-1/2, PARM-END-DATE-1/2 overlays</td><td>JCL-RECORD → TDQ 'JOBS'</td></tr>
+        <tr><td>WS-REPORT-NAME</td><td>STRING concatenation with success message</td><td>WS-MESSAGE → ERRMSGO (screen)</td></tr>
+      </tbody>
+    </table>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 7 — COMMAREA and Interface Contracts
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">7</span>
+    <h2>COMMAREA and Interface Contracts</h2>
+    <span class="section-toggle">&#9662;</span>
+  </div>
+  <div class="section-body">
+
+    <h3>7.1 COMMAREA Layout</h3>
+    <p>Uses shared COMMAREA defined in copybook <code>COCOM01Y.cpy</code>:</p>
+    <table>
+      <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Direction</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>CDEMO-FROM-TRANID</td><td>X(04)</td><td>4</td><td>OUT</td><td>Set to 'CR00' on exit via RETURN-TO-PREV-SCREEN</td></tr>
+        <tr><td>CDEMO-FROM-PROGRAM</td><td>X(08)</td><td>8</td><td>OUT</td><td>Set to 'CORPT00C' on exit</td></tr>
+        <tr><td>CDEMO-TO-TRANID</td><td>X(04)</td><td>4</td><td>IN</td><td>Not used directly by this program</td></tr>
+        <tr><td>CDEMO-TO-PROGRAM</td><td>X(08)</td><td>8</td><td>IN/OUT</td><td>Target program for XCTL (set to 'COMEN01C' on PF3, 'COSGN00C' if EIBCALEN=0)</td></tr>
+        <tr><td>CDEMO-USER-ID</td><td>X(08)</td><td>8</td><td>IN</td><td>Authenticated user ID (passed from sign-on)</td></tr>
+        <tr><td>CDEMO-USER-TYPE</td><td>X(01)</td><td>1</td><td>IN</td><td>'A' = admin, 'U' = regular user</td></tr>
+        <tr><td>CDEMO-PGM-CONTEXT</td><td>9(01)</td><td>1</td><td>IN/OUT</td><td>0 = first entry, 1 = re-entry (CDEMO-PGM-REENTER)</td></tr>
+        <tr><td>CDEMO-CUST-ID</td><td>9(09)</td><td>9</td><td>IN</td><td>Customer ID (not used by this program)</td></tr>
+        <tr><td>CDEMO-ACCT-ID</td><td>9(11)</td><td>11</td><td>IN</td><td>Account ID (not used by this program)</td></tr>
+        <tr><td>CDEMO-CARD-NUM</td><td>9(16)</td><td>16</td><td>IN</td><td>Card number (not used by this program)</td></tr>
+        <tr><td>CDEMO-LAST-MAP</td><td>X(07)</td><td>7</td><td>IN/OUT</td><td>Last map displayed</td></tr>
+        <tr><td>CDEMO-LAST-MAPSET</td><td>X(07)</td><td>7</td><td>IN/OUT</td><td>Last mapset used</td></tr>
+      </tbody>
+    </table>
+
+    <h3>7.2 Return Code Conventions</h3>
+    <table>
+      <thead><tr><th>Interface</th><th>Return Code</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>CSUTLDTC</td><td>CSUTLDTC-RESULT-SEV-CD = '0000'</td><td>Date is valid</td></tr>
+        <tr><td>CSUTLDTC</td><td>CSUTLDTC-RESULT-SEV-CD &ne; '0000' AND MSG-NUM &ne; '2513'</td><td>Date is invalid (show error)</td></tr>
+        <tr><td>CSUTLDTC</td><td>CSUTLDTC-RESULT-MSG-NUM = '2513'</td><td>Tolerated warning (date accepted)</td></tr>
+        <tr><td>WRITEQ TD</td><td>WS-RESP-CD = DFHRESP(NORMAL)</td><td>Record written successfully</td></tr>
+        <tr><td>WRITEQ TD</td><td>WS-RESP-CD &ne; DFHRESP(NORMAL)</td><td>TDQ write failure</td></tr>
+      </tbody>
+    </table>
+
+    <h3>7.3 Conversation State Management</h3>
+    <p>
+      State is managed through the standard CardDemo COMMAREA (<code>CARDDEMO-COMMAREA</code>)
+      passed on each <code>RETURN TRANSID('CR00')</code>.  The key state indicator is
+      <code>CDEMO-PGM-CONTEXT</code>:
+    </p>
+    <ul>
+      <li><code>0</code> (CDEMO-PGM-ENTER) &mdash; First entry into the program; screen is initialized and sent with ERASE.</li>
+      <li><code>1</code> (CDEMO-PGM-REENTER) &mdash; Subsequent entries; user input is received and processed.</li>
+    </ul>
+    <p>
+      No screen-level state is preserved in the COMMAREA between iterations.  All report selection
+      and date data resides in the BMS map buffers (CORPT0AI/CORPT0AO) which are re-received each
+      iteration.  After successful submission, <code>INITIALIZE-ALL-FIELDS</code> clears all input
+      fields.
+    </p>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 8 — Error Handling and User Feedback
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">8</span>
+    <h2>Error Handling and User Feedback</h2>
+    <span class="section-toggle">&#9662;</span>
+  </div>
+  <div class="section-body">
+
+    <h3>8.1 Error Flow Diagram</h3>
+<pre>
+  User Input
+    │
+    ├── No report selected ──────────▶ "Select a report type to print report..."
+    │
+    ├── Custom: empty field ─────────▶ "Start/End Date - &lt;field&gt; can NOT be empty..."
+    │
+    ├── Custom: invalid numeric ─────▶ "Start/End Date - Not a valid Month/Day/Year..."
+    │
+    ├── Custom: invalid date ────────▶ "Start/End Date - Not a valid date..."
+    │                                   (via CSUTLDTC)
+    │
+    ├── No confirmation ─────────────▶ "Please confirm to print the &lt;type&gt; report..."
+    │
+    ├── Confirm = N ─────────────────▶ (silent cancel, fields reinitialized)
+    │
+    ├── Confirm = invalid ───────────▶ '"X" is not a valid value to confirm...'
+    │
+    ├── TDQ write failure ───────────▶ "Unable to Write TDQ (JOBS)..."
+    │
+    ├── Invalid AID key ─────────────▶ "Invalid key pressed. Please see below..."
+    │
+    └── Success ─────────────────────▶ "&lt;type&gt; report submitted for printing ..."
+                                       (displayed in GREEN)
+</pre>
+
+    <h3>8.2 Error Handling Matrix</h3>
+    <table>
+      <thead><tr><th>Error Condition</th><th>RESP Code</th><th>Program Action</th><th>User Message</th><th>Logging</th></tr></thead>
+      <tbody>
+        <tr><td>No report type selected</td><td>N/A</td><td>Set ERR-FLG-ON, cursor to MONTHLY</td><td>Select a report type to print report...</td><td>None</td></tr>
+        <tr><td>Start Month empty</td><td>N/A</td><td>Set ERR-FLG-ON, cursor to SDTMM</td><td>Start Date - Month can NOT be empty...</td><td>None</td></tr>
+        <tr><td>Start Day empty</td><td>N/A</td><td>Set ERR-FLG-ON, cursor to SDTDD</td><td>Start Date - Day can NOT be empty...</td><td>None</td></tr>
+        <tr><td>Start Year empty</td><td>N/A</td><td>Set ERR-FLG-ON, cursor to SDTYYYY</td><td>Start Date - Year can NOT be empty...</td><td>None</td></tr>
+        <tr><td>End Month empty</td><td>N/A</td><td>Set ERR-FLG-ON, cursor to EDTMM</td><td>End Date - Month can NOT be empty...</td><td>None</td></tr>
+        <tr><td>End Day empty</td><td>N/A</td><td>Set ERR-FLG-ON, cursor to EDTDD</td><td>End Date - Day can NOT be empty...</td><td>None</td></tr>
+        <tr><td>End Year empty</td><td>N/A</td><td>Set ERR-FLG-ON, cursor to EDTYYYY</td><td>End Date - Year can NOT be empty...</td><td>None</td></tr>
+        <tr><td>Start Month not numeric or &gt; 12</td><td>N/A</td><td>Set ERR-FLG-ON, cursor to SDTMM</td><td>Start Date - Not a valid Month...</td><td>None</td></tr>
+        <tr><td>Start Day not numeric or &gt; 31</td><td>N/A</td><td>Set ERR-FLG-ON, cursor to SDTDD</td><td>Start Date - Not a valid Day...</td><td>None</td></tr>
+        <tr><td>Start Year not numeric</td><td>N/A</td><td>Set ERR-FLG-ON, cursor to SDTYYYY</td><td>Start Date - Not a valid Year...</td><td>None</td></tr>
+        <tr><td>End Month not numeric or &gt; 12</td><td>N/A</td><td>Set ERR-FLG-ON, cursor to EDTMM</td><td>End Date - Not a valid Month...</td><td>None</td></tr>
+        <tr><td>End Day not numeric or &gt; 31</td><td>N/A</td><td>Set ERR-FLG-ON, cursor to EDTDD</td><td>End Date - Not a valid Day...</td><td>None</td></tr>
+        <tr><td>End Year not numeric</td><td>N/A</td><td>Set ERR-FLG-ON, cursor to EDTYYYY</td><td>End Date - Not a valid Year...</td><td>None</td></tr>
+        <tr><td>Start date invalid (CSUTLDTC)</td><td>SEV-CD &ne; '0000'</td><td>Set ERR-FLG-ON, cursor to SDTMM</td><td>Start Date - Not a valid date...</td><td>None</td></tr>
+        <tr><td>End date invalid (CSUTLDTC)</td><td>SEV-CD &ne; '0000'</td><td>Set ERR-FLG-ON, cursor to EDTMM</td><td>End Date - Not a valid date...</td><td>None</td></tr>
+        <tr><td>Confirmation empty</td><td>N/A</td><td>Set ERR-FLG-ON, cursor to CONFIRM</td><td>Please confirm to print the &lt;type&gt; report...</td><td>None</td></tr>
+        <tr><td>Confirmation invalid</td><td>N/A</td><td>Set ERR-FLG-ON, cursor to CONFIRM</td><td>"X" is not a valid value to confirm...</td><td>None</td></tr>
+        <tr><td>TDQ WRITEQ TD failure</td><td>WS-RESP-CD &ne; NORMAL</td><td>Set ERR-FLG-ON, cursor to MONTHLY</td><td>Unable to Write TDQ (JOBS)...</td><td>DISPLAY RESP/REAS to SYSOUT</td></tr>
+        <tr><td>Invalid AID key</td><td>N/A</td><td>Set ERR-FLG-ON, cursor to MONTHLY</td><td>Invalid key pressed. Please see below...</td><td>None</td></tr>
+      </tbody>
+    </table>
+
+    <h3>8.3 HANDLE ABEND / HANDLE CONDITION</h3>
+    <p><em>None &mdash; CORPT00C does not use HANDLE ABEND or HANDLE CONDITION statements. Error handling is performed via inline RESP/RESP2 checking on the WRITEQ TD command.</em></p>
+
+    <h3>8.4 User Error Messages</h3>
+    <table>
+      <thead><tr><th>#</th><th>Message Text</th><th>Source</th><th>Trigger</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Select a report type to print report...</td><td>Inline literal</td><td>No report type checkbox marked</td></tr>
+        <tr><td>2</td><td>Start Date - Month can NOT be empty...</td><td>Inline literal</td><td>SDTMMI is empty (Custom)</td></tr>
+        <tr><td>3</td><td>Start Date - Day can NOT be empty...</td><td>Inline literal</td><td>SDTDDI is empty (Custom)</td></tr>
+        <tr><td>4</td><td>Start Date - Year can NOT be empty...</td><td>Inline literal</td><td>SDTYYYYI is empty (Custom)</td></tr>
+        <tr><td>5</td><td>End Date - Month can NOT be empty...</td><td>Inline literal</td><td>EDTMMI is empty (Custom)</td></tr>
+        <tr><td>6</td><td>End Date - Day can NOT be empty...</td><td>Inline literal</td><td>EDTDDI is empty (Custom)</td></tr>
+        <tr><td>7</td><td>End Date - Year can NOT be empty...</td><td>Inline literal</td><td>EDTYYYYI is empty (Custom)</td></tr>
+        <tr><td>8</td><td>Start Date - Not a valid Month...</td><td>Inline literal</td><td>SDTMMI not numeric or &gt; 12</td></tr>
+        <tr><td>9</td><td>Start Date - Not a valid Day...</td><td>Inline literal</td><td>SDTDDI not numeric or &gt; 31</td></tr>
+        <tr><td>10</td><td>Start Date - Not a valid Year...</td><td>Inline literal</td><td>SDTYYYYI not numeric</td></tr>
+        <tr><td>11</td><td>End Date - Not a valid Month...</td><td>Inline literal</td><td>EDTMMI not numeric or &gt; 12</td></tr>
+        <tr><td>12</td><td>End Date - Not a valid Day...</td><td>Inline literal</td><td>EDTDDI not numeric or &gt; 31</td></tr>
+        <tr><td>13</td><td>End Date - Not a valid Year...</td><td>Inline literal</td><td>EDTYYYYI not numeric</td></tr>
+        <tr><td>14</td><td>Start Date - Not a valid date...</td><td>Inline literal</td><td>CSUTLDTC rejects start date</td></tr>
+        <tr><td>15</td><td>End Date - Not a valid date...</td><td>Inline literal</td><td>CSUTLDTC rejects end date</td></tr>
+        <tr><td>16</td><td>Please confirm to print the &lt;type&gt; report...</td><td>STRING</td><td>CONFIRMI is empty</td></tr>
+        <tr><td>17</td><td>"X" is not a valid value to confirm...</td><td>STRING</td><td>CONFIRMI &ne; Y/y/N/n</td></tr>
+        <tr><td>18</td><td>Unable to Write TDQ (JOBS)...</td><td>Inline literal</td><td>WRITEQ TD non-NORMAL response</td></tr>
+        <tr><td>19</td><td>Invalid key pressed. Please see below...</td><td>CCDA-MSG-INVALID-KEY (CSMSG01Y)</td><td>Any AID key other than ENTER/PF3</td></tr>
+        <tr><td>20</td><td>&lt;type&gt; report submitted for printing ...</td><td>STRING (success)</td><td>Job successfully written to TDQ</td></tr>
+      </tbody>
+    </table>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 9 — Security and Authorization
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">9</span>
+    <h2>Security and Authorization</h2>
+    <span class="section-toggle">&#9662;</span>
+  </div>
+  <div class="section-body">
+
+    <h3>9.1 Transaction Security</h3>
+    <p>
+      Access to CR00 is controlled at two levels:
+    </p>
+    <ul>
+      <li><strong>CICS Transaction Security:</strong> The transaction CR00 can be protected via RACF
+        transaction-level security in the CICS region definition.</li>
+      <li><strong>Application-Level Routing:</strong> The main menu program (<code>COMEN01C</code>)
+        routes to <code>CORPT00C</code> as menu option 9. The menu is available to both regular
+        users (<code>CDEMO-USER-TYPE = 'U'</code>) and admin users (<code>'A'</code>).</li>
+      <li><strong>EIBCALEN Check:</strong> If EIBCALEN = 0 (no COMMAREA, indicating the user has
+        not passed through the sign-on flow), the program immediately transfers control to
+        <code>COSGN00C</code> (sign-on program), preventing unauthenticated access.</li>
+    </ul>
+
+    <h3>9.2 Data Access Authorization</h3>
+    <p>
+      CORPT00C does not access any VSAM files directly. The TDQ &ldquo;JOBS&rdquo; is an
+      extra-partition queue whose access is controlled by the CICS TDQ definition and the
+      underlying JES security. The batch job (TRNRPT00) runs under the submitting user&rsquo;s
+      authority as specified by <code>NOTIFY=&amp;SYSUID</code> in the JCL.
+    </p>
+
+    <h3>9.3 Audit Trail</h3>
+    <p>
+      No explicit audit logging is performed by CORPT00C.  The only diagnostic output is a
+      <code>DISPLAY</code> statement that writes RESP and REAS codes to SYSOUT when the WRITEQ TD
+      command fails.  The JES job submission itself creates an audit trail through the JES
+      job log (JESMSGLG, JESJCL, JESYSMSG).
+    </p>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 10 — Performance Characteristics
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Performance Characteristics</h2>
+    <span class="section-toggle">&#9662;</span>
+  </div>
+  <div class="section-body">
+
+    <h3>10.1 Performance Profile</h3>
+    <table>
+      <thead><tr><th>Metric</th><th>Value</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>VSAM File I/Os per iteration</td><td>0</td><td>No direct file access</td></tr>
+        <tr><td>TDQ writes per submission</td><td>~17</td><td>JOB-DATA contains ~17 JCL lines (80 bytes each) before /*EOF</td></tr>
+        <tr><td>COMMAREA size</td><td>~150 bytes</td><td>Standard CARDDEMO-COMMAREA</td></tr>
+        <tr><td>MAP sends per iteration</td><td>1</td><td>Single SEND MAP per pseudo-conversational iteration</td></tr>
+        <tr><td>External CALLs</td><td>0&ndash;2</td><td>CSUTLDTC called twice for Custom reports only</td></tr>
+        <tr><td>Typical iterations</td><td>2&ndash;3</td><td>1st: display form; 2nd: prompt confirm; 3rd: submit</td></tr>
+      </tbody>
+    </table>
+
+    <h3>10.2 Performance Considerations</h3>
+    <ul>
+      <li><strong>Low overhead:</strong> No VSAM file I/O in the online transaction. All data
+        processing is deferred to the batch job.</li>
+      <li><strong>TDQ contention:</strong> The JOBS TDQ is a shared extra-partition queue.
+        Concurrent report submissions could cause queuing on the TDQ, but each submission is
+        only ~17 writes of 80 bytes.</li>
+      <li><strong>JOB-DATA array:</strong> The JCL template is stored in working storage as a
+        1000-element array (<code>JOB-LINES OCCURS 1000 TIMES PIC X(80)</code>), occupying 80 KB.
+        This is allocated per task instance but most entries are unused (only ~17 are populated).</li>
+      <li><strong>Date validation:</strong> The CSUTLDTC CALL is a synchronous subroutine call
+        (not CICS LINK), so it runs in the same CICS task and should be very fast.</li>
+    </ul>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 11 — Testing Approach
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Testing Approach</h2>
+    <span class="section-toggle">&#9662;</span>
+  </div>
+  <div class="section-body">
+
+    <h3>11.1 Test Scenarios</h3>
+    <table>
+      <thead><tr><th>TC #</th><th>Scenario</th><th>Input</th><th>Expected Result</th></tr></thead>
+      <tbody>
+        <tr><td>TC-01</td><td>Monthly report &mdash; happy path</td><td>Mark Monthly, Confirm = Y</td><td>Success: &ldquo;Monthly report submitted for printing ...&rdquo;</td></tr>
+        <tr><td>TC-02</td><td>Yearly report &mdash; happy path</td><td>Mark Yearly, Confirm = Y</td><td>Success: &ldquo;Yearly report submitted for printing ...&rdquo;</td></tr>
+        <tr><td>TC-03</td><td>Custom report &mdash; happy path</td><td>Mark Custom, valid dates, Confirm = Y</td><td>Success: &ldquo;Custom report submitted for printing ...&rdquo;</td></tr>
+        <tr><td>TC-04</td><td>No report type selected</td><td>Press ENTER with no selection</td><td>Error: &ldquo;Select a report type to print report...&rdquo;</td></tr>
+        <tr><td>TC-05</td><td>Custom &mdash; empty start month</td><td>Mark Custom, leave SDTMM blank</td><td>Error: &ldquo;Start Date - Month can NOT be empty...&rdquo;</td></tr>
+        <tr><td>TC-06</td><td>Custom &mdash; invalid month (&gt;12)</td><td>Mark Custom, SDTMM = 13</td><td>Error: &ldquo;Start Date - Not a valid Month...&rdquo;</td></tr>
+        <tr><td>TC-07</td><td>Custom &mdash; invalid day (&gt;31)</td><td>Mark Custom, SDTDD = 32</td><td>Error: &ldquo;Start Date - Not a valid Day...&rdquo;</td></tr>
+        <tr><td>TC-08</td><td>Custom &mdash; non-numeric year</td><td>Mark Custom, SDTYYYY = ABCD</td><td>Error: &ldquo;Start Date - Not a valid Year...&rdquo;</td></tr>
+        <tr><td>TC-09</td><td>Custom &mdash; invalid calendar date</td><td>Mark Custom, 02/30/2024</td><td>Error: &ldquo;Start Date - Not a valid date...&rdquo;</td></tr>
+        <tr><td>TC-10</td><td>Confirmation declined</td><td>Any report type, Confirm = N</td><td>Fields cleared, no job submitted</td></tr>
+        <tr><td>TC-11</td><td>Invalid confirmation value</td><td>Confirm = X</td><td>Error: &ldquo;&quot;X&quot; is not a valid value to confirm...&rdquo;</td></tr>
+        <tr><td>TC-12</td><td>Confirmation empty (first pass)</td><td>Any report type, Confirm blank</td><td>Prompt: &ldquo;Please confirm to print the &lt;type&gt; report...&rdquo;</td></tr>
+        <tr><td>TC-13</td><td>PF3 &mdash; return to menu</td><td>Press PF3</td><td>XCTL to COMEN01C</td></tr>
+        <tr><td>TC-14</td><td>Invalid key pressed</td><td>Press PF5</td><td>Error: &ldquo;Invalid key pressed. Please see below...&rdquo;</td></tr>
+        <tr><td>TC-15</td><td>Direct entry (no COMMAREA)</td><td>Enter CR00 from blank terminal</td><td>XCTL to COSGN00C (sign-on)</td></tr>
+        <tr><td>TC-16</td><td>TDQ write failure</td><td>JOBS TDQ disabled/unavailable</td><td>Error: &ldquo;Unable to Write TDQ (JOBS)...&rdquo;</td></tr>
+        <tr><td>TC-17</td><td>Custom &mdash; all end date validations</td><td>Valid start, invalid end dates</td><td>Appropriate end date error messages</td></tr>
+      </tbody>
+    </table>
+
+    <h3>11.2 Test Data Requirements</h3>
+    <table>
+      <thead><tr><th>Requirement</th><th>Details</th></tr></thead>
+      <tbody>
+        <tr><td>Authenticated user session</td><td>Valid sign-on through COSGN00C with COMMAREA populated</td></tr>
+        <tr><td>TDQ JOBS definition</td><td>Extra-partition TDQ &ldquo;JOBS&rdquo; must be defined and enabled in the CICS region, mapped to the JES internal reader</td></tr>
+        <tr><td>CSUTLDTC utility</td><td>Date validation utility must be available in the CICS program load library</td></tr>
+        <tr><td>JES configuration</td><td>Internal reader must be active to accept submitted JCL; PROC TRANREPT must exist in JCLLIB</td></tr>
+        <tr><td>TRANSACT file</td><td>Required by the batch job (not the online program); must contain transaction records for the date range</td></tr>
+      </tbody>
+    </table>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 12 — Known Issues and Considerations
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Known Issues and Considerations</h2>
+    <span class="section-toggle">&#9662;</span>
+  </div>
+  <div class="section-body">
+
+    <h3>12.1 Known Issues</h3>
+    <table>
+      <thead><tr><th>Issue #</th><th>Description</th><th>Severity</th><th>Impact</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>KI-01</td>
+          <td>Typo in paragraph name: <code>WIRTE-JOBSUB-TDQ</code> (should be WRITE)</td>
+          <td>Low</td>
+          <td>Cosmetic only; does not affect functionality</td>
+        </tr>
+        <tr>
+          <td>KI-02</td>
+          <td>No validation that Start Date &le; End Date for Custom reports</td>
+          <td>Medium</td>
+          <td>Users can submit reports with inverted date ranges; batch job behavior undefined</td>
+        </tr>
+        <tr>
+          <td>KI-03</td>
+          <td>JCL job name (<code>TRNRPT00</code>) is hardcoded; concurrent submissions may cause JES duplicate job name issues</td>
+          <td>Medium</td>
+          <td>Multiple simultaneous submissions could conflict in JES queue</td>
+        </tr>
+        <tr>
+          <td>KI-04</td>
+          <td>JOB-DATA array allocates 1000 &times; 80 bytes (80 KB) in working storage but only ~17 lines are used</td>
+          <td>Low</td>
+          <td>Wasteful memory allocation per CICS task</td>
+        </tr>
+        <tr>
+          <td>KI-05</td>
+          <td>Custom date validation does not short-circuit: after first error, subsequent validations still execute (multiple error messages possible)</td>
+          <td>Low</td>
+          <td>Only the last error message is displayed (earlier ones overwritten)</td>
+        </tr>
+        <tr>
+          <td>KI-06</td>
+          <td>No RECEIVE MAP RESP handling &mdash; if RECEIVE fails (e.g., MAPFAIL), the program will abend</td>
+          <td>Medium</td>
+          <td>Unhandled error could cause CICS transaction abend</td>
+        </tr>
+        <tr>
+          <td>KI-07</td>
+          <td>GO TO RETURN-TO-CICS from SEND-TRNRPT-SCREEN introduces non-structured control flow</td>
+          <td>Low</td>
+          <td>Makes program logic harder to follow; could cause issues if called from unexpected contexts</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>12.2 Modernization Considerations</h3>
+    <table>
+      <thead><tr><th>Aspect</th><th>Current State</th><th>Target State</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Screen I/O</td>
+          <td>BMS map CORPT0A via SEND/RECEIVE MAP (3270 terminal)</td>
+          <td>Web form with date pickers and radio buttons; REST API for report submission</td>
+        </tr>
+        <tr>
+          <td>Report Submission</td>
+          <td>JCL assembled in working storage, written to TDQ JOBS (JES internal reader)</td>
+          <td>Message queue (e.g., SQS, Kafka) or REST API call to report generation microservice</td>
+        </tr>
+        <tr>
+          <td>Date Validation</td>
+          <td>Manual field-by-field validation + CSUTLDTC CALL</td>
+          <td>Framework-level date parsing and validation (e.g., Java LocalDate, Python datetime)</td>
+        </tr>
+        <tr>
+          <td>State Management</td>
+          <td>COMMAREA pseudo-conversational pattern</td>
+          <td>HTTP session or JWT-based stateless API with request/response per action</td>
+        </tr>
+        <tr>
+          <td>Report Output</td>
+          <td>Batch job produces printed report (SYSOUT)</td>
+          <td>PDF generation service with download/email delivery</td>
+        </tr>
+        <tr>
+          <td>Data Access</td>
+          <td>Batch reads VSAM TRANSACT file</td>
+          <td>SQL query against relational database (e.g., PostgreSQL, Aurora)</td>
+        </tr>
+        <tr>
+          <td>Error Handling</td>
+          <td>WS-ERR-FLG flag with inline message MOVEs, DISPLAY to SYSOUT</td>
+          <td>Structured exception handling with logging framework (e.g., SLF4J, CloudWatch)</td>
+        </tr>
+        <tr>
+          <td>Job Scheduling</td>
+          <td>User-triggered via TDQ to JES internal reader</td>
+          <td>Async job queue with status tracking and progress notifications</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+</section>
+
+</div><!-- /page-wrap-single -->
+
+<!-- ════════════════════  FOOTER  ════════════════════ -->
+<footer class="footer">
+  <strong>UniCredit S.p.A.</strong> &mdash; CardDemo CICS Transaction Analysis &middot; Auto-generated
+</footer>
+
+</body>
+</html>

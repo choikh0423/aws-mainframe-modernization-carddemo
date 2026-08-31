@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRTCATBL – Print Transaction Category Balance Report | Batch Process Analysis | UniCredit CardDemo</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   UniCredit CardDemo — Shared Theme (inlined for standalone viewing)
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --uc-red:        #E4002B;
+  --uc-red-dark:   #B8001F;
+  --uc-red-light:  #FF3354;
+  --uc-navy:       #1D2B4E;
+  --uc-navy-light: #2A3D6B;
+  --uc-gold:       #C5A44E;
+  --uc-gold-light: #E2C97A;
+  --uc-white:      #FFFFFF;
+  --uc-gray-50:    #F8F9FA;
+  --uc-gray-100:   #F0F1F3;
+  --uc-gray-200:   #E2E4E8;
+  --uc-gray-400:   #9EA3AE;
+  --uc-gray-600:   #6B7280;
+  --uc-gray-800:   #374151;
+  --uc-text:       #1F2937;
+  --uc-shadow:     0 4px 24px rgba(29,43,78,.08);
+  --uc-shadow-lg:  0 12px 48px rgba(29,43,78,.12);
+  --uc-radius:     12px;
+  --uc-radius-sm:  8px;
+  --uc-transition: .25s cubic-bezier(.4,0,.2,1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--uc-text);
+  background: var(--uc-gray-50);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+.hero {
+  background: linear-gradient(135deg, var(--uc-navy) 0%, var(--uc-navy-light) 50%, var(--uc-red-dark) 100%);
+  color: var(--uc-white);
+  padding: 3rem 2rem 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -60%; right: -20%;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(228,0,43,.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute; bottom: -30%; left: -10%;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(197,164,78,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-inner { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+.hero-brand { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.hero-logo { height: 48px; flex-shrink: 0; }
+.hero-logo img { height: 100%; width: auto; display: block; }
+.hero-brand-text { font-size: .95rem; opacity: .85; letter-spacing: .04em; text-transform: uppercase; }
+.hero h1 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; letter-spacing: -.02em; line-height: 1.15; margin-bottom: .75rem; }
+.hero h1 span { color: var(--uc-gold-light); }
+.hero-subtitle { font-size: 1.15rem; opacity: .88; max-width: 720px; }
+.hero-meta { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,.15); }
+.hero-meta dt { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin-bottom: .15rem; }
+.hero-meta dd { font-size: .95rem; font-weight: 600; }
+.breadcrumb { max-width: 1200px; margin: 1.25rem auto .5rem; padding: 0 2rem; font-size: .8rem; color: var(--uc-gray-400); }
+.breadcrumb a { color: var(--uc-red); text-decoration: none; font-weight: 600; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb .sep { margin: 0 .4rem; opacity: .5; }
+.page-wrap-single { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+.section { background: var(--uc-white); border-radius: var(--uc-radius); box-shadow: var(--uc-shadow); margin-bottom: 2rem; overflow: hidden; }
+.section-header { display: flex; align-items: center; gap: .75rem; padding: 1.25rem 1.5rem; background: linear-gradient(90deg, var(--uc-navy) 0%, var(--uc-navy-light) 100%); color: var(--uc-white); cursor: pointer; user-select: none; }
+.section-header:hover { filter: brightness(1.1); }
+.section-num { background: var(--uc-red); color: var(--uc-white); font-size: .72rem; font-weight: 700; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.section-header h2 { font-size: 1.1rem; font-weight: 700; letter-spacing: -.01em; flex: 1; }
+.section-toggle { width: 24px; height: 24px; transition: transform var(--uc-transition); opacity: .7; }
+.section.collapsed .section-toggle { transform: rotate(-90deg); }
+.section-body { padding: 1.5rem; }
+.section.collapsed .section-body { display: none; }
+.subsection { margin-bottom: 1.75rem; }
+.subsection:last-child { margin-bottom: 0; }
+.subsection h3 { font-size: .95rem; font-weight: 700; color: var(--uc-navy); margin-bottom: .75rem; padding-bottom: .4rem; border-bottom: 2px solid var(--uc-gray-200); display: flex; align-items: center; gap: .5rem; }
+.subsection h3 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--uc-red); flex-shrink: 0; }
+.subsection h4 { font-size: .88rem; font-weight: 600; color: var(--uc-gray-800); margin: 1rem 0 .5rem; }
+.subsection p, .subsection li { font-size: .88rem; color: var(--uc-gray-800); line-height: 1.7; }
+.subsection ul, .subsection ol { padding-left: 1.4rem; margin-top: .35rem; }
+.subsection li { margin-bottom: .25rem; }
+.table-wrap { overflow-x: auto; margin: .75rem 0; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .82rem; }
+thead th { background: var(--uc-navy); color: var(--uc-white); text-align: left; padding: .6rem .75rem; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
+thead th:first-child { border-radius: var(--uc-radius-sm) 0 0 0; }
+thead th:last-child  { border-radius: 0 var(--uc-radius-sm) 0 0; }
+tbody td { padding: .55rem .75rem; border-bottom: 1px solid var(--uc-gray-200); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:nth-child(even) { background: var(--uc-gray-50); }
+tbody tr:hover { background: rgba(228,0,43,.04); }
+pre { background: var(--uc-navy); color: #E2E8F0; border-radius: var(--uc-radius-sm); padding: 1rem 1.25rem; font-size: .78rem; font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; overflow-x: auto; line-height: 1.65; margin: .75rem 0; }
+code { font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; font-size: .82em; background: var(--uc-gray-100); padding: .1em .35em; border-radius: 4px; color: var(--uc-red-dark); }
+pre code { background: none; padding: 0; color: inherit; }
+.callout { border-left: 4px solid var(--uc-gold); background: rgba(197,164,78,.08); padding: .85rem 1rem; border-radius: 0 var(--uc-radius-sm) var(--uc-radius-sm) 0; margin: .75rem 0; font-size: .85rem; }
+.callout-red { border-left-color: var(--uc-red); background: rgba(228,0,43,.05); }
+.callout strong { color: var(--uc-navy); }
+.diagram-box { background: var(--uc-gray-100); border: 2px dashed var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1.5rem; text-align: center; margin: .75rem 0; }
+.diagram-box pre { text-align: left; background: var(--uc-navy); display: inline-block; max-width: 100%; }
+.badge { display: inline-block; font-size: .68rem; font-weight: 700; padding: .15em .55em; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; line-height: 1.6; }
+.badge-red    { background: var(--uc-red);   color: #fff; }
+.badge-navy   { background: var(--uc-navy);  color: #fff; }
+.badge-gold   { background: var(--uc-gold);  color: var(--uc-navy); }
+.badge-gray   { background: var(--uc-gray-200); color: var(--uc-gray-800); }
+.kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin: 1rem 0; }
+.kpi-card { background: var(--uc-gray-50); border: 1px solid var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1rem; text-align: center; transition: var(--uc-transition); }
+.kpi-card:hover { border-color: var(--uc-red); box-shadow: var(--uc-shadow); transform: translateY(-2px); }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--uc-red); line-height: 1.2; }
+.kpi-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--uc-gray-600); margin-top: .25rem; }
+.footer { background: var(--uc-navy); color: rgba(255,255,255,.6); text-align: center; padding: 2rem; font-size: .78rem; }
+.footer strong { color: var(--uc-gold-light); }
+@media print {
+  .section.collapsed .section-body { display: block; }
+  .hero { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════  HERO  ════════════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. &mdash; Milano</div>
+    </div>
+    <h1>PRTCATBL &ndash; <span>Batch Process Analysis</span></h1>
+    <p class="hero-subtitle">
+      Job <code>PRTCATBL</code> &middot; Utility-only (IEFBR14 + REPROC + SORT) &middot; Print Transaction Category Balance Report &mdash; unloads TCATBALF VSAM, sorts by Account/Type/Category, and formats a human-readable balance report
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Job Name</dt><dd>PRTCATBL</dd></div>
+      <div><dt>Entry Program</dt><dd>IEFBR14 / REPROC / SORT</dd></div>
+      <div><dt>Frequency</dt><dd>On-demand</dd></div>
+      <div><dt>Steps</dt><dd>3</dd></div>
+      <div><dt>Files Touched</dt><dd>4</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ════════════════════  BREADCRUMB  ════════════════════ -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">&rsaquo;</span>
+  <a href="index.html">Batch Flows</a>
+  <span class="sep">&rsaquo;</span>
+  PRTCATBL &ndash; Category Balance Report
+</div>
+
+<!-- ════════════════════  BODY  ════════════════════ -->
+<div class="page-wrap-single">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     IDENTIFICATION
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s0">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">ID</span>
+    <h2>Identification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <tbody>
+          <tr><td><strong>Job Name</strong></td><td><code>PRTCATBL</code></td></tr>
+          <tr><td><strong>Job Stream / Schedule</strong></td><td>On-demand (not in Control-M scheduler; triggered manually by operations when balance reporting is needed)</td></tr>
+          <tr><td><strong>Business Domain</strong></td><td>Reporting / Transaction Category Balance Analysis</td></tr>
+          <tr><td><strong>Owning Team</strong></td><td>CardDemo Batch Operations</td></tr>
+          <tr><td><strong>Frequency</strong></td><td>On-demand</td></tr>
+          <tr><td><strong>Batch Window</strong></td><td>Any time (read-only against VSAM; does not require CICS file closure)</td></tr>
+          <tr><td><strong>Criticality</strong></td><td><span class="badge badge-gray">Low</span></td></tr>
+          <tr><td><strong>Elapsed Time SLA</strong></td><td>None &mdash; informational report</td></tr>
+          <tr><td><strong>Primary Programs</strong></td><td><code>IEFBR14</code> (system), <code>REPROC</code> (proc), <code>SORT</code> (utility)</td></tr>
+          <tr><td><strong>Source Location</strong></td><td>JCL: <code>app/jcl/PRTCATBL.jcl</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 1 — Business Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">1</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 1.1 -->
+    <div class="subsection" id="s1-1">
+      <h3><span class="dot"></span> 1.1 Business Context</h3>
+      <ul>
+        <li><strong>What:</strong> Produces a formatted flat-file report showing running transaction category balances per account, sorted by Account ID, Transaction Type Code, and Category Code. Each line shows the balance formatted with two decimal places.</li>
+        <li><strong>Who:</strong> Consumed by Finance/Operations staff for balance reconciliation, audit reviews, and as input to downstream interest calculation verification.</li>
+        <li><strong>When:</strong> Triggered on-demand whenever operations or audit requires a current snapshot of transaction category balances. Typically run after POSTTRAN has updated the TCATBALF VSAM.</li>
+        <li><strong>Why:</strong> Provides human-readable visibility into the running category-level balances that drive interest calculations (INTCALC/CBACT04C). Used for reconciliation and exception investigation.</li>
+        <li><strong>Outcome:</strong> A fixed-format sequential report file (<code>TCATBALF.REPT</code>) with one line per category balance record, sorted and formatted for readability.</li>
+      </ul>
+    </div>
+
+    <!-- 1.2 -->
+    <div class="subsection" id="s1-2">
+      <h3><span class="dot"></span> 1.2 Business Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────────┐
+  │        PRINT TRANSACTION CATEGORY BALANCE REPORT FLOW           │
+  └─────────────────────────────────────────────────────────────────┘
+
+  Operator Request (On-Demand)
+       │
+       ▼
+  ┌──────────────────────────┐
+  │ STEP: DELDEF             │
+  │ PGM=IEFBR14             │
+  │ Delete previous report   │
+  │ (TCATBALF.REPT)          │
+  └──────────┬───────────────┘
+             │
+             ▼
+  ┌──────────────────────────┐
+  │ STEP: STEP05R            │
+  │ PROC=REPROC              │
+  │ Unload TCATBALF VSAM     │
+  │ to sequential backup     │
+  │ (GDG +1)                 │
+  └──────────┬───────────────┘
+             │
+             ▼
+  ┌──────────────────────────┐     ┌──────────────────────────┐
+  │ STEP: STEP10R            │     │ Output:                  │
+  │ PGM=SORT                 │────▶│ TCATBALF.REPT            │
+  │ Sort by ACCT/TYPE/CD     │     │ (formatted report)       │
+  │ Format with OUTREC       │     │ LRECL=40, RECFM=FB      │
+  └──────────────────────────┘     └──────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 1.3 -->
+    <div class="subsection" id="s1-3">
+      <h3><span class="dot"></span> 1.3 Business Rules Applied in This Process</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Rule ID</th><th>Description</th><th>Applied At</th><th>Exception Handling</th></tr></thead>
+          <tbody>
+            <tr><td>BR-001</td><td>Report must be sorted in ascending order by Account ID, then Transaction Type Code, then Category Code</td><td>STEP10R (SORT FIELDS)</td><td>SORT utility handles duplicate keys naturally (stable sort)</td></tr>
+            <tr><td>BR-002</td><td>Balance amounts must be displayed with 2 decimal places using edited numeric format (TTTTTTTTT.TT)</td><td>STEP10R (OUTREC EDIT mask)</td><td>N/A &mdash; SORT EDIT mask always produces fixed-width output</td></tr>
+            <tr><td>BR-003</td><td>Previous report file must be deleted before generating a new one to avoid stale data</td><td>DELDEF (IEFBR14)</td><td>DISP=(MOD,DELETE) &mdash; if file does not exist, step continues (RC=0)</td></tr>
+            <tr><td>BR-004</td><td>VSAM data must be unloaded to sequential format before SORT can process it</td><td>STEP05R (REPROC proc)</td><td>REPROC proc handles VSAM-to-sequential conversion</td></tr>
+            <tr><td>BR-005</td><td>Each output field is space-separated (X delimiter) for readability</td><td>STEP10R (OUTREC FIELDS with X separators)</td><td>N/A</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 1.4 -->
+    <div class="subsection" id="s1-4">
+      <h3><span class="dot"></span> 1.4 Business Inputs and Outputs</h3>
+      <h4>Inputs</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Input</th><th>Source System</th><th>Business Description</th><th>Timing</th></tr></thead>
+          <tbody>
+            <tr><td>Transaction Category Balance VSAM (<code>TCATBALF.VSAM.KSDS</code>)</td><td>POSTTRAN batch job (CBTRN02C)</td><td>Running balance per account/type/category combination, maintained by daily transaction posting</td><td>Available after POSTTRAN completes</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h4>Outputs</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Output</th><th>Destination</th><th>Business Description</th><th>Timing</th></tr></thead>
+          <tbody>
+            <tr><td>Category Balance Report (<code>TCATBALF.REPT</code>)</td><td>Operations / Finance / Audit</td><td>Formatted report: Account ID, Type Code, Category Code, Balance (edited decimal)</td><td>Available immediately after job</td></tr>
+            <tr><td>Sequential Backup (<code>TCATBALF.BKUP</code> GDG +1)</td><td>Disaster recovery / Archive</td><td>Full sequential copy of TCATBALF VSAM at point-in-time</td><td>Available immediately after STEP05R</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 2 — Technical Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">2</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 2.1 -->
+    <div class="subsection" id="s2-1">
+      <h3><span class="dot"></span> 2.1 Technical Flow Diagram &ndash; Overview</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ JOB: PRTCATBL                                                   │
+  │                                                                 │
+  │  DELDEF: PGM=IEFBR14                                           │
+  │  ┌─────────────────────────────────────────────────────────┐   │
+  │  │  TCATBALF.REPT ──(MOD,DELETE)──▶ File removed            │   │
+  │  └─────────────────────────────────────────────────────────┘   │
+  │                          │                                      │
+  │                          ▼                                      │
+  │  STEP05R: PROC=REPROC                                          │
+  │  ┌─────────────────────────────────────────────────────────┐   │
+  │  │  TCATBALF.VSAM.KSDS ──(REPRO)──▶ TCATBALF.BKUP(+1)     │   │
+  │  │  (VSAM KSDS input)              (Sequential FB/50)       │   │
+  │  └─────────────────────────────────────────────────────────┘   │
+  │                          │                                      │
+  │                          ▼                                      │
+  │  STEP10R: PGM=SORT                                             │
+  │  ┌─────────────────────────────────────────────────────────┐   │
+  │  │  TCATBALF.BKUP(+1) ──(SORTIN)                           │   │
+  │  │       │                                                  │   │
+  │  │       ▼                                                  │   │
+  │  │  SORT FIELDS=(ACCT-ID,A / TYPE-CD,A / CD,A)             │   │
+  │  │       │                                                  │   │
+  │  │       ▼                                                  │   │
+  │  │  OUTREC: Format fields with spaces + EDIT balance        │   │
+  │  │       │                                                  │   │
+  │  │       ▼                                                  │   │
+  │  │  TCATBALF.REPT ──(SORTOUT)──▶ Formatted report (FB/40)  │   │
+  │  └─────────────────────────────────────────────────────────┘   │
+  └─────────────────────────────────────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.2 -->
+    <div class="subsection" id="s2-2">
+      <h3><span class="dot"></span> 2.2 Technical Flow Diagram &ndash; Detailed (Step-by-Step)</h3>
+      <div class="diagram-box">
+<pre>
+  STEP 1: DELDEF - EXEC PGM=IEFBR14
+    PURPOSE: Delete the previous report file to ensure a clean run
+    DD THEFILE:
+      - DSN=AWS.M2.CARDDEMO.TCATBALF.REPT
+      - DISP=(MOD,DELETE)
+      - UNIT=SYSDA, SPACE=(TRK,(1,1),RLSE)
+    RESULT: Previous TCATBALF.REPT is deleted (or no-op if absent)
+
+  STEP 2: STEP05R - EXEC PROC=REPROC
+    PURPOSE: Unload TCATBALF VSAM KSDS to sequential backup
+    CNTLLIB: AWS.M2.CARDDEMO.CNTL
+    DD PRC001.FILEIN:
+      - DSN=AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS (DISP=SHR)
+      - VSAM KSDS (LRECL=50)
+    DD PRC001.FILEOUT:
+      - DSN=AWS.M2.CARDDEMO.TCATBALF.BKUP(+1)
+      - DISP=(NEW,CATLG,DELETE)
+      - DCB=(LRECL=50,RECFM=FB,BLKSIZE=0)
+      - SPACE=(CYL,(1,1),RLSE)
+    RESULT: Full sequential copy of VSAM in GDG generation +1
+
+  STEP 3: STEP10R - EXEC PGM=SORT
+    PURPOSE: Sort records and format report output
+    DD SORTIN:
+      - DSN=AWS.M2.CARDDEMO.TCATBALF.BKUP(+1) (DISP=SHR)
+    DD SYMNAMES (instream):
+      - TRANCAT-ACCT-ID,1,11,ZD
+      - TRANCAT-TYPE-CD,12,2,CH
+      - TRANCAT-CD,14,4,ZD
+      - TRAN-CAT-BAL,18,11,ZD
+    DD SYSIN (instream):
+      - SORT FIELDS=(TRANCAT-ACCT-ID,A,TRANCAT-TYPE-CD,A,TRANCAT-CD,A)
+      - OUTREC FIELDS=(TRANCAT-ACCT-ID,X,
+            TRANCAT-TYPE-CD,X,
+            TRANCAT-CD,X,
+            TRAN-CAT-BAL,EDIT=(TTTTTTTTT.TT),9X)
+    DD SORTOUT:
+      - DSN=AWS.M2.CARDDEMO.TCATBALF.REPT
+      - DISP=(NEW,CATLG,DELETE)
+      - DCB=(LRECL=40,RECFM=FB,BLKSIZE=0)
+      - SPACE=(CYL,(1,1),RLSE)
+    DD SYSOUT: SYSOUT=*
+    RESULT: Sorted, formatted report written to TCATBALF.REPT
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.3 -->
+    <div class="subsection" id="s2-3">
+      <h3><span class="dot"></span> 2.3 Condition Code Logic</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>Expected RC</th><th>Meaning</th><th>Action on Non-Zero</th></tr></thead>
+          <tbody>
+            <tr><td>DELDEF</td><td>0</td><td>File deleted (or did not exist)</td><td>RC=0 even if file absent (IEFBR14 with MOD,DELETE)</td></tr>
+            <tr><td>STEP05R</td><td>0</td><td>VSAM unload completed successfully</td><td>Non-zero indicates VSAM read failure; investigate FILEIN status</td></tr>
+            <tr><td>STEP10R</td><td>0</td><td>SORT completed, all records processed</td><td>RC=4: warning (records with short fields); RC=16: SORT failure &mdash; check SYSOUT</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>Note:</strong> No COND parameters are specified in the JCL. Each step executes unconditionally regardless of prior step return codes. A failure in STEP05R (VSAM unload) will result in STEP10R attempting to sort a missing or empty file.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 3 — JCL Job Stream Specification
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">3</span>
+    <h2>JCL Job Stream Specification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 3.1 -->
+    <div class="subsection" id="s3-1">
+      <h3><span class="dot"></span> 3.1 JCL Overview</h3>
+<pre><code>//PRTCATBL JOB 'Print Trasaction Category Balance File',
+// CLASS=A,MSGCLASS=0,NOTIFY=&amp;SYSUID
+//JOBLIB JCLLIB ORDER=('AWS.M2.CARDDEMO.PROC')
+//*
+//DELDEF   EXEC PGM=IEFBR14
+//THEFILE  DD DISP=(MOD,DELETE),
+//         UNIT=SYSDA,
+//         SPACE=(TRK,(1,1),RLSE),
+//         DSN=AWS.M2.CARDDEMO.TCATBALF.REPT
+//*
+//STEP05R EXEC PROC=REPROC,
+// CNTLLIB=AWS.M2.CARDDEMO.CNTL
+//PRC001.FILEIN  DD DISP=SHR,
+//        DSN=AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS
+//PRC001.FILEOUT DD DISP=(NEW,CATLG,DELETE),
+//        UNIT=SYSDA,
+//        DCB=(LRECL=50,RECFM=FB,BLKSIZE=0),
+//        SPACE=(CYL,(1,1),RLSE),
+//        DSN=AWS.M2.CARDDEMO.TCATBALF.BKUP(+1)
+//*
+//STEP10R  EXEC PGM=SORT
+//SORTIN   DD DISP=SHR,
+//         DSN=AWS.M2.CARDDEMO.TCATBALF.BKUP(+1)
+//SYMNAMES DD *
+TRANCAT-ACCT-ID,1,11,ZD
+TRANCAT-TYPE-CD,12,2,CH
+TRANCAT-CD,14,4,ZD
+TRAN-CAT-BAL,18,11,ZD
+//SYSIN    DD *
+ SORT FIELDS=(TRANCAT-ACCT-ID,A,TRANCAT-TYPE-CD,A,TRANCAT-CD,A)
+ OUTREC FIELDS=(TRANCAT-ACCT-ID,X,
+     TRANCAT-TYPE-CD,X,
+     TRANCAT-CD,X,
+     TRAN-CAT-BAL,EDIT=(TTTTTTTTT.TT),9X)
+/*
+//SYSOUT   DD SYSOUT=*
+//SORTOUT  DD DISP=(NEW,CATLG,DELETE),
+//         UNIT=SYSDA,
+//         DCB=(LRECL=40,RECFM=FB,BLKSIZE=0),
+//         SPACE=(CYL,(1,1),RLSE),
+//         DSN=AWS.M2.CARDDEMO.TCATBALF.REPT</code></pre>
+    </div>
+
+    <!-- 3.2 -->
+    <div class="subsection" id="s3-2">
+      <h3><span class="dot"></span> 3.2 DD Statement Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>DD Name</th><th>Disposition</th><th>Dataset Name</th><th>Type</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>DELDEF</td><td>THEFILE</td><td>(MOD,DELETE)</td><td>AWS.M2.CARDDEMO.TCATBALF.REPT</td><td>Sequential (PS)</td><td>Delete previous report file</td></tr>
+            <tr><td>STEP05R</td><td>PRC001.FILEIN</td><td>SHR</td><td>AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS</td><td>VSAM KSDS</td><td>Input: VSAM source for unload</td></tr>
+            <tr><td>STEP05R</td><td>PRC001.FILEOUT</td><td>(NEW,CATLG,DELETE)</td><td>AWS.M2.CARDDEMO.TCATBALF.BKUP(+1)</td><td>GDG / Sequential</td><td>Output: sequential backup copy</td></tr>
+            <tr><td>STEP10R</td><td>SORTIN</td><td>SHR</td><td>AWS.M2.CARDDEMO.TCATBALF.BKUP(+1)</td><td>Sequential (PS)</td><td>Input to SORT (sequential backup)</td></tr>
+            <tr><td>STEP10R</td><td>SYMNAMES</td><td>Instream (*)</td><td>&mdash;</td><td>Instream</td><td>Symbolic field name definitions for SORT</td></tr>
+            <tr><td>STEP10R</td><td>SYSIN</td><td>Instream (*)</td><td>&mdash;</td><td>Instream</td><td>SORT control statements (SORT FIELDS + OUTREC)</td></tr>
+            <tr><td>STEP10R</td><td>SYSOUT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>SORT utility messages</td></tr>
+            <tr><td>STEP10R</td><td>SORTOUT</td><td>(NEW,CATLG,DELETE)</td><td>AWS.M2.CARDDEMO.TCATBALF.REPT</td><td>Sequential (PS)</td><td>Output: formatted report file</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.3 -->
+    <div class="subsection" id="s3-3">
+      <h3><span class="dot"></span> 3.3 GDG Usage</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>GDG Base</th><th>Generation</th><th>RECFM/LRECL</th><th>Retention</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>AWS.M2.CARDDEMO.TCATBALF.BKUP</code></td><td>+1 (new)</td><td>FB / 50</td><td>GDG limit not specified in JCL (managed externally)</td><td>Sequential backup of TCATBALF VSAM for SORT input and disaster recovery</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.4 -->
+    <div class="subsection" id="s3-4">
+      <h3><span class="dot"></span> 3.4 Scheduler Dependencies</h3>
+      <div class="callout">
+        <strong>Note:</strong> PRTCATBL is not in the Control-M schedule. It is an on-demand reporting job that can run at any time because it only reads the TCATBALF VSAM (via REPROC with DISP=SHR). It does not require CICS file closure. However, for meaningful results it should be run <strong>after</strong> POSTTRAN has posted the day&rsquo;s transactions to TCATBALF.
+      </div>
+      <div class="diagram-box">
+<pre>
+  Logical Dependency (not enforced by scheduler):
+
+  POSTTRAN                    PRTCATBL
+  ────────                    ────────
+  Posts transactions    ──▶   Reads TCATBALF VSAM (SHR)
+  to TCATBALF VSAM            Produces balance report
+
+  No hard prerequisite; PRTCATBL can run anytime,
+  but results reflect the VSAM state at execution time.
+</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 4 — Program Inventory and Call Chain
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">4</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 4.1 -->
+    <div class="subsection" id="s4-1">
+      <h3><span class="dot"></span> 4.1 Program Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Program ID</th><th>Step</th><th>Purpose</th><th>Language</th><th>LOC</th><th>Source Location</th></tr></thead>
+          <tbody>
+            <tr><td><code>IEFBR14</code></td><td>DELDEF</td><td>Do-nothing program &mdash; triggers dataset disposition processing (file deletion)</td><td>System</td><td>&mdash;</td><td>IBM System utility</td></tr>
+            <tr><td><code>REPROC</code></td><td>STEP05R</td><td>Cataloged procedure for VSAM-to-sequential unload (IDCAMS REPRO or equivalent)</td><td>Proc</td><td>&mdash;</td><td><code>AWS.M2.CARDDEMO.PROC(REPROC)</code></td></tr>
+            <tr><td><code>SORT</code></td><td>STEP10R</td><td>Sort/format utility &mdash; sorts input records and reformats via OUTREC</td><td>System</td><td>&mdash;</td><td>DFSORT / SyncSort system utility</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>Note:</strong> This job contains <em>no custom COBOL programs</em>. All processing is achieved through system utilities and cataloged procedures. The core business logic resides in the SORT control cards (SYMNAMES + SYSIN).
+      </div>
+    </div>
+
+    <!-- 4.2 -->
+    <div class="subsection" id="s4-2">
+      <h3><span class="dot"></span> 4.2 Processing Hierarchy</h3>
+      <div class="diagram-box">
+<pre>
+JOB: PRTCATBL
+│
+├── DELDEF (IEFBR14)
+│   └── Disposition processing: delete TCATBALF.REPT
+│
+├── STEP05R (REPROC proc)
+│   └── PRC001: VSAM KSDS → Sequential (FB/50)
+│       ├── FILEIN:  TCATBALF.VSAM.KSDS (read all records)
+│       └── FILEOUT: TCATBALF.BKUP(+1)  (write sequential)
+│
+└── STEP10R (SORT)
+    ├── SYMNAMES: Define symbolic field names
+    │   ├── TRANCAT-ACCT-ID  (pos 1, len 11, ZD)
+    │   ├── TRANCAT-TYPE-CD  (pos 12, len 2, CH)
+    │   ├── TRANCAT-CD       (pos 14, len 4, ZD)
+    │   └── TRAN-CAT-BAL     (pos 18, len 11, ZD)
+    │
+    ├── SORT FIELDS:
+    │   └── TRANCAT-ACCT-ID ASC, TRANCAT-TYPE-CD ASC, TRANCAT-CD ASC
+    │
+    └── OUTREC FIELDS:
+        ├── TRANCAT-ACCT-ID (11 bytes)
+        ├── X (space separator)
+        ├── TRANCAT-TYPE-CD (2 bytes)
+        ├── X (space separator)
+        ├── TRANCAT-CD (4 bytes)
+        ├── X (space separator)
+        ├── TRAN-CAT-BAL EDIT=(TTTTTTTTT.TT) (12 bytes formatted)
+        └── 9X (9 trailing spaces → pad to LRECL=40)
+</pre>
+      </div>
+    </div>
+
+    <!-- 4.3 -->
+    <div class="subsection" id="s4-3">
+      <h3><span class="dot"></span> 4.3 Copybooks Used</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Copybook</th><th>Record</th><th>LRECL</th><th>Key Fields</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>CVTRA01Y</code></td><td>TRAN-CAT-BAL-RECORD</td><td>50</td><td>TRAN-CAT-KEY (ACCT-ID 9(11) + TYPE-CD X(2) + CD 9(4))</td><td>Defines the record layout for TCATBALF VSAM; field positions referenced by SORT SYMNAMES</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 5 — File and Dataset Inventory
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">5</span>
+    <h2>File and Dataset Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 5.1 -->
+    <div class="subsection" id="s5-1">
+      <h3><span class="dot"></span> 5.1 Complete File Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File/Dataset</th><th>Type</th><th>Access</th><th>LRECL</th><th>Key</th><th>Purpose in Flow</th></tr></thead>
+          <tbody>
+            <tr><td><code>AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>INPUT (SHR)</td><td>50</td><td>TRAN-CAT-KEY (17 bytes, offset 0)</td><td>Source data &mdash; transaction category balances</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TCATBALF.BKUP(+1)</code></td><td>GDG / Sequential</td><td>OUTPUT then INPUT</td><td>50</td><td>&mdash;</td><td>Intermediate: sequential copy of VSAM for SORT</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TCATBALF.REPT</code></td><td>Sequential (PS)</td><td>OUTPUT</td><td>40</td><td>&mdash;</td><td>Final formatted balance report</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.2 -->
+    <div class="subsection" id="s5-2">
+      <h3><span class="dot"></span> 5.2 Record Layouts</h3>
+      <h4>TRAN-CAT-BAL-RECORD (Copybook: CVTRA01Y, LRECL=50)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Level</th><th>Field Name</th><th>PIC</th><th>Offset</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>01</td><td>TRAN-CAT-BAL-RECORD</td><td>&mdash;</td><td>0</td><td>50</td><td>Full record</td></tr>
+            <tr><td>05</td><td>TRAN-CAT-KEY</td><td>&mdash;</td><td>0</td><td>17</td><td>Composite key group</td></tr>
+            <tr><td>10</td><td>TRANCAT-ACCT-ID</td><td>9(11)</td><td>0</td><td>11</td><td>Account identifier (zoned decimal)</td></tr>
+            <tr><td>10</td><td>TRANCAT-TYPE-CD</td><td>X(02)</td><td>11</td><td>2</td><td>Transaction type code (alphanumeric)</td></tr>
+            <tr><td>10</td><td>TRANCAT-CD</td><td>9(04)</td><td>13</td><td>4</td><td>Transaction category code (zoned decimal)</td></tr>
+            <tr><td>05</td><td>TRAN-CAT-BAL</td><td>S9(09)V99</td><td>17</td><td>11</td><td>Running balance (signed, 2 implied decimals)</td></tr>
+            <tr><td>05</td><td>FILLER</td><td>X(22)</td><td>28</td><td>22</td><td>Reserved / unused</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h4>Report Output Record (SORTOUT, LRECL=40)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Position</th><th>Length</th><th>Content</th><th>Source</th></tr></thead>
+          <tbody>
+            <tr><td>1&ndash;11</td><td>11</td><td>Account ID</td><td>TRANCAT-ACCT-ID (direct copy)</td></tr>
+            <tr><td>12</td><td>1</td><td>Space</td><td>X delimiter</td></tr>
+            <tr><td>13&ndash;14</td><td>2</td><td>Type Code</td><td>TRANCAT-TYPE-CD (direct copy)</td></tr>
+            <tr><td>15</td><td>1</td><td>Space</td><td>X delimiter</td></tr>
+            <tr><td>16&ndash;19</td><td>4</td><td>Category Code</td><td>TRANCAT-CD (direct copy)</td></tr>
+            <tr><td>20</td><td>1</td><td>Space</td><td>X delimiter</td></tr>
+            <tr><td>21&ndash;31</td><td>12</td><td>Balance (TTTTTTTTT.TT)</td><td>TRAN-CAT-BAL with EDIT mask</td></tr>
+            <tr><td>32&ndash;40</td><td>9</td><td>Spaces</td><td>9X (padding)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.3 -->
+    <div class="subsection" id="s5-3">
+      <h3><span class="dot"></span> 5.3 File Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  TCATBALF.VSAM.KSDS
+  (VSAM KSDS, LRECL=50)
+       │
+       │ STEP05R (REPROC)
+       │ Full unload
+       ▼
+  TCATBALF.BKUP(+1)
+  (Sequential FB/50)
+       │
+       │ STEP10R (SORT)
+       │ Sort + OUTREC format
+       ▼
+  TCATBALF.REPT
+  (Sequential FB/40)
+  ┌───────────────────────────────────────┐
+  │ 00041000100 PR 0001    500000.25      │  ← sample line
+  │ ACCT-ID     TC CD   BALANCE (edited)  │
+  └───────────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 5.4 -->
+    <div class="subsection" id="s5-4">
+      <h3><span class="dot"></span> 5.4 Dependency Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>Created In</th><th>Read In</th><th>Updated In</th><th>Must Exist Before Job?</th><th>Consumed Downstream?</th></tr></thead>
+          <tbody>
+            <tr><td>TCATBALF VSAM</td><td>POSTTRAN (CBTRN02C)</td><td>STEP05R</td><td>&mdash;</td><td>Yes</td><td>Yes &mdash; INTCALC, POSTTRAN</td></tr>
+            <tr><td>TCATBALF.BKUP GDG</td><td>STEP05R</td><td>STEP10R</td><td>&mdash;</td><td>GDG base must exist</td><td>Disaster recovery / archive</td></tr>
+            <tr><td>TCATBALF.REPT</td><td>STEP10R</td><td>&mdash;</td><td>&mdash;</td><td>No (created fresh each run)</td><td>Operations / Finance reporting</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 6 — Data Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">6</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 6.1 -->
+    <div class="subsection" id="s6-1">
+      <h3><span class="dot"></span> 6.1 Data Transformation Map</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Source Field</th><th>Source File</th><th>Transformation</th><th>Target Field</th><th>Target File</th></tr></thead>
+          <tbody>
+            <tr><td>TRANCAT-ACCT-ID (pos 1-11, ZD)</td><td>TCATBALF.BKUP(+1)</td><td>Direct copy (no conversion)</td><td>Position 1-11</td><td>TCATBALF.REPT</td></tr>
+            <tr><td>TRANCAT-TYPE-CD (pos 12-13, CH)</td><td>TCATBALF.BKUP(+1)</td><td>Direct copy</td><td>Position 13-14</td><td>TCATBALF.REPT</td></tr>
+            <tr><td>TRANCAT-CD (pos 14-17, ZD)</td><td>TCATBALF.BKUP(+1)</td><td>Direct copy</td><td>Position 16-19</td><td>TCATBALF.REPT</td></tr>
+            <tr><td>TRAN-CAT-BAL (pos 18-28, ZD)</td><td>TCATBALF.BKUP(+1)</td><td>EDIT=(TTTTTTTTT.TT) &mdash; insert decimal point, suppress leading zeros with spaces</td><td>Position 21-32</td><td>TCATBALF.REPT</td></tr>
+            <tr><td>&mdash;</td><td>&mdash;</td><td>X (space character) inserted between each field</td><td>Positions 12, 15, 20</td><td>TCATBALF.REPT</td></tr>
+            <tr><td>&mdash;</td><td>&mdash;</td><td>9X (9 trailing spaces for padding)</td><td>Positions 32-40</td><td>TCATBALF.REPT</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 6.2 -->
+    <div class="subsection" id="s6-2">
+      <h3><span class="dot"></span> 6.2 Data Lineage Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  POSTTRAN (CBTRN02C) — populates TCATBALF VSAM
+       │
+       │ (Daily transaction posting adds/updates category balances)
+       ▼
+  TCATBALF.VSAM.KSDS
+  ┌─────────────────────────────────────────────────┐
+  │ Key: ACCT-ID(11) + TYPE-CD(2) + CD(4) = 17     │
+  │ Data: TRAN-CAT-BAL S9(09)V99 (11 bytes)        │
+  │ Filler: 22 bytes                                │
+  │ Total: 50 bytes per record                      │
+  └─────────────────────────────────────────────────┘
+       │
+       │ REPROC (STEP05R) — byte-for-byte copy
+       ▼
+  TCATBALF.BKUP(+1) [Sequential FB/50]
+       │
+       │ SORT (STEP10R)
+       │ ├── Sort ascending by ACCT-ID / TYPE-CD / CD
+       │ └── OUTREC: reformat with spaces + EDIT mask
+       ▼
+  TCATBALF.REPT [Sequential FB/40]
+  ┌─────────────────────────────────────────────────┐
+  │ ACCT-ID SP TYPE SP CD SP BALANCE(edited) SPACES │
+  │ 11      1  2    1  4  1  12               9    │
+  │ Total: 40 bytes per record                      │
+  └─────────────────────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 6.3 -->
+    <div class="subsection" id="s6-3">
+      <h3><span class="dot"></span> 6.3 Control Totals and Reconciliation</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Control Point</th><th>What&rsquo;s Counted</th><th>Where Stored</th><th>Reconciled Against</th></tr></thead>
+          <tbody>
+            <tr><td>SORT record count</td><td>Records read from SORTIN</td><td>SYSOUT (SORT messages)</td><td>TCATBALF VSAM record count</td></tr>
+            <tr><td>SORT output count</td><td>Records written to SORTOUT</td><td>SYSOUT (SORT messages)</td><td>Must equal SORTIN count (no filtering)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>Note:</strong> No application-level control totals are computed. The only reconciliation available is the SORT utility&rsquo;s built-in record-in/record-out counts printed to SYSOUT.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 7 — Sort/Merge and Utility Processing
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">7</span>
+    <h2>Sort/Merge and Utility Processing</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s7-1">
+      <h3><span class="dot"></span> 7.1 SORT Specification (STEP10R)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Parameter</th><th>Value</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>SORT FIELDS</td><td><code>(TRANCAT-ACCT-ID,A,TRANCAT-TYPE-CD,A,TRANCAT-CD,A)</code></td><td>Ascending sort by account ID (11-byte ZD), then type code (2-byte CH), then category code (4-byte ZD)</td></tr>
+            <tr><td>OUTREC FIELDS</td><td><code>(TRANCAT-ACCT-ID,X,TRANCAT-TYPE-CD,X,TRANCAT-CD,X,TRAN-CAT-BAL,EDIT=(TTTTTTTTT.TT),9X)</code></td><td>Reformat output: copy key fields with space delimiters, edit-mask the balance, pad with 9 trailing spaces</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s7-2">
+      <h3><span class="dot"></span> 7.2 SYMNAMES Definitions</h3>
+      <p>The SYMNAMES DD defines symbolic names that map to physical positions in the input record, allowing the SORT FIELDS and OUTREC to reference fields by name rather than position/length/format:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Symbol</th><th>Start Position</th><th>Length</th><th>Format</th><th>Maps to Copybook Field</th></tr></thead>
+          <tbody>
+            <tr><td><code>TRANCAT-ACCT-ID</code></td><td>1</td><td>11</td><td>ZD (Zoned Decimal)</td><td>CVTRA01Y: TRANCAT-ACCT-ID PIC 9(11)</td></tr>
+            <tr><td><code>TRANCAT-TYPE-CD</code></td><td>12</td><td>2</td><td>CH (Character)</td><td>CVTRA01Y: TRANCAT-TYPE-CD PIC X(02)</td></tr>
+            <tr><td><code>TRANCAT-CD</code></td><td>14</td><td>4</td><td>ZD (Zoned Decimal)</td><td>CVTRA01Y: TRANCAT-CD PIC 9(04)</td></tr>
+            <tr><td><code>TRAN-CAT-BAL</code></td><td>18</td><td>11</td><td>ZD (Zoned Decimal)</td><td>CVTRA01Y: TRAN-CAT-BAL PIC S9(09)V99</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s7-3">
+      <h3><span class="dot"></span> 7.3 OUTREC EDIT Mask Analysis</h3>
+      <p>The <code>EDIT=(TTTTTTTTT.TT)</code> mask formats the 11-byte zoned decimal TRAN-CAT-BAL field:</p>
+      <ul>
+        <li><strong>T</strong> = source digit placeholder (suppresses leading zeros with spaces)</li>
+        <li><strong>.</strong> = literal decimal point inserted in output</li>
+        <li>Input: <code>S9(09)V99</code> (9 integer digits + 2 implied decimal digits = 11 bytes)</li>
+        <li>Output: <code>TTTTTTTTT.TT</code> = 9 integer positions + decimal point + 2 decimal positions = 12 characters</li>
+        <li>Example: Input <code>00000050025</code> &rarr; Output <code>      500.25</code></li>
+      </ul>
+      <div class="callout callout-red">
+        <strong>Limitation:</strong> The EDIT mask uses <code>T</code> (suppress leading zeros) which replaces leading zeros with spaces. This means negative balances (from the S in S9(09)V99) lose their sign in the formatted output. The sign nibble in the zoned decimal low-order byte is not rendered by the EDIT mask.
+      </div>
+    </div>
+
+    <div class="subsection" id="s7-4">
+      <h3><span class="dot"></span> 7.4 Utility Programs</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>Utility</th><th>Function</th><th>Key Parameters</th></tr></thead>
+          <tbody>
+            <tr><td>DELDEF</td><td>IEFBR14</td><td>Null program &mdash; triggers JCL disposition processing to delete TCATBALF.REPT</td><td>DISP=(MOD,DELETE)</td></tr>
+            <tr><td>STEP05R</td><td>REPROC (proc)</td><td>VSAM KSDS to sequential unload via IDCAMS REPRO or equivalent</td><td>FILEIN=VSAM, FILEOUT=FB/50</td></tr>
+            <tr><td>STEP10R</td><td>SORT (DFSORT/SyncSort)</td><td>Sort and reformat records using SYMNAMES, SORT FIELDS, and OUTREC</td><td>See sections 7.1&ndash;7.3</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 8 — Checkpoint, Restart, and Recovery
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">8</span>
+    <h2>Checkpoint, Restart, and Recovery</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s8-1">
+      <h3><span class="dot"></span> 8.1 Checkpoint Strategy</h3>
+      <div class="callout">
+        <strong>Not applicable.</strong> PRTCATBL is a read-only reporting job. It does not modify the source VSAM file. No checkpoint/restart logic is needed because:
+        <ul style="margin-top:.5rem;">
+          <li>The VSAM is accessed DISP=SHR (read-only)</li>
+          <li>Output files (BKUP, REPT) can simply be re-created on rerun</li>
+          <li>No data inconsistency can result from a mid-job failure</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="subsection" id="s8-2">
+      <h3><span class="dot"></span> 8.2 Restart Procedures</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Failure Scenario</th><th>Restart Step</th><th>Prerequisites</th><th>Data Reset Required</th></tr></thead>
+          <tbody>
+            <tr><td>STEP05R fails (VSAM unload error)</td><td>Resubmit entire job</td><td>Verify TCATBALF VSAM is accessible</td><td>Delete partial TCATBALF.BKUP(+1) if cataloged</td></tr>
+            <tr><td>STEP10R fails (SORT error)</td><td>Resubmit from STEP10R (if BKUP exists) or entire job</td><td>Verify TCATBALF.BKUP(+1) exists and is complete</td><td>Delete partial TCATBALF.REPT</td></tr>
+            <tr><td>JCL error (before execution)</td><td>Fix JCL and resubmit</td><td>None</td><td>None</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s8-3">
+      <h3><span class="dot"></span> 8.3 Recovery Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  Normal: DELDEF → STEP05R (unload) → STEP10R (sort/format) → Done
+
+  Failure at STEP05R:
+    1. VSAM unload failed (file not found, VSAM error)
+    2. BKUP(+1) may be partially written
+    3. Recovery: Delete BKUP(+1), fix VSAM issue, resubmit job
+
+  Failure at STEP10R:
+    1. SORT failed (control card error, space issue)
+    2. BKUP(+1) is intact (already written)
+    3. Recovery: Fix SORT issue, resubmit from STEP10R
+       (or resubmit entire job — DELDEF and STEP05R are idempotent)
+</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 9 — Error Handling and Abend Resolution
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">9</span>
+    <h2>Error Handling and Abend Resolution</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 9.1 -->
+    <div class="subsection" id="s9-1">
+      <h3><span class="dot"></span> 9.1 Error Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  DELDEF (IEFBR14)
+    │
+    ├── File not found → RC=0 (normal for first run)
+    └── Permanent I/O error → S001 ABEND (unlikely)
+
+  STEP05R (REPROC)
+    │
+    ├── VSAM not found → ABEND (dataset not cataloged)
+    ├── VSAM is empty → RC=0 (empty output)
+    ├── VSAM read error → ABEND with VSAM return code
+    └── Output space exhaustion → S*37 ABEND
+
+  STEP10R (SORT)
+    │
+    ├── SORTIN empty → RC=0 (empty SORTOUT)
+    ├── SORTIN not found → RC=16 (SORT failure)
+    ├── Control card syntax error → RC=16
+    ├── SORTOUT space exhaustion → S*37 ABEND
+    └── Normal completion → RC=0
+</pre>
+      </div>
+    </div>
+
+    <!-- 9.2 -->
+    <div class="subsection" id="s9-2">
+      <h3><span class="dot"></span> 9.2 Return Code Summary</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>RC</th><th>Meaning</th><th>Operator Action</th></tr></thead>
+          <tbody>
+            <tr><td>DELDEF</td><td>0</td><td>File deleted or did not exist</td><td>None</td></tr>
+            <tr><td>STEP05R</td><td>0</td><td>VSAM unloaded successfully</td><td>None</td></tr>
+            <tr><td>STEP05R</td><td>&ne;0</td><td>VSAM read failure or allocation error</td><td>Check VSAM catalog entry and file status; verify TCATBALF VSAM is allocated</td></tr>
+            <tr><td>STEP10R</td><td>0</td><td>SORT completed successfully</td><td>None</td></tr>
+            <tr><td>STEP10R</td><td>4</td><td>Warning (e.g., short records)</td><td>Review SYSOUT for warning details</td></tr>
+            <tr><td>STEP10R</td><td>16</td><td>SORT failure</td><td>Check SYSOUT for error message; verify SYSIN control cards and SORTIN availability</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 9.3 -->
+    <div class="subsection" id="s9-3">
+      <h3><span class="dot"></span> 9.3 Common Abends</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Abend Code</th><th>Step</th><th>Cause</th><th>Resolution</th></tr></thead>
+          <tbody>
+            <tr><td>S013-14</td><td>STEP05R</td><td>VSAM file not found or not accessible</td><td>Verify DSN is correctly cataloged; check VSAM cluster definition</td></tr>
+            <tr><td>S*37</td><td>STEP05R / STEP10R</td><td>Output dataset out of space</td><td>Increase SPACE allocation in JCL or clean up DASD</td></tr>
+            <tr><td>S001</td><td>DELDEF</td><td>I/O error on THEFILE (rare)</td><td>Check DASD hardware; dataset catalog entry</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 10 — Security and Authorization
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s10-1">
+      <h3><span class="dot"></span> 10.1 Dataset Access Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Dataset</th><th>Access Level</th><th>RACF/ACF2 Rule</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><code>AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS</code></td><td>READ</td><td>Batch job userid must have READ to VSAM cluster</td><td>Shared access (DISP=SHR); no exclusive lock needed</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TCATBALF.BKUP</code></td><td>UPDATE (CREATE)</td><td>Batch job userid must have ALTER/UPDATE to GDG base and generations</td><td>Creates new GDG generation</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TCATBALF.REPT</code></td><td>UPDATE (CREATE)</td><td>Batch job userid must have ALTER/UPDATE to dataset</td><td>Creates new sequential file</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.CNTL</code></td><td>READ</td><td>Batch job userid must have READ access to control library</td><td>Contains REPROC proc definition</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.PROC</code></td><td>READ</td><td>Batch job userid must have READ access to proc library (JCLLIB)</td><td>Contains cataloged procedures</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 11 — Performance and Batch Window Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Performance and Batch Window Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s11-1">
+      <h3><span class="dot"></span> 11.1 I/O Characteristics</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>File</th><th>I/O Pattern</th><th>Estimated Volume</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>STEP05R</td><td>TCATBALF VSAM (input)</td><td>Sequential read (full scan via REPRO)</td><td>All records in VSAM (typically hundreds to low thousands)</td><td>Single-pass read; performance limited by VSAM CI/CA size</td></tr>
+            <tr><td>STEP05R</td><td>TCATBALF.BKUP (output)</td><td>Sequential write</td><td>Same as input count &times; 50 bytes</td><td>BLKSIZE=0 (system-determined)</td></tr>
+            <tr><td>STEP10R</td><td>SORTIN (input)</td><td>Sequential read</td><td>Same as STEP05R output</td><td>Read once for sort</td></tr>
+            <tr><td>STEP10R</td><td>SORTOUT (output)</td><td>Sequential write</td><td>Same record count &times; 40 bytes</td><td>OUTREC reduces LRECL from 50 to 40</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s11-2">
+      <h3><span class="dot"></span> 11.2 Batch Window Fit</h3>
+      <div class="callout">
+        <strong>Minimal impact.</strong> PRTCATBL is an on-demand reporting job with no batch window constraint. It reads the VSAM with DISP=SHR so it does not block CICS or other batch jobs. Expected elapsed time is seconds to low minutes even with large TCATBALF files, as SORT utilities are highly optimized for sequential I/O.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 12 — Testing Approach
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s12-1">
+      <h3><span class="dot"></span> 12.1 Test Scenarios</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Scenario</th><th>Input Conditions</th><th>Expected Output</th><th>Validates Rule</th></tr></thead>
+          <tbody>
+            <tr><td>TC-001</td><td>Normal run &mdash; multiple accounts</td><td>TCATBALF VSAM with records for accounts 00041000100, 00041000200, 00041000300 with various type/category combinations</td><td>REPT file sorted by ACCT-ID ASC, TYPE-CD ASC, CD ASC with formatted balances</td><td>BR-001, BR-002, BR-005</td></tr>
+            <tr><td>TC-002</td><td>Single-record VSAM</td><td>TCATBALF VSAM with exactly 1 record</td><td>REPT file with exactly 1 formatted line</td><td>BR-002</td></tr>
+            <tr><td>TC-003</td><td>Empty VSAM file</td><td>TCATBALF VSAM with zero records</td><td>Empty REPT file (0 bytes or header only); SORT RC=0</td><td>Edge case</td></tr>
+            <tr><td>TC-004</td><td>Large balance value</td><td>TRAN-CAT-BAL = 999999999.99 (maximum)</td><td>Output shows <code>999999999.99</code> (all positions filled)</td><td>BR-002</td></tr>
+            <tr><td>TC-005</td><td>Zero balance</td><td>TRAN-CAT-BAL = 0</td><td>Output shows <code>         .00</code> (leading zeros suppressed)</td><td>BR-002</td></tr>
+            <tr><td>TC-006</td><td>Negative balance (signed)</td><td>TRAN-CAT-BAL = -500.00 (sign in zone nibble)</td><td>Sign may be lost in EDIT output &mdash; verify behavior</td><td>Known Issue KI-001</td></tr>
+            <tr><td>TC-007</td><td>Previous report exists</td><td>TCATBALF.REPT already cataloged from prior run</td><td>DELDEF deletes old file; STEP10R creates new file</td><td>BR-003</td></tr>
+            <tr><td>TC-008</td><td>Previous report does not exist (first run)</td><td>TCATBALF.REPT not cataloged</td><td>DELDEF completes RC=0; new file created by STEP10R</td><td>BR-003</td></tr>
+            <tr><td>TC-009</td><td>Sort stability &mdash; duplicate keys</td><td>Multiple records with same ACCT-ID + TYPE-CD + CD (if VSAM allows)</td><td>All duplicates appear in output (stable sort preserves input order)</td><td>BR-001</td></tr>
+            <tr><td>TC-010</td><td>Verify GDG generation</td><td>Run job twice</td><td>Two BKUP generations exist (+1, +2 relative); each contains full VSAM snapshot</td><td>BR-004</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s12-2">
+      <h3><span class="dot"></span> 12.2 Test Data Requirements</h3>
+      <ul>
+        <li>Minimum: TCATBALF VSAM with at least 5 records spanning 3 different accounts, 2 type codes, and multiple category codes</li>
+        <li>Include boundary values: maximum balance (999999999.99), zero balance, and negative balance</li>
+        <li>Include records that test sort ordering: ensure account 00041000100 type &ldquo;PR&rdquo; sorts before type &ldquo;SA&rdquo;</li>
+        <li>GDG base <code>AWS.M2.CARDDEMO.TCATBALF.BKUP</code> must be defined before first run</li>
+        <li>Verify REPROC proc is available in <code>AWS.M2.CARDDEMO.PROC</code></li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 13 — Known Issues and Considerations
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s13">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">13</span>
+    <h2>Known Issues and Modernization Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s13-1">
+      <h3><span class="dot"></span> 13.1 Known Issues</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Description</th><th>Impact</th><th>Workaround</th></tr></thead>
+          <tbody>
+            <tr><td>KI-001</td><td>EDIT mask <code>(TTTTTTTTT.TT)</code> does not render the sign for negative balances. The S in <code>S9(09)V99</code> stores the sign in the zone nibble of the last byte, but the T edit character only displays digits. Negative balances appear as positive in the report.</td><td>Medium &mdash; report may be misleading for accounts with negative (credit) category balances</td><td>Use <code>EDIT=(SI,TTTTTTTTT.TT)</code> or add a separate sign indicator field in OUTREC</td></tr>
+            <tr><td>KI-002</td><td>Typo in JCL job card: <code>'Print Trasaction Category Balance File'</code> &mdash; &ldquo;Trasaction&rdquo; should be &ldquo;Transaction&rdquo;</td><td>Low &mdash; cosmetic; does not affect processing</td><td>Correct the accounting string in JCL</td></tr>
+            <tr><td>KI-003</td><td>No COND parameters between steps. If STEP05R fails (e.g., VSAM unavailable), STEP10R will still execute and attempt to read a non-existent or empty SORTIN file.</td><td>Low &mdash; SORT will produce RC=16 or empty output; no data corruption risk since job is read-only</td><td>Add <code>COND=(0,NE,STEP05R)</code> to STEP10R to skip on prior failure</td></tr>
+            <tr><td>KI-004</td><td>SYMNAMES defines TRAN-CAT-BAL at position 18 with length 11 and format ZD. However, the COBOL copybook defines it as <code>S9(09)V99</code> (signed zoned decimal). The ZD format in SYMNAMES does not account for the sign. DFSORT may interpret the sign nibble differently than COBOL.</td><td>Low &mdash; for positive values this is harmless; for negative values, sort order and EDIT output may be incorrect</td><td>Use format <code>ZD</code> with a <code>SIGN=NOSIGN</code> override, or use <code>FS</code> (fixed signed) format</td></tr>
+            <tr><td>KI-005</td><td>JCL comment on line 41 contains a typo: &ldquo;Filter the TCATBALFions&rdquo; (likely intended &ldquo;Filter the TCATBALF records&rdquo;) and references &ldquo;parm date&rdquo; filtering that is not actually implemented in the SORT control cards</td><td>Low &mdash; misleading comment; no actual date filtering occurs</td><td>Update JCL comment to accurately describe the step (sort and format all records)</td></tr>
+            <tr><td>KI-006</td><td>JCL comment on line 26 has a backtick character in the asterisk border: <code>***`***</code></td><td>Low &mdash; cosmetic typo in comment line</td><td>Remove the stray backtick</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s13-2">
+      <h3><span class="dot"></span> 13.2 Modernization Considerations</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Area</th><th>Current State</th><th>Target State</th><th>Complexity</th></tr></thead>
+          <tbody>
+            <tr><td>Report Generation</td><td>Batch SORT utility producing fixed-width flat file</td><td>SQL query against relational database with CSV/Excel/PDF export</td><td>Low</td></tr>
+            <tr><td>Data Access</td><td>VSAM KSDS unloaded to sequential then sorted</td><td>Direct SQL SELECT with ORDER BY from PostgreSQL/Aurora table</td><td>Low</td></tr>
+            <tr><td>Scheduling</td><td>Manual on-demand submission</td><td>Self-service report via web UI or scheduled BI tool (e.g., QuickSight, Tableau)</td><td>Low</td></tr>
+            <tr><td>Output Format</td><td>Fixed-width 40-byte records; no headers, no sign display</td><td>Structured output (CSV with headers, or API endpoint returning JSON) with proper sign handling</td><td>Low</td></tr>
+            <tr><td>Intermediate Files</td><td>GDG backup + sequential SORT pipeline (3 steps, 2 intermediate files)</td><td>Single SQL query (no intermediate files needed)</td><td>Low</td></tr>
+            <tr><td>Sign Handling</td><td>Negative balances silently lose sign in EDIT mask</td><td>Proper signed numeric formatting in report output</td><td>Low</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>Modernization Assessment:</strong> PRTCATBL is an excellent candidate for early modernization. Its logic is entirely achievable with a single SQL query: <code>SELECT acct_id, type_cd, category_cd, balance FROM tran_cat_bal ORDER BY acct_id, type_cd, category_cd</code>. The three-step JCL pipeline (delete/unload/sort) collapses to a parameterized report query with proper formatting.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /page-wrap-single -->
+
+<!-- ════════════════════  FOOTER  ════════════════════ -->
+<footer class="footer">
+  <p><strong>UniCredit CardDemo</strong> &mdash; Batch Process Analysis &mdash; PRTCATBL (Utility-only: IEFBR14 / REPROC / SORT)</p>
+  <p>Generated from source: <code>app/jcl/PRTCATBL.jcl</code> &middot; Copybook: CVTRA01Y</p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Credit Card Update (CCUP) – CICS Transaction Analysis | UniCredit CardDemo</title>
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+/* Collapse/expand toggle script handled below */
+</style>
+</head>
+<body>
+
+<!-- ════════════════════  HERO  ════════════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. &mdash; Milano</div>
+    </div>
+    <h1>Credit Card Update &ndash; <span>CICS Transaction Analysis</span></h1>
+    <p class="hero-subtitle">
+      Transaction <code>CCUP</code> &middot; Program <code>COCRDUPC</code> &middot; Accept and process credit card detail updates including name, status, and expiry date
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Transaction ID</dt><dd>CCUP</dd></div>
+      <div><dt>Entry Program</dt><dd>COCRDUPC</dd></div>
+      <div><dt>BMS Mapset</dt><dd>COCRDUP</dd></div>
+      <div><dt>Design Pattern</dt><dd>Pseudo-conversational</dd></div>
+      <div><dt>LOC</dt><dd>1,560</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ════════════════════  BREADCRUMB  ════════════════════ -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">&rsaquo;</span>
+  <a href="index.html">CICS Flows</a>
+  <span class="sep">&rsaquo;</span>
+  Credit Card Update (CCUP)
+</div>
+
+<!-- ════════════════════  BODY  ════════════════════ -->
+<div class="page-wrap-single">
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 1 — Business Flow Analysis
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">1</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 1.1 Business Context</h3>
+      <p>The <strong>Credit Card Update</strong> transaction (<code>CCUP</code>) allows authorized users to modify details of an existing credit card record in the CardDemo system. Users can update the cardholder&rsquo;s embossed name, active/inactive status, and the card&rsquo;s expiry date (month and year). The transaction is typically accessed from the Credit Card List screen (<code>CCLI</code>) where a user selects a specific card for modification, or directly from the main menu by entering account and card numbers.</p>
+      <p>This transaction is used by customer service representatives and account managers who need to maintain accurate card data&mdash;for example, after a name change, card renewal, or account suspension. The business outcome is an updated VSAM record in the <code>CARDDAT</code> file reflecting the new card details.</p>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 1.2 Business Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+┌─────────────────────────────────────────────────────────────────┐
+│                   CREDIT CARD UPDATE FLOW                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌──────────────┐    ┌──────────────────┐                       │
+│  │  From CCLI   │───▶│ Auto-fetch card  │──┐                    │
+│  │  (Card List) │    │ by Acct+Card Num │  │                    │
+│  └──────────────┘    └──────────────────┘  │                    │
+│                                            ▼                    │
+│  ┌──────────────┐    ┌──────────────────┐  ┌─────────────────┐  │
+│  │  From Menu   │───▶│ Prompt for Acct  │─▶│ Display card    │  │
+│  │  (CM00)      │    │ + Card Number    │  │ details for     │  │
+│  └──────────────┘    └──────────────────┘  │ editing         │  │
+│                                            └────────┬────────┘  │
+│                                                     │           │
+│                                                     ▼           │
+│                              ┌──────────────────────────────┐   │
+│                              │  User edits:                 │   │
+│                              │  • Name on card              │   │
+│                              │  • Active status (Y/N)       │   │
+│                              │  • Expiry month/year         │   │
+│                              └──────────────┬───────────────┘   │
+│                                             │                   │
+│                              ┌──────────────▼───────────────┐   │
+│                              │  Validate all changes        │   │
+│                              │  (INPUT-OK or INPUT-ERROR)   │   │
+│                              └──────────────┬───────────────┘   │
+│                                             │                   │
+│                       ┌─────────────────────┼───────────────┐   │
+│                       │ Errors              │ Valid         │   │
+│                       ▼                     ▼               │   │
+│            ┌──────────────┐   ┌──────────────────────┐      │   │
+│            │ Re-display   │   │ Prompt: F5 to save   │      │   │
+│            │ with error   │   │ F12 to cancel        │      │   │
+│            │ messages     │   └──────────┬───────────┘      │   │
+│            └──────────────┘              │                   │   │
+│                                          ▼                   │   │
+│                           ┌──────────────────────────┐      │   │
+│                           │  F5 → Lock + REWRITE     │      │   │
+│                           │  CARDDAT record           │      │   │
+│                           └──────────────┬───────────┘      │   │
+│                                          │                   │   │
+│                              ┌───────────▼───────────┐      │   │
+│                              │  Success / Failure    │      │   │
+│                              └───────────────────────┘      │   │
+└─────────────────────────────────────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 1.3 Business Rules</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Rule</th><th>Validation Logic</th><th>Error Message</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Account number required</td><td><code>CC-ACCT-ID</code> must not be LOW-VALUES, SPACES, or ZEROS</td><td>Account number not provided</td></tr>
+          <tr><td>2</td><td>Account number numeric</td><td><code>CC-ACCT-ID</code> must be numeric (11 digits)</td><td>ACCOUNT FILTER,IF SUPPLIED MUST BE A 11 DIGIT NUMBER</td></tr>
+          <tr><td>3</td><td>Card number required</td><td><code>CC-CARD-NUM</code> must not be LOW-VALUES, SPACES, or ZEROS</td><td>Card number not provided</td></tr>
+          <tr><td>4</td><td>Card number numeric</td><td><code>CC-CARD-NUM</code> must be numeric (16 digits)</td><td>CARD ID FILTER,IF SUPPLIED MUST BE A 16 DIGIT NUMBER</td></tr>
+          <tr><td>5</td><td>Card name required</td><td><code>CCUP-NEW-CRDNAME</code> must not be blank/spaces/zeros</td><td>Card name not provided</td></tr>
+          <tr><td>6</td><td>Card name alpha only</td><td>After converting all alpha chars to spaces, result must be all spaces (only alphabets and spaces allowed)</td><td>Card name can only contain alphabets and spaces</td></tr>
+          <tr><td>7</td><td>Card status Y or N</td><td><code>CCUP-NEW-CRDSTCD</code> must be 'Y' or 'N'</td><td>Card Active Status must be Y or N</td></tr>
+          <tr><td>8</td><td>Expiry month valid</td><td><code>CCUP-NEW-EXPMON</code> must be numeric and between 1&ndash;12</td><td>Card expiry month must be between 1 and 12</td></tr>
+          <tr><td>9</td><td>Expiry year valid</td><td><code>CCUP-NEW-EXPYEAR</code> must be numeric and between 1950&ndash;2099</td><td>Invalid card expiry year</td></tr>
+          <tr><td>10</td><td>Change detection</td><td>New card data compared with old (<code>FUNCTION UPPER-CASE</code>); if identical, no update occurs</td><td>No change detected with respect to values fetched.</td></tr>
+          <tr><td>11</td><td>Optimistic locking</td><td>Before REWRITE, record is re-read with UPDATE and compared to old snapshot</td><td>Record changed by some one else. Please review</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 1.4 User Interactions</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Step</th><th>User Action</th><th>System Response</th><th>Business Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>1a</td><td>User arrives from Credit Card List (CCLI)</td><td>System auto-fetches card record using <code>CDEMO-ACCT-ID</code> and <code>CDEMO-CARD-NUM</code> from COMMAREA; displays card details</td><td>Selected card is loaded for update</td></tr>
+          <tr><td>1b</td><td>User arrives from Main Menu (CM00)</td><td>System displays empty search form prompting for Account Number and Card Number</td><td>User must identify the card to update</td></tr>
+          <tr><td>2</td><td>User enters/confirms account &amp; card number, presses ENTER</td><td>System reads <code>CARDDAT</code> file and displays card details (name, status, expiry)</td><td>Card record is retrieved for editing</td></tr>
+          <tr><td>3</td><td>User modifies name, status, and/or expiry fields, presses ENTER</td><td>System validates all changes; if errors, shows messages in red; if valid, prompts &ldquo;Changes validated. Press F5 to save&rdquo;</td><td>Pre-save validation ensures data integrity</td></tr>
+          <tr><td>4</td><td>User presses F5 to confirm</td><td>System locks record (READ UPDATE), checks for concurrent changes, then REWRITEs the record</td><td>Card record is persisted to VSAM</td></tr>
+          <tr><td>5</td><td>User presses F12 to cancel</td><td>System re-reads original data and restores display</td><td>Unsaved changes are discarded</td></tr>
+          <tr><td>6</td><td>User presses F3 to exit</td><td>System XCTLs back to calling program (CCLI or menu)</td><td>User returns to previous screen</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 2 — Technical Flow Analysis
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">2</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 2.1 Technical Flow Diagram &mdash; Overview</h3>
+      <div class="diagram-box">
+<pre>
+ ┌──────────┐     ┌──────────────────┐     ┌──────────────┐
+ │ 3270     │     │   CICS REGION    │     │ VSAM FILES   │
+ │ TERMINAL │────▶│                  │     │              │
+ │          │     │  CCUP (COCRDUPC) │────▶│ CARDDAT      │
+ │          │◀────│                  │◀────│ (KSDS)       │
+ │  Map:    │     │  BMS: COCRDUP    │     │              │
+ │  CCRDUPA │     │  Map: CCRDUPA    │     └──────────────┘
+ └──────────┘     │                  │
+                  │  XCTL targets:   │
+                  │  • COCRDLIC      │
+                  │  • COMEN01C      │
+                  └──────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 2.2 Technical Flow Diagram &mdash; Detailed</h3>
+      <div class="diagram-box">
+<pre>
+ Entry (EIBCALEN = 0 or PGM-ENTER from Menu)
+   │
+   ├─ INITIALIZE CARDDEMO-COMMAREA, WS-THIS-PROGCOMMAREA
+   │
+   ├─ PERFORM YYYY-STORE-PFKEY  (map EIBAID → CCARD-AID)
+   │
+   ├─ EVALUATE TRUE
+   │   │
+   │   ├─ CCARD-AID-PFK03 (F3 Exit)
+   │   │    └─ EXEC CICS SYNCPOINT
+   │   │    └─ EXEC CICS XCTL PROGRAM(CDEMO-TO-PROGRAM)
+   │   │
+   │   ├─ CDEMO-PGM-ENTER + FROM COCRDLIC (from Card List)
+   │   │    └─ 9000-READ-DATA → 9100-GETCARD-BYACCTCARD
+   │   │         └─ EXEC CICS READ FILE(CARDDAT)
+   │   │    └─ 3000-SEND-MAP → EXEC CICS SEND MAP(CCRDUPA)
+   │   │
+   │   ├─ CCUP-DETAILS-NOT-FETCHED (Fresh entry)
+   │   │    └─ 3000-SEND-MAP (empty form)
+   │   │
+   │   ├─ CCUP-CHANGES-OKAYED-AND-DONE / CHANGES-FAILED
+   │   │    └─ INITIALIZE, reset, 3000-SEND-MAP (fresh form)
+   │   │
+   │   └─ OTHER (re-entry with data)
+   │        ├─ 1000-PROCESS-INPUTS
+   │        │    ├─ 1100-RECEIVE-MAP
+   │        │    │    └─ EXEC CICS RECEIVE MAP(CCRDUPA)
+   │        │    └─ 1200-EDIT-MAP-INPUTS
+   │        │         ├─ 1210-EDIT-ACCOUNT
+   │        │         ├─ 1220-EDIT-CARD
+   │        │         ├─ 1230-EDIT-NAME
+   │        │         ├─ 1240-EDIT-CARDSTATUS
+   │        │         ├─ 1250-EDIT-EXPIRY-MON
+   │        │         └─ 1260-EDIT-EXPIRY-YEAR
+   │        ├─ 2000-DECIDE-ACTION
+   │        │    ├─ CCUP-DETAILS-NOT-FETCHED / F12 Cancel
+   │        │    │    └─ 9000-READ-DATA
+   │        │    ├─ CCUP-SHOW-DETAILS (check changes)
+   │        │    ├─ CCUP-CHANGES-OK-NOT-CONFIRMED + F5
+   │        │    │    └─ 9200-WRITE-PROCESSING
+   │        │    │         ├─ EXEC CICS READ UPDATE FILE(CARDDAT)
+   │        │    │         ├─ 9300-CHECK-CHANGE-IN-REC
+   │        │    │         └─ EXEC CICS REWRITE FILE(CARDDAT)
+   │        │    └─ OTHER → ABEND-ROUTINE
+   │        └─ 3000-SEND-MAP
+   │
+   └─ COMMON-RETURN
+        └─ EXEC CICS RETURN TRANSID(CCUP) COMMAREA(WS-COMMAREA)
+</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 2.3 Pseudo-Conversational Flow</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Iteration</th><th>EIBCALEN</th><th>State</th><th>User Action</th><th>Entry Point</th><th>Screen Sent</th><th>Next TRANSID</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>0</td><td><code>CDEMO-PGM-ENTER</code></td><td>Transaction start (from menu)</td><td><code>0000-MAIN</code></td><td>Empty CCRDUPA (search prompt)</td><td>CCUP</td></tr>
+          <tr><td>1&prime;</td><td>&gt;0</td><td><code>CDEMO-PGM-ENTER</code> + from COCRDLIC</td><td>Transaction start (from card list)</td><td><code>0000-MAIN</code></td><td>CCRDUPA with card details</td><td>CCUP</td></tr>
+          <tr><td>2</td><td>&gt;0</td><td><code>CCUP-DETAILS-NOT-FETCHED</code></td><td>ENTER with Acct+Card</td><td><code>1000-PROCESS-INPUTS</code> → <code>2000-DECIDE-ACTION</code></td><td>CCRDUPA with card details</td><td>CCUP</td></tr>
+          <tr><td>3</td><td>&gt;0</td><td><code>CCUP-SHOW-DETAILS</code></td><td>ENTER with modifications</td><td><code>1000-PROCESS-INPUTS</code> → <code>2000-DECIDE-ACTION</code></td><td>CCRDUPA: &ldquo;Press F5 to save&rdquo;</td><td>CCUP</td></tr>
+          <tr><td>4</td><td>&gt;0</td><td><code>CCUP-CHANGES-OK-NOT-CONFIRMED</code></td><td>F5 to confirm</td><td><code>9200-WRITE-PROCESSING</code></td><td>CCRDUPA: &ldquo;Changes committed&rdquo;</td><td>CCUP</td></tr>
+          <tr><td>Exit</td><td>&gt;0</td><td>Any</td><td>F3</td><td><code>0000-MAIN</code></td><td>XCTL to calling program</td><td>From COMMAREA</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 2.4 CICS Command Flow</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>CICS Command</th><th>Location</th><th>Purpose</th><th>Response Handling</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><code>EXEC CICS HANDLE ABEND LABEL(ABEND-ROUTINE)</code></td><td><code>0000-MAIN</code></td><td>Register abend handler</td><td>Directs to ABEND-ROUTINE</td></tr>
+          <tr><td>2</td><td><code>EXEC CICS SYNCPOINT</code></td><td><code>0000-MAIN</code> (PF3 path)</td><td>Commit any pending updates before exiting</td><td>N/A</td></tr>
+          <tr><td>3</td><td><code>EXEC CICS XCTL PROGRAM(CDEMO-TO-PROGRAM) COMMAREA(CARDDEMO-COMMAREA)</code></td><td><code>0000-MAIN</code> (PF3 path)</td><td>Transfer control to calling program</td><td>N/A</td></tr>
+          <tr><td>4</td><td><code>EXEC CICS RECEIVE MAP(CCRDUPA) MAPSET(COCRDUP)</code></td><td><code>1100-RECEIVE-MAP</code></td><td>Read user input from terminal</td><td>RESP/RESP2 captured</td></tr>
+          <tr><td>5</td><td><code>EXEC CICS SEND MAP(CCRDUPA) MAPSET(COCRDUP) CURSOR ERASE FREEKB</code></td><td><code>3400-SEND-SCREEN</code></td><td>Send map to terminal with cursor positioning</td><td>RESP captured in <code>WS-RESP-CD</code></td></tr>
+          <tr><td>6</td><td><code>EXEC CICS READ FILE(CARDDAT) RIDFLD(WS-CARD-RID-CARDNUM)</code></td><td><code>9100-GETCARD-BYACCTCARD</code></td><td>Read card record by card number</td><td>NORMAL → found; NOTFND → error; OTHER → file error message</td></tr>
+          <tr><td>7</td><td><code>EXEC CICS READ FILE(CARDDAT) UPDATE RIDFLD(WS-CARD-RID-CARDNUM)</code></td><td><code>9200-WRITE-PROCESSING</code></td><td>Lock card record for update</td><td>Not NORMAL → &ldquo;Could not lock record&rdquo;</td></tr>
+          <tr><td>8</td><td><code>EXEC CICS REWRITE FILE(CARDDAT) FROM(CARD-UPDATE-RECORD)</code></td><td><code>9200-WRITE-PROCESSING</code></td><td>Persist updated card record</td><td>Not NORMAL → &ldquo;Update of record failed&rdquo;</td></tr>
+          <tr><td>9</td><td><code>EXEC CICS RETURN TRANSID(CCUP) COMMAREA(WS-COMMAREA)</code></td><td><code>COMMON-RETURN</code></td><td>Return control to CICS for pseudo-conversational wait</td><td>N/A</td></tr>
+          <tr><td>10</td><td><code>EXEC CICS SEND FROM(ABEND-DATA) NOHANDLE ERASE</code></td><td><code>ABEND-ROUTINE</code></td><td>Display abend information to terminal</td><td>NOHANDLE</td></tr>
+          <tr><td>11</td><td><code>EXEC CICS HANDLE ABEND CANCEL</code></td><td><code>ABEND-ROUTINE</code></td><td>Cancel abend handler before issuing ABEND</td><td>N/A</td></tr>
+          <tr><td>12</td><td><code>EXEC CICS ABEND ABCODE('9999')</code></td><td><code>ABEND-ROUTINE</code></td><td>Issue application abend</td><td>N/A</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 3 — Screen Flow and BMS Maps
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">3</span>
+    <h2>Screen Flow and BMS Maps</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 3.1 Screen Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+ ┌──────────────────┐                     ┌──────────────────┐
+ │  COCRDLI /       │   Select card       │  COCRDUP /       │
+ │  CCRDSLA         │──────────────────▶  │  CCRDUPA         │
+ │  (Card List)     │                     │  (Card Update)   │
+ │  Trans: CCLI     │   ◀── F3 / Done ── │  Trans: CCUP     │
+ └──────────────────┘                     └──────┬───────────┘
+                                                 │
+ ┌──────────────────┐                            │
+ │  COMEN01 /       │   ◀── F3 (if from    ─────┘
+ │  COMEN1A         │        main menu)
+ │  (Main Menu)     │
+ │  Trans: CM00     │
+ └──────────────────┘
+
+ Within CCRDUPA:
+ ┌──────────────────────────────────────────────────────────┐
+ │  ENTER  → Search / Validate edits                       │
+ │  F3     → Exit to calling program                       │
+ │  F5     → Save confirmed changes (only when prompted)   │
+ │  F12    → Cancel changes, re-display original values    │
+ └──────────────────────────────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 3.2 BMS Map Inventory</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Map Name</th><th>Mapset</th><th>Size</th><th>Purpose</th><th>Key Fields</th></tr></thead>
+        <tbody>
+          <tr><td><code>CCRDUPA</code></td><td><code>COCRDUP</code></td><td>24&times;80</td><td>Credit Card Update screen&mdash;search by account/card and edit card details</td><td>ACCTSID, CARDSID, CRDNAME, CRDSTCD, EXPMON, EXPYEAR</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 3.3 Screen Field Details</h3>
+      <h4>Map: CCRDUPA</h4>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>POS</th><th>Length</th><th>Attributes</th><th>Color</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>TRNNAME</code></td><td>(1,7)</td><td>4</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Transaction ID display</td></tr>
+          <tr><td><code>TITLE01</code></td><td>(1,21)</td><td>40</td><td>ASKIP, NORM</td><td>YELLOW</td><td>Screen title line 1</td></tr>
+          <tr><td><code>CURDATE</code></td><td>(1,71)</td><td>8</td><td>ASKIP, NORM</td><td>BLUE</td><td>Current date (mm/dd/yy)</td></tr>
+          <tr><td><code>PGMNAME</code></td><td>(2,7)</td><td>8</td><td>ASKIP, NORM</td><td>BLUE</td><td>Program name display</td></tr>
+          <tr><td><code>TITLE02</code></td><td>(2,21)</td><td>40</td><td>ASKIP, NORM</td><td>YELLOW</td><td>Screen title line 2</td></tr>
+          <tr><td><code>CURTIME</code></td><td>(2,71)</td><td>8</td><td>ASKIP, NORM</td><td>BLUE</td><td>Current time (hh:mm:ss)</td></tr>
+          <tr><td><code>ACCTSID</code></td><td>(7,45)</td><td>11</td><td>FSET, IC, NORM, PROT</td><td>DEFAULT</td><td>Account number (protected after fetch)</td></tr>
+          <tr><td><code>CARDSID</code></td><td>(8,45)</td><td>16</td><td>FSET, NORM, UNPROT</td><td>DEFAULT</td><td>Card number input</td></tr>
+          <tr><td><code>CRDNAME</code></td><td>(11,25)</td><td>50</td><td>UNPROT</td><td>&mdash;</td><td>Name on card (editable)</td></tr>
+          <tr><td><code>CRDSTCD</code></td><td>(13,25)</td><td>1</td><td>UNPROT</td><td>&mdash;</td><td>Card active status Y/N (editable)</td></tr>
+          <tr><td><code>EXPMON</code></td><td>(15,25)</td><td>2</td><td>UNPROT, JUSTIFY RIGHT</td><td>&mdash;</td><td>Expiry month (editable)</td></tr>
+          <tr><td><code>EXPYEAR</code></td><td>(15,30)</td><td>4</td><td>UNPROT, JUSTIFY RIGHT</td><td>&mdash;</td><td>Expiry year (editable)</td></tr>
+          <tr><td><code>EXPDAY</code></td><td>(15,36)</td><td>2</td><td>DRK, FSET, PROT</td><td>&mdash;</td><td>Expiry day (hidden, not user-editable)</td></tr>
+          <tr><td><code>INFOMSG</code></td><td>(20,25)</td><td>40</td><td>PROT</td><td>NEUTRAL</td><td>Information/status message</td></tr>
+          <tr><td><code>ERRMSG</code></td><td>(23,1)</td><td>80</td><td>ASKIP, BRT, FSET</td><td>RED</td><td>Error message line</td></tr>
+          <tr><td><code>FKEYS</code></td><td>(24,1)</td><td>21</td><td>ASKIP, NORM</td><td>YELLOW</td><td>Function key legend: &ldquo;ENTER=Process F3=Exit&rdquo;</td></tr>
+          <tr><td><code>FKEYSC</code></td><td>(24,23)</td><td>18</td><td>ASKIP, DRK</td><td>YELLOW</td><td>Conditional keys: &ldquo;F5=Save F12=Cancel&rdquo; (shown when applicable)</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 3.4 PF Key / AID Key Handling</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Key</th><th>EIBAID Mapping</th><th>Condition</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td>ENTER</td><td><code>CCARD-AID-ENTER</code></td><td>Always valid</td><td>Process search criteria or validate edits; proceed to next state</td></tr>
+          <tr><td>PF3</td><td><code>CCARD-AID-PFK03</code></td><td>Always valid</td><td>SYNCPOINT + XCTL to calling program (<code>CDEMO-FROM-PROGRAM</code> or <code>COMEN01C</code>)</td></tr>
+          <tr><td>PF5</td><td><code>CCARD-AID-PFK05</code></td><td>Only when <code>CCUP-CHANGES-OK-NOT-CONFIRMED</code></td><td>Execute <code>9200-WRITE-PROCESSING</code> to persist changes</td></tr>
+          <tr><td>PF12</td><td><code>CCARD-AID-PFK12</code></td><td>Only when details have been fetched</td><td>Cancel edits; re-read original data from <code>CARDDAT</code> and re-display</td></tr>
+          <tr><td>Other</td><td>Any other AID</td><td>&mdash;</td><td>Remapped to ENTER (invalid keys treated as ENTER press)</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 4 — Program Inventory and Call Chain
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">4</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 4.1 Program Inventory</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Program</th><th>Trans ID</th><th>Purpose</th><th>Entry Mechanism</th><th>LOC</th></tr></thead>
+        <tbody>
+          <tr><td><code>COCRDUPC</code></td><td>CCUP</td><td>Credit Card Update&mdash;main entry program</td><td>CICS Transaction / XCTL</td><td>1,560</td></tr>
+          <tr><td><code>COCRDLIC</code></td><td>CCLI</td><td>Credit Card List&mdash;caller that passes selected card</td><td>XCTL (from COCRDUPC on F3/exit)</td><td>&mdash;</td></tr>
+          <tr><td><code>COMEN01C</code></td><td>CM00</td><td>Main Menu&mdash;fallback return target</td><td>XCTL (from COCRDUPC on F3 if no caller)</td><td>&mdash;</td></tr>
+          <tr><td><code>COCRDSLC</code></td><td>CCDL</td><td>Credit Card View Detail&mdash;referenced as <code>LIT-CARDDTLPGM</code></td><td>Referenced (not called in current flow)</td><td>&mdash;</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 4.2 Call Chain Diagram</h3>
+      <div class="diagram-box">
+<pre>
+ Transaction CCUP
+      │
+      ▼
+ COCRDUPC (Entry Program)
+      │
+      ├── XCTL → COCRDLIC (CCLI)   [on F3 / exit, if from card list]
+      │
+      ├── XCTL → COMEN01C (CM00)   [on F3 / exit, if from main menu]
+      │
+      ├── XCTL → CDEMO-TO-PROGRAM  [dynamic, based on COMMAREA]
+      │
+      └── FILE I/O → CARDDAT (VSAM KSDS)
+              ├── READ (fetch)
+              ├── READ UPDATE (lock)
+              └── REWRITE (persist)
+</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 4.3 Call Details</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Caller</th><th>Called</th><th>Mechanism</th><th>Data Passed</th><th>When</th></tr></thead>
+        <tbody>
+          <tr><td><code>COCRDUPC</code></td><td><code>CDEMO-TO-PROGRAM</code> (dynamic&mdash;typically <code>COCRDLIC</code> or <code>COMEN01C</code>)</td><td>EXEC CICS XCTL</td><td><code>CARDDEMO-COMMAREA</code> (full application COMMAREA)</td><td>PF3 exit or after successful update when originally from card list</td></tr>
+          <tr><td><code>COCRDLIC</code></td><td><code>COCRDUPC</code></td><td>EXEC CICS XCTL</td><td><code>CARDDEMO-COMMAREA</code> with <code>CDEMO-ACCT-ID</code> and <code>CDEMO-CARD-NUM</code> populated</td><td>User selects a card from list for update</td></tr>
+          <tr><td><code>COMEN01C</code></td><td><code>COCRDUPC</code></td><td>EXEC CICS XCTL</td><td><code>CARDDEMO-COMMAREA</code> with menu context</td><td>User selects Credit Card Update from menu</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 5 — File and Data Store Inventory
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">5</span>
+    <h2>File and Data Store Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 5.1 File Inventory</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>FCT Name</th><th>Type</th><th>Access Mode</th><th>Program</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>CARDDAT</code></td><td>VSAM KSDS</td><td>READ, READ UPDATE, REWRITE</td><td><code>COCRDUPC</code></td><td>Credit card master file&mdash;stores card number, account ID, CVV, embossed name, expiry date, and active status</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="callout">
+        <strong>Note:</strong> The literal <code>LIT-CARDFILENAME-ACCT-PATH</code> references <code>CARDAIX</code> (an alternate index path), but it is not used in this program&rsquo;s execution flow. It is defined but commented out in the read logic.
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 5.2 File Access Details</h3>
+      <h4>CARDDAT</h4>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Attribute</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>Dataset Name (FCT)</td><td><code>CARDDAT</code></td></tr>
+          <tr><td>Record Layout Copybook</td><td><code>CVACT02Y.cpy</code> &mdash; <code>CARD-RECORD</code> (150 bytes)</td></tr>
+          <tr><td>Primary Key</td><td><code>CARD-NUM</code> (PIC X(16))&mdash;card number</td></tr>
+          <tr><td>Key Length</td><td>16 bytes</td></tr>
+          <tr><td>RIDFLD</td><td><code>WS-CARD-RID-CARDNUM</code></td></tr>
+          <tr><td>Access Modes</td><td>READ (fetch for display), READ UPDATE (lock for modify), REWRITE (persist changes)</td></tr>
+          <tr><td>Locking</td><td>Pessimistic lock via <code>READ UPDATE</code>; optimistic concurrency check in <code>9300-CHECK-CHANGE-IN-REC</code></td></tr>
+          <tr><td>Record Fields</td><td><code>CARD-NUM</code> X(16), <code>CARD-ACCT-ID</code> 9(11), <code>CARD-CVV-CD</code> 9(03), <code>CARD-EMBOSSED-NAME</code> X(50), <code>CARD-EXPIRAION-DATE</code> X(10), <code>CARD-ACTIVE-STATUS</code> X(01), FILLER X(59)</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 5.3 TSQ Usage</h3>
+      <p>N/A &mdash; This transaction does not use Temporary Storage Queues.</p>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 5.4 TDQ Usage</h3>
+      <p>N/A &mdash; This transaction does not use Transient Data Queues.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 6 — Data Flow Analysis
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">6</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 6.1 Data Flow Through Transaction</h3>
+      <div class="diagram-box">
+<pre>
+ ┌────────────────┐    RECEIVE MAP    ┌─────────────────────────┐
+ │  Terminal      │──────────────────▶│  Working Storage        │
+ │  Input Fields  │                   │                         │
+ │  (CCRDUPAI)    │                   │  CCUP-NEW-DETAILS:      │
+ │                │                   │    CCUP-NEW-ACCTID      │
+ │  ACCTSIDI      │                   │    CCUP-NEW-CARDID      │
+ │  CARDSIDI      │                   │    CCUP-NEW-CRDNAME     │
+ │  CRDNAMEI      │                   │    CCUP-NEW-CRDSTCD     │
+ │  CRDSTCDI      │                   │    CCUP-NEW-EXPMON      │
+ │  EXPMONI       │                   │    CCUP-NEW-EXPYEAR     │
+ │  EXPYEARI      │                   │    CCUP-NEW-EXPDAY      │
+ └────────────────┘                   └───────────┬─────────────┘
+                                                  │
+                                      Validation  │  (1200-EDIT-MAP-INPUTS)
+                                                  │
+                                                  ▼
+                                      ┌──────────────────────┐
+                                      │  CARD-UPDATE-RECORD  │
+                                      │  (update buffer)     │
+                                      │                      │
+                                      │  STRING expiry date  │
+                                      │  YYYY-MM-DD format   │
+                                      └──────────┬───────────┘
+                                                 │
+                                       REWRITE   │
+                                                 ▼
+                                      ┌──────────────────────┐
+                                      │  CARDDAT (VSAM)      │
+                                      │  CARD-RECORD         │
+                                      └──────────────────────┘
+
+ ┌────────────────┐     READ          ┌─────────────────────────┐
+ │  CARDDAT       │──────────────────▶│  CCUP-OLD-DETAILS       │
+ │  (VSAM)        │                   │  (snapshot for compare) │
+ │                │                   │                         │
+ └────────────────┘                   └───────────┬─────────────┘
+                                                  │
+                                       SEND MAP   │
+                                                  ▼
+                                      ┌──────────────────────┐
+                                      │  Terminal Output      │
+                                      │  (CCRDUPAO)           │
+                                      │  ACCTSIDO, CARDSIDO   │
+                                      │  CRDNAMEO, CRDSTCDO   │
+                                      │  EXPMONO, EXPYEARO    │
+                                      └──────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 6.2 Data Transformation Map</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Source</th><th>Transformation</th><th>Target</th></tr></thead>
+        <tbody>
+          <tr><td><code>ACCTSIDI</code> (map input)</td><td>Move; &lsquo;*&rsquo; or SPACES → LOW-VALUES</td><td><code>CC-ACCT-ID</code>, <code>CCUP-NEW-ACCTID</code></td></tr>
+          <tr><td><code>CARDSIDI</code> (map input)</td><td>Move; &lsquo;*&rsquo; or SPACES → LOW-VALUES</td><td><code>CC-CARD-NUM</code>, <code>CCUP-NEW-CARDID</code></td></tr>
+          <tr><td><code>CRDNAMEI</code> (map input)</td><td>Move; &lsquo;*&rsquo; or SPACES → LOW-VALUES</td><td><code>CCUP-NEW-CRDNAME</code></td></tr>
+          <tr><td><code>CRDSTCDI</code> (map input)</td><td>Move; &lsquo;*&rsquo; or SPACES → LOW-VALUES</td><td><code>CCUP-NEW-CRDSTCD</code></td></tr>
+          <tr><td><code>EXPMONI</code> (map input)</td><td>Move; &lsquo;*&rsquo; or SPACES → LOW-VALUES</td><td><code>CCUP-NEW-EXPMON</code></td></tr>
+          <tr><td><code>EXPYEARI</code> (map input)</td><td>Move; &lsquo;*&rsquo; or SPACES → LOW-VALUES</td><td><code>CCUP-NEW-EXPYEAR</code></td></tr>
+          <tr><td><code>CARD-EMBOSSED-NAME</code> (file)</td><td>INSPECT CONVERTING lower → upper</td><td><code>CCUP-OLD-CRDNAME</code></td></tr>
+          <tr><td><code>CARD-EXPIRAION-DATE</code> (file)</td><td>Substring: (1:4)→year, (6:2)→month, (9:2)→day</td><td><code>CCUP-OLD-EXPYEAR</code>, <code>CCUP-OLD-EXPMON</code>, <code>CCUP-OLD-EXPDAY</code></td></tr>
+          <tr><td><code>CCUP-NEW-EXPYEAR</code>, <code>CCUP-NEW-EXPMON</code>, <code>CCUP-NEW-EXPDAY</code></td><td>STRING &hellip; DELIMITED BY SIZE → <code>YYYY-MM-DD</code></td><td><code>CARD-UPDATE-EXPIRAION-DATE</code></td></tr>
+          <tr><td><code>CCUP-NEW-CVV-CD</code> → <code>CARD-CVV-CD-X</code></td><td>Move X(3) → redefine as 9(3)</td><td><code>CARD-UPDATE-CVV-CD</code></td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 7 — COMMAREA and Interface Contracts
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">7</span>
+    <h2>COMMAREA and Interface Contracts</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 7.1 COMMAREA Layout</h3>
+      <p>This transaction uses a two-part COMMAREA: the shared <code>CARDDEMO-COMMAREA</code> (from <code>COCOM01Y.cpy</code>) followed by the program-specific <code>WS-THIS-PROGCOMMAREA</code>. Total size: <code>WS-COMMAREA PIC X(2000)</code>.</p>
+
+      <h4>Part 1: CARDDEMO-COMMAREA (COCOM01Y.cpy)</h4>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>PIC</th><th>Direction</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>CDEMO-FROM-TRANID</code></td><td>X(04)</td><td>IN</td><td>Originating transaction ID</td></tr>
+          <tr><td><code>CDEMO-FROM-PROGRAM</code></td><td>X(08)</td><td>IN</td><td>Originating program name (e.g., COCRDLIC, COMEN01C)</td></tr>
+          <tr><td><code>CDEMO-TO-TRANID</code></td><td>X(04)</td><td>OUT</td><td>Target transaction for XCTL exit</td></tr>
+          <tr><td><code>CDEMO-TO-PROGRAM</code></td><td>X(08)</td><td>OUT</td><td>Target program for XCTL exit</td></tr>
+          <tr><td><code>CDEMO-USER-ID</code></td><td>X(08)</td><td>IN</td><td>Signed-on user ID</td></tr>
+          <tr><td><code>CDEMO-USER-TYPE</code></td><td>X(01)</td><td>IN</td><td>&lsquo;A&rsquo; = Admin, &lsquo;U&rsquo; = User</td></tr>
+          <tr><td><code>CDEMO-PGM-CONTEXT</code></td><td>9(01)</td><td>IN/OUT</td><td>0 = ENTER (first entry), 1 = REENTER (subsequent)</td></tr>
+          <tr><td><code>CDEMO-ACCT-ID</code></td><td>9(11)</td><td>IN/OUT</td><td>Selected account ID</td></tr>
+          <tr><td><code>CDEMO-ACCT-STATUS</code></td><td>X(01)</td><td>IN/OUT</td><td>Account status</td></tr>
+          <tr><td><code>CDEMO-CARD-NUM</code></td><td>9(16)</td><td>IN/OUT</td><td>Selected card number</td></tr>
+          <tr><td><code>CDEMO-LAST-MAP</code></td><td>X(07)</td><td>OUT</td><td>Last BMS map sent</td></tr>
+          <tr><td><code>CDEMO-LAST-MAPSET</code></td><td>X(07)</td><td>OUT</td><td>Last BMS mapset sent</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <h4>Part 2: WS-THIS-PROGCOMMAREA (Program-Specific)</h4>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>PIC</th><th>Direction</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>CCUP-CHANGE-ACTION</code></td><td>X(01)</td><td>IN/OUT</td><td>State machine flag: LOW-VALUES/SPACES=not fetched, &lsquo;S&rsquo;=show, &lsquo;E&rsquo;=errors, &lsquo;N&rsquo;=validated, &lsquo;C&rsquo;=committed, &lsquo;L&rsquo;=lock error, &lsquo;F&rsquo;=failed</td></tr>
+          <tr><td><code>CCUP-OLD-ACCTID</code></td><td>X(11)</td><td>IN/OUT</td><td>Original account ID (snapshot)</td></tr>
+          <tr><td><code>CCUP-OLD-CARDID</code></td><td>X(16)</td><td>IN/OUT</td><td>Original card number (snapshot)</td></tr>
+          <tr><td><code>CCUP-OLD-CVV-CD</code></td><td>X(03)</td><td>IN/OUT</td><td>Original CVV code (for concurrent change detection)</td></tr>
+          <tr><td><code>CCUP-OLD-CRDNAME</code></td><td>X(50)</td><td>IN/OUT</td><td>Original embossed name</td></tr>
+          <tr><td><code>CCUP-OLD-EXPYEAR</code></td><td>X(04)</td><td>IN/OUT</td><td>Original expiry year</td></tr>
+          <tr><td><code>CCUP-OLD-EXPMON</code></td><td>X(02)</td><td>IN/OUT</td><td>Original expiry month</td></tr>
+          <tr><td><code>CCUP-OLD-EXPDAY</code></td><td>X(02)</td><td>IN/OUT</td><td>Original expiry day</td></tr>
+          <tr><td><code>CCUP-OLD-CRDSTCD</code></td><td>X(01)</td><td>IN/OUT</td><td>Original active status</td></tr>
+          <tr><td><code>CCUP-NEW-*</code></td><td>(mirror of OLD)</td><td>IN/OUT</td><td>New values entered by user</td></tr>
+          <tr><td><code>CARD-UPDATE-RECORD</code></td><td>X(150)</td><td>OUT</td><td>Formatted record buffer for REWRITE</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 7.2 Return Code Conventions</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Code / Flag</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>WS-RESP-CD</code> = <code>DFHRESP(NORMAL)</code></td><td>CICS command succeeded</td></tr>
+          <tr><td><code>WS-RESP-CD</code> = <code>DFHRESP(NOTFND)</code></td><td>Record not found in CARDDAT</td></tr>
+          <tr><td><code>INPUT-OK</code> (WS-INPUT-FLAG = &lsquo;0&rsquo;)</td><td>All input validations passed</td></tr>
+          <tr><td><code>INPUT-ERROR</code> (WS-INPUT-FLAG = &lsquo;1&rsquo;)</td><td>One or more input validations failed</td></tr>
+          <tr><td><code>CCUP-CHANGE-ACTION</code> flags</td><td>State machine controlling transaction flow (see 7.1)</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 7.3 Conversation State Management</h3>
+      <p>State between pseudo-conversational iterations is preserved via the two-part COMMAREA:</p>
+      <ol>
+        <li><strong>Save:</strong> At <code>COMMON-RETURN</code>, <code>CARDDEMO-COMMAREA</code> is moved to <code>WS-COMMAREA</code>, then <code>WS-THIS-PROGCOMMAREA</code> is appended at the offset <code>LENGTH OF CARDDEMO-COMMAREA + 1</code>.</li>
+        <li><strong>Restore:</strong> On re-entry (EIBCALEN &gt; 0), <code>DFHCOMMAREA</code> is split: first portion into <code>CARDDEMO-COMMAREA</code>, remainder into <code>WS-THIS-PROGCOMMAREA</code>.</li>
+        <li><strong>State flag:</strong> <code>CCUP-CHANGE-ACTION</code> drives the EVALUATE logic in both <code>0000-MAIN</code> and <code>2000-DECIDE-ACTION</code>, ensuring the correct processing path on each iteration.</li>
+        <li><strong>Old-value snapshot:</strong> <code>CCUP-OLD-DETAILS</code> preserves the original record values across iterations for change detection and optimistic concurrency control.</li>
+      </ol>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 8 — Error Handling and User Feedback
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">8</span>
+    <h2>Error Handling and User Feedback</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 8.1 Error Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+                    ┌────────────────────┐
+                    │  Normal Path       │
+                    │                    │
+                    │  RECEIVE → EDIT →  │
+                    │  VALIDATE → SAVE   │
+                    └────────┬───────────┘
+                             │
+         ┌───────────────────┼───────────────────┐
+         │                   │                   │
+         ▼                   ▼                   ▼
+ ┌───────────────┐  ┌───────────────┐  ┌────────────────────┐
+ │ Input Errors  │  │ File Errors   │  │ Concurrency Errors │
+ │               │  │               │  │                    │
+ │ Set INPUT-    │  │ NOTFND:       │  │ 9300-CHECK-CHANGE  │
+ │ ERROR flag    │  │ combo not     │  │ -IN-REC detects    │
+ │               │  │ found         │  │ stale data         │
+ │ Set specific  │  │               │  │                    │
+ │ WS-RETURN-MSG │  │ OTHER:        │  │ Set DATA-WAS-      │
+ │ (88-level)    │  │ File Error:   │  │ CHANGED-BEFORE-    │
+ │               │  │ <op> on       │  │ UPDATE             │
+ │ Re-display    │  │ <file>        │  │                    │
+ │ with red      │  │ returned      │  │ Refresh old data   │
+ │ highlights    │  │ RESP <n>      │  │ Re-display         │
+ └───────────────┘  └───────────────┘  └────────────────────┘
+                             │
+                             ▼
+                    ┌────────────────────┐
+                    │ Lock Failure       │
+                    │                    │
+                    │ READ UPDATE fails: │
+                    │ "Could not lock    │
+                    │  record for        │
+                    │  update"           │
+                    └────────────────────┘
+                             │
+                             ▼
+                    ┌────────────────────┐
+                    │ REWRITE Failure    │
+                    │                    │
+                    │ "Update of record  │
+                    │  failed"           │
+                    └────────────────────┘
+                             │
+                             ▼
+                    ┌────────────────────┐
+                    │ Unexpected State   │
+                    │                    │
+                    │ ABEND-ROUTINE      │
+                    │ ABCODE '9999'      │
+                    └────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 8.2 Error Handling Matrix</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Error Condition</th><th>RESP Code</th><th>Program Action</th><th>User Message</th><th>Logging</th></tr></thead>
+        <tbody>
+          <tr><td>Card record not found</td><td><code>DFHRESP(NOTFND)</code></td><td>Set <code>INPUT-ERROR</code>, <code>FLG-ACCTFILTER-NOT-OK</code>, <code>FLG-CARDFILTER-NOT-OK</code></td><td>Did not find cards for this search condition</td><td>None</td></tr>
+          <tr><td>File read error (other)</td><td>Any non-NORMAL, non-NOTFND</td><td>Set <code>INPUT-ERROR</code>; build <code>WS-FILE-ERROR-MESSAGE</code></td><td>File Error: READ on CARDDAT returned RESP &lt;n&gt;, RESP2 &lt;n&gt;</td><td>Error message includes operation, file, RESP, RESP2</td></tr>
+          <tr><td>Cannot lock record</td><td>Non-NORMAL on READ UPDATE</td><td>Set <code>INPUT-ERROR</code>, <code>COULD-NOT-LOCK-FOR-UPDATE</code></td><td>Could not lock record for update</td><td>None</td></tr>
+          <tr><td>Concurrent modification</td><td>N/A (application check)</td><td>Set <code>DATA-WAS-CHANGED-BEFORE-UPDATE</code>; refresh <code>CCUP-OLD-*</code> from re-read</td><td>Record changed by some one else. Please review</td><td>Old values refreshed from file</td></tr>
+          <tr><td>REWRITE failure</td><td>Non-NORMAL on REWRITE</td><td>Set <code>LOCKED-BUT-UPDATE-FAILED</code></td><td>Update of record failed</td><td>None</td></tr>
+          <tr><td>Unexpected data scenario</td><td>N/A</td><td><code>ABEND-ROUTINE</code>: SEND error data, ABEND ABCODE &lsquo;9999&rsquo;</td><td>UNEXPECTED DATA SCENARIO</td><td>ABEND-DATA sent to terminal</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 8.3 HANDLE ABEND / HANDLE CONDITION</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Statement</th><th>Location</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>EXEC CICS HANDLE ABEND LABEL(ABEND-ROUTINE)</code></td><td><code>0000-MAIN</code> (line 370)</td><td>Register abend handler to display diagnostic info and issue ABEND &lsquo;9999&rsquo;</td></tr>
+          <tr><td><code>EXEC CICS HANDLE ABEND CANCEL</code></td><td><code>ABEND-ROUTINE</code> (line 1546)</td><td>Cancel handler before issuing ABEND to prevent recursive handling</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 8.4 User Error Messages</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>88-Level Name</th><th>Message Text</th><th>Context</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><code>FOUND-CARDS-FOR-ACCOUNT</code></td><td>Details of selected card shown above</td><td>Info: card fetched successfully</td></tr>
+          <tr><td>2</td><td><code>PROMPT-FOR-SEARCH-KEYS</code></td><td>Please enter Account and Card Number</td><td>Info: initial prompt</td></tr>
+          <tr><td>3</td><td><code>PROMPT-FOR-CHANGES</code></td><td>Update card details presented above.</td><td>Info: edit mode, validation errors present</td></tr>
+          <tr><td>4</td><td><code>PROMPT-FOR-CONFIRMATION</code></td><td>Changes validated.Press F5 to save</td><td>Info: edits valid, awaiting F5</td></tr>
+          <tr><td>5</td><td><code>CONFIRM-UPDATE-SUCCESS</code></td><td>Changes committed to database</td><td>Info: update succeeded</td></tr>
+          <tr><td>6</td><td><code>INFORM-FAILURE</code></td><td>Changes unsuccessful. Please try again</td><td>Error: lock or REWRITE failed</td></tr>
+          <tr><td>7</td><td><code>WS-EXIT-MESSAGE</code></td><td>PF03 pressed.Exiting</td><td>Info: user pressed F3</td></tr>
+          <tr><td>8</td><td><code>WS-PROMPT-FOR-ACCT</code></td><td>Account number not provided</td><td>Error: blank account</td></tr>
+          <tr><td>9</td><td><code>WS-PROMPT-FOR-CARD</code></td><td>Card number not provided</td><td>Error: blank card number</td></tr>
+          <tr><td>10</td><td><code>WS-PROMPT-FOR-NAME</code></td><td>Card name not provided</td><td>Error: blank name</td></tr>
+          <tr><td>11</td><td><code>WS-NAME-MUST-BE-ALPHA</code></td><td>Card name can only contain alphabets and spaces</td><td>Error: non-alpha characters</td></tr>
+          <tr><td>12</td><td><code>NO-SEARCH-CRITERIA-RECEIVED</code></td><td>No input received</td><td>Error: both fields blank</td></tr>
+          <tr><td>13</td><td><code>NO-CHANGES-DETECTED</code></td><td>No change detected with respect to values fetched.</td><td>Info: identical data</td></tr>
+          <tr><td>14</td><td><code>SEARCHED-ACCT-ZEROES / NOT-NUMERIC</code></td><td>Account number must be a non zero 11 digit number</td><td>Error: bad account format</td></tr>
+          <tr><td>15</td><td><code>SEARCHED-CARD-NOT-NUMERIC</code></td><td>Card number if supplied must be a 16 digit number</td><td>Error: bad card format</td></tr>
+          <tr><td>16</td><td><code>CARD-STATUS-MUST-BE-YES-NO</code></td><td>Card Active Status must be Y or N</td><td>Error: invalid status</td></tr>
+          <tr><td>17</td><td><code>CARD-EXPIRY-MONTH-NOT-VALID</code></td><td>Card expiry month must be between 1 and 12</td><td>Error: bad month</td></tr>
+          <tr><td>18</td><td><code>CARD-EXPIRY-YEAR-NOT-VALID</code></td><td>Invalid card expiry year</td><td>Error: bad year</td></tr>
+          <tr><td>19</td><td><code>DID-NOT-FIND-ACCT-IN-CARDXREF</code></td><td>Did not find this account in cards database</td><td>Error: account not in XREF</td></tr>
+          <tr><td>20</td><td><code>DID-NOT-FIND-ACCTCARD-COMBO</code></td><td>Did not find cards for this search condition</td><td>Error: card not found</td></tr>
+          <tr><td>21</td><td><code>COULD-NOT-LOCK-FOR-UPDATE</code></td><td>Could not lock record for update</td><td>Error: lock failure</td></tr>
+          <tr><td>22</td><td><code>DATA-WAS-CHANGED-BEFORE-UPDATE</code></td><td>Record changed by some one else. Please review</td><td>Error: optimistic lock conflict</td></tr>
+          <tr><td>23</td><td><code>LOCKED-BUT-UPDATE-FAILED</code></td><td>Update of record failed</td><td>Error: REWRITE failed</td></tr>
+          <tr><td>24</td><td><code>XREF-READ-ERROR</code></td><td>Error reading Card Data File</td><td>Error: file I/O error</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 9 — Security and Authorization
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">9</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 9.1 Transaction Security</h3>
+      <p>Access to <code>CCUP</code> is controlled via the CardDemo menu routing system. The sign-on program (<code>COSGN00C</code> / transaction <code>CC00</code>) authenticates users and sets <code>CDEMO-USER-TYPE</code> in the COMMAREA (&lsquo;A&rsquo; for admin, &lsquo;U&rsquo; for regular user). The main menu (<code>COMEN01C</code>) routes users to the Credit Card List (<code>CCLI</code>), which then allows navigation to <code>CCUP</code>.</p>
+      <p>Within <code>COCRDUPC</code>, on exit (PF3 path), the program explicitly sets <code>CDEMO-USRTYP-USER</code> to TRUE (line 464), ensuring the user type remains consistent in the COMMAREA chain.</p>
+      <p>CICS-level transaction security (e.g., RACF resource definitions for transaction <code>CCUP</code>) would be configured in the CICS system definition; the program itself does not perform explicit RACF checks.</p>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 9.2 Data Access Authorization</h3>
+      <p>The program does not perform explicit data-level authorization checks beyond the menu-based access control. Any user who can reach this transaction (via CCLI or direct menu entry) can read and update any card record. There is no row-level security restricting which accounts a user can modify.</p>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 9.3 Audit Trail</h3>
+      <p>The program does not generate explicit audit trail records. No journal writes, TDQ messages, or audit log entries are produced when a card record is updated. Audit information would need to be captured via CICS system-level journaling or SMF records if required.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 10 — Performance Characteristics
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Performance Characteristics</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 10.1 Performance Profile</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Metric</th><th>Value</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>File I/Os per fetch iteration</td><td>1 READ</td><td>Single READ on CARDDAT by card number key</td></tr>
+          <tr><td>File I/Os per update iteration</td><td>1 READ UPDATE + 1 REWRITE</td><td>Lock and persist in one iteration</td></tr>
+          <tr><td>Map sends per iteration</td><td>1 SEND MAP</td><td>Single map: CCRDUPA</td></tr>
+          <tr><td>Map receives per iteration</td><td>0 or 1 RECEIVE MAP</td><td>Only on re-entry with user input</td></tr>
+          <tr><td>COMMAREA size</td><td>2,000 bytes</td><td>Passed on RETURN TRANSID</td></tr>
+          <tr><td>CARDDAT record size</td><td>150 bytes</td><td>Relatively small record</td></tr>
+          <tr><td>SYNCPOINT calls</td><td>1 (on PF3 exit only)</td><td>Explicit commit before XCTL</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 10.2 Performance Considerations</h3>
+      <ul>
+        <li><strong>Minimal I/O:</strong> The transaction performs at most 2 file I/Os per update iteration (READ UPDATE + REWRITE), making it lightweight.</li>
+        <li><strong>No BROWSE operations:</strong> Unlike the list transactions (CCLI, CT00), this program does not use STARTBR/READNEXT, so there is no risk of long browse sessions.</li>
+        <li><strong>Optimistic concurrency overhead:</strong> The <code>9300-CHECK-CHANGE-IN-REC</code> paragraph adds a data comparison step during the update path, but this is an in-memory comparison (no additional I/O).</li>
+        <li><strong>COMMAREA size:</strong> At 2,000 bytes, the COMMAREA is moderately sized. It includes both old and new card detail snapshots, which is necessary for change detection but adds to the data passed on each RETURN.</li>
+        <li><strong>INSPECT/CONVERTING:</strong> The program uses <code>INSPECT CONVERTING</code> for case conversion of the embossed name (lower → upper). This is efficient for the 50-byte field.</li>
+        <li><strong>STRING operation:</strong> The expiry date assembly (<code>STRING CCUP-NEW-EXPYEAR '-' CCUP-NEW-EXPMON '-' CCUP-NEW-EXPDAY</code>) is a simple concatenation with minimal overhead.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 11 — Testing Approach
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 11.1 Test Scenarios</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Scenario</th><th>Input</th><th>Expected Result</th><th>Business Rule</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Normal update flow (from CCLI)</td><td>Select card from list → modify name → ENTER → F5</td><td>Card details displayed; changes validated; &ldquo;Changes committed to database&rdquo;</td><td>Happy path</td></tr>
+          <tr><td>2</td><td>Normal update flow (from menu)</td><td>Enter valid Acct+Card → ENTER → modify fields → ENTER → F5</td><td>Search, display, validate, save</td><td>Happy path (manual entry)</td></tr>
+          <tr><td>3</td><td>Blank account number</td><td>Leave account empty, press ENTER</td><td>&ldquo;Account number not provided&rdquo;; account field highlighted red</td><td>Rule #1</td></tr>
+          <tr><td>4</td><td>Non-numeric account</td><td>Enter &ldquo;ABC12345678&rdquo;</td><td>&ldquo;ACCOUNT FILTER,IF SUPPLIED MUST BE A 11 DIGIT NUMBER&rdquo;</td><td>Rule #2</td></tr>
+          <tr><td>5</td><td>Blank card number</td><td>Enter valid account, leave card empty</td><td>&ldquo;Card number not provided&rdquo;</td><td>Rule #3</td></tr>
+          <tr><td>6</td><td>Non-numeric card</td><td>Enter non-numeric card number</td><td>&ldquo;CARD ID FILTER,IF SUPPLIED MUST BE A 16 DIGIT NUMBER&rdquo;</td><td>Rule #4</td></tr>
+          <tr><td>7</td><td>Card not found</td><td>Enter valid-format but non-existent card</td><td>&ldquo;Did not find cards for this search condition&rdquo;</td><td>NOTFND handling</td></tr>
+          <tr><td>8</td><td>Blank card name</td><td>Clear name field, press ENTER</td><td>&ldquo;Card name not provided&rdquo;</td><td>Rule #5</td></tr>
+          <tr><td>9</td><td>Non-alpha card name</td><td>Enter &ldquo;John123&rdquo;</td><td>&ldquo;Card name can only contain alphabets and spaces&rdquo;</td><td>Rule #6</td></tr>
+          <tr><td>10</td><td>Invalid card status</td><td>Enter &ldquo;X&rdquo; for status</td><td>&ldquo;Card Active Status must be Y or N&rdquo;</td><td>Rule #7</td></tr>
+          <tr><td>11</td><td>Invalid expiry month</td><td>Enter &ldquo;13&rdquo; for month</td><td>&ldquo;Card expiry month must be between 1 and 12&rdquo;</td><td>Rule #8</td></tr>
+          <tr><td>12</td><td>Invalid expiry year</td><td>Enter &ldquo;1800&rdquo; for year</td><td>&ldquo;Invalid card expiry year&rdquo;</td><td>Rule #9</td></tr>
+          <tr><td>13</td><td>No changes detected</td><td>Display card, press ENTER without modifications</td><td>&ldquo;No change detected with respect to values fetched.&rdquo;</td><td>Rule #10</td></tr>
+          <tr><td>14</td><td>Cancel with F12</td><td>Modify fields, press F12</td><td>Original values restored from CARDDAT</td><td>Cancel flow</td></tr>
+          <tr><td>15</td><td>Exit with F3</td><td>Press F3 at any point</td><td>XCTL to calling program or main menu</td><td>Exit flow</td></tr>
+          <tr><td>16</td><td>Concurrent modification</td><td>Another user updates same card between display and F5</td><td>&ldquo;Record changed by some one else. Please review&rdquo;; refreshed data shown</td><td>Rule #11</td></tr>
+          <tr><td>17</td><td>Lock failure</td><td>Simulate READ UPDATE failure</td><td>&ldquo;Could not lock record for update&rdquo;</td><td>Locking error</td></tr>
+          <tr><td>18</td><td>REWRITE failure</td><td>Simulate REWRITE failure</td><td>&ldquo;Update of record failed&rdquo;</td><td>Write error</td></tr>
+          <tr><td>19</td><td>No search criteria</td><td>Leave both account and card blank</td><td>&ldquo;No input received&rdquo;</td><td>Both fields blank</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 11.2 Test Data Requirements</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Requirement</th><th>Details</th></tr></thead>
+        <tbody>
+          <tr><td>CARDDAT records</td><td>At least 2&ndash;3 records in <code>CARDDAT</code> VSAM file with valid card data (known card number, account ID, CVV, name, expiry, status)</td></tr>
+          <tr><td>User accounts</td><td>At least one signed-on user session (via CC00) with type &lsquo;U&rsquo; (regular user)</td></tr>
+          <tr><td>Cross-reference data</td><td>Matching account-to-card relationships accessible via CCLI for the &ldquo;from card list&rdquo; path</td></tr>
+          <tr><td>Concurrent test setup</td><td>Two terminal sessions accessing the same card record simultaneously (for test #16)</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 12 — Known Issues and Considerations
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Known Issues and Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 12.1 Known Issues</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Issue</th><th>Severity</th><th>Details</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Hardcoded user type on exit</td><td>Low</td><td>Line 464: <code>SET CDEMO-USRTYP-USER TO TRUE</code> forces user type to &lsquo;U&rsquo; on F3 exit, which could override an admin user&rsquo;s type if they navigated here. Admin users returning to the admin menu could lose their admin context.</td></tr>
+          <tr><td>2</td><td>EXPDAY not user-editable</td><td>Info</td><td>The expiry day (<code>EXPDAY</code>) field is defined as DRK/PROT in the BMS map and is never updated by user input. The old day value is carried forward unchanged (line 1123: <code>MOVE CCUP-OLD-EXPDAY TO EXPDAYO</code>). The user can only change month and year.</td></tr>
+          <tr><td>3</td><td>No RESP handling on RECEIVE MAP</td><td>Low</td><td>The RECEIVE MAP at line 579 captures <code>WS-RESP-CD</code> and <code>WS-REAS-CD</code> but does not check them. A MAPFAIL condition would not be handled gracefully.</td></tr>
+          <tr><td>4</td><td>No RESP handling on SEND MAP</td><td>Low</td><td>The SEND MAP at line 3400 captures <code>WS-RESP-CD</code> but does not evaluate the response. A send failure would be silently ignored.</td></tr>
+          <tr><td>5</td><td>Account validation uses inline literal</td><td>Info</td><td>Lines 744&ndash;746: The account validation error message is an inline literal rather than using an 88-level like other messages, creating inconsistency in message management.</td></tr>
+          <tr><td>6</td><td>No audit logging</td><td>Medium</td><td>Card record updates produce no audit trail. For compliance, journal writes or TDQ logging should be added.</td></tr>
+          <tr><td>7</td><td>No row-level security</td><td>Medium</td><td>Any authenticated user can update any card record. There is no check to ensure the user has authorization for the specific account.</td></tr>
+          <tr><td>8</td><td>CVV exposed in COMMAREA</td><td>Medium</td><td><code>CCUP-OLD-CVV-CD</code> is stored in the COMMAREA (and thus in CICS temporary storage) across pseudo-conversational iterations. This sensitive data persists in memory between user interactions.</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3><span class="dot"></span> 12.2 Modernization Considerations</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Aspect</th><th>Current State</th><th>Target State</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Screen I/O</td><td>BMS maps (COCRDUP/CCRDUPA) via 3270 terminal</td><td>REST API + Web/Mobile UI</td><td>Replace SEND/RECEIVE MAP with JSON request/response; field validations become server-side API validators</td></tr>
+          <tr><td>Data Access</td><td>EXEC CICS READ/REWRITE on VSAM KSDS (<code>CARDDAT</code>)</td><td>SQL/JPA against relational database (e.g., PostgreSQL, DB2 for z/OS)</td><td>Card table with primary key on card_number; ORM mapping for CARD-RECORD layout</td></tr>
+          <tr><td>State Management</td><td>COMMAREA-based pseudo-conversational state (2,000 bytes)</td><td>Server-side session or JWT token with state claims</td><td>Eliminates COMMAREA packing/unpacking; enables stateless microservices</td></tr>
+          <tr><td>Concurrency Control</td><td>READ UPDATE + application-level optimistic check (<code>9300-CHECK-CHANGE-IN-REC</code>)</td><td>Database optimistic locking (version column or ETag)</td><td>Replace manual field-by-field comparison with <code>@Version</code> annotation or HTTP ETag</td></tr>
+          <tr><td>Validation</td><td>Procedural EVALUATE/IF blocks (1210&ndash;1260 paragraphs)</td><td>Declarative validation framework (Bean Validation, Joi, etc.)</td><td>Business rules become annotations or schema definitions</td></tr>
+          <tr><td>Error Handling</td><td>88-level flags + <code>WS-RETURN-MSG</code> + ABEND-ROUTINE</td><td>Structured exceptions + HTTP status codes + error response DTOs</td><td>Centralized error handler with typed exceptions</td></tr>
+          <tr><td>Navigation</td><td>XCTL between COBOL programs with COMMAREA routing</td><td>Client-side routing (React Router, etc.) or API gateway routing</td><td>Decouple UI navigation from backend program control flow</td></tr>
+          <tr><td>Security</td><td>Menu-based access control; no row-level security; RACF at transaction level</td><td>OAuth2/OIDC + RBAC + row-level security policies</td><td>Add account-level access control; encrypt sensitive fields (CVV)</td></tr>
+          <tr><td>Audit</td><td>None</td><td>Event-sourced audit log or CDC-based change tracking</td><td>Capture who changed what, when, with before/after values</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- end page-wrap-single -->
+
+<!-- ════════════════════  FOOTER  ════════════════════ -->
+<footer class="footer">
+  <strong>UniCredit S.p.A.</strong> &mdash; CardDemo CICS Transaction Analysis &middot; Auto-generated
+</footer>
+
+<!-- ════════════════════  SCRIPTS  ════════════════════ -->
+<script>
+// Allow sections to start expanded; clicking header toggles
+document.querySelectorAll('.section-header').forEach(h => {
+  h.addEventListener('click', () => h.parentElement.classList.toggle('collapsed'));
+});
+</script>
+
+</body>
+</html>

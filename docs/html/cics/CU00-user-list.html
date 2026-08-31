@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User List (CU00) – CICS Transaction Analysis | UniCredit CardDemo</title>
+<link rel="stylesheet" href="../shared/theme.css">
+</head>
+<body>
+
+<!-- Hero -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. — Milano</div>
+    </div>
+    <h1>User List – <span>CICS Transaction Analysis</span></h1>
+    <p class="hero-subtitle">
+      Transaction <code>CU00</code> · Program <code>COUSR00C</code> · Admin-only browsable list of all users in the USRSEC security file
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Transaction ID</dt><dd>CU00</dd></div>
+      <div><dt>Entry Program</dt><dd>COUSR00C</dd></div>
+      <div><dt>BMS Mapset</dt><dd>COUSR00</dd></div>
+      <div><dt>Design Pattern</dt><dd>Pseudo-conversational</dd></div>
+      <div><dt>LOC</dt><dd>695</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">&rsaquo;</span>
+  <a href="index.html">CICS Flows</a>
+  <span class="sep">&rsaquo;</span>
+  User List (CU00)
+</div>
+
+<!-- Body -->
+<div class="page-wrap-single">
+
+<!-- ================================================================== -->
+<!--  SECTION 1 — BUSINESS FLOW ANALYSIS                               -->
+<!-- ================================================================== -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">01</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>1.1 Business Context</h3>
+<p>
+  The <strong>User List</strong> transaction (<code>CU00</code>) provides system administrators with a paginated,
+  browsable view of every user record stored in the <code>USRSEC</code> VSAM KSDS security file.
+  It is accessible only from the <strong>Admin Menu</strong> (transaction <code>CA00</code>, option 1 &mdash;
+  "User List (Security)") and is restricted to users whose <code>CDEMO-USER-TYPE</code> is <code>'A'</code> (Admin).
+</p>
+<p>
+  The screen displays up to <strong>10 user records per page</strong> showing User ID, First Name, Last Name,
+  and User Type. Administrators can page forward (<kbd>PF8</kbd>) and backward (<kbd>PF7</kbd>), search by
+  User ID prefix, and select individual users for <strong>Update</strong> (selection code <code>U</code>)
+  or <strong>Delete</strong> (selection code <code>D</code>). The transaction transfers control via
+  <code>XCTL</code> to <code>COUSR02C</code> (User Update) or <code>COUSR03C</code> (User Delete) respectively.
+</p>
+
+<h3>1.2 Business Flow Diagram</h3>
+<pre>
+  Admin Menu (CA00)
+       |
+       | Option 1 selected
+       v
+  +---------------------------+
+  |  CU00 — User List Screen  |
+  |  (COUSR0A map)            |
+  +---------------------------+
+       |         |         |
+       |  PF7    |  PF8    |  ENTER + selection
+       |  Page   |  Page   |
+       |  Back   |  Forward|
+       v         v         v
+  +----------+ +----------+ +----------------------------+
+  | Previous | |   Next   | | EVALUATE selection code    |
+  |   Page   | |   Page   | |  'U' → XCTL → COUSR02C    |
+  |          | |          | |  'D' → XCTL → COUSR03C    |
+  +----------+ +----------+ +----------------------------+
+       |         |                   |
+       +----+----+                   |
+            |                        |
+            v                        v
+     Redisplay COUSR0A       Transfer to Update/Delete
+                              (returns to CU00 after)
+       |
+       | PF3
+       v
+  Admin Menu (COADM01C)
+</pre>
+
+<h3>1.3 Business Rules</h3>
+<table>
+<thead><tr><th>#</th><th>Rule</th><th>Source</th><th>Enforcement</th></tr></thead>
+<tbody>
+<tr><td>BR-01</td><td>Only admin users may access the User List screen</td><td>Admin Menu routing (COADM01C / COADM02Y)</td><td>Menu dispatch — option 1 maps to COUSR00C</td></tr>
+<tr><td>BR-02</td><td>Selection code must be <code>U</code> (update) or <code>D</code> (delete); all other values are rejected</td><td>PROCESS-ENTER-KEY, lines 189–215</td><td>EVALUATE CDEMO-CU00-USR-SEL-FLG with error message for invalid values</td></tr>
+<tr><td>BR-03</td><td>Page size is fixed at 10 records</td><td>WS-USER-DATA (OCCURS 10), PERFORM UNTIL WS-IDX &gt;= 11</td><td>Hardcoded loop bound</td></tr>
+<tr><td>BR-04</td><td>Search by User ID prefix positions the browse cursor at or after the entered key</td><td>PROCESS-ENTER-KEY, lines 218–222 → STARTBR with RIDFLD</td><td>STARTBR GTEQ (default) on SEC-USR-ID</td></tr>
+<tr><td>BR-05</td><td>Cannot page backward past page 1</td><td>PROCESS-PF7-KEY, line 248</td><td>IF CDEMO-CU00-PAGE-NUM &gt; 1 check</td></tr>
+<tr><td>BR-06</td><td>Cannot page forward past the last record</td><td>PROCESS-PF8-KEY, line 270</td><td>NEXT-PAGE-YES flag check</td></tr>
+</tbody>
+</table>
+
+<h3>1.4 User Interactions</h3>
+<table>
+<thead><tr><th>Step</th><th>User Action</th><th>System Response</th><th>Business Meaning</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Select option 1 from Admin Menu</td><td>XCTL to COUSR00C; initial page of users displayed</td><td>Begin user administration</td></tr>
+<tr><td>2</td><td>Enter User ID prefix in search field, press ENTER</td><td>Browse repositioned from matching key; first page displayed</td><td>Filter / search for a specific user</td></tr>
+<tr><td>3</td><td>Press PF8</td><td>Next 10 users displayed; page counter incremented</td><td>Page forward through user list</td></tr>
+<tr><td>4</td><td>Press PF7</td><td>Previous 10 users displayed; page counter decremented</td><td>Page backward through user list</td></tr>
+<tr><td>5</td><td>Type <code>U</code> next to a user, press ENTER</td><td>XCTL to COUSR02C (User Update) with selected User ID</td><td>Modify user attributes</td></tr>
+<tr><td>6</td><td>Type <code>D</code> next to a user, press ENTER</td><td>XCTL to COUSR03C (User Delete) with selected User ID</td><td>Delete a user from the security file</td></tr>
+<tr><td>7</td><td>Press PF3</td><td>XCTL back to COADM01C (Admin Menu)</td><td>Return to admin menu</td></tr>
+</tbody>
+</table>
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!--  SECTION 2 — TECHNICAL FLOW ANALYSIS                              -->
+<!-- ================================================================== -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">02</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>2.1 Technical Flow Diagram — Overview</h3>
+<pre>
+  3270 TERMINAL
+       |
+       |  CICS Transaction CU00
+       v
+  +---------------------+        +------------------+
+  |     CICS REGION     |        |   VSAM KSDS      |
+  |                     |  I/O   |   USRSEC          |
+  |   COUSR00C.cbl  ----+--------+  (SEC-USER-DATA)  |
+  |                     |        +------------------+
+  |   BMS Map:          |
+  |     COUSR0A /       |
+  |     COUSR00         |
+  +---------------------+
+       |          |
+       | XCTL    | XCTL
+       v          v
+  COUSR02C    COUSR03C
+  (Update)    (Delete)
+</pre>
+
+<h3>2.2 Technical Flow Diagram — Detailed</h3>
+<pre>
+  CICS RECEIVE MAP('COUSR0A') MAPSET('COUSR00') INTO(COUSR0AI)
+       |
+       v
+  EVALUATE EIBAID
+   ├── DFHENTER → PROCESS-ENTER-KEY
+   │     ├── Check SEL0001I–SEL0010I for selection code
+   │     ├── If 'U' → XCTL PROGRAM('COUSR02C') COMMAREA
+   │     ├── If 'D' → XCTL PROGRAM('COUSR03C') COMMAREA
+   │     ├── If other → error message
+   │     ├── MOVE USRIDINI → SEC-USR-ID (search key)
+   │     └── PROCESS-PAGE-FORWARD
+   │           ├── STARTBR DATASET('USRSEC') RIDFLD(SEC-USR-ID)
+   │           ├── READNEXT × 10 → POPULATE-USER-DATA
+   │           ├── READNEXT one more → set NEXT-PAGE flag
+   │           ├── ENDBR DATASET('USRSEC')
+   │           └── SEND MAP('COUSR0A') FROM(COUSR0AO) ERASE CURSOR
+   │
+   ├── DFHPF3 → RETURN-TO-PREV-SCREEN
+   │     └── XCTL PROGRAM('COADM01C') COMMAREA
+   │
+   ├── DFHPF7 → PROCESS-PF7-KEY
+   │     ├── Set SEC-USR-ID = CDEMO-CU00-USRID-FIRST
+   │     └── PROCESS-PAGE-BACKWARD
+   │           ├── STARTBR DATASET('USRSEC') RIDFLD(SEC-USR-ID)
+   │           ├── READPREV × 10 → POPULATE-USER-DATA
+   │           ├── ENDBR DATASET('USRSEC')
+   │           └── SEND MAP('COUSR0A') FROM(COUSR0AO) CURSOR
+   │
+   ├── DFHPF8 → PROCESS-PF8-KEY
+   │     ├── Set SEC-USR-ID = CDEMO-CU00-USRID-LAST
+   │     └── PROCESS-PAGE-FORWARD (same as ENTER)
+   │
+   └── OTHER → error "Invalid key pressed"
+            └── SEND MAP('COUSR0A') FROM(COUSR0AO) CURSOR
+
+  EXEC CICS RETURN TRANSID('CU00') COMMAREA(CARDDEMO-COMMAREA)
+</pre>
+
+<h3>2.3 Pseudo-Conversational Flow</h3>
+<table>
+<thead><tr><th>Iteration</th><th>EIBCALEN</th><th>User Action</th><th>Entry Point</th><th>Screen Sent</th><th>RETURN TRANSID</th></tr></thead>
+<tbody>
+<tr><td>First</td><td>= 0</td><td>Direct entry (no COMMAREA)</td><td>MAIN-PARA → RETURN-TO-PREV-SCREEN (XCTL to COSGN00C)</td><td>None (redirects to sign-on)</td><td>N/A</td></tr>
+<tr><td>Initial</td><td>&gt; 0, PGM-CONTEXT = 0</td><td>Arriving from Admin Menu</td><td>SET CDEMO-PGM-REENTER → PROCESS-ENTER-KEY → PROCESS-PAGE-FORWARD</td><td>COUSR0A (first page of users)</td><td>CU00</td></tr>
+<tr><td>Subsequent</td><td>&gt; 0, PGM-CONTEXT = 1</td><td>ENTER / PF7 / PF8 / PF3</td><td>RECEIVE-USRLST-SCREEN → EVALUATE EIBAID</td><td>COUSR0A (updated page)</td><td>CU00</td></tr>
+</tbody>
+</table>
+
+<h3>2.4 CICS Command Flow</h3>
+<table>
+<thead><tr><th>Command</th><th>Paragraph</th><th>Purpose</th><th>RESP Handling</th></tr></thead>
+<tbody>
+<tr><td><code>RECEIVE MAP('COUSR0A') MAPSET('COUSR00')</code></td><td>RECEIVE-USRLST-SCREEN</td><td>Receive user input from terminal</td><td>WS-RESP-CD / WS-REAS-CD captured</td></tr>
+<tr><td><code>STARTBR DATASET('USRSEC') RIDFLD(SEC-USR-ID)</code></td><td>STARTBR-USER-SEC-FILE</td><td>Position browse cursor at or after given key</td><td>NORMAL → continue; NOTFND → EOF + message; OTHER → error flag + message</td></tr>
+<tr><td><code>READNEXT DATASET('USRSEC') INTO(SEC-USER-DATA)</code></td><td>READNEXT-USER-SEC-FILE</td><td>Read next sequential record in forward browse</td><td>NORMAL → continue; ENDFILE → EOF + message; OTHER → error flag + message</td></tr>
+<tr><td><code>READPREV DATASET('USRSEC') INTO(SEC-USER-DATA)</code></td><td>READPREV-USER-SEC-FILE</td><td>Read previous sequential record in backward browse</td><td>NORMAL → continue; ENDFILE → EOF + message; OTHER → error flag + message</td></tr>
+<tr><td><code>ENDBR DATASET('USRSEC')</code></td><td>ENDBR-USER-SEC-FILE</td><td>End browse session</td><td>None</td></tr>
+<tr><td><code>SEND MAP('COUSR0A') MAPSET('COUSR00') ERASE CURSOR</code></td><td>SEND-USRLST-SCREEN</td><td>Send map with full screen erase (first send)</td><td>None</td></tr>
+<tr><td><code>SEND MAP('COUSR0A') MAPSET('COUSR00') CURSOR</code></td><td>SEND-USRLST-SCREEN</td><td>Send map without erase (subsequent updates)</td><td>None</td></tr>
+<tr><td><code>RETURN TRANSID('CU00') COMMAREA(CARDDEMO-COMMAREA)</code></td><td>MAIN-PARA</td><td>Return control to CICS; re-invoke on next input</td><td>None</td></tr>
+<tr><td><code>XCTL PROGRAM('COUSR02C') COMMAREA</code></td><td>PROCESS-ENTER-KEY</td><td>Transfer to User Update program</td><td>None</td></tr>
+<tr><td><code>XCTL PROGRAM('COUSR03C') COMMAREA</code></td><td>PROCESS-ENTER-KEY</td><td>Transfer to User Delete program</td><td>None</td></tr>
+<tr><td><code>XCTL PROGRAM('COADM01C') COMMAREA</code></td><td>RETURN-TO-PREV-SCREEN</td><td>Return to Admin Menu</td><td>None</td></tr>
+</tbody>
+</table>
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!--  SECTION 3 — SCREEN FLOW AND BMS MAPS                             -->
+<!-- ================================================================== -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">03</span>
+    <h2>Screen Flow and BMS Maps</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>3.1 Screen Flow Diagram</h3>
+<pre>
+  +------------------+                        +------------------+
+  |   Admin Menu     |   PF3 (from CU00)      |   Admin Menu     |
+  |   (COADM01C)     | &lt;--------------------- |   (COADM01C)     |
+  +------------------+                        +------------------+
+         |
+         | Option 1 (XCTL)
+         v
+  +-----------------------------------+
+  |       COUSR0A  (User List)        |
+  |                                   |
+  |  Tran: CU00        Date: mm/dd/yy|
+  |  Prog: COUSR00C    Time: hh:mm:ss|
+  |                                   |
+  |       List Users       Page: NNN  |
+  |                                   |
+  |  Search User ID: [________]       |
+  |                                   |
+  |  Sel  User ID   First Name        |
+  |  ---  --------  ----------        |
+  |  [_]  ADMIN001  Admin   ...    A  |
+  |  [_]  USER0001  John    ...    U  |
+  |  ...  (10 rows)                   |
+  |                                   |
+  |  Type 'U' to Update or 'D' to    |
+  |  Delete a User from the list      |
+  |                                   |
+  |  [error message line]             |
+  |  ENTER=Continue F3=Back           |
+  |  F7=Backward  F8=Forward          |
+  +-----------------------------------+
+         |                  |
+         | 'U'+ENTER        | 'D'+ENTER
+         v                  v
+  +-------------+    +-------------+
+  | COUSR02C    |    | COUSR03C    |
+  | User Update |    | User Delete |
+  +-------------+    +-------------+
+</pre>
+
+<h3>3.2 BMS Map Inventory</h3>
+<table>
+<thead><tr><th>Map Name</th><th>Mapset</th><th>Purpose</th><th>Key Fields</th></tr></thead>
+<tbody>
+<tr><td>COUSR0A</td><td>COUSR00</td><td>User list display — 10-row browsable grid with selection, search, and pagination</td><td>USRIDIN (search), SEL0001–SEL0010 (selection), USRID01–USRID10, FNAME01–FNAME10, LNAME01–LNAME10, UTYPE01–UTYPE10, PAGENUM, ERRMSG</td></tr>
+</tbody>
+</table>
+
+<h3>3.3 Screen Field Details</h3>
+<table>
+<thead><tr><th>Field</th><th>Line,Col</th><th>Length</th><th>Attribute</th><th>Color</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td>TRNNAME</td><td>1,7</td><td>4</td><td>ASKIP,FSET,NORM</td><td>BLUE</td><td>Transaction ID display</td></tr>
+<tr><td>TITLE01</td><td>1,21</td><td>40</td><td>ASKIP,FSET,NORM</td><td>YELLOW</td><td>Application title line 1</td></tr>
+<tr><td>CURDATE</td><td>1,71</td><td>8</td><td>ASKIP,FSET,NORM</td><td>BLUE</td><td>Current date (mm/dd/yy)</td></tr>
+<tr><td>PGMNAME</td><td>2,7</td><td>8</td><td>ASKIP,FSET,NORM</td><td>BLUE</td><td>Program name display</td></tr>
+<tr><td>TITLE02</td><td>2,21</td><td>40</td><td>ASKIP,FSET,NORM</td><td>YELLOW</td><td>Application title line 2</td></tr>
+<tr><td>CURTIME</td><td>2,71</td><td>8</td><td>ASKIP,FSET,NORM</td><td>BLUE</td><td>Current time (hh:mm:ss)</td></tr>
+<tr><td>PAGENUM</td><td>4,71</td><td>8</td><td>ASKIP,FSET,NORM</td><td>BLUE</td><td>Current page number</td></tr>
+<tr><td>USRIDIN</td><td>6,21</td><td>8</td><td>UNPROT,FSET,NORM</td><td>GREEN</td><td>Search User ID input field</td></tr>
+<tr><td>SEL0001–SEL0010</td><td>10–19,6</td><td>1</td><td>UNPROT,FSET,NORM</td><td>GREEN</td><td>Row selection (U/D) input fields</td></tr>
+<tr><td>USRID01–USRID10</td><td>10–19,12</td><td>8</td><td>ASKIP,FSET,NORM</td><td>BLUE</td><td>User ID display</td></tr>
+<tr><td>FNAME01–FNAME10</td><td>10–19,24</td><td>20</td><td>ASKIP,FSET,NORM</td><td>BLUE</td><td>First name display</td></tr>
+<tr><td>LNAME01–LNAME10</td><td>10–19,48</td><td>20</td><td>ASKIP,FSET,NORM</td><td>BLUE</td><td>Last name display</td></tr>
+<tr><td>UTYPE01–UTYPE10</td><td>10–19,73</td><td>1</td><td>ASKIP,FSET,NORM</td><td>BLUE</td><td>User type (A=Admin, U=User)</td></tr>
+<tr><td>ERRMSG</td><td>23,1</td><td>78</td><td>ASKIP,BRT,FSET</td><td>RED</td><td>Error / informational message</td></tr>
+</tbody>
+</table>
+
+<h3>3.4 PF Key / AID Key Handling</h3>
+<table>
+<thead><tr><th>Key</th><th>EIBAID Constant</th><th>Action</th><th>Paragraph</th></tr></thead>
+<tbody>
+<tr><td>ENTER</td><td>DFHENTER</td><td>Process selection (U/D) and/or search; refresh page</td><td>PROCESS-ENTER-KEY → PROCESS-PAGE-FORWARD</td></tr>
+<tr><td>PF3</td><td>DFHPF3</td><td>Return to Admin Menu (COADM01C)</td><td>RETURN-TO-PREV-SCREEN</td></tr>
+<tr><td>PF7</td><td>DFHPF7</td><td>Page backward (previous 10 users)</td><td>PROCESS-PF7-KEY → PROCESS-PAGE-BACKWARD</td></tr>
+<tr><td>PF8</td><td>DFHPF8</td><td>Page forward (next 10 users)</td><td>PROCESS-PF8-KEY → PROCESS-PAGE-FORWARD</td></tr>
+<tr><td>Other</td><td>Any other AID</td><td>Error message: "Invalid key pressed. Please see below..."</td><td>Inline in EVALUATE EIBAID</td></tr>
+</tbody>
+</table>
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!--  SECTION 4 — PROGRAM INVENTORY AND CALL CHAIN                     -->
+<!-- ================================================================== -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">04</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>4.1 Program Inventory</h3>
+<table>
+<thead><tr><th>Program</th><th>Purpose</th><th>Entry Mechanism</th><th>LOC</th></tr></thead>
+<tbody>
+<tr><td>COUSR00C</td><td>User List — browse USRSEC file, display paginated list, dispatch selection</td><td>XCTL from COADM01C (Admin Menu)</td><td>695</td></tr>
+<tr><td>COUSR02C</td><td>User Update — modify selected user record</td><td>XCTL from COUSR00C (selection code 'U')</td><td>—</td></tr>
+<tr><td>COUSR03C</td><td>User Delete — delete selected user record</td><td>XCTL from COUSR00C (selection code 'D')</td><td>—</td></tr>
+<tr><td>COADM01C</td><td>Admin Menu — navigation hub for admin functions</td><td>XCTL from COUSR00C (PF3 return)</td><td>—</td></tr>
+<tr><td>COSGN00C</td><td>Sign-On — authentication entry point</td><td>XCTL from COUSR00C (EIBCALEN=0 guard)</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h3>4.2 Call Chain Diagram</h3>
+<pre>
+  Transaction CU00
+       |
+       v
+  COUSR00C  (entry program)
+       |
+       ├── XCTL → COADM01C   [PF3 — return to Admin Menu]
+       ├── XCTL → COSGN00C   [EIBCALEN=0 — redirect to sign-on]
+       ├── XCTL → COUSR02C   [selection 'U' — User Update]
+       └── XCTL → COUSR03C   [selection 'D' — User Delete]
+       |
+       └── VSAM I/O → USRSEC  (STARTBR / READNEXT / READPREV / ENDBR)
+</pre>
+
+<h3>4.3 Call Details</h3>
+<table>
+<thead><tr><th>Caller</th><th>Called</th><th>Mechanism</th><th>Data Passed</th><th>When</th></tr></thead>
+<tbody>
+<tr><td>COUSR00C</td><td>COADM01C</td><td>XCTL</td><td>CARDDEMO-COMMAREA</td><td>PF3 pressed (return to Admin Menu)</td></tr>
+<tr><td>COUSR00C</td><td>COSGN00C</td><td>XCTL</td><td>CARDDEMO-COMMAREA</td><td>EIBCALEN = 0 (no COMMAREA, direct entry guard)</td></tr>
+<tr><td>COUSR00C</td><td>COUSR02C</td><td>XCTL</td><td>CARDDEMO-COMMAREA (CDEMO-CU00-USR-SELECTED populated)</td><td>ENTER with selection code 'U' or 'u'</td></tr>
+<tr><td>COUSR00C</td><td>COUSR03C</td><td>XCTL</td><td>CARDDEMO-COMMAREA (CDEMO-CU00-USR-SELECTED populated)</td><td>ENTER with selection code 'D' or 'd'</td></tr>
+</tbody>
+</table>
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!--  SECTION 5 — FILE AND DATA STORE INVENTORY                        -->
+<!-- ================================================================== -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">05</span>
+    <h2>File and Data Store Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>5.1 File Inventory</h3>
+<table>
+<thead><tr><th>FCT Name</th><th>Type</th><th>Access Mode</th><th>Program</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td>USRSEC</td><td>VSAM KSDS</td><td>Browse (STARTBR / READNEXT / READPREV / ENDBR)</td><td>COUSR00C</td><td>Security user file — contains user ID, name, password, and type for all application users</td></tr>
+</tbody>
+</table>
+
+<h3>5.2 File Access Details</h3>
+<table>
+<thead><tr><th>Attribute</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td>Dataset Name (FCT)</td><td><code>USRSEC</code> (WS-USRSEC-FILE = <code>'USRSEC  '</code>)</td></tr>
+<tr><td>Record Layout Copybook</td><td><code>CSUSR01Y.cpy</code> — <code>SEC-USER-DATA</code> (80 bytes)</td></tr>
+<tr><td>Primary Key</td><td><code>SEC-USR-ID</code> — PIC X(08), unique user identifier</td></tr>
+<tr><td>Key Length</td><td>8 bytes (<code>LENGTH OF SEC-USR-ID</code>)</td></tr>
+<tr><td>Access Mode</td><td>Browse only (read-only in this transaction)</td></tr>
+<tr><td>Locking</td><td>None — browse operations do not acquire locks</td></tr>
+<tr><td>Access Pattern</td><td>Sequential forward (READNEXT) and backward (READPREV) browse, 10 records per page</td></tr>
+</tbody>
+</table>
+
+<h4>Record Layout — SEC-USER-DATA (CSUSR01Y.cpy)</h4>
+<table>
+<thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td>SEC-USR-ID</td><td>X(08)</td><td>8</td><td>User ID (primary key)</td></tr>
+<tr><td>SEC-USR-FNAME</td><td>X(20)</td><td>20</td><td>First name</td></tr>
+<tr><td>SEC-USR-LNAME</td><td>X(20)</td><td>20</td><td>Last name</td></tr>
+<tr><td>SEC-USR-PWD</td><td>X(08)</td><td>8</td><td>Password</td></tr>
+<tr><td>SEC-USR-TYPE</td><td>X(01)</td><td>1</td><td>User type (A=Admin, U=User)</td></tr>
+<tr><td>SEC-USR-FILLER</td><td>X(23)</td><td>23</td><td>Reserved / filler</td></tr>
+</tbody>
+</table>
+
+<h3>5.3 TSQ Usage</h3>
+<p><em>N/A — This transaction does not use Temporary Storage Queues.</em></p>
+
+<h3>5.4 TDQ Usage</h3>
+<p><em>N/A — This transaction does not use Transient Data Queues.</em></p>
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!--  SECTION 6 — DATA FLOW ANALYSIS                                   -->
+<!-- ================================================================== -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">06</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>6.1 Data Flow Through Transaction</h3>
+<pre>
+  3270 TERMINAL INPUT
+       |
+       |  RECEIVE MAP('COUSR0A')
+       v
+  +------------------------------+
+  |  COUSR0AI  (input map area)  |
+  |  ├── USRIDINI  (search key)  |
+  |  └── SEL0001I–SEL0010I      |
+  +------------------------------+
+       |
+       | Copy to working storage
+       v
+  +------------------------------+
+  |  SEC-USR-ID  (browse key)    |
+  |  CDEMO-CU00-USR-SEL-FLG     |
+  |  CDEMO-CU00-USR-SELECTED    |
+  +------------------------------+
+       |
+       | STARTBR → READNEXT × 10
+       v
+  +------------------------------+
+  |  SEC-USER-DATA  (from VSAM)  |
+  |  ├── SEC-USR-ID              |
+  |  ├── SEC-USR-FNAME           |
+  |  ├── SEC-USR-LNAME           |
+  |  └── SEC-USR-TYPE            |
+  +------------------------------+
+       |
+       | POPULATE-USER-DATA
+       v
+  +------------------------------+
+  |  COUSR0AI  (output fields)   |
+  |  ├── USRID01I–USRID10I       |
+  |  ├── FNAME01I–FNAME10I       |
+  |  ├── LNAME01I–LNAME10I       |
+  |  └── UTYPE01I–UTYPE10I       |
+  +------------------------------+
+       |
+       | SEND MAP('COUSR0A')
+       v
+  3270 TERMINAL OUTPUT
+</pre>
+
+<h3>6.2 Data Transformation Map</h3>
+<table>
+<thead><tr><th>Source</th><th>Transformation</th><th>Target</th></tr></thead>
+<tbody>
+<tr><td>USRIDINI (map input)</td><td>Direct copy; spaces → LOW-VALUES</td><td>SEC-USR-ID (browse key)</td></tr>
+<tr><td>SEC-USR-ID (VSAM record)</td><td>Direct copy via POPULATE-USER-DATA</td><td>USRID01I–USRID10I (map output)</td></tr>
+<tr><td>SEC-USR-FNAME (VSAM record)</td><td>Direct copy via POPULATE-USER-DATA</td><td>FNAME01I–FNAME10I (map output)</td></tr>
+<tr><td>SEC-USR-LNAME (VSAM record)</td><td>Direct copy via POPULATE-USER-DATA</td><td>LNAME01I–LNAME10I (map output)</td></tr>
+<tr><td>SEC-USR-TYPE (VSAM record)</td><td>Direct copy via POPULATE-USER-DATA</td><td>UTYPE01I–UTYPE10I (map output)</td></tr>
+<tr><td>SEL0001I–SEL0010I (map input)</td><td>First non-empty selection → CDEMO-CU00-USR-SEL-FLG</td><td>COMMAREA for XCTL dispatch</td></tr>
+<tr><td>Corresponding USRIDnnI (map)</td><td>Copy alongside selection</td><td>CDEMO-CU00-USR-SELECTED (COMMAREA)</td></tr>
+<tr><td>CDEMO-CU00-PAGE-NUM</td><td>Increment/decrement on page forward/backward</td><td>PAGENUMI (map output)</td></tr>
+<tr><td>SEC-USR-ID (first record)</td><td>Direct copy</td><td>CDEMO-CU00-USRID-FIRST (COMMAREA)</td></tr>
+<tr><td>SEC-USR-ID (last record)</td><td>Direct copy</td><td>CDEMO-CU00-USRID-LAST (COMMAREA)</td></tr>
+</tbody>
+</table>
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!--  SECTION 7 — COMMAREA AND INTERFACE CONTRACTS                     -->
+<!-- ================================================================== -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">07</span>
+    <h2>COMMAREA and Interface Contracts</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>7.1 COMMAREA Layout</h3>
+<p>The transaction uses the shared <code>CARDDEMO-COMMAREA</code> defined in <code>COCOM01Y.cpy</code>,
+plus a transaction-specific extension <code>CDEMO-CU00-INFO</code> defined inline in the program.</p>
+
+<h4>Shared COMMAREA (COCOM01Y.cpy)</h4>
+<table>
+<thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Direction</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td>CDEMO-FROM-TRANID</td><td>X(04)</td><td>4</td><td>IN/OUT</td><td>Originating transaction ID</td></tr>
+<tr><td>CDEMO-FROM-PROGRAM</td><td>X(08)</td><td>8</td><td>IN/OUT</td><td>Originating program name</td></tr>
+<tr><td>CDEMO-TO-TRANID</td><td>X(04)</td><td>4</td><td>OUT</td><td>Target transaction ID</td></tr>
+<tr><td>CDEMO-TO-PROGRAM</td><td>X(08)</td><td>8</td><td>OUT</td><td>Target program name for XCTL</td></tr>
+<tr><td>CDEMO-USER-ID</td><td>X(08)</td><td>8</td><td>IN</td><td>Authenticated user ID</td></tr>
+<tr><td>CDEMO-USER-TYPE</td><td>X(01)</td><td>1</td><td>IN</td><td>User type: 'A' (admin) or 'U' (user)</td></tr>
+<tr><td>CDEMO-PGM-CONTEXT</td><td>9(01)</td><td>1</td><td>IN/OUT</td><td>0 = first entry, 1 = re-entry</td></tr>
+<tr><td>CDEMO-LAST-MAP</td><td>X(07)</td><td>7</td><td>OUT</td><td>Last BMS map sent</td></tr>
+<tr><td>CDEMO-LAST-MAPSET</td><td>X(07)</td><td>7</td><td>OUT</td><td>Last BMS mapset sent</td></tr>
+</tbody>
+</table>
+
+<h4>Transaction-Specific Extension (CDEMO-CU00-INFO)</h4>
+<table>
+<thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Direction</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td>CDEMO-CU00-USRID-FIRST</td><td>X(08)</td><td>8</td><td>OUT</td><td>User ID of first record on current page (used by PF7)</td></tr>
+<tr><td>CDEMO-CU00-USRID-LAST</td><td>X(08)</td><td>8</td><td>OUT</td><td>User ID of last record on current page (used by PF8)</td></tr>
+<tr><td>CDEMO-CU00-PAGE-NUM</td><td>9(08)</td><td>8</td><td>IN/OUT</td><td>Current page number for pagination</td></tr>
+<tr><td>CDEMO-CU00-NEXT-PAGE-FLG</td><td>X(01)</td><td>1</td><td>OUT</td><td>'Y' = more records after current page; 'N' = last page</td></tr>
+<tr><td>CDEMO-CU00-USR-SEL-FLG</td><td>X(01)</td><td>1</td><td>OUT</td><td>Selection action code ('U' or 'D')</td></tr>
+<tr><td>CDEMO-CU00-USR-SELECTED</td><td>X(08)</td><td>8</td><td>OUT</td><td>User ID of the selected user for Update/Delete</td></tr>
+</tbody>
+</table>
+
+<h3>7.2 Return Code Conventions</h3>
+<p>No explicit return codes are used. Error state is managed through:</p>
+<ul>
+  <li><code>WS-ERR-FLG</code> — flag (<code>'Y'</code>/<code>'N'</code>) indicating an error occurred during file I/O</li>
+  <li><code>WS-RESP-CD</code> / <code>WS-REAS-CD</code> — CICS RESP/RESP2 codes from file operations</li>
+  <li><code>WS-MESSAGE</code> — text message displayed via <code>ERRMSGO</code> field on the map</li>
+</ul>
+
+<h3>7.3 Conversation State Management</h3>
+<p>State is preserved between pseudo-conversational iterations via the <code>CARDDEMO-COMMAREA</code>:</p>
+<ul>
+  <li><strong>CDEMO-PGM-CONTEXT</strong>: Distinguishes first entry (0) from re-entry (1). Set to 1 on first successful entry.</li>
+  <li><strong>CDEMO-CU00-USRID-FIRST / USRID-LAST</strong>: Anchors for the current page — first and last User IDs displayed. Used by PF7/PF8 to position the STARTBR cursor.</li>
+  <li><strong>CDEMO-CU00-PAGE-NUM</strong>: Current logical page number, incremented on forward, decremented on backward.</li>
+  <li><strong>CDEMO-CU00-NEXT-PAGE-FLG</strong>: Lookahead flag — 'Y' if at least one more record exists beyond the current page.</li>
+  <li>The entire COMMAREA is passed on <code>RETURN TRANSID('CU00')</code> and restored from <code>DFHCOMMAREA</code> at re-entry.</li>
+</ul>
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!--  SECTION 8 — ERROR HANDLING AND USER FEEDBACK                     -->
+<!-- ================================================================== -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">08</span>
+    <h2>Error Handling and User Feedback</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>8.1 Error Flow Diagram</h3>
+<pre>
+  User Action
+       |
+       v
+  +------------------+     +-------------------+
+  |  Normal Path     |     |  Error Path       |
+  |                  |     |                   |
+  |  STARTBR → OK   |     |  STARTBR → NOTFND |
+  |  READNEXT → OK  |     |  READNEXT → ENDF  |
+  |  Populate data   |     |  Set EOF flag     |
+  |  SEND MAP        |     |  Set error msg    |
+  |                  |     |  SEND MAP (w/msg) |
+  +------------------+     +-------------------+
+                                    |
+                                    v
+                           +-------------------+
+                           |  STARTBR → OTHER  |
+                           |  READNEXT → OTHER |
+                           |  Set ERR-FLG = 'Y'|
+                           |  DISPLAY RESP/REAS|
+                           |  Set error msg    |
+                           |  SEND MAP (w/msg) |
+                           +-------------------+
+</pre>
+
+<h3>8.2 Error Handling Matrix</h3>
+<table>
+<thead><tr><th>Condition</th><th>RESP Code</th><th>Program Action</th><th>User Message</th><th>Logging</th></tr></thead>
+<tbody>
+<tr><td>STARTBR — record not found</td><td>DFHRESP(NOTFND)</td><td>Set USER-SEC-EOF; send map with message</td><td>"You are at the top of the page..."</td><td>None</td></tr>
+<tr><td>STARTBR — other error</td><td>OTHER</td><td>Set WS-ERR-FLG = 'Y'; DISPLAY RESP/REAS</td><td>"Unable to lookup User..."</td><td>DISPLAY to CICS log</td></tr>
+<tr><td>READNEXT — end of file</td><td>DFHRESP(ENDFILE)</td><td>Set USER-SEC-EOF; send map with message</td><td>"You have reached the bottom of the page..."</td><td>None</td></tr>
+<tr><td>READNEXT — other error</td><td>OTHER</td><td>Set WS-ERR-FLG = 'Y'; DISPLAY RESP/REAS</td><td>"Unable to lookup User..."</td><td>DISPLAY to CICS log</td></tr>
+<tr><td>READPREV — end of file</td><td>DFHRESP(ENDFILE)</td><td>Set USER-SEC-EOF; send map with message</td><td>"You have reached the top of the page..."</td><td>None</td></tr>
+<tr><td>READPREV — other error</td><td>OTHER</td><td>Set WS-ERR-FLG = 'Y'; DISPLAY RESP/REAS</td><td>"Unable to lookup User..."</td><td>DISPLAY to CICS log</td></tr>
+<tr><td>Invalid AID key pressed</td><td>N/A</td><td>Set WS-ERR-FLG = 'Y'; send map</td><td>"Invalid key pressed. Please see below..."</td><td>None</td></tr>
+<tr><td>Invalid selection code</td><td>N/A</td><td>Set error message; continue</td><td>"Invalid selection. Valid values are U and D"</td><td>None</td></tr>
+<tr><td>PF7 on page 1</td><td>N/A</td><td>Send map with message (no page change)</td><td>"You are already at the top of the page..."</td><td>None</td></tr>
+<tr><td>PF8 on last page</td><td>N/A</td><td>Send map with message (no page change)</td><td>"You are already at the bottom of the page..."</td><td>None</td></tr>
+</tbody>
+</table>
+
+<h3>8.3 HANDLE ABEND / HANDLE CONDITION</h3>
+<p><em>None — This program does not use HANDLE ABEND or HANDLE CONDITION. All error handling is performed
+via inline RESP/RESP2 checking on each EXEC CICS command.</em></p>
+
+<h3>8.4 User Error Messages</h3>
+<table>
+<thead><tr><th>#</th><th>Message Text</th><th>Trigger</th><th>Source</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>"Invalid key pressed. Please see below..."</td><td>Unrecognized AID key</td><td>CCDA-MSG-INVALID-KEY (CSMSG01Y.cpy)</td></tr>
+<tr><td>2</td><td>"Invalid selection. Valid values are U and D"</td><td>Selection code not U or D</td><td>Inline literal (line 212)</td></tr>
+<tr><td>3</td><td>"You are at the top of the page..."</td><td>STARTBR NOTFND response</td><td>Inline literal (line 603)</td></tr>
+<tr><td>4</td><td>"Unable to lookup User..."</td><td>STARTBR/READNEXT/READPREV unexpected error</td><td>Inline literal (lines 610, 644, 678)</td></tr>
+<tr><td>5</td><td>"You have reached the bottom of the page..."</td><td>READNEXT ENDFILE</td><td>Inline literal (line 637)</td></tr>
+<tr><td>6</td><td>"You have reached the top of the page..."</td><td>READPREV ENDFILE</td><td>Inline literal (line 671)</td></tr>
+<tr><td>7</td><td>"You are already at the top of the page..."</td><td>PF7 pressed on page 1</td><td>Inline literal (line 251)</td></tr>
+<tr><td>8</td><td>"You are already at the bottom of the page..."</td><td>PF8 pressed on last page</td><td>Inline literal (line 273)</td></tr>
+</tbody>
+</table>
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!--  SECTION 9 — SECURITY AND AUTHORIZATION                           -->
+<!-- ================================================================== -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">09</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>9.1 Transaction Security</h3>
+<p>Access to <code>CU00</code> is controlled at multiple levels:</p>
+<ul>
+  <li><strong>Menu-Level Restriction</strong>: The transaction is only reachable via the Admin Menu (<code>COADM01C</code>),
+      which is only presented to users with <code>CDEMO-USER-TYPE = 'A'</code> (admin). Regular users
+      (<code>'U'</code>) are routed to the Main Menu (<code>COMEN01C</code>) at sign-on and never see admin options.</li>
+  <li><strong>EIBCALEN Guard</strong>: If <code>EIBCALEN = 0</code> (no COMMAREA — direct invocation without authentication),
+      the program immediately XCTLs to <code>COSGN00C</code> (Sign-On), preventing unauthenticated access.</li>
+  <li><strong>CICS Transaction Security</strong>: Standard RACF/ESM transaction-level security can be configured
+      to restrict <code>CU00</code> to authorized user groups at the CICS region level.</li>
+</ul>
+
+<h3>9.2 Data Access Authorization</h3>
+<p>The <code>USRSEC</code> file is accessed in browse-only mode (STARTBR/READNEXT/READPREV). The program itself
+does not perform any write operations. However, the file contains sensitive data (passwords in
+<code>SEC-USR-PWD</code>), which is <strong>not</strong> displayed on the screen — only User ID, First Name,
+Last Name, and User Type are shown.</p>
+
+<h3>9.3 Audit Trail</h3>
+<p>No explicit application-level audit logging is implemented. Error conditions trigger
+<code>DISPLAY</code> statements that write RESP/REAS codes to the CICS system log (CEEMSG/CEEOUT),
+but no business-level audit trail (e.g., "Admin X viewed user list") is recorded.</p>
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!--  SECTION 10 — PERFORMANCE CHARACTERISTICS                         -->
+<!-- ================================================================== -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Performance Characteristics</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>10.1 Performance Profile</h3>
+<table>
+<thead><tr><th>Metric</th><th>Value</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>File I/Os per page (forward)</td><td>~12</td><td>1 STARTBR + 10 READNEXT (data) + 1 READNEXT (lookahead) + 1 ENDBR</td></tr>
+<tr><td>File I/Os per page (backward)</td><td>~13</td><td>1 STARTBR + 1 READPREV (skip) + 10 READPREV (data) + 1 READPREV (lookahead) + 1 ENDBR</td></tr>
+<tr><td>COMMAREA Size</td><td>~300 bytes</td><td>COCOM01Y shared area + CDEMO-CU00-INFO extension</td></tr>
+<tr><td>Map Sends per Iteration</td><td>1</td><td>Single SEND MAP per pseudo-conversational cycle</td></tr>
+<tr><td>Map Receives per Iteration</td><td>1</td><td>Single RECEIVE MAP per re-entry</td></tr>
+<tr><td>Records per Page</td><td>10</td><td>Fixed page size</td></tr>
+</tbody>
+</table>
+
+<h3>10.2 Performance Considerations</h3>
+<ul>
+  <li><strong>Browse Operations</strong>: Each page request opens and closes a new browse session
+      (STARTBR/ENDBR). This avoids holding browse cursors across pseudo-conversational boundaries
+      but requires repositioning on each iteration.</li>
+  <li><strong>Lookahead Read</strong>: An extra READNEXT after the 10 data records determines whether
+      more pages exist. This adds one I/O but avoids a separate count query.</li>
+  <li><strong>No Caching</strong>: User data is not cached in the COMMAREA; only the first/last key
+      values are preserved for repositioning. This keeps COMMAREA size small at the cost of
+      re-reading data on every page.</li>
+  <li><strong>No Index Optimization</strong>: The USRSEC file is keyed on User ID (8 bytes). For large
+      user populations, forward/backward browsing performance depends on VSAM CI/CA split ratios
+      and buffer allocation.</li>
+  <li><strong>Backward Paging Overhead</strong>: READPREV requires an initial skip read to move past
+      the anchor key, then reads 10 records in reverse. This is slightly more expensive than
+      forward paging due to the additional repositioning logic.</li>
+</ul>
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!--  SECTION 11 — TESTING APPROACH                                    -->
+<!-- ================================================================== -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>11.1 Test Scenarios</h3>
+<table>
+<thead><tr><th>#</th><th>Scenario</th><th>Input</th><th>Expected Result</th><th>Category</th></tr></thead>
+<tbody>
+<tr><td>TC-01</td><td>Initial display from Admin Menu</td><td>Select option 1 from Admin Menu</td><td>First page of users displayed; page = 1</td><td>Normal Flow</td></tr>
+<tr><td>TC-02</td><td>Page forward (PF8)</td><td>Press PF8 on first page</td><td>Next 10 users displayed; page = 2</td><td>Normal Flow</td></tr>
+<tr><td>TC-03</td><td>Page backward (PF7)</td><td>Press PF7 on page 2</td><td>Previous 10 users displayed; page = 1</td><td>Normal Flow</td></tr>
+<tr><td>TC-04</td><td>PF7 on first page</td><td>Press PF7 when page = 1</td><td>Message: "You are already at the top of the page..."</td><td>Boundary</td></tr>
+<tr><td>TC-05</td><td>PF8 on last page</td><td>Press PF8 when no more records</td><td>Message: "You are already at the bottom of the page..."</td><td>Boundary</td></tr>
+<tr><td>TC-06</td><td>Search by User ID prefix</td><td>Enter "USER00" in search field, press ENTER</td><td>List repositions to first user matching "USER00*"</td><td>Normal Flow</td></tr>
+<tr><td>TC-07</td><td>Search with non-existent key</td><td>Enter "ZZZZZZZZ" in search field, press ENTER</td><td>Message: "You are at the top of the page..." (NOTFND)</td><td>Error Path</td></tr>
+<tr><td>TC-08</td><td>Select user for Update</td><td>Type 'U' next to a user, press ENTER</td><td>XCTL to COUSR02C with selected User ID in COMMAREA</td><td>Normal Flow</td></tr>
+<tr><td>TC-09</td><td>Select user for Delete</td><td>Type 'D' next to a user, press ENTER</td><td>XCTL to COUSR03C with selected User ID in COMMAREA</td><td>Normal Flow</td></tr>
+<tr><td>TC-10</td><td>Invalid selection code</td><td>Type 'X' next to a user, press ENTER</td><td>Message: "Invalid selection. Valid values are U and D"</td><td>Validation</td></tr>
+<tr><td>TC-11</td><td>Case-insensitive selection</td><td>Type 'u' (lowercase) next to a user, press ENTER</td><td>XCTL to COUSR02C (same as uppercase 'U')</td><td>Normal Flow</td></tr>
+<tr><td>TC-12</td><td>Invalid PF key</td><td>Press PF5</td><td>Message: "Invalid key pressed. Please see below..."</td><td>Validation</td></tr>
+<tr><td>TC-13</td><td>Return to Admin Menu</td><td>Press PF3</td><td>XCTL to COADM01C</td><td>Navigation</td></tr>
+<tr><td>TC-14</td><td>Direct entry (no COMMAREA)</td><td>Enter CU00 from blank terminal</td><td>XCTL to COSGN00C (sign-on redirect)</td><td>Security</td></tr>
+<tr><td>TC-15</td><td>Empty user file</td><td>Browse with no records in USRSEC</td><td>Empty list displayed; EOF message shown</td><td>Boundary</td></tr>
+<tr><td>TC-16</td><td>Fewer than 10 records total</td><td>USRSEC contains 5 records</td><td>5 users shown on page 1; PF8 disabled (no next page)</td><td>Boundary</td></tr>
+</tbody>
+</table>
+
+<h3>11.2 Test Data Requirements</h3>
+<table>
+<thead><tr><th>Data</th><th>Requirement</th><th>Source</th></tr></thead>
+<tbody>
+<tr><td>USRSEC records</td><td>At least 25 records to test multi-page browsing (3+ pages)</td><td>VSAM USRSEC file load utility</td></tr>
+<tr><td>Admin user account</td><td>User with SEC-USR-TYPE = 'A' to access Admin Menu</td><td>USRSEC file</td></tr>
+<tr><td>Mixed user types</td><td>Records with type 'A' and 'U' to verify type display</td><td>USRSEC file</td></tr>
+<tr><td>Known User ID prefixes</td><td>Users with predictable IDs for search testing (e.g., "USER0001"–"USER0025")</td><td>Test data script</td></tr>
+<tr><td>Edge-case key values</td><td>Users with IDs at extremes (e.g., "AAAAAAAA", "ZZZZZZZZ")</td><td>Test data script</td></tr>
+</tbody>
+</table>
+  </div>
+</section>
+
+<!-- ================================================================== -->
+<!--  SECTION 12 — KNOWN ISSUES AND CONSIDERATIONS                     -->
+<!-- ================================================================== -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Known Issues and Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>12.1 Known Issues</h3>
+<table>
+<thead><tr><th>#</th><th>Issue</th><th>Severity</th><th>Details</th></tr></thead>
+<tbody>
+<tr><td>KI-01</td><td>No application-level access control check</td><td>Medium</td><td>The program does not verify <code>CDEMO-USER-TYPE = 'A'</code> in its own code — it relies entirely on the Admin Menu routing. A crafted COMMAREA with valid context could bypass the menu restriction.</td></tr>
+<tr><td>KI-02</td><td>Password field in VSAM record is read but not displayed</td><td>Low</td><td><code>SEC-USR-PWD</code> is part of <code>SEC-USER-DATA</code> read into working storage on every READNEXT/READPREV. While not displayed on screen, it is present in program memory during execution.</td></tr>
+<tr><td>KI-03</td><td>Hardcoded file name</td><td>Low</td><td><code>WS-USRSEC-FILE</code> is initialized to <code>'USRSEC  '</code> as a literal. File name changes require a program recompile.</td></tr>
+<tr><td>KI-04</td><td>No HANDLE ABEND protection</td><td>Low</td><td>An unexpected abend (e.g., storage violation) will produce a CICS transaction dump rather than a graceful error message.</td></tr>
+<tr><td>KI-05</td><td>Only first selection is processed</td><td>Low</td><td>If the user types selection codes in multiple rows, only the first non-empty selection (lowest row number) is processed. No warning is issued for multiple selections.</td></tr>
+<tr><td>KI-06</td><td>ENDBR not called on error paths</td><td>Medium</td><td>When STARTBR succeeds but a subsequent READNEXT/READPREV fails with an unexpected error, the SEND-USRLST-SCREEN is called directly without first calling ENDBR. This could leave an open browse cursor.</td></tr>
+</tbody>
+</table>
+
+<h3>12.2 Modernization Considerations</h3>
+<table>
+<thead><tr><th>Aspect</th><th>Current State</th><th>Target State</th></tr></thead>
+<tbody>
+<tr><td>Screen I/O</td><td>BMS maps (COUSR0A) with 3270 terminal I/O</td><td>REST API endpoint returning JSON; React/Angular data grid with server-side pagination</td></tr>
+<tr><td>Data Access</td><td>VSAM KSDS browse (STARTBR/READNEXT/READPREV)</td><td>SQL SELECT with LIMIT/OFFSET or keyset pagination on a relational database (PostgreSQL/Aurora)</td></tr>
+<tr><td>State Management</td><td>COMMAREA-based pseudo-conversational state (first/last keys, page number)</td><td>Stateless REST API with pagination tokens or cursor-based pagination parameters</td></tr>
+<tr><td>User Selection</td><td>Single-character selection codes ('U'/'D') next to each row</td><td>Action buttons or context menus per row; batch selection with checkboxes</td></tr>
+<tr><td>Navigation</td><td>PF key driven (PF3=Back, PF7/PF8=Page)</td><td>Browser navigation (back button, pagination controls, breadcrumbs)</td></tr>
+<tr><td>Search</td><td>VSAM key-prefix positioning (STARTBR with GTEQ)</td><td>Full-text search or SQL LIKE/ILIKE with indexed columns</td></tr>
+<tr><td>Security</td><td>Menu-based access control; no in-program authorization check</td><td>Role-based access control (RBAC) with JWT claims or OAuth2 scopes; middleware enforcement</td></tr>
+<tr><td>Error Handling</td><td>RESP code checking with DISPLAY to system log</td><td>Structured exception handling with centralized logging (e.g., ELK stack, CloudWatch)</td></tr>
+<tr><td>Page Size</td><td>Hardcoded 10 records per page</td><td>Configurable page size; client-controlled via query parameter</td></tr>
+<tr><td>Audit</td><td>No application-level audit trail</td><td>Audit log table recording admin actions (who viewed/searched user list, when)</td></tr>
+</tbody>
+</table>
+  </div>
+</section>
+
+</div>
+
+<footer class="footer">
+  <strong>UniCredit S.p.A.</strong> — CardDemo CICS Transaction Analysis &middot; Auto-generated
+</footer>
+
+</body>
+</html>

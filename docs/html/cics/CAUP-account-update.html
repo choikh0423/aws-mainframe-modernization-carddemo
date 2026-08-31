@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Account Update (CAUP) – CICS Transaction Analysis | UniCredit CardDemo</title>
+<link rel="stylesheet" href="../shared/theme.css">
+</head>
+<body>
+
+<!-- Hero -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. &mdash; Milano</div>
+    </div>
+    <h1>Account Update &ndash; <span>CICS Transaction Analysis</span></h1>
+    <p class="hero-subtitle">
+      Transaction <code>CAUP</code> &middot; Program <code>COACTUPC</code> &middot; Accepts and processes account and customer detail updates with full field-level validation
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Transaction ID</dt><dd>CAUP</dd></div>
+      <div><dt>Entry Program</dt><dd>COACTUPC</dd></div>
+      <div><dt>BMS Mapset</dt><dd>COACTUP</dd></div>
+      <div><dt>Design Pattern</dt><dd>Pseudo-conversational</dd></div>
+      <div><dt>LOC</dt><dd>4,236</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">&rsaquo;</span>
+  <a href="index.html">CICS Flows</a>
+  <span class="sep">&rsaquo;</span>
+  Account Update (CAUP)
+</div>
+
+<!-- Body -->
+<div class="page-wrap-single">
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION 1: Business Flow Analysis -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">01</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>1.1 Business Context</h3>
+<p>The Account Update transaction (<code>CAUP</code>) provides customer service representatives with the ability to modify account master data and associated customer demographic information for a given credit card account. The operator enters an 11-digit account number; the system retrieves and displays the current account details (balances, limits, dates) together with the linked customer record (name, address, phone, SSN, FICO score). The operator makes changes and the system validates all fields before persisting updates to both the ACCTDAT and CUSTDAT VSAM files in a single logical unit of work.</p>
+<p>This is the largest online program in CardDemo (4,236 LOC) due to its comprehensive field-level validation of over 30 editable fields spanning account financial data and customer demographics.</p>
+
+<h3>1.2 Business Flow Diagram</h3>
+<pre>
+┌─────────────────────────────────────────────────────────────────────┐
+│                    ACCOUNT UPDATE BUSINESS FLOW                       │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                       │
+│  ┌──────────┐    ┌──────────────┐    ┌───────────────────┐           │
+│  │  Operator │───▶│ Enter Acct # │───▶│ System Fetches    │           │
+│  │  (CSR)    │    │ (11 digits)  │    │ Acct + Customer   │           │
+│  └──────────┘    └──────────────┘    └─────────┬─────────┘           │
+│                                                 │                     │
+│                                                 ▼                     │
+│                                    ┌────────────────────────┐         │
+│                                    │ Display Current Values  │         │
+│                                    │ (Account + Customer)    │         │
+│                                    └───────────┬────────────┘         │
+│                                                │                     │
+│                                                ▼                     │
+│                              ┌──────────────────────────────┐         │
+│                              │ Operator Modifies Fields      │         │
+│                              │ (limits, dates, address, etc.)│         │
+│                              └──────────────┬───────────────┘         │
+│                                             │                         │
+│                                             ▼                         │
+│                              ┌──────────────────────────────┐         │
+│                              │ System Validates All Fields   │         │
+│                              └──────┬───────────┬───────────┘         │
+│                                     │           │                     │
+│                              Valid   │           │  Invalid            │
+│                                     ▼           ▼                     │
+│                   ┌─────────────────────┐  ┌──────────────────┐       │
+│                   │ Prompt: F5 to Save   │  │ Show Error Message│       │
+│                   └──────────┬──────────┘  │ Re-display Screen │       │
+│                              │              └──────────────────┘       │
+│                              ▼                                         │
+│                   ┌─────────────────────┐                             │
+│                   │ Lock Records (UPDATE)│                             │
+│                   │ Verify No Changes    │                             │
+│                   │ REWRITE Acct + Cust  │                             │
+│                   └──────────┬──────────┘                             │
+│                              │                                         │
+│                              ▼                                         │
+│                   ┌─────────────────────┐                             │
+│                   │ Confirm: "Changes    │                             │
+│                   │ committed to DB"     │                             │
+│                   └─────────────────────┘                             │
+│                                                                       │
+└─────────────────────────────────────────────────────────────────────┘
+</pre>
+
+<h3>1.3 Business Rules</h3>
+<table>
+<thead><tr><th>Rule #</th><th>Field</th><th>Rule</th><th>Error Message</th></tr></thead>
+<tbody>
+<tr><td>BR-01</td><td>Account Number</td><td>Must be 11-digit non-zero numeric</td><td>Account number must be a non zero 11 digit number</td></tr>
+<tr><td>BR-02</td><td>Active Status</td><td>Must be Y or N</td><td>Account Active Status must be Y or N</td></tr>
+<tr><td>BR-03</td><td>Credit Limit</td><td>Must be a valid signed numeric (NUMVAL-C)</td><td>Credit Limit is not valid</td></tr>
+<tr><td>BR-04</td><td>Cash Credit Limit</td><td>Must be a valid signed numeric (NUMVAL-C)</td><td>Cash Credit Limit is not valid</td></tr>
+<tr><td>BR-05</td><td>Current Balance</td><td>Must be a valid signed numeric (NUMVAL-C)</td><td>Current Balance is not valid</td></tr>
+<tr><td>BR-06</td><td>Cycle Credit/Debit</td><td>Must be valid signed numeric</td><td>[field name] is not valid</td></tr>
+<tr><td>BR-07</td><td>Open/Expiry/Reissue Dates</td><td>Must be valid CCYYMMDD calendar dates</td><td>Invalid card expiry year / month must be between 1 and 12</td></tr>
+<tr><td>BR-08</td><td>First/Last Name</td><td>Required; alphabets and spaces only</td><td>[field] can have alphabets only</td></tr>
+<tr><td>BR-09</td><td>Middle Name</td><td>Optional; alphabets and spaces only if supplied</td><td>[field] can have alphabets only</td></tr>
+<tr><td>BR-10</td><td>Address Line 1</td><td>Required (mandatory)</td><td>Address Line 1 must be supplied</td></tr>
+<tr><td>BR-11</td><td>City</td><td>Required; alphabets only</td><td>City can have alphabets only</td></tr>
+<tr><td>BR-12</td><td>State</td><td>Required; valid US state code (lookup table)</td><td>State can have alphabets only</td></tr>
+<tr><td>BR-13</td><td>Zip Code</td><td>Required; 5-digit numeric non-zero</td><td>Zip must be all numeric / must not be zero</td></tr>
+<tr><td>BR-14</td><td>Country</td><td>Required; alphabets only (3 chars)</td><td>Country can have alphabets only</td></tr>
+<tr><td>BR-15</td><td>Phone 1 &amp; 2</td><td>Optional; if supplied, valid US format (3+3+4 digits), area code validated against lookup</td><td>Area code must be a 3 digit number</td></tr>
+<tr><td>BR-16</td><td>SSN</td><td>Must be 9-digit numeric; part 1 &ne; 0, 666, 900-999</td><td>SSN part 1 invalid</td></tr>
+<tr><td>BR-17</td><td>Date of Birth</td><td>Valid calendar date; must not be in the future</td><td>Invalid date of birth</td></tr>
+<tr><td>BR-18</td><td>FICO Score</td><td>Required; numeric 3-digit; range 300-850</td><td>FICO Score must be all numeric / not in range</td></tr>
+<tr><td>BR-19</td><td>EFT Account ID</td><td>Required; 10-digit numeric non-zero</td><td>EFT Account Id must be all numeric</td></tr>
+<tr><td>BR-20</td><td>Primary Card Holder</td><td>Must be Y or N</td><td>Primary Card Holder must be Y or N</td></tr>
+<tr><td>BR-21</td><td>State + Zip Cross-validation</td><td>State/Zip combination validated via lookup</td><td>State/Zip mismatch</td></tr>
+<tr><td>BR-22</td><td>Optimistic Locking</td><td>Record must not have been changed by another user between fetch and update</td><td>Record changed by some one else. Please review</td></tr>
+</tbody>
+</table>
+
+<h3>1.4 User Interactions</h3>
+<table>
+<thead><tr><th>Step</th><th>User Action</th><th>System Response</th><th>Business Meaning</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Enter Account Number, press ENTER</td><td>Looks up CXACAIX &rarr; ACCTDAT &rarr; CUSTDAT; displays all current values</td><td>Retrieve target account for update</td></tr>
+<tr><td>2</td><td>Modify any displayed field(s), press ENTER</td><td>Validates all fields; if OK shows &ldquo;Changes validated. Press F5 to save&rdquo;</td><td>Confirm user intent before commit</td></tr>
+<tr><td>3</td><td>Press F5 (Save)</td><td>Locks records, verifies no concurrent changes, REWRITEs both files</td><td>Persist changes atomically</td></tr>
+<tr><td>4</td><td>Press F12 (Cancel)</td><td>Discards changes, re-fetches and re-displays original values</td><td>Abandon uncommitted edits</td></tr>
+<tr><td>5</td><td>Press F3 (Exit)</td><td>XCTL back to calling program or Main Menu (CM00)</td><td>Leave the transaction</td></tr>
+</tbody>
+</table>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION 2: Technical Flow Analysis -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">02</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>2.1 Technical Flow Diagram &mdash; Overview</h3>
+<pre>
+┌────────────┐     ┌────────────────────────────────────────────────────┐
+│  3270       │     │              CICS REGION                            │
+│  TERMINAL   │◄───▶│                                                    │
+│             │     │  ┌──────────┐         ┌──────────┐                │
+│  Map:       │     │  │COACTUPC  │────────▶│COMEN01C  │ (PF3 exit)    │
+│  CACTUPA    │     │  │(CAUP)    │         │(CM00)    │                │
+│             │     │  └────┬─────┘         └──────────┘                │
+└────────────┘     │       │                                            │
+                    │       │ EXEC CICS READ / REWRITE                   │
+                    │       ▼                                            │
+                    │  ┌──────────────────────────────────┐              │
+                    │  │ VSAM Files                        │              │
+                    │  │  CXACAIX (Card Xref - alt index)  │              │
+                    │  │  ACCTDAT (Account Master KSDS)    │              │
+                    │  │  CUSTDAT (Customer Master KSDS)   │              │
+                    │  └──────────────────────────────────┘              │
+                    └────────────────────────────────────────────────────┘
+</pre>
+
+<h3>2.2 Technical Flow Diagram &mdash; Detailed</h3>
+<pre>
+ENTRY (EIBCALEN check)
+  │
+  ├─ EIBCALEN = 0 OR first entry from menu
+  │    → INITIALIZE CARDDEMO-COMMAREA, WS-THIS-PROGCOMMAREA
+  │    → SET CDEMO-PGM-ENTER, ACUP-DETAILS-NOT-FETCHED
+  │
+  ├─ EIBCALEN > 0
+  │    → MOVE DFHCOMMAREA to CARDDEMO-COMMAREA + WS-THIS-PROGCOMMAREA
+  │
+  ▼
+YYYY-STORE-PFKEY (map EIBAID to CCARD-AID)
+  │
+  ▼
+VALIDATE AID (ENTER, PF03, PF05 if confirmed, PF12 if details shown)
+  │
+  ▼
+EVALUATE TRUE
+  │
+  ├─ CCARD-AID-PFK03 → SYNCPOINT → XCTL to calling program
+  │
+  ├─ ACUP-DETAILS-NOT-FETCHED AND CDEMO-PGM-ENTER
+  │    → 3000-SEND-MAP (empty screen) → COMMON-RETURN
+  │
+  ├─ ACUP-CHANGES-OKAYED-AND-DONE / ACUP-CHANGES-FAILED
+  │    → INITIALIZE → 3000-SEND-MAP (reset) → COMMON-RETURN
+  │
+  └─ OTHER (normal processing)
+       → 1000-PROCESS-INPUTS
+       │   ├─ 1100-RECEIVE-MAP (EXEC CICS RECEIVE MAP)
+       │   └─ 1200-EDIT-MAP-INPUTS
+       │        ├─ If not fetched: 1210-EDIT-ACCOUNT (validate acct #)
+       │        └─ If fetched: 1205-COMPARE-OLD-NEW
+       │             → validate all 30+ fields
+       │             → SET ACUP-CHANGES-OK-NOT-CONFIRMED if valid
+       │
+       → 2000-DECIDE-ACTION
+       │   ├─ ACUP-DETAILS-NOT-FETCHED / PF12
+       │   │    → 9000-READ-ACCT → fetch from 3 files
+       │   ├─ ACUP-SHOW-DETAILS: set confirmed if valid
+       │   ├─ ACUP-CHANGES-OK-NOT-CONFIRMED AND PF05
+       │   │    → 9600-WRITE-PROCESSING
+       │   │         ├─ READ UPDATE ACCTDAT (lock)
+       │   │         ├─ READ UPDATE CUSTDAT (lock)
+       │   │         ├─ 9700-CHECK-CHANGE-IN-REC (optimistic lock)
+       │   │         ├─ REWRITE ACCTDAT
+       │   │         └─ REWRITE CUSTDAT (rollback on failure)
+       │   └─ OTHER: ABEND '9999'
+       │
+       → 3000-SEND-MAP
+       │   ├─ 3100-SCREEN-INIT (set titles, date, time)
+       │   ├─ 3200-SETUP-SCREEN-VARS (populate output fields)
+       │   ├─ 3250-SETUP-INFOMSG
+       │   ├─ 3300-SETUP-SCREEN-ATTRS (set field attributes)
+       │   ├─ 3390-SETUP-INFOMSG-ATTRS
+       │   └─ 3400-SEND-SCREEN (EXEC CICS SEND MAP)
+       │
+       → COMMON-RETURN
+            → EXEC CICS RETURN TRANSID('CAUP') COMMAREA(WS-COMMAREA)
+</pre>
+
+<h3>2.3 Pseudo-Conversational Flow</h3>
+<table>
+<thead><tr><th>Iteration</th><th>EIBCALEN</th><th>State Flag</th><th>User Action</th><th>Entry Point</th><th>Screen Sent</th><th>Next TRANSID</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>0</td><td>ACUP-DETAILS-NOT-FETCHED + CDEMO-PGM-ENTER</td><td>Menu selection</td><td>Fresh entry</td><td>Empty CACTUPA (enter acct#)</td><td>CAUP</td></tr>
+<tr><td>2</td><td>&gt;0</td><td>ACUP-DETAILS-NOT-FETCHED + CDEMO-PGM-REENTER</td><td>Enter acct #</td><td>1000 &rarr; 2000</td><td>CACTUPA with fetched data</td><td>CAUP</td></tr>
+<tr><td>3</td><td>&gt;0</td><td>ACUP-SHOW-DETAILS</td><td>Modify fields, ENTER</td><td>1000 &rarr; 2000</td><td>CACTUPA (validated, &ldquo;F5 to save&rdquo;)</td><td>CAUP</td></tr>
+<tr><td>4</td><td>&gt;0</td><td>ACUP-CHANGES-OK-NOT-CONFIRMED</td><td>Press F5</td><td>2000 &rarr; 9600-WRITE</td><td>CACTUPA (success message)</td><td>CAUP</td></tr>
+</tbody>
+</table>
+
+<h3>2.4 CICS Command Flow</h3>
+<table>
+<thead><tr><th>Command</th><th>Paragraph</th><th>Purpose</th><th>Response Handling</th></tr></thead>
+<tbody>
+<tr><td>HANDLE ABEND LABEL(ABEND-ROUTINE)</td><td>0000-MAIN</td><td>Set abend handler</td><td>Branches to ABEND-ROUTINE</td></tr>
+<tr><td>RECEIVE MAP(CACTUPA) MAPSET(COACTUP)</td><td>1100-RECEIVE-MAP</td><td>Get user input from terminal</td><td>WS-RESP-CD checked</td></tr>
+<tr><td>READ DATASET(CXACAIX)</td><td>9200-GETCARDXREF-BYACCT</td><td>Lookup account in card xref (alt index)</td><td>NORMAL / NOTFND / OTHER</td></tr>
+<tr><td>READ DATASET(ACCTDAT)</td><td>9300-GETACCTDATA-BYACCT</td><td>Read account master record</td><td>NORMAL / NOTFND / OTHER</td></tr>
+<tr><td>READ DATASET(CUSTDAT)</td><td>9400-GETCUSTDATA-BYCUST</td><td>Read customer master record</td><td>NORMAL / NOTFND / OTHER</td></tr>
+<tr><td>READ FILE(ACCTDAT) UPDATE</td><td>9600-WRITE-PROCESSING</td><td>Lock account record for update</td><td>NORMAL / lock failure</td></tr>
+<tr><td>READ FILE(CUSTDAT) UPDATE</td><td>9600-WRITE-PROCESSING</td><td>Lock customer record for update</td><td>NORMAL / lock failure</td></tr>
+<tr><td>REWRITE FILE(ACCTDAT)</td><td>9600-WRITE-PROCESSING</td><td>Write updated account record</td><td>NORMAL / failure</td></tr>
+<tr><td>REWRITE FILE(CUSTDAT)</td><td>9600-WRITE-PROCESSING</td><td>Write updated customer record</td><td>NORMAL / failure &rarr; SYNCPOINT ROLLBACK</td></tr>
+<tr><td>SYNCPOINT</td><td>0000-MAIN (PF03)</td><td>Commit before XCTL on exit</td><td>&mdash;</td></tr>
+<tr><td>SYNCPOINT ROLLBACK</td><td>9600-WRITE-PROCESSING</td><td>Rollback on customer update failure</td><td>&mdash;</td></tr>
+<tr><td>SEND MAP(CACTUPA) MAPSET(COACTUP)</td><td>3400-SEND-SCREEN</td><td>Display screen to operator</td><td>&mdash;</td></tr>
+<tr><td>RETURN TRANSID(CAUP) COMMAREA</td><td>COMMON-RETURN</td><td>Pseudo-conversational return</td><td>&mdash;</td></tr>
+<tr><td>XCTL PROGRAM(CDEMO-TO-PROGRAM)</td><td>0000-MAIN (PF03)</td><td>Transfer control on exit</td><td>&mdash;</td></tr>
+<tr><td>SEND FROM(ABEND-DATA)</td><td>ABEND-ROUTINE</td><td>Display abend message</td><td>&mdash;</td></tr>
+<tr><td>ABEND ABCODE('9999')</td><td>ABEND-ROUTINE</td><td>Force abend</td><td>&mdash;</td></tr>
+</tbody>
+</table>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION 3: Screen Flow and BMS Maps -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">03</span>
+    <h2>Screen Flow and BMS Maps</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>3.1 Screen Flow Diagram</h3>
+<pre>
+┌──────────────────────────────────────────────────────────────────┐
+│                      SCREEN FLOW                                  │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                    │
+│  ┌─────────────┐  ENTER   ┌─────────────┐  ENTER  ┌──────────┐  │
+│  │ CACTUPA     │─────────▶│ CACTUPA     │────────▶│ CACTUPA  │  │
+│  │ (Empty -    │          │ (Data shown) │         │ (Confirm)│  │
+│  │  enter ID)  │          │              │         │ F5=Save  │  │
+│  └──────┬──────┘          └──────┬───────┘         └─────┬────┘  │
+│         │                        │                       │        │
+│    PF3  │                   PF3  │ PF12              F5  │ PF3    │
+│         ▼                        ▼                       ▼        │
+│  ┌─────────────┐          ┌─────────────┐       ┌──────────────┐ │
+│  │ XCTL to     │          │ Re-fetch &  │       │ REWRITE both │ │
+│  │ Menu/Caller │          │ show orig.  │       │ → Success msg│ │
+│  └─────────────┘          └─────────────┘       └──────────────┘ │
+│                                                                    │
+└──────────────────────────────────────────────────────────────────┘
+</pre>
+
+<h3>3.2 BMS Map Inventory</h3>
+<table>
+<thead><tr><th>Map Name</th><th>Mapset</th><th>Purpose</th><th>Key Fields</th></tr></thead>
+<tbody>
+<tr><td>CACTUPA</td><td>COACTUP</td><td>Account update data entry and display (24&times;80)</td><td>ACCTSID, ACSTTUS, ACRDLIM, ACSHLIM, ACURBAL, ACRCYCR, ACRCYDB, ACSFNAM, ACSLNAM, ACSADL1, ACSCITY, ACSSTTE, ACSZIPC</td></tr>
+</tbody>
+</table>
+
+<h3>3.3 Screen Field Details</h3>
+<table>
+<thead><tr><th>Field Name</th><th>Row,Col</th><th>Length</th><th>Attribute</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td>TRNNAME</td><td>1,7</td><td>4</td><td>ASKIP,FSET,NORM</td><td>Transaction ID display</td></tr>
+<tr><td>TITLE01</td><td>1,21</td><td>40</td><td>ASKIP,NORM</td><td>Application title line 1</td></tr>
+<tr><td>CURDATE</td><td>1,71</td><td>8</td><td>ASKIP,NORM</td><td>Current date</td></tr>
+<tr><td>PGMNAME</td><td>2,7</td><td>8</td><td>ASKIP,NORM</td><td>Program name display</td></tr>
+<tr><td>TITLE02</td><td>2,21</td><td>40</td><td>ASKIP,NORM</td><td>Application title line 2</td></tr>
+<tr><td>CURTIME</td><td>2,71</td><td>8</td><td>ASKIP,NORM</td><td>Current time</td></tr>
+<tr><td>ACCTSID</td><td>5,38</td><td>11</td><td>IC,UNPROT</td><td>Account number (key)</td></tr>
+<tr><td>ACSTTUS</td><td>5,70</td><td>1</td><td>UNPROT</td><td>Active status Y/N</td></tr>
+<tr><td>OPNYEAR/MON/DAY</td><td>6,17-29</td><td>4/2/2</td><td>FSET,UNPROT</td><td>Account open date YYYY-MM-DD</td></tr>
+<tr><td>ACRDLIM</td><td>6,61</td><td>15</td><td>FSET,UNPROT</td><td>Credit limit</td></tr>
+<tr><td>EXPYEAR/MON/DAY</td><td>7,17-29</td><td>4/2/2</td><td>UNPROT</td><td>Expiry date YYYY-MM-DD</td></tr>
+<tr><td>ACSHLIM</td><td>7,61</td><td>15</td><td>FSET,UNPROT</td><td>Cash credit limit</td></tr>
+<tr><td>RISYEAR/MON/DAY</td><td>8,17-29</td><td>4/2/2</td><td>UNPROT</td><td>Reissue date YYYY-MM-DD</td></tr>
+<tr><td>ACURBAL</td><td>8,61</td><td>15</td><td>FSET,UNPROT</td><td>Current balance</td></tr>
+<tr><td>ACRCYCR</td><td>9,61</td><td>15</td><td>FSET,UNPROT</td><td>Current cycle credit</td></tr>
+<tr><td>AADDGRP</td><td>10,23</td><td>10</td><td>UNPROT</td><td>Account group</td></tr>
+<tr><td>ACRCYDB</td><td>10,61</td><td>15</td><td>FSET,UNPROT</td><td>Current cycle debit</td></tr>
+<tr><td>ACSTNUM</td><td>12,23</td><td>9</td><td>UNPROT</td><td>Customer ID</td></tr>
+<tr><td>ACTSSN1/2/3</td><td>12,55-66</td><td>3/2/4</td><td>UNPROT</td><td>Social Security Number</td></tr>
+<tr><td>DOBYEAR/MON/DAY</td><td>13,23-35</td><td>4/2/2</td><td>UNPROT</td><td>Date of birth</td></tr>
+<tr><td>ACSTFCO</td><td>13,62</td><td>3</td><td>UNPROT</td><td>FICO credit score</td></tr>
+<tr><td>ACSFNAM</td><td>15,1</td><td>25</td><td>UNPROT</td><td>First name</td></tr>
+<tr><td>ACSMNAM</td><td>15,28</td><td>25</td><td>UNPROT</td><td>Middle name</td></tr>
+<tr><td>ACSLNAM</td><td>15,55</td><td>25</td><td>UNPROT</td><td>Last name</td></tr>
+<tr><td>ACSADL1</td><td>16,10</td><td>50</td><td>UNPROT</td><td>Address line 1</td></tr>
+<tr><td>ACSSTTE</td><td>16,73</td><td>2</td><td>UNPROT</td><td>State code</td></tr>
+<tr><td>ACSADL2</td><td>17,10</td><td>50</td><td>UNPROT</td><td>Address line 2</td></tr>
+<tr><td>ACSZIPC</td><td>17,73</td><td>5</td><td>UNPROT</td><td>Zip code</td></tr>
+<tr><td>ACSCITY</td><td>18,10</td><td>50</td><td>UNPROT</td><td>City</td></tr>
+<tr><td>ACSCTRY</td><td>18,73</td><td>3</td><td>UNPROT</td><td>Country code</td></tr>
+<tr><td>ACSPH1A/B/C</td><td>19,10-18</td><td>3/3/4</td><td>UNPROT</td><td>Phone number 1</td></tr>
+<tr><td>ACSGOVT</td><td>19,58</td><td>20</td><td>UNPROT</td><td>Government issued ID</td></tr>
+<tr><td>ACSPH2A/B/C</td><td>20,10-18</td><td>3/3/4</td><td>UNPROT</td><td>Phone number 2</td></tr>
+<tr><td>ACSEFTC</td><td>20,41</td><td>10</td><td>UNPROT</td><td>EFT account ID</td></tr>
+<tr><td>ACSPFLG</td><td>20,78</td><td>1</td><td>UNPROT</td><td>Primary card holder Y/N</td></tr>
+<tr><td>INFOMSG</td><td>22,23</td><td>45</td><td>ASKIP</td><td>Informational message</td></tr>
+<tr><td>ERRMSG</td><td>23,1</td><td>78</td><td>ASKIP,BRT,FSET (RED)</td><td>Error message</td></tr>
+<tr><td>FKEYS</td><td>24,1</td><td>21</td><td>ASKIP,NORM</td><td>Function key legend</td></tr>
+<tr><td>FKEY05</td><td>24,23</td><td>7</td><td>ASKIP,DRK</td><td>F5=Save (shown when ready)</td></tr>
+<tr><td>FKEY12</td><td>24,31</td><td>10</td><td>ASKIP,DRK</td><td>F12=Cancel (shown when active)</td></tr>
+</tbody>
+</table>
+
+<h3>3.4 PF Key / AID Key Handling</h3>
+<table>
+<thead><tr><th>Key</th><th>Condition</th><th>Action</th></tr></thead>
+<tbody>
+<tr><td>ENTER</td><td>Always valid</td><td>Process inputs &rarr; validate &rarr; decide action</td></tr>
+<tr><td>PF03</td><td>Always valid</td><td>SYNCPOINT &rarr; XCTL to calling program or Main Menu</td></tr>
+<tr><td>PF05</td><td>Only when ACUP-CHANGES-OK-NOT-CONFIRMED</td><td>Confirm save &rarr; 9600-WRITE-PROCESSING</td></tr>
+<tr><td>PF12</td><td>Only when details are shown (not initial state)</td><td>Cancel changes &rarr; re-fetch and show original values</td></tr>
+<tr><td>Any other</td><td>&mdash;</td><td>Treated as ENTER (PFK-INVALID forces CCARD-AID-ENTER)</td></tr>
+</tbody>
+</table>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION 4: Program Inventory and Call Chain -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">04</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>4.1 Program Inventory</h3>
+<table>
+<thead><tr><th>Program</th><th>Trans ID</th><th>Purpose</th><th>Entry Mechanism</th><th>LOC</th></tr></thead>
+<tbody>
+<tr><td>COACTUPC</td><td>CAUP</td><td>Account Update (entry program)</td><td>CICS task attach</td><td>4,236</td></tr>
+<tr><td>COMEN01C</td><td>CM00</td><td>Main Menu (return target)</td><td>XCTL from COACTUPC on PF03</td><td>~300</td></tr>
+</tbody>
+</table>
+
+<h3>4.2 Call Chain Diagram</h3>
+<pre>
+CAUP (Transaction)
+  │
+  └─▶ COACTUPC (entry program)
+        │
+        ├── EXEC CICS READ  → CXACAIX (Card Xref alt index)
+        ├── EXEC CICS READ  → ACCTDAT (Account Master)
+        ├── EXEC CICS READ  → CUSTDAT (Customer Master)
+        │
+        ├── EXEC CICS READ UPDATE → ACCTDAT (lock for update)
+        ├── EXEC CICS READ UPDATE → CUSTDAT (lock for update)
+        ├── EXEC CICS REWRITE     → ACCTDAT
+        ├── EXEC CICS REWRITE     → CUSTDAT
+        │
+        ├── EXEC CICS SEND MAP    → CACTUPA (COACTUP mapset)
+        ├── EXEC CICS RECEIVE MAP → CACTUPA
+        │
+        └── EXEC CICS XCTL ──────▶ COMEN01C (CM00) [on PF03 exit]
+</pre>
+
+<h3>4.3 Call Details</h3>
+<table>
+<thead><tr><th>Caller</th><th>Called</th><th>Mechanism</th><th>Data Passed</th><th>When</th></tr></thead>
+<tbody>
+<tr><td>COACTUPC</td><td>COMEN01C</td><td>XCTL</td><td>CARDDEMO-COMMAREA</td><td>PF03 exit when no FROM-PROGRAM is set</td></tr>
+<tr><td>COACTUPC</td><td>CDEMO-FROM-PROGRAM</td><td>XCTL</td><td>CARDDEMO-COMMAREA</td><td>PF03 exit when FROM-PROGRAM is set (return to caller)</td></tr>
+</tbody>
+</table>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION 5: File and Data Store Inventory -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">05</span>
+    <h2>File and Data Store Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>5.1 File Inventory</h3>
+<table>
+<thead><tr><th>FCT Name</th><th>Type</th><th>Access Mode</th><th>Paragraph</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td>CXACAIX</td><td>VSAM KSDS (Alt Index path)</td><td>READ</td><td>9200-GETCARDXREF-BYACCT</td><td>Lookup card cross-reference by account ID</td></tr>
+<tr><td>ACCTDAT</td><td>VSAM KSDS</td><td>READ / READ UPDATE / REWRITE</td><td>9300, 9600</td><td>Account master &mdash; fetch and update</td></tr>
+<tr><td>CUSTDAT</td><td>VSAM KSDS</td><td>READ / READ UPDATE / REWRITE</td><td>9400, 9600</td><td>Customer master &mdash; fetch and update</td></tr>
+</tbody>
+</table>
+
+<h3>5.2 File Access Details</h3>
+<table>
+<thead><tr><th>File</th><th>Record Layout</th><th>Key Field</th><th>Key Length</th><th>Record Length</th><th>Locking</th><th>Access Pattern</th></tr></thead>
+<tbody>
+<tr><td>CXACAIX</td><td>CARD-XREF-RECORD (CVACT03Y)</td><td>WS-CARD-RID-ACCT-ID-X</td><td>11</td><td>50</td><td>No lock (read only)</td><td>Direct READ by alternate key (account ID)</td></tr>
+<tr><td>ACCTDAT</td><td>ACCOUNT-RECORD (CVACT01Y)</td><td>WS-CARD-RID-ACCT-ID-X</td><td>11</td><td>300</td><td>READ UPDATE (pessimistic lock during write)</td><td>Direct READ by primary key; REWRITE to update</td></tr>
+<tr><td>CUSTDAT</td><td>CUSTOMER-RECORD (CVCUS01Y)</td><td>WS-CARD-RID-CUST-ID-X</td><td>9</td><td>500</td><td>READ UPDATE (pessimistic lock during write)</td><td>Direct READ by primary key; REWRITE to update</td></tr>
+</tbody>
+</table>
+
+<h3>5.3 TSQ Usage</h3>
+<p>N/A &mdash; This transaction does not use Temporary Storage Queues.</p>
+
+<h3>5.4 TDQ Usage</h3>
+<p>N/A &mdash; This transaction does not use Transient Data Queues.</p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION 6: Data Flow Analysis -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">06</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>6.1 Data Flow Through Transaction</h3>
+<pre>
+┌────────────┐      ┌──────────────────────┐      ┌────────────────────┐
+│  TERMINAL  │      │   WORKING STORAGE    │      │    VSAM FILES      │
+│  (3270)    │      │                      │      │                    │
+│            │      │                      │      │                    │
+│ CACTUPAI   │─────▶│ ACUP-NEW-DETAILS     │      │                    │
+│ (input)    │      │ (new field values)   │      │                    │
+│            │      │         │            │      │                    │
+│            │      │         ▼            │      │                    │
+│            │      │ 1200-EDIT-MAP-INPUTS │      │                    │
+│            │      │ (validate all fields)│      │                    │
+│            │      │         │            │      │                    │
+│            │      │         ▼            │      │                    │
+│            │      │ ACCT-UPDATE-RECORD   │─────▶│ ACCTDAT (REWRITE)  │
+│            │      │ CUST-UPDATE-RECORD   │─────▶│ CUSTDAT (REWRITE)  │
+│            │      │                      │      │                    │
+│            │      │                      │      │                    │
+│            │      │ ACCOUNT-RECORD       │◀─────│ ACCTDAT (READ)     │
+│            │      │ CUSTOMER-RECORD      │◀─────│ CUSTDAT (READ)     │
+│            │      │ CARD-XREF-RECORD     │◀─────│ CXACAIX (READ)     │
+│            │      │         │            │      │                    │
+│            │      │         ▼            │      │                    │
+│            │      │ ACUP-OLD-DETAILS     │      │                    │
+│            │      │ (original values)    │      │                    │
+│            │      │         │            │      │                    │
+│ CACTUPAO   │◀─────│ 3200-SETUP-SCREEN   │      │                    │
+│ (output)   │      │ (format for display) │      │                    │
+└────────────┘      └──────────────────────┘      └────────────────────┘
+</pre>
+
+<h3>6.2 Data Transformation Map</h3>
+<table>
+<thead><tr><th>Source</th><th>Transformation</th><th>Target</th></tr></thead>
+<tbody>
+<tr><td>ACCTSIDI (map input)</td><td>Move to CC-ACCT-ID, ACUP-NEW-ACCT-ID-X</td><td>Account key for file lookup</td></tr>
+<tr><td>ACRDLIMI (map input)</td><td>NUMVAL-C &rarr; ACUP-NEW-CREDIT-LIMIT-N (S9(10)V99)</td><td>Numeric credit limit for REWRITE</td></tr>
+<tr><td>ACSHLIMI (map input)</td><td>NUMVAL-C &rarr; ACUP-NEW-CASH-CREDIT-LIMIT-N</td><td>Numeric cash credit limit</td></tr>
+<tr><td>ACURBALI (map input)</td><td>NUMVAL-C &rarr; ACUP-NEW-CURR-BAL-N</td><td>Numeric current balance</td></tr>
+<tr><td>OPNYEAR/MON/DAY (map)</td><td>Concatenate with &lsquo;-&rsquo; &rarr; ACCT-UPDATE-OPEN-DATE (X(10))</td><td>Date string for account record</td></tr>
+<tr><td>ACSPH1A/B/C (map)</td><td>STRING &lsquo;(&rsquo; + A + &lsquo;)&rsquo; + B + &lsquo;-&rsquo; + C</td><td>CUST-UPDATE-PHONE-NUM-1 X(15)</td></tr>
+<tr><td>ACUP-OLD-CURR-BAL-N (S9(10)V99)</td><td>Move to WS-EDIT-CURRENCY-9-2-F (+ZZZ,ZZZ,ZZZ.99)</td><td>ACURBALO (formatted display)</td></tr>
+<tr><td>ACUP-OLD-OPEN-DATE parts</td><td>Individual YEAR/MON/DAY fields</td><td>OPNYEARO, OPNMONO, OPNDAYO (map output)</td></tr>
+<tr><td>ACUP-NEW-CUST-FICO-SCORE</td><td>Range check 300-850</td><td>CUST-UPDATE-FICO-CREDIT-SCORE</td></tr>
+</tbody>
+</table>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION 7: COMMAREA and Interface Contracts -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">07</span>
+    <h2>COMMAREA and Interface Contracts</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>7.1 COMMAREA Layout</h3>
+<p>The transaction uses a two-part COMMAREA structure passed in DFHCOMMAREA:</p>
+<table>
+<thead><tr><th>Part</th><th>Copybook</th><th>Size</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td>Part 1</td><td>COCOM01Y (CARDDEMO-COMMAREA)</td><td>~200 bytes</td><td>Shared inter-program context</td></tr>
+<tr><td>Part 2</td><td>WS-THIS-PROGCOMMAREA (inline)</td><td>~1800 bytes</td><td>Program-specific state (old/new details)</td></tr>
+</tbody>
+</table>
+
+<h4>Part 1 &mdash; CARDDEMO-COMMAREA (COCOM01Y)</h4>
+<table>
+<thead><tr><th>Field</th><th>PIC</th><th>Direction</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td>CDEMO-FROM-TRANID</td><td>X(04)</td><td>IN</td><td>Transaction that called us</td></tr>
+<tr><td>CDEMO-FROM-PROGRAM</td><td>X(08)</td><td>IN</td><td>Program that called us</td></tr>
+<tr><td>CDEMO-TO-TRANID</td><td>X(04)</td><td>OUT</td><td>Target transaction on exit</td></tr>
+<tr><td>CDEMO-TO-PROGRAM</td><td>X(08)</td><td>OUT</td><td>Target program on exit</td></tr>
+<tr><td>CDEMO-USER-ID</td><td>X(08)</td><td>IN</td><td>Signed-on user</td></tr>
+<tr><td>CDEMO-USER-TYPE</td><td>X(01)</td><td>IN</td><td>A=Admin, U=User</td></tr>
+<tr><td>CDEMO-PGM-CONTEXT</td><td>9(01)</td><td>IN/OUT</td><td>0=Enter, 1=Reenter</td></tr>
+<tr><td>CDEMO-CUST-ID</td><td>9(09)</td><td>OUT</td><td>Customer ID from xref lookup</td></tr>
+<tr><td>CDEMO-ACCT-ID</td><td>9(11)</td><td>IN/OUT</td><td>Account ID being processed</td></tr>
+<tr><td>CDEMO-ACCT-STATUS</td><td>X(01)</td><td>OUT</td><td>Account active status</td></tr>
+<tr><td>CDEMO-CARD-NUM</td><td>9(16)</td><td>OUT</td><td>Card number from xref</td></tr>
+<tr><td>CDEMO-LAST-MAP</td><td>X(07)</td><td>OUT</td><td>Last map sent (CACTUPA)</td></tr>
+<tr><td>CDEMO-LAST-MAPSET</td><td>X(07)</td><td>OUT</td><td>Last mapset (COACTUP)</td></tr>
+</tbody>
+</table>
+
+<h4>Part 2 &mdash; WS-THIS-PROGCOMMAREA (Program-specific state)</h4>
+<table>
+<thead><tr><th>Field</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td>ACUP-CHANGE-ACTION (X(1))</td><td>State machine flag: LOW-VALUES/S/E/N/C/L/F</td></tr>
+<tr><td>ACUP-OLD-ACCT-DATA (~120 bytes)</td><td>Original account values at time of fetch</td></tr>
+<tr><td>ACUP-OLD-CUST-DATA (~300 bytes)</td><td>Original customer values at time of fetch</td></tr>
+<tr><td>ACUP-NEW-ACCT-DATA (~120 bytes)</td><td>User-entered new account values</td></tr>
+<tr><td>ACUP-NEW-CUST-DATA (~300 bytes)</td><td>User-entered new customer values</td></tr>
+</tbody>
+</table>
+
+<h3>7.2 Return Code Conventions</h3>
+<p>The program does not use explicit return codes. State is communicated via the <code>ACUP-CHANGE-ACTION</code> flag in WS-THIS-PROGCOMMAREA:</p>
+<table>
+<thead><tr><th>Value</th><th>88-level Name</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td>LOW-VALUES / SPACES</td><td>ACUP-DETAILS-NOT-FETCHED</td><td>Initial state &mdash; no data shown yet</td></tr>
+<tr><td>'S'</td><td>ACUP-SHOW-DETAILS</td><td>Data fetched and displayed</td></tr>
+<tr><td>'E'</td><td>ACUP-CHANGES-NOT-OK</td><td>Validation errors found</td></tr>
+<tr><td>'N'</td><td>ACUP-CHANGES-OK-NOT-CONFIRMED</td><td>Changes valid, awaiting F5 confirmation</td></tr>
+<tr><td>'C'</td><td>ACUP-CHANGES-OKAYED-AND-DONE</td><td>Update committed successfully</td></tr>
+<tr><td>'L'</td><td>ACUP-CHANGES-OKAYED-LOCK-ERROR</td><td>Could not lock record(s)</td></tr>
+<tr><td>'F'</td><td>ACUP-CHANGES-OKAYED-BUT-FAILED</td><td>Lock obtained but REWRITE failed</td></tr>
+</tbody>
+</table>
+
+<h3>7.3 Conversation State Management</h3>
+<p>State is preserved between pseudo-conversational iterations via the combined COMMAREA (CARDDEMO-COMMAREA + WS-THIS-PROGCOMMAREA) passed on <code>EXEC CICS RETURN TRANSID('CAUP') COMMAREA(WS-COMMAREA)</code>. The total COMMAREA is defined as <code>WS-COMMAREA PIC X(2000)</code>. On re-entry, the program splits DFHCOMMAREA back into the two structures using offset arithmetic based on <code>LENGTH OF CARDDEMO-COMMAREA</code>.</p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION 8: Error Handling and User Feedback -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">08</span>
+    <h2>Error Handling and User Feedback</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>8.1 Error Flow Diagram</h3>
+<pre>
+┌─────────────────────────────────────────────────────────────────┐
+│                     ERROR HANDLING FLOW                           │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  Normal Path                        Error Paths                   │
+│  ───────────                        ───────────                   │
+│  RECEIVE MAP ────────────────────▶ MAPFAIL → error msg           │
+│       │                                                           │
+│       ▼                                                           │
+│  Validate Account # ─────────────▶ Not numeric / zero → msg      │
+│       │                            Not found in CXACAIX → msg    │
+│       ▼                            Not found in ACCTDAT → msg    │
+│  Fetch Records ──────────────────▶ Not found in CUSTDAT → msg    │
+│       │                            Other RESP → file error msg   │
+│       ▼                                                           │
+│  Validate All Fields ────────────▶ Any field invalid → msg       │
+│       │                            (first error wins WS-RETURN-MSG│
+│       ▼                                                           │
+│  Confirm &amp; Save ────────────────▶ Lock failure → msg            │
+│       │                            Concurrent change → msg        │
+│       │                            REWRITE failure → ROLLBACK     │
+│       ▼                                                           │
+│  Success ──────────────────────── "Changes committed to database" │
+│                                                                   │
+│  Unexpected state ───────────────▶ ABEND '9999'                  │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+</pre>
+
+<h3>8.2 Error Handling Matrix</h3>
+<table>
+<thead><tr><th>Condition</th><th>RESP Code</th><th>Program Action</th><th>User Message</th></tr></thead>
+<tbody>
+<tr><td>Account not in CXACAIX</td><td>DFHRESP(NOTFND)</td><td>SET FLG-ACCTFILTER-NOT-OK, INPUT-ERROR</td><td>Account:XXXXXXXXXXX not found in Cross ref file</td></tr>
+<tr><td>CXACAIX other error</td><td>Other</td><td>SET FLG-ACCTFILTER-NOT-OK</td><td>File Error: READ on CXACAIX returned RESP xx, RESP2 xx</td></tr>
+<tr><td>Account not in ACCTDAT</td><td>DFHRESP(NOTFND)</td><td>SET FLG-ACCTFILTER-NOT-OK</td><td>Account:XXXXXXXXXXX not found in Acct Master file</td></tr>
+<tr><td>Customer not in CUSTDAT</td><td>DFHRESP(NOTFND)</td><td>SET FLG-CUSTFILTER-NOT-OK</td><td>CustId:XXXXXXXXX not found in customer master</td></tr>
+<tr><td>Cannot lock ACCTDAT</td><td>Non-NORMAL</td><td>SET COULD-NOT-LOCK-ACCT-FOR-UPDATE</td><td>Could not lock account record for update</td></tr>
+<tr><td>Cannot lock CUSTDAT</td><td>Non-NORMAL</td><td>SET COULD-NOT-LOCK-CUST-FOR-UPDATE</td><td>Could not lock customer record for update</td></tr>
+<tr><td>Record changed by another user</td><td>N/A (data comparison)</td><td>SET DATA-WAS-CHANGED-BEFORE-UPDATE</td><td>Record changed by some one else. Please review</td></tr>
+<tr><td>Account REWRITE failure</td><td>Non-NORMAL</td><td>SET LOCKED-BUT-UPDATE-FAILED</td><td>Update of record failed</td></tr>
+<tr><td>Customer REWRITE failure</td><td>Non-NORMAL</td><td>SYNCPOINT ROLLBACK; SET LOCKED-BUT-UPDATE-FAILED</td><td>Update of record failed</td></tr>
+<tr><td>Validation error (any field)</td><td>N/A</td><td>SET INPUT-ERROR</td><td>Specific field-level message (see Section 1.3)</td></tr>
+<tr><td>No changes detected</td><td>N/A</td><td>SET NO-CHANGES-DETECTED</td><td>No change detected with respect to values fetched</td></tr>
+</tbody>
+</table>
+
+<h3>8.3 HANDLE ABEND / HANDLE CONDITION</h3>
+<table>
+<thead><tr><th>Statement</th><th>Location</th><th>Action</th></tr></thead>
+<tbody>
+<tr><td>EXEC CICS HANDLE ABEND LABEL(ABEND-ROUTINE)</td><td>0000-MAIN (line 862)</td><td>Branch to ABEND-ROUTINE on any abend</td></tr>
+<tr><td>EXEC CICS HANDLE ABEND CANCEL</td><td>ABEND-ROUTINE (line 4218)</td><td>Cancel handler before issuing controlled ABEND</td></tr>
+</tbody>
+</table>
+<p>The ABEND-ROUTINE sends the abend data to the terminal, cancels the handler, then issues <code>EXEC CICS ABEND ABCODE('9999')</code>.</p>
+
+<h3>8.4 User Error Messages</h3>
+<table>
+<thead><tr><th>88-Level / Context</th><th>Message Text</th></tr></thead>
+<tbody>
+<tr><td>WS-PROMPT-FOR-ACCT</td><td>Account number not provided</td></tr>
+<tr><td>SEARCHED-ACCT-ZEROES</td><td>Account number must be a non zero 11 digit number</td></tr>
+<tr><td>NO-SEARCH-CRITERIA-RECEIVED</td><td>No input received</td></tr>
+<tr><td>NO-CHANGES-DETECTED</td><td>No change detected with respect to values fetched.</td></tr>
+<tr><td>COULD-NOT-LOCK-ACCT-FOR-UPDATE</td><td>Could not lock account record for update</td></tr>
+<tr><td>COULD-NOT-LOCK-CUST-FOR-UPDATE</td><td>Could not lock customer record for update</td></tr>
+<tr><td>DATA-WAS-CHANGED-BEFORE-UPDATE</td><td>Record changed by some one else. Please review</td></tr>
+<tr><td>LOCKED-BUT-UPDATE-FAILED</td><td>Update of record failed</td></tr>
+<tr><td>CONFIRM-UPDATE-SUCCESS</td><td>Changes committed to database</td></tr>
+<tr><td>PROMPT-FOR-SEARCH-KEYS</td><td>Enter or update id of account to update</td></tr>
+<tr><td>PROMPT-FOR-CHANGES</td><td>Update account details presented above.</td></tr>
+<tr><td>PROMPT-FOR-CONFIRMATION</td><td>Changes validated. Press F5 to save</td></tr>
+<tr><td>INFORM-FAILURE</td><td>Changes unsuccessful. Please try again</td></tr>
+</tbody>
+</table>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION 9: Security and Authorization -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">09</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>9.1 Transaction Security</h3>
+<p>The CAUP transaction is accessible to regular users (CDEMO-USRTYP-USER = 'U') via the Main Menu (CM00). Access control is enforced at the menu level by COSGN00C which routes users to the appropriate menu based on their user type. COACTUPC itself does not perform an explicit security check &mdash; it relies on the sign-on (CC00) having authenticated the user and the menu (CM00) only presenting this option to authorized users.</p>
+<p>On exit (PF03), the program explicitly sets <code>SET CDEMO-USRTYP-USER TO TRUE</code>, preserving the user type in the COMMAREA for downstream programs.</p>
+
+<h3>9.2 Data Access Authorization</h3>
+<p>No data-level authorization checks are performed within this program. Any user who can reach the CAUP transaction can update any account by entering its 11-digit account number. In a production CICS environment, RACF/ACF2 resource-level security on the FCT entries (ACCTDAT, CUSTDAT, CXACAIX) would restrict file access at the infrastructure level.</p>
+
+<h3>9.3 Audit Trail</h3>
+<p>The program does not explicitly write audit records. Changes are persisted directly to the VSAM files without a separate audit log. In a modernized environment, this would be a candidate for adding audit trail functionality (change history with user ID, timestamp, before/after values).</p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION 10: Performance Characteristics -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Performance Characteristics</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>10.1 Performance Profile</h3>
+<table>
+<thead><tr><th>Metric</th><th>Value</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>File I/Os per fetch</td><td>3 READs</td><td>CXACAIX + ACCTDAT + CUSTDAT</td></tr>
+<tr><td>File I/Os per update</td><td>2 READ UPDATEs + 2 REWRITEs</td><td>Lock then write for both account and customer</td></tr>
+<tr><td>Total I/Os (full cycle)</td><td>7</td><td>3 (fetch) + 2 (lock) + 2 (write)</td></tr>
+<tr><td>COMMAREA size</td><td>2,000 bytes</td><td>WS-COMMAREA PIC X(2000)</td></tr>
+<tr><td>Map sends per iteration</td><td>1</td><td>Single SEND MAP per pseudo-conversational cycle</td></tr>
+<tr><td>Map receives per iteration</td><td>1</td><td>Single RECEIVE MAP</td></tr>
+<tr><td>Lock hold time</td><td>Minimal</td><td>Lock acquired immediately before REWRITE, released at task end</td></tr>
+</tbody>
+</table>
+
+<h3>10.2 Performance Considerations</h3>
+<table>
+<thead><tr><th>Observation</th><th>Impact</th><th>Recommendation</th></tr></thead>
+<tbody>
+<tr><td>Large COMMAREA (2000 bytes)</td><td>Moderate: stored in CICS temp storage between iterations</td><td>Acceptable for pseudo-conversational &mdash; no action needed</td></tr>
+<tr><td>No BROWSE operations</td><td>Positive: direct key reads only</td><td>Efficient single-record access pattern</td></tr>
+<tr><td>Optimistic locking via data comparison</td><td>Positive: avoids long-held locks</td><td>Good pattern for multi-user environments</td></tr>
+<tr><td>SYNCPOINT ROLLBACK on partial failure</td><td>Positive: maintains data integrity</td><td>Ensures atomicity of dual-file update</td></tr>
+<tr><td>Two-file update (ACCTDAT + CUSTDAT)</td><td>Moderate: holds two record locks simultaneously</td><td>Short lock duration mitigates contention risk</td></tr>
+<tr><td>STRING operations for date formatting</td><td>Low: minimal CPU cost</td><td>No concern</td></tr>
+</tbody>
+</table>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION 11: Testing Approach -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>11.1 Test Scenarios</h3>
+<table>
+<thead><tr><th>ID</th><th>Scenario</th><th>Expected Result</th><th>Type</th></tr></thead>
+<tbody>
+<tr><td>TC-01</td><td>Enter valid account number, verify display</td><td>All account and customer fields populated correctly</td><td>Positive</td></tr>
+<tr><td>TC-02</td><td>Enter non-existent account number</td><td>Error: &ldquo;not found in Cross ref file&rdquo;</td><td>Negative</td></tr>
+<tr><td>TC-03</td><td>Enter non-numeric account number</td><td>Error: &ldquo;must be a non zero 11 digit number&rdquo;</td><td>Negative</td></tr>
+<tr><td>TC-04</td><td>Modify credit limit to valid value, confirm save</td><td>Changes committed; field reflects new value on re-fetch</td><td>Positive</td></tr>
+<tr><td>TC-05</td><td>Enter invalid credit limit (non-numeric)</td><td>Error: &ldquo;Credit Limit is not valid&rdquo;</td><td>Negative</td></tr>
+<tr><td>TC-06</td><td>Modify active status to invalid value (&lsquo;X&rsquo;)</td><td>Error: &ldquo;Account Active Status must be Y or N&rdquo;</td><td>Negative</td></tr>
+<tr><td>TC-07</td><td>Enter invalid date (month = 13)</td><td>Error: &ldquo;month must be between 1 and 12&rdquo;</td><td>Negative</td></tr>
+<tr><td>TC-08</td><td>Enter invalid SSN (part 1 = 000)</td><td>Error: SSN validation failure</td><td>Negative</td></tr>
+<tr><td>TC-09</td><td>Enter FICO score outside 300-850</td><td>Error: FICO range validation failure</td><td>Negative</td></tr>
+<tr><td>TC-10</td><td>Modify multiple fields, press ENTER then F5</td><td>Two-step confirmation: validated &rarr; saved</td><td>Positive</td></tr>
+<tr><td>TC-11</td><td>Press F12 after making changes</td><td>Changes discarded, original values re-displayed</td><td>Positive</td></tr>
+<tr><td>TC-12</td><td>Press F3 at any point</td><td>Return to calling program or main menu</td><td>Navigation</td></tr>
+<tr><td>TC-13</td><td>Make no changes and press ENTER</td><td>Message: &ldquo;No change detected&rdquo;</td><td>Boundary</td></tr>
+<tr><td>TC-14</td><td>Concurrent update: another user changes record between fetch and save</td><td>Error: &ldquo;Record changed by some one else&rdquo;</td><td>Concurrency</td></tr>
+<tr><td>TC-15</td><td>Record lock failure (another task holds lock)</td><td>Error: &ldquo;Could not lock account record for update&rdquo;</td><td>Concurrency</td></tr>
+<tr><td>TC-16</td><td>Enter invalid phone area code</td><td>Error: &ldquo;Area code must be A 3 digit number&rdquo;</td><td>Negative</td></tr>
+<tr><td>TC-17</td><td>Leave required field blank (first name)</td><td>Error: &ldquo;First Name must be supplied&rdquo;</td><td>Negative</td></tr>
+<tr><td>TC-18</td><td>Enter special characters in name field</td><td>Error: &ldquo;[field] can have alphabets only&rdquo;</td><td>Negative</td></tr>
+</tbody>
+</table>
+
+<h3>11.2 Test Data Requirements</h3>
+<table>
+<thead><tr><th>Requirement</th><th>Details</th></tr></thead>
+<tbody>
+<tr><td>Valid account records</td><td>ACCTDAT entries with various statuses (Y/N), diverse balances and dates</td></tr>
+<tr><td>Card cross-reference records</td><td>CXACAIX entries linking accounts to customers</td></tr>
+<tr><td>Customer records</td><td>CUSTDAT entries with various name/address/phone combinations</td></tr>
+<tr><td>Edge-case data</td><td>Accounts with maximum balance values, boundary dates, minimum/maximum FICO scores</td></tr>
+<tr><td>Concurrent test setup</td><td>Two terminal sessions accessing the same account simultaneously</td></tr>
+</tbody>
+</table>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION 12: Known Issues and Considerations -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Known Issues and Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+<h3>12.1 Known Issues</h3>
+<table>
+<thead><tr><th>Issue</th><th>Severity</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td>No audit trail</td><td>Medium</td><td>Account and customer changes are not logged; no history of who changed what and when</td></tr>
+<tr><td>No data-level authorization</td><td>Medium</td><td>Any authenticated user can modify any account; no ownership or role-based restrictions on account data</td></tr>
+<tr><td>Partial rollback gap</td><td>Low</td><td>If account REWRITE succeeds but customer REWRITE fails, SYNCPOINT ROLLBACK is issued. However, the rollback is only effective within the same UOW; if CICS uses split-UOW, there could be an inconsistency window</td></tr>
+<tr><td>Hardcoded literals</td><td>Low</td><td>Program name, transaction ID, and file names are hardcoded (LIT-THISPGM, LIT-ACCTFILENAME, etc.) rather than externalized</td></tr>
+<tr><td>Large monolithic program</td><td>Low</td><td>At 4,236 lines, the program handles account AND customer updates in a single module; separation into two modules would improve maintainability</td></tr>
+<tr><td>Address Line 2 not validated</td><td>Info</td><td>Address Line 2 (ACSADL2) is received but not validated (commented out at line 1614)</td></tr>
+<tr><td>State/Zip cross-validation</td><td>Info</td><td>Relies on a lookup table (CSLKPCDY copybook) for US state codes and zip code ranges</td></tr>
+</tbody>
+</table>
+
+<h3>12.2 Modernization Considerations</h3>
+<table>
+<thead><tr><th>Aspect</th><th>Current State</th><th>Target State</th></tr></thead>
+<tbody>
+<tr><td>Screen I/O</td><td>BMS map (3270 terminal)</td><td>REST API / Web UI with JSON payloads</td></tr>
+<tr><td>Data Access</td><td>VSAM KSDS via EXEC CICS READ/REWRITE</td><td>RDBMS (PostgreSQL/DB2) with JPA/JDBC</td></tr>
+<tr><td>State Management</td><td>Pseudo-conversational COMMAREA (2000 bytes)</td><td>Stateless REST with JWT tokens; server-side session cache if needed</td></tr>
+<tr><td>Validation</td><td>Inline COBOL INSPECT/IF/EVALUATE logic (~2000 LOC)</td><td>Declarative validation framework (Bean Validation / JSON Schema)</td></tr>
+<tr><td>Concurrency Control</td><td>Optimistic lock via field-by-field comparison + pessimistic file lock</td><td>Optimistic locking via version column / ETag header</td></tr>
+<tr><td>Error Handling</td><td>88-level flags + HANDLE ABEND</td><td>Exception hierarchy with structured error responses</td></tr>
+<tr><td>Audit</td><td>None</td><td>Event-sourced audit log or CDC (Change Data Capture)</td></tr>
+<tr><td>Authorization</td><td>Menu-level routing only</td><td>RBAC / attribute-based access control (ABAC) with account ownership</td></tr>
+<tr><td>Program Structure</td><td>Single 4,236-line monolith</td><td>Separated Account Service + Customer Service microservices</td></tr>
+<tr><td>Phone/SSN/Date Formatting</td><td>Manual STRING/INSPECT operations</td><td>Standard library formatters and validators</td></tr>
+</tbody>
+</table>
+  </div>
+</section>
+
+</div><!-- /page-wrap-single -->
+
+<footer class="footer">
+  <strong>UniCredit S.p.A.</strong> &mdash; CardDemo CICS Transaction Analysis &middot; Auto-generated
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SETUP – Initialization Jobs (D1–D3) | Batch Process Analysis | UniCredit CardDemo</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   UniCredit CardDemo — Shared Theme (inlined for standalone viewing)
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --uc-red:        #E4002B;
+  --uc-red-dark:   #B8001F;
+  --uc-red-light:  #FF3354;
+  --uc-navy:       #1D2B4E;
+  --uc-navy-light: #2A3D6B;
+  --uc-gold:       #C5A44E;
+  --uc-gold-light: #E2C97A;
+  --uc-white:      #FFFFFF;
+  --uc-gray-50:    #F8F9FA;
+  --uc-gray-100:   #F0F1F3;
+  --uc-gray-200:   #E2E4E8;
+  --uc-gray-400:   #9EA3AE;
+  --uc-gray-600:   #6B7280;
+  --uc-gray-800:   #374151;
+  --uc-text:       #1F2937;
+  --uc-shadow:     0 4px 24px rgba(29,43,78,.08);
+  --uc-shadow-lg:  0 12px 48px rgba(29,43,78,.12);
+  --uc-radius:     12px;
+  --uc-radius-sm:  8px;
+  --uc-transition: .25s cubic-bezier(.4,0,.2,1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--uc-text);
+  background: var(--uc-gray-50);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+.hero {
+  background: linear-gradient(135deg, var(--uc-navy) 0%, var(--uc-navy-light) 50%, var(--uc-red-dark) 100%);
+  color: var(--uc-white);
+  padding: 3rem 2rem 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -60%; right: -20%;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(228,0,43,.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute; bottom: -30%; left: -10%;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(197,164,78,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-inner { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+.hero-brand { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.hero-logo { height: 48px; flex-shrink: 0; }
+.hero-logo img { height: 100%; width: auto; display: block; }
+.hero-brand-text { font-size: .95rem; opacity: .85; letter-spacing: .04em; text-transform: uppercase; }
+.hero h1 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; letter-spacing: -.02em; line-height: 1.15; margin-bottom: .75rem; }
+.hero h1 span { color: var(--uc-gold-light); }
+.hero-subtitle { font-size: 1.15rem; opacity: .88; max-width: 720px; }
+.hero-meta { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,.15); }
+.hero-meta dt { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin-bottom: .15rem; }
+.hero-meta dd { font-size: .95rem; font-weight: 600; }
+.breadcrumb { max-width: 1200px; margin: 1.25rem auto .5rem; padding: 0 2rem; font-size: .8rem; color: var(--uc-gray-400); }
+.breadcrumb a { color: var(--uc-red); text-decoration: none; font-weight: 600; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb .sep { margin: 0 .4rem; opacity: .5; }
+.page-wrap-single { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+.section { background: var(--uc-white); border-radius: var(--uc-radius); box-shadow: var(--uc-shadow); margin-bottom: 2rem; overflow: hidden; }
+.section-header { display: flex; align-items: center; gap: .75rem; padding: 1.25rem 1.5rem; background: linear-gradient(90deg, var(--uc-navy) 0%, var(--uc-navy-light) 100%); color: var(--uc-white); cursor: pointer; user-select: none; }
+.section-header:hover { filter: brightness(1.1); }
+.section-num { background: var(--uc-red); color: var(--uc-white); font-size: .72rem; font-weight: 700; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.section-header h2 { font-size: 1.1rem; font-weight: 700; letter-spacing: -.01em; flex: 1; }
+.section-toggle { width: 24px; height: 24px; transition: transform var(--uc-transition); opacity: .7; }
+.section.collapsed .section-toggle { transform: rotate(-90deg); }
+.section-body { padding: 1.5rem; }
+.section.collapsed .section-body { display: none; }
+.subsection { margin-bottom: 1.75rem; }
+.subsection:last-child { margin-bottom: 0; }
+.subsection h3 { font-size: .95rem; font-weight: 700; color: var(--uc-navy); margin-bottom: .75rem; padding-bottom: .4rem; border-bottom: 2px solid var(--uc-gray-200); display: flex; align-items: center; gap: .5rem; }
+.subsection h3 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--uc-red); flex-shrink: 0; }
+.subsection h4 { font-size: .88rem; font-weight: 600; color: var(--uc-gray-800); margin: 1rem 0 .5rem; }
+.subsection p, .subsection li { font-size: .88rem; color: var(--uc-gray-800); line-height: 1.7; }
+.subsection ul, .subsection ol { padding-left: 1.4rem; margin-top: .35rem; }
+.subsection li { margin-bottom: .25rem; }
+.table-wrap { overflow-x: auto; margin: .75rem 0; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .82rem; }
+thead th { background: var(--uc-navy); color: var(--uc-white); text-align: left; padding: .6rem .75rem; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
+thead th:first-child { border-radius: var(--uc-radius-sm) 0 0 0; }
+thead th:last-child  { border-radius: 0 var(--uc-radius-sm) 0 0; }
+tbody td { padding: .55rem .75rem; border-bottom: 1px solid var(--uc-gray-200); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:nth-child(even) { background: var(--uc-gray-50); }
+tbody tr:hover { background: rgba(228,0,43,.04); }
+pre { background: var(--uc-navy); color: #E2E8F0; border-radius: var(--uc-radius-sm); padding: 1rem 1.25rem; font-size: .78rem; font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; overflow-x: auto; line-height: 1.65; margin: .75rem 0; }
+code { font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; font-size: .82em; background: var(--uc-gray-100); padding: .1em .35em; border-radius: 4px; color: var(--uc-red-dark); }
+pre code { background: none; padding: 0; color: inherit; }
+.callout { border-left: 4px solid var(--uc-gold); background: rgba(197,164,78,.08); padding: .85rem 1rem; border-radius: 0 var(--uc-radius-sm) var(--uc-radius-sm) 0; margin: .75rem 0; font-size: .85rem; }
+.callout-red { border-left-color: var(--uc-red); background: rgba(228,0,43,.05); }
+.callout strong { color: var(--uc-navy); }
+.diagram-box { background: var(--uc-gray-100); border: 2px dashed var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1.5rem; text-align: center; margin: .75rem 0; }
+.diagram-box pre { text-align: left; background: var(--uc-navy); display: inline-block; max-width: 100%; }
+.badge { display: inline-block; font-size: .68rem; font-weight: 700; padding: .15em .55em; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; line-height: 1.6; }
+.badge-red    { background: var(--uc-red);   color: #fff; }
+.badge-navy   { background: var(--uc-navy);  color: #fff; }
+.badge-gold   { background: var(--uc-gold);  color: var(--uc-navy); }
+.badge-gray   { background: var(--uc-gray-200); color: var(--uc-gray-800); }
+.kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin: 1rem 0; }
+.kpi-card { background: var(--uc-gray-50); border: 1px solid var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1rem; text-align: center; transition: var(--uc-transition); }
+.kpi-card:hover { border-color: var(--uc-red); box-shadow: var(--uc-shadow); transform: translateY(-2px); }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--uc-red); line-height: 1.2; }
+.kpi-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--uc-gray-600); margin-top: .25rem; }
+.footer { background: var(--uc-navy); color: rgba(255,255,255,.6); text-align: center; padding: 2rem; font-size: .78rem; }
+.footer strong { color: var(--uc-gold-light); }
+@media print {
+  .section.collapsed .section-body { display: block; }
+  .hero { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════  HERO  ════════════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. &mdash; Milano</div>
+    </div>
+    <h1>SETUP &ndash; <span>Initialization Jobs (D1&ndash;D3)</span></h1>
+    <p class="hero-subtitle">
+      Infrastructure setup &amp; one-time initialization: VSAM file definitions, GDG base entries, user security seed data, CICS CSD resource definitions, and DB2 database creation for the CardDemo application
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Job Group</dt><dd>D1&ndash;D3 (Setup)</dd></div>
+      <div><dt>Total Jobs</dt><dd>18</dd></div>
+      <div><dt>Frequency</dt><dd>One-time / As-needed</dd></div>
+      <div><dt>Primary Utility</dt><dd>IDCAMS</dd></div>
+      <div><dt>COBOL Programs</dt><dd>None</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ════════════════════  BREADCRUMB  ════════════════════ -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">&rsaquo;</span>
+  <a href="index.html">Batch Flows</a>
+  <span class="sep">&rsaquo;</span>
+  SETUP &ndash; Initialization Jobs (D1&ndash;D3)
+</div>
+
+<!-- ════════════════════  BODY  ════════════════════ -->
+<div class="page-wrap-single">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     IDENTIFICATION
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s0">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">ID</span>
+    <h2>Identification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <tbody>
+          <tr><td><strong>Job Group</strong></td><td>D1 (VSAM Definitions) &middot; D2 (GDG Definitions) &middot; D3 (Other Setup)</td></tr>
+          <tr><td><strong>Job Stream / Schedule</strong></td><td>One-time setup (not in Control-M scheduler; run manually during initial environment provisioning or data refresh)</td></tr>
+          <tr><td><strong>Business Domain</strong></td><td>Infrastructure Provisioning / Environment Setup</td></tr>
+          <tr><td><strong>Owning Team</strong></td><td>CardDemo Platform Operations</td></tr>
+          <tr><td><strong>Frequency</strong></td><td>One-time or as-needed (environment rebuild, disaster recovery)</td></tr>
+          <tr><td><strong>Batch Window</strong></td><td>N/A &mdash; run outside normal operations when CICS is down or files are closed</td></tr>
+          <tr><td><strong>Criticality</strong></td><td><span class="badge badge-red">Critical</span> (prerequisite for all other processing)</td></tr>
+          <tr><td><strong>Elapsed Time SLA</strong></td><td>Must complete before any online or batch processing begins</td></tr>
+          <tr><td><strong>Primary Programs</strong></td><td>IDCAMS, IEBGENER, IEFBR14, DFHCSDUP, IKJEFT01 (DB2 utilities), SDSF</td></tr>
+          <tr><td><strong>Source Location</strong></td><td><code>app/jcl/</code> &middot; <code>app/app-transaction-type-db2/jcl/CREADB21.jcl</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 1 — Business Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">1</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 1.1 -->
+    <div class="subsection" id="s1-1">
+      <h3><span class="dot"></span> 1.1 Business Context</h3>
+      <ul>
+        <li><strong>What:</strong> Provisions the complete data infrastructure for the CardDemo application &mdash; defines all VSAM clusters (KSDS, ESDS, RRDS), GDG base entries, alternate indexes, CICS CSD resource definitions, and DB2 database objects required before any online or batch processing can occur.</li>
+        <li><strong>Who:</strong> Platform operations team, system programmers, and DBAs execute these jobs during initial environment setup, migration to a new LPAR, or disaster recovery rebuild.</li>
+        <li><strong>When:</strong> One-time during environment provisioning. Re-run as needed for data refresh, environment clone, or after catastrophic failure.</li>
+        <li><strong>Why:</strong> All CardDemo online transactions (CICS) and batch jobs depend on these VSAM files, GDG structures, CICS resource definitions, and DB2 tables existing and being properly initialized with seed data.</li>
+        <li><strong>Outcome:</strong> A fully provisioned CardDemo environment with all 9 VSAM KSDS clusters defined and loaded, 10 GDG bases established, user security data seeded, CICS CSD group installed, and DB2 transaction tables created and populated.</li>
+      </ul>
+    </div>
+
+    <!-- 1.2 -->
+    <div class="subsection" id="s1-2">
+      <h3><span class="dot"></span> 1.2 Business Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │          CARDDEMO INFRASTRUCTURE SETUP FLOW (D1→D2→D3)              │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  ╔═══════════════════════════════════════════════════════════╗
+  ║  D1 — VSAM FILE DEFINITIONS (9 Jobs)                     ║
+  ╠═══════════════════════════════════════════════════════════╣
+  ║                                                           ║
+  ║  ACCTFILE ─── Account Master KSDS (300-byte records)      ║
+  ║  CARDFILE ─── Card Data KSDS + AIX + PATH (150-byte)      ║
+  ║  CUSTFILE ─── Customer Master KSDS (500-byte)             ║
+  ║  TRANFILE ─── Transaction Master KSDS + AIX (350-byte)    ║
+  ║  XREFFILE ─── Card Cross-Reference KSDS + AIX (50-byte)  ║
+  ║  TCATBALF ─── Transaction Category Balance KSDS (50-byte) ║
+  ║  TRANCATG ─── Transaction Category Type KSDS (60-byte)   ║
+  ║  TRANTYPE ─── Transaction Type KSDS (60-byte)            ║
+  ║  DISCGRP  ─── Disclosure Group KSDS (50-byte)            ║
+  ║                                                           ║
+  ╚════════════════════════════╤══════════════════════════════╝
+                               │
+                               ▼
+  ╔═══════════════════════════════════════════════════════════╗
+  ║  D2 — GDG BASE DEFINITIONS (4 Jobs)                      ║
+  ╠═══════════════════════════════════════════════════════════╣
+  ║                                                           ║
+  ║  DEFGDGB ─── 6 GDG bases (BKUP, DALY, TRANREPT,         ║
+  ║              TCATBALF.BKUP, SYSTRAN, COMBINED)           ║
+  ║  DEFGDGD ─── 3 GDG bases + first generations             ║
+  ║              (TRANTYPE.BKUP, TRANCATG.PS.BKUP,          ║
+  ║               DISCGRP.BKUP)                              ║
+  ║  DALYREJS ── Daily Rejections GDG base                   ║
+  ║  REPTFILE ── Transaction Report GDG base                 ║
+  ║                                                           ║
+  ╚════════════════════════════╤══════════════════════════════╝
+                               │
+                               ▼
+  ╔═══════════════════════════════════════════════════════════╗
+  ║  D3 — OTHER SETUP (5 Jobs)                               ║
+  ╠═══════════════════════════════════════════════════════════╣
+  ║                                                           ║
+  ║  DUSRSECJ ── User Security VSAM (inline data → PS → KSDS)║
+  ║  ESDSRRDS ── ESDS + RRDS VSAM variants (security data)  ║
+  ║  TRANIDX  ── AIX + PATH on Transaction VSAM, BLDINDEX   ║
+  ║  CBADMCDJ ── CICS CSD: programs, mapsets, transactions  ║
+  ║  CREADB21 ── DB2 database, tables, data load             ║
+  ║                                                           ║
+  ╚═══════════════════════════════════════════════════════════╝
+</pre>
+      </div>
+    </div>
+
+    <!-- 1.3 -->
+    <div class="subsection" id="s1-3">
+      <h3><span class="dot"></span> 1.3 Business Rules</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Rule</th><th>Enforcement</th></tr></thead>
+          <tbody>
+            <tr><td>BR-001</td><td>All VSAM clusters must be defined before data can be loaded</td><td>IDCAMS DELETE + DEFINE pattern; IF MAXCC LE 08 THEN SET MAXCC=0 allows re-run</td></tr>
+            <tr><td>BR-002</td><td>GDG bases must exist before any batch job creates a new generation</td><td>DEFINE GENERATIONDATAGROUP with LIMIT and SCRATCH; IF LASTCC=12 THEN SET MAXCC=0</td></tr>
+            <tr><td>BR-003</td><td>CICS files must be closed before VSAM redefinition and opened after</td><td>SDSF commands: CEMT SET FIL(xxx) CLO/OPE issued to CICSAWSA region</td></tr>
+            <tr><td>BR-004</td><td>Seed data must be loaded from flat files (PS) into VSAM using REPRO</td><td>IDCAMS REPRO INFILE(xxx) OUTFILE(yyy) in each definition job</td></tr>
+            <tr><td>BR-005</td><td>Alternate indexes must be defined after base cluster and data load</td><td>DEFINE AIX → DEFINE PATH → BLDINDEX sequence</td></tr>
+            <tr><td>BR-006</td><td>DB2 objects must be created after VSAM setup (separate subsystem)</td><td>CREADB21 uses DSNTIAD and DSNTEP4 utilities via IKJEFT01</td></tr>
+            <tr><td>BR-007</td><td>User security records use 8-byte user-ID key with fixed 80-byte records</td><td>KSDS KEYS(8,0) RECORDSIZE(80,80) in DUSRSECJ</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 1.4 -->
+    <div class="subsection" id="s1-4">
+      <h3><span class="dot"></span> 1.4 Inputs / Outputs</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Direction</th><th>Dataset</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-navy">Input</span></td><td><code>AWS.M2.CARDDEMO.ACCTDATA.PS</code></td><td>Account master seed data (flat file)</td></tr>
+            <tr><td><span class="badge badge-navy">Input</span></td><td><code>AWS.M2.CARDDEMO.CARDDATA.PS</code></td><td>Card data seed (flat file)</td></tr>
+            <tr><td><span class="badge badge-navy">Input</span></td><td><code>AWS.M2.CARDDEMO.CUSTDATA.PS</code></td><td>Customer master seed data</td></tr>
+            <tr><td><span class="badge badge-navy">Input</span></td><td><code>AWS.M2.CARDDEMO.DALYTRAN.PS.INIT</code></td><td>Initial transaction data</td></tr>
+            <tr><td><span class="badge badge-navy">Input</span></td><td><code>AWS.M2.CARDDEMO.CARDXREF.PS</code></td><td>Card cross-reference seed</td></tr>
+            <tr><td><span class="badge badge-navy">Input</span></td><td><code>AWS.M2.CARDDEMO.TCATBALF.PS</code></td><td>Transaction category balance seed</td></tr>
+            <tr><td><span class="badge badge-navy">Input</span></td><td><code>AWS.M2.CARDDEMO.TRANCATG.PS</code></td><td>Transaction category type seed</td></tr>
+            <tr><td><span class="badge badge-navy">Input</span></td><td><code>AWS.M2.CARDDEMO.TRANTYPE.PS</code></td><td>Transaction type seed</td></tr>
+            <tr><td><span class="badge badge-navy">Input</span></td><td><code>AWS.M2.CARDDEMO.DISCGRP.PS</code></td><td>Disclosure group seed</td></tr>
+            <tr><td><span class="badge badge-navy">Input</span></td><td>Inline JCL data (DUSRSECJ/ESDSRRDS)</td><td>User security records (10 users)</td></tr>
+            <tr><td><span class="badge badge-red">Output</span></td><td>9 VSAM KSDS clusters + 3 AIX + 3 PATHs</td><td>All application VSAM files</td></tr>
+            <tr><td><span class="badge badge-red">Output</span></td><td>10 GDG base entries</td><td>Version-controlled dataset structures</td></tr>
+            <tr><td><span class="badge badge-red">Output</span></td><td>CICS CSD Group <code>CARDDEMO</code></td><td>Programs, mapsets, transactions, files</td></tr>
+            <tr><td><span class="badge badge-red">Output</span></td><td>DB2 Database + Tables</td><td>TRANTYPE and TRANCATG tables in DAZ1 subsystem</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 2 — Technical Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">2</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 2.1 -->
+    <div class="subsection" id="s2-1">
+      <h3><span class="dot"></span> 2.1 Overview Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌──────────────────────────────────────────────────────────────────┐
+  │              EXECUTION ORDER &amp; DEPENDENCIES                      │
+  └──────────────────────────────────────────────────────────────────┘
+
+  Phase 1: VSAM Cluster Definitions (can run in parallel)
+  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
+  │ACCTFILE │ │CUSTFILE │ │TCATBALF │ │TRANCATG │ │TRANTYPE │
+  └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘
+       │           │           │           │           │
+  ┌────┴────┐ ┌────┴────┐     │      ┌────┴────┐     │
+  │CARDFILE │ │XREFFILE │     │      │DISCGRP  │     │
+  │(+AIX)   │ │(+AIX)   │     │      └─────────┘     │
+  └────┬────┘ └────┬────┘     │                       │
+       │           │           │                       │
+  ┌────┴────┐      │           │                       │
+  │TRANFILE │      │           │                       │
+  │(+AIX)   │      │           │                       │
+  └────┬────┘      │           │                       │
+       │           │           │                       │
+       ▼           ▼           ▼                       ▼
+  Phase 2: GDG Base Definitions (depends on VSAM for backup GDGs)
+  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
+  │ DEFGDGB │ │ DEFGDGD │ │DALYREJS │ │REPTFILE │
+  │ (6 GDGs)│ │(3+loads)│ │ (1 GDG) │ │ (1 GDG) │
+  └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘
+       │           │           │           │
+       ▼           ▼           ▼           ▼
+  Phase 3: Supplementary Setup
+  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
+  │DUSRSECJ │ │ESDSRRDS │ │ TRANIDX │ │CBADMCDJ │ │CREADB21 │
+  │(UsrSec) │ │(ESDS/   │ │(AIX/    │ │(CICS    │ │(DB2 DDL │
+  │         │ │ RRDS)   │ │ PATH)   │ │ CSD)    │ │ + Load) │
+  └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.2 -->
+    <div class="subsection" id="s2-2">
+      <h3><span class="dot"></span> 2.2 Detailed Step-by-Step</h3>
+
+      <h4>D1 &mdash; VSAM File Definition Jobs (Common Pattern)</h4>
+      <p>Each D1 job follows a consistent 3-step pattern (some with additional AIX steps):</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>Program</th><th>Action</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>CLCIFIL</td><td>SDSF</td><td>Close CICS files</td><td>Only in CARDFILE, CUSTFILE, TRANFILE (files open in CICS)</td></tr>
+            <tr><td>STEP05</td><td>IDCAMS</td><td>DELETE existing cluster (+ AIX if applicable)</td><td>IF MAXCC LE 08 / SET MAXCC=0 for idempotency</td></tr>
+            <tr><td>STEP10</td><td>IDCAMS</td><td>DEFINE CLUSTER (KSDS)</td><td>Specifies KEYS, RECORDSIZE, SHAREOPTIONS, VOLUMES</td></tr>
+            <tr><td>STEP15</td><td>IDCAMS</td><td>REPRO from PS flat file to VSAM</td><td>Loads seed data</td></tr>
+            <tr><td>STEP20/40</td><td>IDCAMS</td><td>DEFINE ALTERNATEINDEX</td><td>CARDFILE, TRANFILE, XREFFILE only</td></tr>
+            <tr><td>STEP25/50</td><td>IDCAMS</td><td>DEFINE PATH</td><td>Associates AIX with base cluster</td></tr>
+            <tr><td>STEP30/60</td><td>IDCAMS</td><td>BLDINDEX</td><td>Builds AIX from base cluster data</td></tr>
+            <tr><td>OPCIFIL</td><td>SDSF</td><td>Open CICS files</td><td>Only in CARDFILE, CUSTFILE, TRANFILE</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>D2 &mdash; GDG Definition Jobs</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Job</th><th>Steps</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td>DEFGDGB</td><td>STEP05 (IDCAMS)</td><td>DEFINE 6 GDG bases: TRANSACT.BKUP, TRANSACT.DALY, TRANREPT, TCATBALF.BKUP, SYSTRAN, TRANSACT.COMBINED (all LIMIT(5) SCRATCH)</td></tr>
+            <tr><td>DEFGDGD</td><td>STEP10-60 (IDCAMS + IEBGENER)</td><td>DEFINE 3 GDG bases (TRANTYPE.BKUP, TRANCATG.PS.BKUP, DISCGRP.BKUP) and load first generation of each using IEBGENER from PS source</td></tr>
+            <tr><td>DALYREJS</td><td>STEP05 (IDCAMS)</td><td>DEFINE GDG base: DALYREJS (LIMIT(5) SCRATCH)</td></tr>
+            <tr><td>REPTFILE</td><td>STEP05 (IDCAMS)</td><td>DEFINE GDG base: TRANREPT (LIMIT(10)) &mdash; higher limit for report retention</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>D3 &mdash; Other Setup Jobs</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Job</th><th>Steps</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td>DUSRSECJ</td><td>PREDEL, STEP01, STEP02, STEP03</td><td>Delete old PS → IEBGENER inline data to PS → IDCAMS DEFINE KSDS → REPRO PS to VSAM. Creates user security file with 10 users (5 admin + 5 regular).</td></tr>
+            <tr><td>ESDSRRDS</td><td>PREDEL, STEP01-05</td><td>Same inline data → PS, then DEFINE ESDS cluster + REPRO, then DEFINE RRDS cluster + REPRO. Creates alternative VSAM access methods for security data.</td></tr>
+            <tr><td>TRANIDX</td><td>STEP20, STEP25, STEP30</td><td>DEFINE AIX on TRANSACT.VSAM.KSDS (KEYS 26,304 = processed timestamp), DEFINE PATH, BLDINDEX. Standalone AIX job for transaction file.</td></tr>
+            <tr><td>CBADMCDJ</td><td>STEP1 (DFHCSDUP)</td><td>Define CICS CSD resources: LIBRARY, 17 MAPSETs, 14 PROGRAMs, 5 TRANSACTIONs in GROUP(CARDDEMO)</td></tr>
+            <tr><td>CREADB21</td><td>FREEPLN, CRCRDDB, LDTTYPE, RUNTEP2, LDTCCAT</td><td>Free existing DB2 plans → create database/tables via DSNTIAD → load TRANTYPE data → load TRANCATG data via DSNTEP4</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 2.3 -->
+    <div class="subsection" id="s2-3">
+      <h3><span class="dot"></span> 2.3 Condition Code Logic</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Job</th><th>Condition Code Handling</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>D1 Jobs (ACCTFILE, XREFFILE, etc.)</td><td><code>IF MAXCC LE 08 THEN SET MAXCC = 0</code></td><td>Allows DELETE to fail (RC=8) when cluster does not exist, enabling re-run</td></tr>
+            <tr><td>TCATBALF, TRANCATG, TRANTYPE, DISCGRP</td><td><code>SET MAXCC = 0</code></td><td>Unconditionally resets after DELETE &mdash; always continues</td></tr>
+            <tr><td>DEFGDGB</td><td><code>IF LASTCC=12 THEN SET MAXCC=0</code></td><td>GDG already exists (RC=12) is acceptable</td></tr>
+            <tr><td>DEFGDGD (STEP20, 40, 60)</td><td><code>COND=(0,NE)</code> on IEBGENER</td><td>Only load first generation if prior DEFINE succeeded (CC=0)</td></tr>
+            <tr><td>CREADB21</td><td><code>COND=(0,NE)</code> on data load steps</td><td>Only load data if database creation succeeded</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 3 — JCL Job Stream Specification
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">3</span>
+    <h2>JCL Job Stream Specification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 3.1 -->
+    <div class="subsection" id="s3-1">
+      <h3><span class="dot"></span> 3.1 JCL Overview</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Job Name</th><th>JCL Source</th><th>CLASS</th><th>MSGCLASS</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>ACCTFILE</td><td><code>app/jcl/ACCTFILE.jcl</code></td><td>A</td><td>0</td><td>Delete/Define/Load Account VSAM</td></tr>
+            <tr><td>CARDFILE</td><td><code>app/jcl/CARDFILE.jcl</code></td><td>A</td><td>0</td><td>Delete/Define/Load Card Data VSAM + AIX</td></tr>
+            <tr><td>CUSTFILE</td><td><code>app/jcl/CUSTFILE.jcl</code></td><td>A</td><td>0</td><td>Delete/Define/Load Customer VSAM</td></tr>
+            <tr><td>TRANFILE</td><td><code>app/jcl/TRANFILE.jcl</code></td><td>A</td><td>0</td><td>Delete/Define/Load Transaction VSAM + AIX</td></tr>
+            <tr><td>XREFFILE</td><td><code>app/jcl/XREFFILE.jcl</code></td><td>A</td><td>0</td><td>Delete/Define/Load Cross-Ref VSAM + AIX</td></tr>
+            <tr><td>TCATBALF</td><td><code>app/jcl/TCATBALF.jcl</code></td><td>A</td><td>0</td><td>Delete/Define/Load Tran Cat Balance VSAM</td></tr>
+            <tr><td>TRANCATG</td><td><code>app/jcl/TRANCATG.jcl</code></td><td>A</td><td>0</td><td>Delete/Define/Load Tran Category VSAM</td></tr>
+            <tr><td>TRANTYPE</td><td><code>app/jcl/TRANTYPE.jcl</code></td><td>A</td><td>0</td><td>Delete/Define/Load Transaction Type VSAM</td></tr>
+            <tr><td>DISCGRP</td><td><code>app/jcl/DISCGRP.jcl</code></td><td>A</td><td>0</td><td>Delete/Define/Load Disclosure Group VSAM</td></tr>
+            <tr><td>DEFGDGB</td><td><code>app/jcl/DEFGDGB.jcl</code></td><td>A</td><td>0</td><td>Define 6 GDG bases</td></tr>
+            <tr><td>DEFGDGD</td><td><code>app/jcl/DEFGDGD.jcl</code></td><td>A</td><td>0</td><td>Define 3 GDG bases + load first generation</td></tr>
+            <tr><td>DALYREJS</td><td><code>app/jcl/DALYREJS.jcl</code></td><td>A</td><td>0</td><td>Define Daily Rejections GDG base</td></tr>
+            <tr><td>REPTFILE</td><td><code>app/jcl/REPTFILE.jcl</code></td><td>A</td><td>0</td><td>Define Report GDG base</td></tr>
+            <tr><td>DUSRSECJ</td><td><code>app/jcl/DUSRSECJ.jcl</code></td><td>A</td><td>H</td><td>Create User Security VSAM from inline data</td></tr>
+            <tr><td>ESDSRRDS</td><td><code>app/jcl/ESDSRRDS.jcl</code></td><td>A</td><td>H</td><td>Create ESDS + RRDS VSAM variants</td></tr>
+            <tr><td>TRANIDX</td><td><code>app/jcl/TRANIDX.jcl</code></td><td>A</td><td>0</td><td>Define AIX + PATH on Transaction VSAM</td></tr>
+            <tr><td>CBADMCDJ</td><td><code>app/jcl/CBADMCDJ.jcl</code></td><td>A</td><td>H</td><td>Define CICS CSD resources</td></tr>
+            <tr><td>CREADB21</td><td><code>app/app-transaction-type-db2/jcl/CREADB21.jcl</code></td><td>A</td><td>A</td><td>Create DB2 database + load tables</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.2 -->
+    <div class="subsection" id="s3-2">
+      <h3><span class="dot"></span> 3.2 DD Statement Inventory (Representative)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>DD Name</th><th>Dataset / Disposition</th><th>Used In</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>SYSPRINT</td><td>SYSOUT=*</td><td>All jobs</td><td>IDCAMS/utility output messages</td></tr>
+            <tr><td>SYSIN</td><td>Instream (*)</td><td>All jobs</td><td>IDCAMS control statements</td></tr>
+            <tr><td>ACCTDATA</td><td>AWS.M2.CARDDEMO.ACCTDATA.PS (SHR)</td><td>ACCTFILE</td><td>Account seed flat file</td></tr>
+            <tr><td>ACCTVSAM</td><td>AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS (SHR)</td><td>ACCTFILE</td><td>Target VSAM for REPRO</td></tr>
+            <tr><td>CARDDATA</td><td>AWS.M2.CARDDEMO.CARDDATA.PS (SHR)</td><td>CARDFILE</td><td>Card seed flat file</td></tr>
+            <tr><td>CARDVSAM</td><td>AWS.M2.CARDDEMO.CARDDATA.VSAM.KSDS (SHR)</td><td>CARDFILE</td><td>Target VSAM for REPRO</td></tr>
+            <tr><td>CUSTDATA</td><td>AWS.M2.CARDDEMO.CUSTDATA.PS (SHR)</td><td>CUSTFILE</td><td>Customer seed flat file</td></tr>
+            <tr><td>TRANSACT</td><td>AWS.M2.CARDDEMO.DALYTRAN.PS.INIT (SHR)</td><td>TRANFILE</td><td>Initial transaction seed</td></tr>
+            <tr><td>XREFDATA</td><td>AWS.M2.CARDDEMO.CARDXREF.PS (SHR)</td><td>XREFFILE</td><td>Cross-reference seed</td></tr>
+            <tr><td>SYSUT1</td><td>Inline data / PS source</td><td>DUSRSECJ, ESDSRRDS, DEFGDGD</td><td>Input for IEBGENER copy</td></tr>
+            <tr><td>SYSUT2</td><td>New PS file (NEW,CATLG)</td><td>DUSRSECJ, ESDSRRDS, DEFGDGD</td><td>Output for IEBGENER copy</td></tr>
+            <tr><td>DFHCSD</td><td>OEM.CICSTS.DFHCSD (SHR)</td><td>CBADMCDJ</td><td>CICS System Definition file</td></tr>
+            <tr><td>STEPLIB</td><td>OEM.CICSTS.V05R06M0.CICS.SDFHLOAD</td><td>CBADMCDJ</td><td>DFHCSDUP load library</td></tr>
+            <tr><td>JOBLIB</td><td>OEM.DB2.DAZ1.SDSNLOAD + CEE.SCEERUN</td><td>CREADB21</td><td>DB2 + LE runtime libraries</td></tr>
+            <tr><td>ISFIN</td><td>Instream (*)</td><td>CARDFILE, CUSTFILE, TRANFILE</td><td>SDSF commands to CICS region</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.3 -->
+    <div class="subsection" id="s3-3">
+      <h3><span class="dot"></span> 3.3 GDG Usage</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>GDG Base</th><th>Defined In</th><th>LIMIT</th><th>SCRATCH</th><th>Used By</th></tr></thead>
+          <tbody>
+            <tr><td>AWS.M2.CARDDEMO.TRANSACT.BKUP</td><td>DEFGDGB</td><td>5</td><td>Yes</td><td>TRANBKP (daily backup)</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.TRANSACT.DALY</td><td>DEFGDGB</td><td>5</td><td>Yes</td><td>POSTTRAN (daily input)</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.TRANREPT</td><td>DEFGDGB + REPTFILE</td><td>5/10</td><td>Yes/No</td><td>TRANREPT (report output)</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.TCATBALF.BKUP</td><td>DEFGDGB</td><td>5</td><td>Yes</td><td>TRANBKP (category balance backup)</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.SYSTRAN</td><td>DEFGDGB</td><td>5</td><td>Yes</td><td>COMBTRAN (system transactions)</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.TRANSACT.COMBINED</td><td>DEFGDGB</td><td>5</td><td>Yes</td><td>COMBTRAN (combined output)</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.TRANTYPE.BKUP</td><td>DEFGDGD</td><td>5</td><td>Yes</td><td>Reference data backup</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.TRANCATG.PS.BKUP</td><td>DEFGDGD</td><td>5</td><td>Yes</td><td>Category type backup</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.DISCGRP.BKUP</td><td>DEFGDGD</td><td>5</td><td>Yes</td><td>Disclosure group backup</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.DALYREJS</td><td>DALYREJS</td><td>5</td><td>Yes</td><td>POSTTRAN (rejected transactions)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.4 -->
+    <div class="subsection" id="s3-4">
+      <h3><span class="dot"></span> 3.4 Scheduler Dependencies</h3>
+      <div class="callout">
+        <strong>Note:</strong> These setup jobs are <em>not</em> defined in the Control-M scheduler (<code>app/scheduler/CardDemo.controlm</code>). They are run manually by operations staff during environment provisioning. The dependency order is enforced procedurally by the operations runbook.
+      </div>
+      <p>Required execution order:</p>
+      <ol>
+        <li><strong>D1 jobs first</strong> &mdash; VSAM clusters must exist before GDG jobs reference them (DEFGDGD loads from PS files that correspond to VSAM datasets)</li>
+        <li><strong>D2 jobs second</strong> &mdash; GDG bases must exist before daily batch cycle can produce generation datasets</li>
+        <li><strong>D3 jobs last</strong> &mdash; TRANIDX requires TRANSACT VSAM to exist (from TRANFILE); CBADMCDJ defines CICS resources pointing to VSAM files; CREADB21 is independent but logically last</li>
+      </ol>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 4 — Program Inventory and Call Chain
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">4</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 4.1 -->
+    <div class="subsection" id="s4-1">
+      <h3><span class="dot"></span> 4.1 Program Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Program</th><th>Type</th><th>Purpose</th><th>Used In</th></tr></thead>
+          <tbody>
+            <tr><td><code>IDCAMS</code></td><td>IBM Utility</td><td>Access Method Services &mdash; VSAM cluster management (DELETE, DEFINE, REPRO, BLDINDEX)</td><td>All D1, D2, D3 jobs</td></tr>
+            <tr><td><code>IEBGENER</code></td><td>IBM Utility</td><td>Sequential dataset copy (PS to PS, inline to PS)</td><td>DUSRSECJ, ESDSRRDS, DEFGDGD</td></tr>
+            <tr><td><code>IEFBR14</code></td><td>IBM Utility</td><td>Dummy program for DD allocation/deletion</td><td>DUSRSECJ (PREDEL), ESDSRRDS (PREDEL), CREADB21 (LDTTYPE)</td></tr>
+            <tr><td><code>DFHCSDUP</code></td><td>CICS Utility</td><td>CICS System Definition Utility &mdash; batch CSD updates</td><td>CBADMCDJ</td></tr>
+            <tr><td><code>IKJEFT01</code></td><td>TSO/E Utility</td><td>TSO batch processor &mdash; executes DB2 commands</td><td>CREADB21 (FREEPLN, CRCRDDB, RUNTEP2, LDTCCAT)</td></tr>
+            <tr><td><code>SDSF</code></td><td>IBM Utility</td><td>System Display and Search Facility &mdash; issues MVS commands</td><td>CARDFILE, CUSTFILE, TRANFILE (CICS file open/close)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>No COBOL programs:</strong> All 18 setup jobs use only IBM/CICS system utilities. No application-level COBOL code is involved.
+      </div>
+    </div>
+
+    <!-- 4.2 -->
+    <div class="subsection" id="s4-2">
+      <h3><span class="dot"></span> 4.2 Call / Paragraph Hierarchy</h3>
+      <p>Not applicable &mdash; these are utility-driven JCL jobs with no COBOL paragraphs. The &ldquo;call chain&rdquo; is the JCL step execution sequence within each job.</p>
+    </div>
+
+    <!-- 4.3 -->
+    <div class="subsection" id="s4-3">
+      <h3><span class="dot"></span> 4.3 Copybooks</h3>
+      <p>Not applicable &mdash; no COBOL programs means no COPY statements. Record layouts are implicitly defined by the VSAM DEFINE CLUSTER parameters (KEYS, RECORDSIZE) and the flat-file seed data format.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 5 — File and Dataset Inventory
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">5</span>
+    <h2>File and Dataset Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 5.1 -->
+    <div class="subsection" id="s5-1">
+      <h3><span class="dot"></span> 5.1 Complete VSAM Cluster Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Cluster Name</th><th>Type</th><th>Key Len</th><th>Key Offset</th><th>RECSIZE</th><th>SHROPT</th><th>Space</th></tr></thead>
+          <tbody>
+            <tr><td><code>AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS</code></td><td>KSDS</td><td>11</td><td>0</td><td>300</td><td>(2,3)</td><td>CYL(1,5)</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.CARDDATA.VSAM.KSDS</code></td><td>KSDS</td><td>16</td><td>0</td><td>150</td><td>(2,3)</td><td>CYL(1,5)</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.CUSTDATA.VSAM.KSDS</code></td><td>KSDS</td><td>9</td><td>0</td><td>500</td><td>(2,3)</td><td>CYL(1,5)</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</code></td><td>KSDS</td><td>16</td><td>0</td><td>350</td><td>(2,3)</td><td>CYL(1,5)</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</code></td><td>KSDS</td><td>16</td><td>0</td><td>50</td><td>(2,3)</td><td>CYL(1,5)</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS</code></td><td>KSDS</td><td>17</td><td>0</td><td>50</td><td>(2,3)</td><td>CYL(1,5)</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANCATG.VSAM.KSDS</code></td><td>KSDS</td><td>6</td><td>0</td><td>60</td><td>(2,3)</td><td>CYL(1,5)</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANTYPE.VSAM.KSDS</code></td><td>KSDS</td><td>2</td><td>0</td><td>60</td><td>(1,4)</td><td>CYL(1,5)</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.DISCGRP.VSAM.KSDS</code></td><td>KSDS</td><td>16</td><td>0</td><td>50</td><td>(2,3)</td><td>CYL(1,5)</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.USRSEC.VSAM.KSDS</code></td><td>KSDS</td><td>8</td><td>0</td><td>80</td><td>N/A</td><td>TRK(45,15)</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.USRSEC.VSAM.ESDS</code></td><td>ESDS</td><td>N/A</td><td>N/A</td><td>80</td><td>N/A</td><td>TRK(45,15)</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.USRSEC.VSAM.RRDS</code></td><td>RRDS</td><td>N/A</td><td>N/A</td><td>80</td><td>N/A</td><td>TRK(45,15)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.2 -->
+    <div class="subsection" id="s5-2">
+      <h3><span class="dot"></span> 5.2 Alternate Index Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>AIX Name</th><th>Base Cluster</th><th>Key Len</th><th>Key Offset</th><th>Unique?</th><th>PATH Name</th></tr></thead>
+          <tbody>
+            <tr><td><code>AWS.M2.CARDDEMO.CARDDATA.VSAM.AIX</code></td><td>CARDDATA.VSAM.KSDS</td><td>11</td><td>16</td><td>No</td><td><code>...AIX.PATH</code></td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANSACT.VSAM.AIX</code></td><td>TRANSACT.VSAM.KSDS</td><td>26</td><td>304</td><td>No</td><td><code>...AIX.PATH</code></td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.CARDXREF.VSAM.AIX</code></td><td>CARDXREF.VSAM.KSDS</td><td>11</td><td>25</td><td>No</td><td><code>...AIX.PATH</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.3 -->
+    <div class="subsection" id="s5-3">
+      <h3><span class="dot"></span> 5.3 Record Layout Summary</h3>
+      <div class="callout">
+        <strong>Note:</strong> Since these are utility-only jobs, record layouts are defined implicitly by DEFINE CLUSTER parameters. Actual field-level layouts are documented in the corresponding copybooks (CVACT01Y, CVACT02Y, CVTRA05Y, CVTRA01Y, CVCUS01Y, etc.) which are used by the COBOL programs that access these files.
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>VSAM File</th><th>Record Size</th><th>Key Description</th><th>Related Copybook</th></tr></thead>
+          <tbody>
+            <tr><td>ACCTDATA</td><td>300 bytes</td><td>11-byte Account ID (positions 1&ndash;11)</td><td>CVACT01Y, CVACT02Y</td></tr>
+            <tr><td>CARDDATA</td><td>150 bytes</td><td>16-byte Card Number (positions 1&ndash;16)</td><td>CVACT02Y</td></tr>
+            <tr><td>CUSTDATA</td><td>500 bytes</td><td>9-byte Customer ID (positions 1&ndash;9)</td><td>CVCUS01Y</td></tr>
+            <tr><td>TRANSACT</td><td>350 bytes</td><td>16-byte Transaction ID (positions 1&ndash;16)</td><td>CVTRA05Y</td></tr>
+            <tr><td>CARDXREF</td><td>50 bytes</td><td>16-byte Card Number (positions 1&ndash;16)</td><td>CVACT03Y</td></tr>
+            <tr><td>TCATBALF</td><td>50 bytes</td><td>17-byte composite key (positions 1&ndash;17)</td><td>CVTRA01Y</td></tr>
+            <tr><td>TRANCATG</td><td>60 bytes</td><td>6-byte Category Code (positions 1&ndash;6)</td><td>CVTRA06Y</td></tr>
+            <tr><td>TRANTYPE</td><td>60 bytes</td><td>2-byte Type Code (positions 1&ndash;2)</td><td>CVTRA06Y</td></tr>
+            <tr><td>DISCGRP</td><td>50 bytes</td><td>16-byte Group key (positions 1&ndash;16)</td><td>(none documented)</td></tr>
+            <tr><td>USRSEC</td><td>80 bytes</td><td>8-byte User ID (positions 1&ndash;8)</td><td>COSGN00Y, COUSR01Y</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.4 -->
+    <div class="subsection" id="s5-4">
+      <h3><span class="dot"></span> 5.4 File Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  Flat File Seeds (.PS)              VSAM Clusters                  Downstream
+  ═══════════════════               ═══════════════                 ══════════
+  ACCTDATA.PS ─────────REPRO──────▶ ACCTDATA.VSAM.KSDS ──────────▶ CICS Online
+  CARDDATA.PS ─────────REPRO──────▶ CARDDATA.VSAM.KSDS ──────────▶ CICS Online
+                                    └── CARDDATA.VSAM.AIX ────────▶ (by Acct ID)
+  CUSTDATA.PS ─────────REPRO──────▶ CUSTDATA.VSAM.KSDS ──────────▶ CICS Online
+  DALYTRAN.PS.INIT ────REPRO──────▶ TRANSACT.VSAM.KSDS ──────────▶ Batch + CICS
+                                    └── TRANSACT.VSAM.AIX ────────▶ (by Timestamp)
+  CARDXREF.PS ─────────REPRO──────▶ CARDXREF.VSAM.KSDS ──────────▶ POSTTRAN
+                                    └── CARDXREF.VSAM.AIX ────────▶ (by Acct ID)
+  TCATBALF.PS ─────────REPRO──────▶ TCATBALF.VSAM.KSDS ──────────▶ POSTTRAN
+  TRANCATG.PS ─────────REPRO──────▶ TRANCATG.VSAM.KSDS ──────────▶ CICS Online
+  TRANTYPE.PS ─────────REPRO──────▶ TRANTYPE.VSAM.KSDS ──────────▶ CICS Online
+  DISCGRP.PS ──────────REPRO──────▶ DISCGRP.VSAM.KSDS ───────────▶ CICS Online
+  Inline data ─────────IEBGENER──▶ USRSEC.VSAM.KSDS ─────────────▶ CICS Sign-on
+                       IEBGENER──▶ USRSEC.VSAM.ESDS ─────────────▶ (variant)
+                       IEBGENER──▶ USRSEC.VSAM.RRDS ─────────────▶ (variant)
+</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 6 — Data Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">6</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 6.1 -->
+    <div class="subsection" id="s6-1">
+      <h3><span class="dot"></span> 6.1 Transformation Map</h3>
+      <p>The setup jobs perform <strong>no data transformation</strong>. All operations are either:</p>
+      <ul>
+        <li><strong>Structure definition</strong> &mdash; DEFINE CLUSTER/GDG/AIX/PATH creates empty containers</li>
+        <li><strong>Byte-for-byte copy</strong> &mdash; REPRO and IEBGENER copy records without modification from flat files into VSAM clusters or from inline data into PS files</li>
+        <li><strong>Index construction</strong> &mdash; BLDINDEX reads base cluster records and builds AIX entries based on key position/length</li>
+      </ul>
+    </div>
+
+    <!-- 6.2 -->
+    <div class="subsection" id="s6-2">
+      <h3><span class="dot"></span> 6.2 Lineage Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  Source of Truth              Intermediate              Target (Runtime)
+  ════════════════            ═════════════             ════════════════
+  app/data/*.dat ──(manual)─▶ *.PS flat files ──REPRO─▶ *.VSAM.KSDS
+  (EBCDIC seed data)                                    *.VSAM.AIX (derived)
+                                                        *.VSAM.AIX.PATH (alias)
+
+  JCL inline data ──IEBGENER─▶ USRSEC.PS ─────REPRO──▶ USRSEC.VSAM.KSDS
+                                              REPRO──▶ USRSEC.VSAM.ESDS
+                                              REPRO──▶ USRSEC.VSAM.RRDS
+
+  CNTL members     ──DSNTIAD──▶ DB2 Database (CARDDEMO)
+  (DB2CREAT,       ──DSNTEP4──▶ TRANTYPE table (loaded)
+   DB2LTTYP,                  ▶ TRANCATG table (loaded)
+   DB2LTCAT)
+</pre>
+      </div>
+    </div>
+
+    <!-- 6.3 -->
+    <div class="subsection" id="s6-3">
+      <h3><span class="dot"></span> 6.3 Control Totals</h3>
+      <p>No control total logic exists in these setup jobs. IDCAMS REPRO reports record counts in SYSPRINT output but there is no programmatic validation of expected vs. actual counts. The DUSRSECJ job has exactly 10 inline records (5 ADMIN + 5 USER) which can be verified manually.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 7 — Sort/Merge and Utility Processing
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">7</span>
+    <h2>Sort/Merge and Utility Processing</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s7-1">
+      <h3><span class="dot"></span> 7.1 Utility Programs Used</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Utility</th><th>Function</th><th>Jobs Using</th></tr></thead>
+          <tbody>
+            <tr><td><code>IDCAMS</code></td><td>DELETE, DEFINE CLUSTER/GDG/AIX/PATH, REPRO, BLDINDEX</td><td>All 18 jobs</td></tr>
+            <tr><td><code>IEBGENER</code></td><td>Copy sequential data (inline → PS, PS → GDG generation)</td><td>DUSRSECJ, ESDSRRDS, DEFGDGD</td></tr>
+            <tr><td><code>IEFBR14</code></td><td>Dummy program for DD-based dataset deletion/allocation</td><td>DUSRSECJ, ESDSRRDS, CREADB21</td></tr>
+            <tr><td><code>DFHCSDUP</code></td><td>CICS CSD batch update utility</td><td>CBADMCDJ</td></tr>
+            <tr><td><code>IKJEFT01</code></td><td>TSO batch &mdash; runs DB2 utility programs (DSNTIAD, DSNTEP4)</td><td>CREADB21</td></tr>
+            <tr><td><code>SDSF</code></td><td>Issues MVS MODIFY commands to CICS region</td><td>CARDFILE, CUSTFILE, TRANFILE</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>No SORT/MERGE:</strong> None of the setup jobs use DFSORT, SYNCSORT, or ICETOOL. Data is loaded in the order it appears in the source flat files.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 8 — Checkpoint, Restart, and Recovery
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">8</span>
+    <h2>Checkpoint, Restart, and Recovery</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s8-1">
+      <h3><span class="dot"></span> 8.1 Checkpointing Strategy</h3>
+      <p><strong>None.</strong> No checkpoint/restart logic is implemented in any of the 18 setup jobs. This is acceptable because:</p>
+      <ul>
+        <li>Each job is idempotent &mdash; DELETE-then-DEFINE pattern allows complete re-execution</li>
+        <li>Data volumes are small (seed data for a demo application)</li>
+        <li>Jobs complete in seconds, making checkpoint overhead unnecessary</li>
+      </ul>
+    </div>
+
+    <div class="subsection" id="s8-2">
+      <h3><span class="dot"></span> 8.2 Restart Procedures</h3>
+      <ul>
+        <li><strong>Any D1 job fails:</strong> Simply re-submit the job. The DELETE step handles pre-existing clusters.</li>
+        <li><strong>Any D2 job fails:</strong> Re-submit. IF LASTCC=12 THEN SET MAXCC=0 handles pre-existing GDG bases.</li>
+        <li><strong>DUSRSECJ/ESDSRRDS fails:</strong> Re-submit. PREDEL step with IEFBR14 and DELETE handle cleanup.</li>
+        <li><strong>CBADMCDJ fails:</strong> Uncomment <code>DELETE GROUP(CARDDEMO)</code> in SYSIN and re-submit.</li>
+        <li><strong>CREADB21 fails:</strong> Enable FREEPLN step (remove TYPRUN=SCAN), fix issue, re-submit. DDL is CREATE-or-fail so may need manual DROP first.</li>
+      </ul>
+    </div>
+
+    <div class="subsection" id="s8-3">
+      <h3><span class="dot"></span> 8.3 Recovery Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  Job Failure?
+       │
+       ▼
+  ┌────────────────────┐     ┌──────────────────────────────┐
+  │ Is it a D1 or D2   │─Yes─▶ Re-submit job as-is          │
+  │ job?               │     │ (idempotent by design)        │
+  └────────┬───────────┘     └──────────────────────────────┘
+           │ No
+           ▼
+  ┌────────────────────┐     ┌──────────────────────────────┐
+  │ Is it CBADMCDJ?    │─Yes─▶ Uncomment DELETE GROUP,       │
+  │                    │     │ re-submit                     │
+  └────────┬───────────┘     └──────────────────────────────┘
+           │ No
+           ▼
+  ┌────────────────────┐     ┌──────────────────────────────┐
+  │ Is it CREADB21?    │─Yes─▶ Check DB2 catalog, DROP if    │
+  │                    │     │ partial, fix DDL, re-submit   │
+  └────────────────────┘     └──────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 9 — Error Handling and Abend Resolution
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">9</span>
+    <h2>Error Handling and Abend Resolution</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 9.1 -->
+    <div class="subsection" id="s9-1">
+      <h3><span class="dot"></span> 9.1 IDCAMS Return Codes</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>RC</th><th>Meaning</th><th>Handling</th></tr></thead>
+          <tbody>
+            <tr><td>0</td><td>Success</td><td>Continue to next step</td></tr>
+            <tr><td>4</td><td>Warning (e.g., empty file)</td><td>Acceptable; usually ignored</td></tr>
+            <tr><td>8</td><td>Cluster not found (DELETE)</td><td>Handled by IF MAXCC LE 08 THEN SET MAXCC=0</td></tr>
+            <tr><td>12</td><td>GDG already exists (DEFINE GDG)</td><td>Handled by IF LASTCC=12 THEN SET MAXCC=0</td></tr>
+            <tr><td>12+</td><td>Serious error (catalog, I/O, authority)</td><td>Job ABENDs &mdash; check SYSPRINT for details</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 9.2 -->
+    <div class="subsection" id="s9-2">
+      <h3><span class="dot"></span> 9.2 Common Abends</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Abend</th><th>Cause</th><th>Resolution</th></tr></thead>
+          <tbody>
+            <tr><td>S213</td><td>Dataset not found for REPRO input (PS file missing)</td><td>Verify seed flat files exist on the volume; run data upload first</td></tr>
+            <tr><td>S913</td><td>RACF/security authority insufficient</td><td>Ensure batch user has ALTER access to HLQ AWS.M2.CARDDEMO</td></tr>
+            <tr><td>S222</td><td>Job cancelled by operator or time exceeded</td><td>Check TIME= parameter; CREADB21 has TIME=1440</td></tr>
+            <tr><td>S806</td><td>Load module not found (DFHCSDUP, IKJEFT01)</td><td>Verify STEPLIB/JOBLIB DSNs point to correct product libraries</td></tr>
+            <tr><td>IEC070I</td><td>VSAM open error (file in use by CICS)</td><td>Close file in CICS first (CEMT SET FIL(xxx) CLO)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 9.3 -->
+    <div class="subsection" id="s9-3">
+      <h3><span class="dot"></span> 9.3 Error Flow</h3>
+      <div class="diagram-box">
+<pre>
+  IDCAMS DELETE fails (RC &gt; 8)?
+       │
+       ├── RC=8 (not found) ──▶ SET MAXCC=0, continue ──▶ DEFINE
+       │
+       └── RC=12+ ──▶ ABEND ──▶ Check SYSPRINT:
+                                 • Catalog error? → Fix ICF catalog
+                                 • Authority?     → RACF PERMIT
+                                 • Volume?        → SMS/DASD issue
+
+  IDCAMS DEFINE fails?
+       │
+       └── Cluster already exists (RC=8) ──▶ DELETE step should have handled
+           Space unavailable (RC=12)     ──▶ Increase CYLINDERS/TRACKS
+           Invalid parameters            ──▶ Fix JCL SYSIN
+
+  IDCAMS REPRO fails?
+       │
+       └── Input file empty/missing ──▶ Verify PS file cataloged
+           Key sequence error       ──▶ Sort source file by key
+           Duplicate key            ──▶ Clean source data
+</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 10 — Security and Authorization
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s10-1">
+      <h3><span class="dot"></span> 10.1 Dataset Access Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Resource</th><th>Access Level</th><th>Justification</th></tr></thead>
+          <tbody>
+            <tr><td><code>AWS.M2.CARDDEMO.**</code></td><td>ALTER</td><td>DELETE + DEFINE requires ALTER authority on HLQ</td></tr>
+            <tr><td><code>OEM.CICSTS.**</code></td><td>READ</td><td>STEPLIB access for DFHCSDUP</td></tr>
+            <tr><td><code>OEM.DB2.DAZ1.**</code></td><td>READ</td><td>JOBLIB/STEPLIB for DB2 utilities</td></tr>
+            <tr><td><code>CEE.SCEERUN</code></td><td>READ</td><td>LE runtime for DB2 programs</td></tr>
+            <tr><td>CICS Region (CICSAWSA)</td><td>OPERATOR</td><td>SDSF /F commands require MVS MODIFY authority</td></tr>
+            <tr><td>DB2 Subsystem (DAZ1)</td><td>SYSADM or DBADM</td><td>CREATE DATABASE, CREATE TABLE, LOAD</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s10-2">
+      <h3><span class="dot"></span> 10.2 User Security Seed Data</h3>
+      <div class="callout callout-red">
+        <strong>Security Note:</strong> The DUSRSECJ and ESDSRRDS jobs contain hardcoded user credentials in plain text within JCL inline data. Passwords (<code>PASSWORDA</code> for admins, <code>PASSWORDU</code> for users) are visible in source. This is a demo application &mdash; in production, credentials would be sourced from a vault or encrypted at rest.
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>User ID</th><th>First Name</th><th>Last Name</th><th>Role</th><th>Password</th></tr></thead>
+          <tbody>
+            <tr><td>ADMIN001</td><td>MARGARET</td><td>GOLD</td><td>Admin</td><td>PASSWORDA</td></tr>
+            <tr><td>ADMIN002</td><td>RUSSELL</td><td>RUSSELL</td><td>Admin</td><td>PASSWORDA</td></tr>
+            <tr><td>ADMIN003</td><td>RAYMOND</td><td>WHITMORE</td><td>Admin</td><td>PASSWORDA</td></tr>
+            <tr><td>ADMIN004</td><td>EMMANUEL</td><td>CASGRAIN</td><td>Admin</td><td>PASSWORDA</td></tr>
+            <tr><td>ADMIN005</td><td>GRANVILLE</td><td>LACHAPELLE</td><td>Admin</td><td>PASSWORDA</td></tr>
+            <tr><td>USER0001</td><td>LAWRENCE</td><td>THOMAS</td><td>User</td><td>PASSWORDU</td></tr>
+            <tr><td>USER0002</td><td>AJITH</td><td>KUMAR</td><td>User</td><td>PASSWORDU</td></tr>
+            <tr><td>USER0003</td><td>LAURITZ</td><td>ALME</td><td>User</td><td>PASSWORDU</td></tr>
+            <tr><td>USER0004</td><td>AVERARDO</td><td>MAZZI</td><td>User</td><td>PASSWORDU</td></tr>
+            <tr><td>USER0005</td><td>LEE</td><td>TING</td><td>User</td><td>PASSWORDU</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 11 — Performance and Batch Window Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Performance and Batch Window Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s11-1">
+      <h3><span class="dot"></span> 11.1 I/O Characteristics</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Characteristic</th><th>Value</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Total VSAM clusters defined</td><td>12</td><td>9 KSDS + 1 ESDS + 1 RRDS + 3 AIX</td></tr>
+            <tr><td>Total GDG bases defined</td><td>10</td><td>All with LIMIT(5) except REPTFILE LIMIT(10)</td></tr>
+            <tr><td>Total data volume (seed)</td><td>&lt; 5 MB</td><td>Demo dataset &mdash; minimal records</td></tr>
+            <tr><td>Primary I/O pattern</td><td>Sequential write (REPRO)</td><td>Bulk load, no random access during setup</td></tr>
+            <tr><td>DASD volume</td><td>AWSHJ1</td><td>Single volume for all VSAM allocations</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s11-2">
+      <h3><span class="dot"></span> 11.2 Batch Window Fit</h3>
+      <p>These jobs are not part of the daily batch window. They run as one-time provisioning. Expected elapsed time for all 18 jobs: <strong>&lt; 5 minutes</strong> total on a modern z/OS LPAR or rehosting environment. The CREADB21 job is the longest due to DB2 DDL processing and plan binding.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 12 — Testing Approach
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 12.1 -->
+    <div class="subsection" id="s12-1">
+      <h3><span class="dot"></span> 12.1 Test Scenarios</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Scenario</th><th>Expected Result</th><th>Verification</th></tr></thead>
+          <tbody>
+            <tr><td>TS-001</td><td>Run D1 jobs on clean environment (no pre-existing clusters)</td><td>All VSAM clusters defined and loaded; RC=0 or MAXCC reset to 0</td><td>IDCAMS LISTCAT on each cluster; verify record count</td></tr>
+            <tr><td>TS-002</td><td>Re-run D1 jobs on environment with existing clusters</td><td>DELETE succeeds (RC=0), DEFINE re-creates, REPRO re-loads</td><td>Compare record counts before/after; should be identical</td></tr>
+            <tr><td>TS-003</td><td>Run D2 GDG jobs on clean environment</td><td>All GDG bases defined with correct LIMIT; DEFGDGD first generations created</td><td>LISTCAT GDG bases; verify generation count for DEFGDGD targets</td></tr>
+            <tr><td>TS-004</td><td>Run DUSRSECJ and verify user security</td><td>10 records loaded into USRSEC.VSAM.KSDS</td><td>IDCAMS PRINT on VSAM; verify 5 ADMIN + 5 USER records</td></tr>
+            <tr><td>TS-005</td><td>Run CBADMCDJ and verify CICS definitions</td><td>GROUP(CARDDEMO) created with all resources</td><td>CEDA DISPLAY GROUP(CARDDEMO) in CICS</td></tr>
+            <tr><td>TS-006</td><td>Run all D1 jobs with CICS running (files open)</td><td>CLCIFIL closes files, job proceeds, OPCIFIL re-opens</td><td>CEMT INQ FIL(*) shows files open after job completes</td></tr>
+            <tr><td>TS-007</td><td>Run TRANIDX after TRANFILE has been defined and loaded</td><td>AIX built successfully; PATH defined</td><td>Access TRANSACT via AIX.PATH; verify records accessible by timestamp key</td></tr>
+            <tr><td>TS-008</td><td>Run CREADB21 with DB2 subsystem DAZ1 active</td><td>Database created, TRANTYPE and TRANCATG tables loaded</td><td>SPUFI SELECT COUNT(*) from tables; verify non-zero</td></tr>
+            <tr><td>TS-009</td><td>Run CARDFILE job without closing CICS files first (skip CLCIFIL)</td><td>STEP05 DELETE may fail with IEC070I (VSAM in use)</td><td>Verify error handling; job should fail gracefully</td></tr>
+            <tr><td>TS-010</td><td>Run full D1→D2→D3 sequence then start CICS and process a transaction</td><td>End-to-end validation: sign on with USER0001, view account, submit transaction</td><td>CICS screens function correctly; no file-not-found errors</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 12.2 -->
+    <div class="subsection" id="s12-2">
+      <h3><span class="dot"></span> 12.2 Test Data Requirements</h3>
+      <ul>
+        <li>Flat file seeds must be pre-staged on volume AWSHJ1 under HLQ <code>AWS.M2.CARDDEMO</code></li>
+        <li>Files available in <code>app/data/</code> directory (EBCDIC format): must be uploaded to mainframe/rehosting platform first</li>
+        <li>DB2 subsystem DAZ1 must be active with STOGROUP AWST1STG available</li>
+        <li>CICS region CICSAWSA must be started for jobs that issue /F commands</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 13 — Known Issues and Modernization Considerations
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s13">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">13</span>
+    <h2>Known Issues and Modernization Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 13.1 -->
+    <div class="subsection" id="s13-1">
+      <h3><span class="dot"></span> 13.1 Known Issues</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Issue</th><th>Impact</th><th>Recommendation</th></tr></thead>
+          <tbody>
+            <tr><td>KI-001</td><td>REPTFILE defines GDG base <code>AWS.M2.CARDDEMO.TRANREPT</code> with LIMIT(10) but DEFGDGB already defines the same GDG base with LIMIT(5). Duplicate/conflicting definitions.</td><td>Medium &mdash; running both may give unexpected LIMIT depending on order</td><td>Remove duplicate from one job or reconcile LIMIT value</td></tr>
+            <tr><td>KI-002</td><td>CREADB21 has <code>TYPRUN=SCAN</code> on the JOB statement, meaning it only syntax-checks and never actually executes</td><td>High &mdash; job does nothing when submitted; must be manually edited</td><td>Remove TYPRUN=SCAN for actual execution</td></tr>
+            <tr><td>KI-003</td><td>Typo in TRANFILE and DALYREJS comments: &ldquo;DELETE TRANSACATION&rdquo; (missing &lsquo;T&rsquo; in &lsquo;TRANSACTION&rsquo;)</td><td>None &mdash; cosmetic</td><td>Fix comments</td></tr>
+            <tr><td>KI-004</td><td>CBADMCDJ defines duplicate MAPSETs (COSGN00M defined twice, lines 53&ndash;54; COACT00S, COACTVWS, COACTUPS, COACTDES each defined twice for Account and Card)</td><td>Low &mdash; DFHCSDUP may issue warning but second DEFINE overwrites first</td><td>Remove duplicate definitions or use separate resource names for Card vs Account</td></tr>
+            <tr><td>KI-005</td><td>CBADMCDJ defines duplicate PROGRAMs (COACT00C, COACTVWC, COACTUPC, COACTDEC each defined twice)</td><td>Low &mdash; second definition overwrites; only last DESCRIPTION preserved</td><td>Split into distinct programs for Account vs Card modules</td></tr>
+            <tr><td>KI-006</td><td>TRANTYPE uses SHAREOPTIONS(1,4) while all other VSAM files use (2,3) &mdash; inconsistent sharing level</td><td>Low &mdash; SHROPT(1,4) is more restrictive (single user); may block concurrent batch/CICS access</td><td>Align to SHAREOPTIONS(2,3) for consistency</td></tr>
+            <tr><td>KI-007</td><td>Hardcoded passwords in DUSRSECJ/ESDSRRDS inline data (PASSWORDA, PASSWORDU)</td><td>Demo only &mdash; unacceptable for production</td><td>Source credentials from external vault or encrypted dataset</td></tr>
+            <tr><td>KI-008</td><td>ESDSRRDS comment says &ldquo;COPY USER SECURITY DATA FROM PS TO VSAM FILE(ESDS)&rdquo; but STEP05 copies to RRDS &mdash; misleading comment</td><td>None &mdash; cosmetic</td><td>Fix comment to reference RRDS</td></tr>
+            <tr><td>KI-009</td><td>CBADMCDJ does not define FILE resources (FCT entries) for VSAM files &mdash; only PROGRAM, MAPSET, TRANSACTION, and LIBRARY</td><td>Medium &mdash; CICS cannot access VSAM files without FILE definitions in CSD</td><td>Add DEFINE FILE entries for all VSAM files used by CICS programs</td></tr>
+            <tr><td>KI-010</td><td>No VOLUMES specified for USRSEC VSAM clusters in DUSRSECJ/ESDSRRDS (unlike all D1 jobs which specify AWSHJ1)</td><td>Low &mdash; SMS will assign default volume; may not land on expected DASD</td><td>Add VOLUMES(AWSHJ1) for consistency or rely on SMS ACS routines</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 13.2 -->
+    <div class="subsection" id="s13-2">
+      <h3><span class="dot"></span> 13.2 Modernization Considerations</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Area</th><th>Current State</th><th>Target State</th><th>Complexity</th></tr></thead>
+          <tbody>
+            <tr><td>Data Storage</td><td>VSAM KSDS files on z/OS DASD</td><td>Relational database (PostgreSQL/Aurora) with proper schemas</td><td>Medium</td></tr>
+            <tr><td>Infrastructure as Code</td><td>Manual JCL submission; no version-controlled deployment</td><td>Terraform/CloudFormation for database provisioning; Flyway/Liquibase for schema migrations</td><td>Medium</td></tr>
+            <tr><td>Seed Data Management</td><td>Flat files + inline JCL records</td><td>Database migrations with seed scripts; Docker containers with pre-loaded data</td><td>Low</td></tr>
+            <tr><td>Security Provisioning</td><td>Hardcoded credentials in JCL source</td><td>Secrets Manager / HashiCorp Vault with IAM-based authentication</td><td>Low</td></tr>
+            <tr><td>CICS Resource Definitions</td><td>Batch DFHCSDUP with CSD file</td><td>Containerized microservices; no CICS equivalent needed</td><td>High</td></tr>
+            <tr><td>DB2 Objects</td><td>Manual DDL via DSNTIAD/DSNTEP4 utilities</td><td>Schema migration tools (Flyway) with CI/CD pipeline</td><td>Low</td></tr>
+            <tr><td>GDG Version Control</td><td>GDG bases with LIMIT/SCRATCH for dataset rotation</td><td>Object storage with lifecycle policies (S3 versioning, Glacier tiering)</td><td>Medium</td></tr>
+            <tr><td>Environment Provisioning</td><td>Sequential manual job submission (18 jobs)</td><td>Single-command deployment (Docker Compose, Kubernetes Helm chart, or Terraform module)</td><td>Medium</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /page-wrap-single -->
+
+<!-- ════════════════════  FOOTER  ════════════════════ -->
+<footer class="footer">
+  <p><strong>UniCredit CardDemo</strong> &mdash; Batch Process Analysis &mdash; Setup &amp; Initialization Jobs (D1&ndash;D3)</p>
+  <p>Generated from source: 18 JCL files in <code>app/jcl/</code> and <code>app/app-transaction-type-db2/jcl/</code></p>
+</footer>
+
+</body>
+</html>

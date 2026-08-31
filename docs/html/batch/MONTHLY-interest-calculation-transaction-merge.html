@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MONTHLY A2 &ndash; Interest Calculation &amp; Transaction Merge | Batch Process Analysis | UniCredit CardDemo</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   UniCredit CardDemo — Shared Theme (inlined for standalone viewing)
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --uc-red:        #E4002B;
+  --uc-red-dark:   #B8001F;
+  --uc-red-light:  #FF3354;
+  --uc-navy:       #1D2B4E;
+  --uc-navy-light: #2A3D6B;
+  --uc-gold:       #C5A44E;
+  --uc-gold-light: #E2C97A;
+  --uc-white:      #FFFFFF;
+  --uc-gray-50:    #F8F9FA;
+  --uc-gray-100:   #F0F1F3;
+  --uc-gray-200:   #E2E4E8;
+  --uc-gray-400:   #9EA3AE;
+  --uc-gray-600:   #6B7280;
+  --uc-gray-800:   #374151;
+  --uc-text:       #1F2937;
+  --uc-shadow:     0 4px 24px rgba(29,43,78,.08);
+  --uc-shadow-lg:  0 12px 48px rgba(29,43,78,.12);
+  --uc-radius:     12px;
+  --uc-radius-sm:  8px;
+  --uc-transition: .25s cubic-bezier(.4,0,.2,1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--uc-text);
+  background: var(--uc-gray-50);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+.hero {
+  background: linear-gradient(135deg, var(--uc-navy) 0%, var(--uc-navy-light) 50%, var(--uc-red-dark) 100%);
+  color: var(--uc-white);
+  padding: 3rem 2rem 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -60%; right: -20%;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(228,0,43,.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute; bottom: -30%; left: -10%;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(197,164,78,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-inner { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+.hero-brand { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.hero-logo { height: 48px; flex-shrink: 0; }
+.hero-logo img { height: 100%; width: auto; display: block; }
+.hero-brand-text { font-size: .95rem; opacity: .85; letter-spacing: .04em; text-transform: uppercase; }
+.hero h1 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; letter-spacing: -.02em; line-height: 1.15; margin-bottom: .75rem; }
+.hero h1 span { color: var(--uc-gold-light); }
+.hero-subtitle { font-size: 1.15rem; opacity: .88; max-width: 720px; }
+.hero-meta { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,.15); }
+.hero-meta dt { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin-bottom: .15rem; }
+.hero-meta dd { font-size: .95rem; font-weight: 600; }
+.breadcrumb { max-width: 1200px; margin: 1.25rem auto .5rem; padding: 0 2rem; font-size: .8rem; color: var(--uc-gray-400); }
+.breadcrumb a { color: var(--uc-red); text-decoration: none; font-weight: 600; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb .sep { margin: 0 .4rem; opacity: .5; }
+.page-wrap-single { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+.section { background: var(--uc-white); border-radius: var(--uc-radius); box-shadow: var(--uc-shadow); margin-bottom: 2rem; overflow: hidden; }
+.section-header { display: flex; align-items: center; gap: .75rem; padding: 1.25rem 1.5rem; background: linear-gradient(90deg, var(--uc-navy) 0%, var(--uc-navy-light) 100%); color: var(--uc-white); cursor: pointer; user-select: none; }
+.section-header:hover { filter: brightness(1.1); }
+.section-num { background: var(--uc-red); color: var(--uc-white); font-size: .72rem; font-weight: 700; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.section-header h2 { font-size: 1.1rem; font-weight: 700; letter-spacing: -.01em; flex: 1; }
+.section-toggle { width: 24px; height: 24px; transition: transform var(--uc-transition); opacity: .7; }
+.section.collapsed .section-toggle { transform: rotate(-90deg); }
+.section-body { padding: 1.5rem; }
+.section.collapsed .section-body { display: none; }
+.subsection { margin-bottom: 1.75rem; }
+.subsection:last-child { margin-bottom: 0; }
+.subsection h3 { font-size: .95rem; font-weight: 700; color: var(--uc-navy); margin-bottom: .75rem; padding-bottom: .4rem; border-bottom: 2px solid var(--uc-gray-200); display: flex; align-items: center; gap: .5rem; }
+.subsection h3 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--uc-red); flex-shrink: 0; }
+.subsection h4 { font-size: .88rem; font-weight: 600; color: var(--uc-gray-800); margin: 1rem 0 .5rem; }
+.subsection p, .subsection li { font-size: .88rem; color: var(--uc-gray-800); line-height: 1.7; }
+.subsection ul, .subsection ol { padding-left: 1.4rem; margin-top: .35rem; }
+.subsection li { margin-bottom: .25rem; }
+.table-wrap { overflow-x: auto; margin: .75rem 0; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .82rem; }
+thead th { background: var(--uc-navy); color: var(--uc-white); text-align: left; padding: .6rem .75rem; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
+thead th:first-child { border-radius: var(--uc-radius-sm) 0 0 0; }
+thead th:last-child  { border-radius: 0 var(--uc-radius-sm) 0 0; }
+tbody td { padding: .55rem .75rem; border-bottom: 1px solid var(--uc-gray-200); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:nth-child(even) { background: var(--uc-gray-50); }
+tbody tr:hover { background: rgba(228,0,43,.04); }
+pre { background: var(--uc-navy); color: #E2E8F0; border-radius: var(--uc-radius-sm); padding: 1rem 1.25rem; font-size: .78rem; font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; overflow-x: auto; line-height: 1.65; margin: .75rem 0; }
+code { font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; font-size: .82em; background: var(--uc-gray-100); padding: .1em .35em; border-radius: 4px; color: var(--uc-red-dark); }
+pre code { background: none; padding: 0; color: inherit; }
+.callout { border-left: 4px solid var(--uc-gold); background: rgba(197,164,78,.08); padding: .85rem 1rem; border-radius: 0 var(--uc-radius-sm) var(--uc-radius-sm) 0; margin: .75rem 0; font-size: .85rem; }
+.callout-red { border-left-color: var(--uc-red); background: rgba(228,0,43,.05); }
+.callout strong { color: var(--uc-navy); }
+.diagram-box { background: var(--uc-gray-100); border: 2px dashed var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1.5rem; text-align: center; margin: .75rem 0; }
+.diagram-box pre { text-align: left; background: var(--uc-navy); display: inline-block; max-width: 100%; }
+.badge { display: inline-block; font-size: .68rem; font-weight: 700; padding: .15em .55em; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; line-height: 1.6; }
+.badge-red    { background: var(--uc-red);   color: #fff; }
+.badge-navy   { background: var(--uc-navy);  color: #fff; }
+.badge-gold   { background: var(--uc-gold);  color: var(--uc-navy); }
+.badge-gray   { background: var(--uc-gray-200); color: var(--uc-gray-800); }
+.kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin: 1rem 0; }
+.kpi-card { background: var(--uc-gray-50); border: 1px solid var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1rem; text-align: center; transition: var(--uc-transition); }
+.kpi-card:hover { border-color: var(--uc-red); box-shadow: var(--uc-shadow); transform: translateY(-2px); }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--uc-red); line-height: 1.2; }
+.kpi-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--uc-gray-600); margin-top: .25rem; }
+.footer { background: var(--uc-navy); color: rgba(255,255,255,.6); text-align: center; padding: 2rem; font-size: .78rem; }
+.footer strong { color: var(--uc-gold-light); }
+@media print {
+  .section.collapsed .section-body { display: block; }
+  .hero { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════  HERO  ════════════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. &mdash; Milano</div>
+    </div>
+    <h1>MONTHLY A2 &ndash; <span>Interest Calculation &amp; Transaction Merge</span></h1>
+    <p class="hero-subtitle">
+      Job Stream <code>MONTHLY-InterestCalculation</code> &middot; CLOSEFIL &rarr; INTCALC &rarr; COMBTRAN &rarr; WAITSTEP &rarr; OPENFIL &middot; Compute monthly interest charges from transaction category balances, generate system transactions, sort-merge with daily backup, and reload to TRANSACT VSAM
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Job Stream</dt><dd>MONTHLY-InterestCalculation</dd></div>
+      <div><dt>Entry Program</dt><dd>CBACT04C</dd></div>
+      <div><dt>Frequency</dt><dd>Monthly</dd></div>
+      <div><dt>LOC (main)</dt><dd>652</dd></div>
+      <div><dt>Jobs in Chain</dt><dd>5</dd></div>
+      <div><dt>Files Touched</dt><dd>9</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ════════════════════  BREADCRUMB  ════════════════════ -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">&rsaquo;</span>
+  <a href="index.html">Batch Flows</a>
+  <span class="sep">&rsaquo;</span>
+  MONTHLY A2 &ndash; Interest Calculation &amp; Transaction Merge
+</div>
+
+<!-- ════════════════════  BODY  ════════════════════ -->
+<div class="page-wrap-single">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     IDENTIFICATION
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s0">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">ID</span>
+    <h2>Identification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <tbody>
+          <tr><td><strong>Job Stream Name</strong></td><td><code>MONTHLY-InterestCalculation</code> (Control-M Folder)</td></tr>
+          <tr><td><strong>Job Steps</strong></td><td>CLOSEFIL &rarr; INTCALC &rarr; COMBTRAN &rarr; WAITSTEP &rarr; OPENFIL</td></tr>
+          <tr><td><strong>Business Domain</strong></td><td>Monthly Interest &amp; Fee Calculation / Transaction Lifecycle</td></tr>
+          <tr><td><strong>Owning Team</strong></td><td>CardDemo Batch Operations</td></tr>
+          <tr><td><strong>Frequency</strong></td><td>Monthly (end-of-billing-cycle)</td></tr>
+          <tr><td><strong>Batch Window</strong></td><td>Monthly batch window &mdash; CICS files closed for duration</td></tr>
+          <tr><td><strong>Criticality</strong></td><td><span class="badge badge-red">Critical</span></td></tr>
+          <tr><td><strong>Elapsed Time SLA</strong></td><td>Must complete before OPENFIL reopens CICS files for online operations</td></tr>
+          <tr><td><strong>Primary Program</strong></td><td><code>CBACT04C</code> (COBOL Batch, 652 LOC) &mdash; Interest Calculator</td></tr>
+          <tr><td><strong>Source Locations</strong></td><td>JCL: <code>app/jcl/CLOSEFIL.jcl</code>, <code>app/jcl/INTCALC.jcl</code>, <code>app/jcl/COMBTRAN.jcl</code>, <code>app/jcl/WAITSTEP.jcl</code>, <code>app/jcl/OPENFIL.jcl</code><br>COBOL: <code>app/cbl/CBACT04C.cbl</code>, <code>app/cbl/COBSWAIT.cbl</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 1 — Business Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">1</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 1.1 -->
+    <div class="subsection" id="s1-1">
+      <h3><span class="dot"></span> 1.1 Business Context</h3>
+      <ul>
+        <li><strong>What:</strong> A five-job monthly batch stream that (1) closes CICS VSAM files, (2) reads every Transaction Category Balance record, looks up the account&rsquo;s disclosure group interest rate, computes monthly interest as <code>(TRAN-CAT-BAL &times; DIS-INT-RATE) / 1200</code>, and writes system-generated interest transactions to a SYSTRAN GDG, (3) sort-merges the daily transaction backup with the new interest transactions and reloads the combined result to the TRANSACT VSAM master, (4) pauses for VSAM buffer flush, and (5) reopens CICS files for online access.</li>
+        <li><strong>Who:</strong> Upstream: the <em>Daily Transaction Posting</em> batch (POSTTRAN/CBTRN02C) populates the TCATBALF and ACCTDATA files consumed here. Downstream: the combined TRANSACT VSAM feeds the <em>Transaction Report</em> (TRANREPT/CBTRN03C) and <em>Statement Generation</em> (CREASTMT/CBSTM03A) jobs.</li>
+        <li><strong>When:</strong> Runs monthly at end of billing cycle, after the last daily POSTTRAN run for the month.</li>
+        <li><strong>Why:</strong> Regulatory and business requirement &mdash; interest must be computed and applied to account balances each billing cycle. System-generated interest transactions must be merged into the transaction ledger for statement accuracy and audit trail.</li>
+        <li><strong>Outcome:</strong> Account balances updated with accrued interest; TRANSACT VSAM contains both customer-originated and system-generated interest transactions; cycle accumulators (CYC-CREDIT/CYC-DEBIT) reset to zero.</li>
+      </ul>
+    </div>
+
+    <!-- 1.2 -->
+    <div class="subsection" id="s1-2">
+      <h3><span class="dot"></span> 1.2 Business Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │      MONTHLY INTEREST CALCULATION &amp; TRANSACTION MERGE FLOW         │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  End-of-Month
+       │
+       ▼
+  ┌──────────────────────┐
+  │ Step 1: CLOSEFIL     │  Close CICS VSAM files
+  │ (SDSF/CEMT SET CLO)  │  TRANSACT, CCXREF, ACCTDAT,
+  │                      │  CXACAIX, USRSEC
+  └──────────┬───────────┘
+             │
+             ▼
+  ┌──────────────────────┐     ┌──────────────────────┐
+  │ Step 2: INTCALC      │     │ TCATBALF VSAM        │
+  │ PGM=CBACT04C         │◀────│ (Category Balances)  │
+  │ Interest Calculator  │     └──────────────────────┘
+  │                      │     ┌──────────────────────┐
+  │ For each TCATBAL:    │◀────│ DISCGRP VSAM         │
+  │  - Lookup ACCT       │     │ (Interest Rates)     │
+  │  - Lookup XREF       │     └──────────────────────┘
+  │  - Lookup DISCGRP    │     ┌──────────────────────┐
+  │  - Compute interest  │◀────│ ACCTFILE VSAM        │
+  │  - Write SYSTRAN     │     │ (Account Master)     │
+  │  - Update ACCT bal   │     └──────────────────────┘
+  └──────────┬───────────┘
+             │ SYSTRAN GDG(+1)
+             ▼
+  ┌──────────────────────┐     ┌──────────────────────┐
+  │ Step 3: COMBTRAN     │     │ TRANSACT.BKUP(0)     │
+  │ SORT + IDCAMS REPRO  │◀────│ (Daily Backup)       │
+  │ Merge BKUP + SYSTRAN │     └──────────────────────┘
+  │ Reload to VSAM       │
+  └──────────┬───────────┘
+             │
+             ▼
+  ┌──────────────────────┐
+  │ Step 4: WAITSTEP     │  Pause 36 seconds
+  │ PGM=COBSWAIT         │  (VSAM buffer flush)
+  └──────────┬───────────┘
+             │
+             ▼
+  ┌──────────────────────┐
+  │ Step 5: OPENFIL      │  Reopen CICS VSAM files
+  │ (SDSF/CEMT SET OPE)  │  TRANSACT, CCXREF, ACCTDAT,
+  │                      │  CXACAIX, USRSEC
+  └──────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 1.3 -->
+    <div class="subsection" id="s1-3">
+      <h3><span class="dot"></span> 1.3 Business Rules Applied in This Process</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Rule ID</th><th>Description</th><th>Applied At</th><th>Exception Handling</th></tr></thead>
+          <tbody>
+            <tr><td>BR-001</td><td>Interest is calculated per transaction category balance record: <code>monthly_interest = (TRAN-CAT-BAL &times; DIS-INT-RATE) / 1200</code></td><td>1300-COMPUTE-INTEREST</td><td>N/A &mdash; standard computation</td></tr>
+            <tr><td>BR-002</td><td>If the disclosure group record is not found (status &lsquo;23&rsquo;), fall back to the &lsquo;DEFAULT&rsquo; group code for interest rate lookup</td><td>1200-GET-INTEREST-RATE / 1200-A-GET-DEFAULT-INT-RATE</td><td>ABEND if default group also not found</td></tr>
+            <tr><td>BR-003</td><td>Interest is only computed if <code>DIS-INT-RATE &ne; 0</code>; zero-rate categories are skipped</td><td>Main loop (line 214)</td><td>No transaction generated for zero-rate categories</td></tr>
+            <tr><td>BR-004</td><td>System-generated interest transactions are written with type code &lsquo;01&rsquo; and category code &lsquo;05&rsquo; (hardcoded), source &lsquo;System&rsquo;</td><td>1300-B-WRITE-TX</td><td>N/A</td></tr>
+            <tr><td>BR-005</td><td>When processing moves to a new account, accumulated total interest is added to ACCT-CURR-BAL, and cycle accumulators (CYC-CREDIT, CYC-DEBIT) are reset to zero</td><td>1050-UPDATE-ACCOUNT</td><td>ABEND on REWRITE failure</td></tr>
+            <tr><td>BR-006</td><td>Transaction IDs are generated as <code>PARM-DATE || WS-TRANID-SUFFIX</code> (10-char date + 6-digit sequence)</td><td>1300-B-WRITE-TX</td><td>N/A</td></tr>
+            <tr><td>BR-007</td><td>The COMBTRAN step sorts the merged transaction backup + system transactions by TRAN-ID (ascending, 16-byte character key at offset 1)</td><td>COMBTRAN STEP05R (SORT)</td><td>SORT utility handles errors</td></tr>
+            <tr><td>BR-008</td><td>After sort-merge, IDCAMS REPRO loads the combined sorted file into the TRANSACT VSAM KSDS master</td><td>COMBTRAN STEP10 (IDCAMS)</td><td>IDCAMS returns non-zero on error</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 1.4 -->
+    <div class="subsection" id="s1-4">
+      <h3><span class="dot"></span> 1.4 Business Inputs and Outputs</h3>
+      <h4>Inputs</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Input</th><th>Source System</th><th>Business Description</th><th>Timing</th></tr></thead>
+          <tbody>
+            <tr><td>Transaction Category Balance (<code>TCATBALF.VSAM.KSDS</code>)</td><td>POSTTRAN (daily posting)</td><td>Running balance by account/type/category &mdash; basis for interest calculation</td><td>Populated by daily POSTTRAN runs throughout the month</td></tr>
+            <tr><td>Card Cross-Reference (<code>CARDXREF.VSAM.KSDS</code>)</td><td>Account setup</td><td>Maps account IDs to card numbers (used to populate TRAN-CARD-NUM on generated transactions)</td><td>Static reference</td></tr>
+            <tr><td>Account Master (<code>ACCTDATA.VSAM.KSDS</code>)</td><td>Account management</td><td>Account balances, group IDs for disclosure group lookup</td><td>Updated by this job (interest posted to balance)</td></tr>
+            <tr><td>Disclosure Group (<code>DISCGRP.VSAM.KSDS</code>)</td><td>Weekly DISCGRP refresh</td><td>Interest rates by account group / transaction type / category</td><td>Static reference (refreshed weekly)</td></tr>
+            <tr><td>Transaction Backup (<code>TRANSACT.BKUP(0)</code>)</td><td>Daily TRANBKP job</td><td>Most recent backup of the daily transaction VSAM</td><td>Latest GDG generation from daily backup cycle</td></tr>
+            <tr><td>Processing Date (<code>PARM</code>)</td><td>JCL PARM field</td><td>10-character date string (e.g., &lsquo;2022071800&rsquo;) used to generate transaction IDs</td><td>Set at job submission</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h4>Outputs</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Output</th><th>Destination</th><th>Business Description</th><th>Timing</th></tr></thead>
+          <tbody>
+            <tr><td>System Transactions (<code>SYSTRAN</code> GDG +1)</td><td>COMBTRAN (merge step)</td><td>Interest charge transactions generated by CBACT04C</td><td>Created by INTCALC, consumed by COMBTRAN</td></tr>
+            <tr><td>Combined Transactions (<code>TRANSACT.COMBINED</code> GDG +1)</td><td>TRANSACT VSAM (via REPRO)</td><td>Sorted merge of daily backup + interest transactions</td><td>Intermediate; loaded to VSAM in same step</td></tr>
+            <tr><td>Updated Account Balances (<code>ACCTDATA.VSAM.KSDS</code>)</td><td>CICS online, downstream batches</td><td>ACCT-CURR-BAL updated with total interest; cycle credits/debits reset</td><td>Available after OPENFIL</td></tr>
+            <tr><td>Reloaded Transaction Master (<code>TRANSACT.VSAM.KSDS</code>)</td><td>CICS online, TRANREPT, CREASTMT</td><td>Complete transaction ledger including interest charges</td><td>Available after OPENFIL</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 2 — Technical Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">2</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 2.1 -->
+    <div class="subsection" id="s2-1">
+      <h3><span class="dot"></span> 2.1 Technical Flow Diagram &ndash; Overview</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ JOB STREAM: MONTHLY-InterestCalculation (Control-M)                │
+  │                                                                     │
+  │  Job 1: CLOSEFIL ─── PGM=SDSF (CEMT SET FIL ... CLO)              │
+  │          │                                                          │
+  │  Job 2: INTCALC ──── PGM=CBACT04C                                 │
+  │          │  ┌─────────────────────────────────────────────┐        │
+  │          │  │ TCATBALF ──(Seq READ)─┐                     │        │
+  │          │  │ XREFFILE ──(Random)───┼──▶ Lookup &amp; Compute │        │
+  │          │  │ ACCTFILE ──(Random    │    Interest          │        │
+  │          │  │            I-O)───────┘                      │        │
+  │          │  │ DISCGRP  ──(Random)──▶ Get Rate              │        │
+  │          │  │                   │                          │        │
+  │          │  │             ┌─────┴─────┐                   │        │
+  │          │  │             │ Rate &ne; 0? │                   │        │
+  │          │  │             └─────┬─────┘                   │        │
+  │          │  │               Yes │                          │        │
+  │          │  │                   ▼                          │        │
+  │          │  │  SYSTRAN GDG(+1) ◀── WRITE interest txn     │        │
+  │          │  │  ACCTFILE ◀────────── REWRITE balance        │        │
+  │          │  └─────────────────────────────────────────────┘        │
+  │          │                                                          │
+  │  Job 3: COMBTRAN                                                    │
+  │          │  STEP05R: SORT (TRANSACT.BKUP(0) + SYSTRAN(0))         │
+  │          │           ──▶ TRANSACT.COMBINED(+1)                     │
+  │          │  STEP10:  IDCAMS REPRO COMBINED ──▶ TRANSACT.VSAM.KSDS │
+  │          │                                                          │
+  │  Job 4: WAITSTEP ─── PGM=COBSWAIT (36-second pause)               │
+  │          │                                                          │
+  │  Job 5: OPENFIL ──── PGM=SDSF (CEMT SET FIL ... OPE)              │
+  └─────────────────────────────────────────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.2 -->
+    <div class="subsection" id="s2-2">
+      <h3><span class="dot"></span> 2.2 Technical Flow Diagram &ndash; Detailed (Step-by-Step)</h3>
+      <div class="diagram-box">
+<pre>
+  === Job 1: CLOSEFIL ===
+  STEP: CLCIFIL  EXEC PGM=SDSF
+    Via ISFIN DD instream:
+      /F CICSAWSA,'CEMT SET FIL(TRANSACT ) CLO'
+      /F CICSAWSA,'CEMT SET FIL(CCXREF   ) CLO'
+      /F CICSAWSA,'CEMT SET FIL(ACCTDAT  ) CLO'
+      /F CICSAWSA,'CEMT SET FIL(CXACAIX  ) CLO'
+      /F CICSAWSA,'CEMT SET FIL(USRSEC   ) CLO'
+
+  === Job 2: INTCALC ===
+  STEP15: EXEC PGM=CBACT04C,PARM='2022071800'
+    INPUTS:
+      - TCATBALF: AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS  (indexed seq read)
+      - XREFFILE: AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS  (keyed random read)
+      - XREFFIL1: AWS.M2.CARDDEMO.CARDXREF.VSAM.AIX.PATH (alt index)
+      - ACCTFILE: AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS  (keyed random I-O)
+      - DISCGRP:  AWS.M2.CARDDEMO.DISCGRP.VSAM.KSDS   (keyed random read)
+    OUTPUTS:
+      - TRANSACT: AWS.M2.CARDDEMO.SYSTRAN(+1)          (sequential output)
+
+    PROCESSING:
+      1. Open all 5 files (ABEND if any open fails)
+      2. READ TCATBAL-FILE sequentially until EOF
+         For each TRAN-CAT-BAL-RECORD:
+         a. Increment WS-RECORD-COUNT
+         b. If TRANCAT-ACCT-ID changed from previous:
+            - If not first record: PERFORM 1050-UPDATE-ACCOUNT
+              (ADD WS-TOTAL-INT to ACCT-CURR-BAL, reset CYC accums,
+               REWRITE account record)
+            - Reset WS-TOTAL-INT to 0
+            - Read Account Master by ACCT-ID (1100-GET-ACCT-DATA)
+            - Read XREF by alternate key ACCT-ID (1110-GET-XREF-DATA)
+         c. Build DISCGRP key from ACCT-GROUP-ID + TRANCAT-CD + TYPE-CD
+         d. PERFORM 1200-GET-INTEREST-RATE
+            - If status '23' (not found): retry with 'DEFAULT' group
+         e. If DIS-INT-RATE &ne; 0:
+            - PERFORM 1300-COMPUTE-INTEREST:
+              monthly_int = (TRAN-CAT-BAL * DIS-INT-RATE) / 1200
+              ADD to WS-TOTAL-INT
+              PERFORM 1300-B-WRITE-TX (write interest txn to SYSTRAN)
+            - PERFORM 1400-COMPUTE-FEES (stub &mdash; not implemented)
+      3. After EOF: PERFORM 1050-UPDATE-ACCOUNT for last account
+      4. Close all files
+      5. Display counts
+      6. GOBACK (RC=0)
+
+  === Job 3: COMBTRAN ===
+  STEP05R: EXEC PGM=SORT
+    SORTIN:  AWS.M2.CARDDEMO.TRANSACT.BKUP(0)
+             AWS.M2.CARDDEMO.SYSTRAN(0)
+    SYMNAMES: TRAN-ID,1,16,CH
+    SYSIN:    SORT FIELDS=(TRAN-ID,A)
+    SORTOUT:  AWS.M2.CARDDEMO.TRANSACT.COMBINED(+1)
+              (NEW,CATLG,DELETE), DCB=(*.SORTIN)
+
+  STEP10:  EXEC PGM=IDCAMS
+    REPRO INFILE(TRANSACT) OUTFILE(TRANVSAM)
+      TRANSACT: AWS.M2.CARDDEMO.TRANSACT.COMBINED(+1)
+      TRANVSAM: AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS
+
+  === Job 4: WAITSTEP ===
+  WAIT: EXEC PGM=COBSWAIT
+    SYSIN: 00003600  (36 seconds in centiseconds)
+
+  === Job 5: OPENFIL ===
+  STEP: OPCIFIL  EXEC PGM=SDSF
+    Via ISFIN DD instream:
+      /F CICSAWSA,'CEMT SET FIL(TRANSACT ) OPE'
+      /F CICSAWSA,'CEMT SET FIL(CCXREF   ) OPE'
+      /F CICSAWSA,'CEMT SET FIL(ACCTDAT  ) OPE'
+      /F CICSAWSA,'CEMT SET FIL(CXACAIX  ) OPE'
+      /F CICSAWSA,'CEMT SET FIL(USRSEC   ) OPE'
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.3 -->
+    <div class="subsection" id="s2-3">
+      <h3><span class="dot"></span> 2.3 Step Dependency and Condition Code Logic</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Job</th><th>Step</th><th>Program</th><th>Executes If</th><th>Condition Code Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>CLOSEFIL</td><td>CLCIFIL</td><td>SDSF</td><td>Always (first in chain)</td><td>0 = CEMT commands accepted</td></tr>
+            <tr><td>INTCALC</td><td>STEP15</td><td>CBACT04C</td><td>CLOSEFIL completed (Control-M condition)</td><td>0 = All interest computed and written successfully<br>999 = ABEND via CEE3ABD (file I/O failure)</td></tr>
+            <tr><td>COMBTRAN</td><td>STEP05R</td><td>SORT</td><td>INTCALC completed (Control-M condition)</td><td>0 = Sort successful<br>16 = Sort failure</td></tr>
+            <tr><td>COMBTRAN</td><td>STEP10</td><td>IDCAMS</td><td>STEP05R RC=0 (implicit)</td><td>0 = REPRO successful<br>4+ = Warnings or errors</td></tr>
+            <tr><td>WAITSTEP</td><td>WAIT</td><td>COBSWAIT</td><td>COMBTRAN completed (Control-M condition)</td><td>0 = Wait completed</td></tr>
+            <tr><td>OPENFIL</td><td>OPCIFIL</td><td>SDSF</td><td>WAITSTEP completed (Control-M condition)</td><td>0 = CEMT commands accepted</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 3 — JCL Job Stream Specification
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">3</span>
+    <h2>JCL Job Stream Specification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 3.1 -->
+    <div class="subsection" id="s3-1">
+      <h3><span class="dot"></span> 3.1 JCL Overview</h3>
+
+      <h4>CLOSEFIL.jcl</h4>
+<pre><code>//CLOSEFIL JOB 'Close files in CICS',CLASS=A,MSGCLASS=0,
+// NOTIFY=&amp;SYSUID
+//CLCIFIL EXEC PGM=SDSF
+//ISFOUT DD SYSOUT=*
+//CMDOUT DD SYSOUT=*
+//ISFIN  DD *
+ /F CICSAWSA,'CEMT SET FIL(TRANSACT ) CLO'
+ /F CICSAWSA,'CEMT SET FIL(CCXREF   ) CLO'
+ /F CICSAWSA,'CEMT SET FIL(ACCTDAT  ) CLO'
+ /F CICSAWSA,'CEMT SET FIL(CXACAIX  ) CLO'
+ /F CICSAWSA,'CEMT SET FIL(USRSEC   ) CLO'
+/*</code></pre>
+
+      <h4>INTCALC.jcl</h4>
+<pre><code>//INTCALC JOB 'INTEREST CALCULATOR',CLASS=A,MSGCLASS=0,
+//   NOTIFY=&amp;SYSUID
+//STEP15 EXEC PGM=CBACT04C,PARM='2022071800'
+//STEPLIB  DD DISP=SHR,DSN=AWS.M2.CARDDEMO.LOADLIB
+//SYSPRINT DD SYSOUT=*
+//SYSOUT   DD SYSOUT=*
+//TCATBALF DD DISP=SHR,DSN=AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS
+//XREFFILE DD DISP=SHR,DSN=AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS
+//XREFFIL1 DD DISP=SHR,DSN=AWS.M2.CARDDEMO.CARDXREF.VSAM.AIX.PATH
+//ACCTFILE DD DISP=SHR,DSN=AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS
+//DISCGRP  DD DISP=SHR,DSN=AWS.M2.CARDDEMO.DISCGRP.VSAM.KSDS
+//TRANSACT DD DISP=(NEW,CATLG,DELETE),UNIT=SYSDA,
+//         DCB=(RECFM=F,LRECL=350,BLKSIZE=0),
+//         SPACE=(CYL,(1,1),RLSE),
+//         DSN=AWS.M2.CARDDEMO.SYSTRAN(+1)</code></pre>
+
+      <h4>COMBTRAN.jcl</h4>
+<pre><code>//COMBTRAN JOB 'COMBINE TRANSACTIONS',CLASS=A,MSGCLASS=0,
+//  NOTIFY=&amp;SYSUID
+//STEP05R  EXEC PGM=SORT
+//SORTIN   DD DISP=SHR,DSN=AWS.M2.CARDDEMO.TRANSACT.BKUP(0)
+//         DD DISP=SHR,DSN=AWS.M2.CARDDEMO.SYSTRAN(0)
+//SYMNAMES DD *
+TRAN-ID,1,16,CH
+//SYSIN    DD *
+ SORT FIELDS=(TRAN-ID,A)
+/*
+//SYSOUT   DD SYSOUT=*
+//SORTOUT  DD DISP=(NEW,CATLG,DELETE),UNIT=SYSDA,
+//         DCB=(*.SORTIN),SPACE=(CYL,(1,1),RLSE),
+//         DSN=AWS.M2.CARDDEMO.TRANSACT.COMBINED(+1)
+//*
+//STEP10 EXEC PGM=IDCAMS
+//SYSPRINT DD SYSOUT=*
+//TRANSACT DD DISP=SHR,DSN=AWS.M2.CARDDEMO.TRANSACT.COMBINED(+1)
+//TRANVSAM DD DISP=SHR,DSN=AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS
+//SYSIN    DD *
+   REPRO INFILE(TRANSACT) OUTFILE(TRANVSAM)
+/*</code></pre>
+
+      <h4>WAITSTEP.jcl</h4>
+<pre><code>//WAITSTEP JOB 'WAIT STEP',CLASS=A,MSGCLASS=0,
+// NOTIFY=&amp;SYSUID
+//WAIT     EXEC PGM=COBSWAIT
+//STEPLIB  DD DSN=AWS.M2.CARDDEMO.LOADLIB,DISP=SHR
+//SYSOUT DD SYSOUT=*
+//SYSIN    DD *
+00003600      VALUE IN CENTISECONDS
+/*</code></pre>
+
+      <h4>OPENFIL.jcl</h4>
+<pre><code>//OPENFIL JOB 'Open files in CICS',CLASS=A,MSGCLASS=0,
+// NOTIFY=&amp;SYSUID
+//OPCIFIL EXEC PGM=SDSF
+//ISFOUT DD SYSOUT=*
+//CMDOUT DD SYSOUT=*
+//ISFIN  DD *
+ /F CICSAWSA,'CEMT SET FIL(TRANSACT ) OPE'
+ /F CICSAWSA,'CEMT SET FIL(CCXREF   ) OPE'
+ /F CICSAWSA,'CEMT SET FIL(ACCTDAT  ) OPE'
+ /F CICSAWSA,'CEMT SET FIL(CXACAIX  ) OPE'
+ /F CICSAWSA,'CEMT SET FIL(USRSEC   ) OPE'
+/*</code></pre>
+    </div>
+
+    <!-- 3.2 -->
+    <div class="subsection" id="s3-2">
+      <h3><span class="dot"></span> 3.2 DD Statement Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Job</th><th>Step</th><th>DD Name</th><th>Disposition</th><th>Dataset Name</th><th>Type</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>CLOSEFIL</td><td>CLCIFIL</td><td>ISFIN</td><td>Instream</td><td>&mdash;</td><td>Instream</td><td>CEMT close commands</td></tr>
+            <tr><td>CLOSEFIL</td><td>CLCIFIL</td><td>ISFOUT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>SDSF output</td></tr>
+            <tr><td>CLOSEFIL</td><td>CLCIFIL</td><td>CMDOUT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>Command output</td></tr>
+            <tr><td>INTCALC</td><td>STEP15</td><td>STEPLIB</td><td>SHR</td><td>AWS.M2.CARDDEMO.LOADLIB</td><td>PDS</td><td>Program load library</td></tr>
+            <tr><td>INTCALC</td><td>STEP15</td><td>TCATBALF</td><td>SHR</td><td>AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS</td><td>VSAM KSDS</td><td>Input: transaction category balances (sequential read)</td></tr>
+            <tr><td>INTCALC</td><td>STEP15</td><td>XREFFILE</td><td>SHR</td><td>AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</td><td>VSAM KSDS</td><td>Input: card cross-reference (random read by primary key)</td></tr>
+            <tr><td>INTCALC</td><td>STEP15</td><td>XREFFIL1</td><td>SHR</td><td>AWS.M2.CARDDEMO.CARDXREF.VSAM.AIX.PATH</td><td>VSAM AIX Path</td><td>Input: XREF alternate index path (read by ACCT-ID)</td></tr>
+            <tr><td>INTCALC</td><td>STEP15</td><td>ACCTFILE</td><td>SHR</td><td>AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS</td><td>VSAM KSDS</td><td>I-O: account master (read + rewrite balance)</td></tr>
+            <tr><td>INTCALC</td><td>STEP15</td><td>DISCGRP</td><td>SHR</td><td>AWS.M2.CARDDEMO.DISCGRP.VSAM.KSDS</td><td>VSAM KSDS</td><td>Input: disclosure group interest rates (random read)</td></tr>
+            <tr><td>INTCALC</td><td>STEP15</td><td>TRANSACT</td><td>(NEW,CATLG,DELETE)</td><td>AWS.M2.CARDDEMO.SYSTRAN(+1)</td><td>GDG / Sequential</td><td>Output: system-generated interest transactions</td></tr>
+            <tr><td>INTCALC</td><td>STEP15</td><td>SYSPRINT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>COBOL DISPLAY output</td></tr>
+            <tr><td>INTCALC</td><td>STEP15</td><td>SYSOUT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>System output</td></tr>
+            <tr><td>COMBTRAN</td><td>STEP05R</td><td>SORTIN (1)</td><td>SHR</td><td>AWS.M2.CARDDEMO.TRANSACT.BKUP(0)</td><td>GDG / Sequential</td><td>Input 1: daily transaction backup (latest generation)</td></tr>
+            <tr><td>COMBTRAN</td><td>STEP05R</td><td>SORTIN (2)</td><td>SHR</td><td>AWS.M2.CARDDEMO.SYSTRAN(0)</td><td>GDG / Sequential</td><td>Input 2: system-generated interest transactions</td></tr>
+            <tr><td>COMBTRAN</td><td>STEP05R</td><td>SORTOUT</td><td>(NEW,CATLG,DELETE)</td><td>AWS.M2.CARDDEMO.TRANSACT.COMBINED(+1)</td><td>GDG / Sequential</td><td>Output: sorted merged transactions</td></tr>
+            <tr><td>COMBTRAN</td><td>STEP10</td><td>TRANSACT</td><td>SHR</td><td>AWS.M2.CARDDEMO.TRANSACT.COMBINED(+1)</td><td>GDG / Sequential</td><td>Input: combined sorted file</td></tr>
+            <tr><td>COMBTRAN</td><td>STEP10</td><td>TRANVSAM</td><td>SHR</td><td>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</td><td>VSAM KSDS</td><td>Output: transaction master (REPRO target)</td></tr>
+            <tr><td>WAITSTEP</td><td>WAIT</td><td>STEPLIB</td><td>SHR</td><td>AWS.M2.CARDDEMO.LOADLIB</td><td>PDS</td><td>Program load library</td></tr>
+            <tr><td>WAITSTEP</td><td>WAIT</td><td>SYSIN</td><td>Instream</td><td>&mdash;</td><td>Instream</td><td>Wait duration (centiseconds)</td></tr>
+            <tr><td>OPENFIL</td><td>OPCIFIL</td><td>ISFIN</td><td>Instream</td><td>&mdash;</td><td>Instream</td><td>CEMT open commands</td></tr>
+            <tr><td>OPENFIL</td><td>OPCIFIL</td><td>ISFOUT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>SDSF output</td></tr>
+            <tr><td>OPENFIL</td><td>OPCIFIL</td><td>CMDOUT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>Command output</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.3 -->
+    <div class="subsection" id="s3-3">
+      <h3><span class="dot"></span> 3.3 GDG Usage</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>GDG Base</th><th>Generation</th><th>RECFM/LRECL</th><th>Retention</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>AWS.M2.CARDDEMO.SYSTRAN</code></td><td>+1 (new, created by INTCALC)</td><td>F / 350</td><td>Per GDG base definition</td><td>System-generated interest charge transactions output by CBACT04C</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.SYSTRAN</code></td><td>0 (current, read by COMBTRAN)</td><td>F / 350</td><td>&mdash;</td><td>Same generation, read as SORTIN input #2</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANSACT.BKUP</code></td><td>0 (current, read by COMBTRAN)</td><td>F / 350</td><td>Per GDG base definition</td><td>Most recent daily transaction backup, read as SORTIN input #1</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANSACT.COMBINED</code></td><td>+1 (new, created by COMBTRAN STEP05R, read by STEP10)</td><td>F / 350</td><td>Per GDG base definition</td><td>Intermediate: sorted merge of backup + interest transactions</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.4 -->
+    <div class="subsection" id="s3-4">
+      <h3><span class="dot"></span> 3.4 Scheduler Dependencies (Control-M)</h3>
+      <div class="callout">
+        <strong>Control-M Folder:</strong> <code>MONTHLY-InterestCalculation</code> (FOLDER_NAME in <code>app/scheduler/CardDemo.controlm</code>). All five jobs are defined within this folder with explicit INCOND/OUTCOND dependency chaining.
+      </div>
+      <div class="diagram-box">
+<pre>
+  Control-M: MONTHLY-InterestCalculation
+  ────────────────────────────────────────
+
+  CLOSEFIL ──(OUTCOND: MONTHLY-InterestCalculation-CLOSEFIL +)
+       │
+       ▼ (INCOND: MONTHLY-InterestCalculation-CLOSEFIL)
+  INTCALC  ──(OUTCOND: MONTHLY-InterestCalculation-INTCALC +)
+       │
+       ▼ (INCOND: MONTHLY-InterestCalculation-INTCALC)
+  COMBTRAN ──(OUTCOND: MONTHLY-InterestCalculation-COMBTRAN +)
+       │
+       ▼ (INCOND: MONTHLY-InterestCalculation-COMBTRAN)
+  WAITSTEP ──(OUTCOND: MONTHLY-InterestCalculation-WAITSTEP +)
+       │
+       ▼ (INCOND: MONTHLY-InterestCalculation-WAITSTEP)
+  OPENFIL
+
+  Schedule: Monthly (all months enabled), MAXRERUN=5, MAXWAIT=7 days
+  Application: CARD-DEMO / Sub-Application: CTRLM
+</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 4 — Program Inventory and Call Chain
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">4</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 4.1 -->
+    <div class="subsection" id="s4-1">
+      <h3><span class="dot"></span> 4.1 Program Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Program ID</th><th>Job / Step</th><th>Purpose</th><th>Language</th><th>LOC</th><th>Source Location</th></tr></thead>
+          <tbody>
+            <tr><td><code>SDSF</code></td><td>CLOSEFIL / CLCIFIL</td><td>Issue CEMT SET FIL CLO commands to CICS region</td><td>System</td><td>&mdash;</td><td>z/OS system utility</td></tr>
+            <tr><td><code>CBACT04C</code></td><td>INTCALC / STEP15</td><td>Main interest calculator &mdash; reads TCATBALF, computes interest, writes SYSTRAN, updates account balances</td><td>COBOL</td><td>652</td><td><code>app/cbl/CBACT04C.cbl</code></td></tr>
+            <tr><td><code>CEE3ABD</code></td><td>INTCALC / STEP15 (called)</td><td>LE abend service &mdash; invoked on fatal I/O errors</td><td>System</td><td>&mdash;</td><td>Language Environment runtime</td></tr>
+            <tr><td><code>SORT</code></td><td>COMBTRAN / STEP05R</td><td>Sort-merge two input files by TRAN-ID ascending</td><td>System</td><td>&mdash;</td><td>z/OS DFSORT or SyncSort utility</td></tr>
+            <tr><td><code>IDCAMS</code></td><td>COMBTRAN / STEP10</td><td>REPRO sorted sequential file into TRANSACT VSAM KSDS</td><td>System</td><td>&mdash;</td><td>z/OS Access Method Services</td></tr>
+            <tr><td><code>COBSWAIT</code></td><td>WAITSTEP / WAIT</td><td>Utility wait program &mdash; pauses for specified centiseconds</td><td>COBOL</td><td>41</td><td><code>app/cbl/COBSWAIT.cbl</code></td></tr>
+            <tr><td><code>MVSWAIT</code></td><td>WAITSTEP (called by COBSWAIT)</td><td>System wait service (STIMER equivalent)</td><td>System</td><td>&mdash;</td><td>System library</td></tr>
+            <tr><td><code>SDSF</code></td><td>OPENFIL / OPCIFIL</td><td>Issue CEMT SET FIL OPE commands to CICS region</td><td>System</td><td>&mdash;</td><td>z/OS system utility</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4.2 -->
+    <div class="subsection" id="s4-2">
+      <h3><span class="dot"></span> 4.2 Paragraph Call Hierarchy (CBACT04C)</h3>
+      <div class="diagram-box">
+<pre>
+CBACT04C (PROCEDURE DIVISION USING EXTERNAL-PARMS)
+│
+├── 0000-TCATBALF-OPEN      (Open TCATBAL-FILE INPUT)
+├── 0100-XREFFILE-OPEN      (Open XREF-FILE INPUT)
+├── 0200-DISCGRP-OPEN       (Open DISCGRP-FILE INPUT)
+├── 0300-ACCTFILE-OPEN       (Open ACCOUNT-FILE I-O)
+├── 0400-TRANFILE-OPEN       (Open TRANSACT-FILE OUTPUT)
+│
+├── [MAIN LOOP: PERFORM UNTIL END-OF-FILE = 'Y']
+│   ├── 1000-TCATBALF-GET-NEXT  (Read next TRAN-CAT-BAL record)
+│   │
+│   ├── [IF new account (TRANCAT-ACCT-ID changed)]
+│   │   ├── 1050-UPDATE-ACCOUNT   (Add total interest to ACCT-CURR-BAL,
+│   │   │                          reset CYC accumulators, REWRITE)
+│   │   ├── 1100-GET-ACCT-DATA    (Read ACCOUNT-FILE by ACCT-ID)
+│   │   └── 1110-GET-XREF-DATA   (Read XREF-FILE by alt key ACCT-ID)
+│   │
+│   ├── 1200-GET-INTEREST-RATE   (Read DISCGRP-FILE by composite key)
+│   │   └── 1200-A-GET-DEFAULT-INT-RATE  (Fallback: 'DEFAULT' group)
+│   │
+│   ├── [IF DIS-INT-RATE &ne; 0]
+│   │   ├── 1300-COMPUTE-INTEREST
+│   │   │   └── 1300-B-WRITE-TX   (Build &amp; WRITE interest txn to SYSTRAN)
+│   │   │       └── Z-GET-DB2-FORMAT-TIMESTAMP
+│   │   └── 1400-COMPUTE-FEES     (Stub &mdash; not implemented)
+│   │
+│   └── [AT EOF: 1050-UPDATE-ACCOUNT for last account]
+│
+├── 9000-TCATBALF-CLOSE      (Close TCATBAL-FILE)
+├── 9100-XREFFILE-CLOSE      (Close XREF-FILE)
+├── 9200-DISCGRP-CLOSE       (Close DISCGRP-FILE)
+├── 9300-ACCTFILE-CLOSE      (Close ACCOUNT-FILE)
+├── 9400-TRANFILE-CLOSE      (Close TRANSACT-FILE)
+│
+├── 9910-DISPLAY-IO-STATUS   (Format &amp; display VSAM file status)
+└── 9999-ABEND-PROGRAM       (CALL CEE3ABD with ABCODE=999, TIMING=0)
+</pre>
+      </div>
+
+      <h4>Call Hierarchy (COBSWAIT)</h4>
+      <div class="diagram-box">
+<pre>
+COBSWAIT (PROCEDURE DIVISION)
+│
+├── ACCEPT PARM-VALUE FROM SYSIN
+├── MOVE PARM-VALUE TO MVSWAIT-TIME
+└── CALL 'MVSWAIT' USING MVSWAIT-TIME
+</pre>
+      </div>
+    </div>
+
+    <!-- 4.3 -->
+    <div class="subsection" id="s4-3">
+      <h3><span class="dot"></span> 4.3 Copybooks Used</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Copybook</th><th>Record</th><th>LRECL</th><th>Key Fields</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>CVTRA01Y</code></td><td>TRAN-CAT-BAL-RECORD</td><td>50</td><td>TRAN-CAT-KEY: TRANCAT-ACCT-ID (9(11)) + TRANCAT-TYPE-CD (X(2)) + TRANCAT-CD (9(4))</td><td>Transaction category balance &mdash; primary input for interest calc</td></tr>
+            <tr><td><code>CVACT03Y</code></td><td>CARD-XREF-RECORD</td><td>50</td><td>XREF-CARD-NUM (X(16)), alt: XREF-ACCT-ID (9(11))</td><td>Card cross-reference &mdash; maps accounts to card numbers</td></tr>
+            <tr><td><code>CVTRA02Y</code></td><td>DIS-GROUP-RECORD</td><td>50</td><td>DIS-GROUP-KEY: DIS-ACCT-GROUP-ID (X(10)) + DIS-TRAN-TYPE-CD (X(2)) + DIS-TRAN-CAT-CD (9(4))</td><td>Disclosure group &mdash; provides interest rates</td></tr>
+            <tr><td><code>CVACT01Y</code></td><td>ACCOUNT-RECORD</td><td>300</td><td>ACCT-ID (9(11))</td><td>Account master &mdash; balances, group IDs, cycle accumulators</td></tr>
+            <tr><td><code>CVTRA05Y</code></td><td>TRAN-RECORD</td><td>350</td><td>TRAN-ID (X(16))</td><td>Transaction record &mdash; layout for generated interest transactions</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 5 — File and Dataset Inventory
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">5</span>
+    <h2>File and Dataset Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 5.1 -->
+    <div class="subsection" id="s5-1">
+      <h3><span class="dot"></span> 5.1 Complete File Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File/Dataset</th><th>Type</th><th>Access</th><th>LRECL</th><th>Key</th><th>Purpose in Flow</th></tr></thead>
+          <tbody>
+            <tr><td><code>AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>INPUT (seq)</td><td>50</td><td>TRAN-CAT-KEY (17 bytes, offset 0)</td><td>Primary input: category balance records driving interest calc</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>INPUT (random)</td><td>50</td><td>XREF-CARD-NUM (16 bytes, offset 0)</td><td>Card cross-reference: provides card number for generated txns</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.CARDXREF.VSAM.AIX.PATH</code></td><td>VSAM AIX Path</td><td>INPUT (random)</td><td>50</td><td>XREF-ACCT-ID (11 bytes)</td><td>Alternate index path: lookup XREF by account ID</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>I-O (random)</td><td>300</td><td>ACCT-ID (11 bytes, offset 0)</td><td>Account master: read for group-ID and balance; rewrite with interest</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.DISCGRP.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>INPUT (random)</td><td>50</td><td>DIS-GROUP-KEY (16 bytes, offset 0)</td><td>Disclosure group: interest rates by group/type/category</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.SYSTRAN(+1)</code></td><td>GDG / Sequential</td><td>OUTPUT</td><td>350</td><td>&mdash;</td><td>System-generated interest transactions (output of INTCALC)</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANSACT.BKUP(0)</code></td><td>GDG / Sequential</td><td>INPUT</td><td>350</td><td>&mdash;</td><td>Daily transaction backup (input to COMBTRAN SORT)</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANSACT.COMBINED(+1)</code></td><td>GDG / Sequential</td><td>OUTPUT/INPUT</td><td>350</td><td>&mdash;</td><td>Intermediate: sorted merge output, then REPRO input</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>OUTPUT (REPRO)</td><td>350</td><td>TRAN-ID (16 bytes, offset 0)</td><td>Transaction master: final destination of merged transactions</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.2 -->
+    <div class="subsection" id="s5-2">
+      <h3><span class="dot"></span> 5.2 Key Record Layouts</h3>
+
+      <h4>TRAN-CAT-BAL-RECORD (Copybook: CVTRA01Y, 50 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Offset</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>TRANCAT-ACCT-ID</td><td>9(11)</td><td>1</td><td>11</td><td>Account identifier (part of composite key)</td></tr>
+            <tr><td>TRANCAT-TYPE-CD</td><td>X(02)</td><td>12</td><td>2</td><td>Transaction type code</td></tr>
+            <tr><td>TRANCAT-CD</td><td>9(04)</td><td>14</td><td>4</td><td>Transaction category code</td></tr>
+            <tr><td>TRAN-CAT-BAL</td><td>S9(09)V99</td><td>18</td><td>11</td><td>Running balance for this category (basis for interest calc)</td></tr>
+            <tr><td>FILLER</td><td>X(22)</td><td>29</td><td>22</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>DIS-GROUP-RECORD (Copybook: CVTRA02Y, 50 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Offset</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>DIS-ACCT-GROUP-ID</td><td>X(10)</td><td>1</td><td>10</td><td>Account group identifier</td></tr>
+            <tr><td>DIS-TRAN-TYPE-CD</td><td>X(02)</td><td>11</td><td>2</td><td>Transaction type code</td></tr>
+            <tr><td>DIS-TRAN-CAT-CD</td><td>9(04)</td><td>13</td><td>4</td><td>Transaction category code</td></tr>
+            <tr><td>DIS-INT-RATE</td><td>S9(04)V99</td><td>17</td><td>6</td><td>Annual interest rate (divided by 1200 for monthly)</td></tr>
+            <tr><td>FILLER</td><td>X(28)</td><td>23</td><td>28</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>ACCOUNT-RECORD (Copybook: CVACT01Y, 300 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>ACCT-ID</td><td>9(11)</td><td>11</td><td>Account identifier (key)</td></tr>
+            <tr><td>ACCT-ACTIVE-STATUS</td><td>X(01)</td><td>1</td><td>Active status flag</td></tr>
+            <tr><td>ACCT-CURR-BAL</td><td>S9(10)V99</td><td>12</td><td>Current balance (updated with total interest)</td></tr>
+            <tr><td>ACCT-CREDIT-LIMIT</td><td>S9(10)V99</td><td>12</td><td>Credit limit</td></tr>
+            <tr><td>ACCT-CASH-CREDIT-LIMIT</td><td>S9(10)V99</td><td>12</td><td>Cash credit limit</td></tr>
+            <tr><td>ACCT-OPEN-DATE</td><td>X(10)</td><td>10</td><td>Account open date</td></tr>
+            <tr><td>ACCT-EXPIRAION-DATE</td><td>X(10)</td><td>10</td><td>Account expiration date (note: typo in copybook)</td></tr>
+            <tr><td>ACCT-REISSUE-DATE</td><td>X(10)</td><td>10</td><td>Reissue date</td></tr>
+            <tr><td>ACCT-CURR-CYC-CREDIT</td><td>S9(10)V99</td><td>12</td><td>Current cycle credit total (reset to 0 by this job)</td></tr>
+            <tr><td>ACCT-CURR-CYC-DEBIT</td><td>S9(10)V99</td><td>12</td><td>Current cycle debit total (reset to 0 by this job)</td></tr>
+            <tr><td>ACCT-ADDR-ZIP</td><td>X(10)</td><td>10</td><td>Account zip code</td></tr>
+            <tr><td>ACCT-GROUP-ID</td><td>X(10)</td><td>10</td><td>Account group (used for DISCGRP lookup key)</td></tr>
+            <tr><td>FILLER</td><td>X(178)</td><td>178</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>TRAN-RECORD (Copybook: CVTRA05Y, 350 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Offset</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>TRAN-ID</td><td>X(16)</td><td>1</td><td>16</td><td>Transaction ID (PARM-DATE + sequence suffix)</td></tr>
+            <tr><td>TRAN-TYPE-CD</td><td>X(02)</td><td>17</td><td>2</td><td>Transaction type (&lsquo;01&rsquo; for interest)</td></tr>
+            <tr><td>TRAN-CAT-CD</td><td>9(04)</td><td>19</td><td>4</td><td>Transaction category (&lsquo;05&rsquo; for interest)</td></tr>
+            <tr><td>TRAN-SOURCE</td><td>X(10)</td><td>23</td><td>10</td><td>Source (&lsquo;System&rsquo; for generated txns)</td></tr>
+            <tr><td>TRAN-DESC</td><td>X(100)</td><td>33</td><td>100</td><td>Description (&lsquo;Int. for a/c NNNNNNNNNNN&rsquo;)</td></tr>
+            <tr><td>TRAN-AMT</td><td>S9(09)V99</td><td>133</td><td>11</td><td>Interest amount (WS-MONTHLY-INT)</td></tr>
+            <tr><td>TRAN-MERCHANT-ID</td><td>9(09)</td><td>144</td><td>9</td><td>Merchant ID (0 for system txns)</td></tr>
+            <tr><td>TRAN-MERCHANT-NAME</td><td>X(50)</td><td>153</td><td>50</td><td>Merchant name (SPACES for system txns)</td></tr>
+            <tr><td>TRAN-MERCHANT-CITY</td><td>X(50)</td><td>203</td><td>50</td><td>Merchant city (SPACES for system txns)</td></tr>
+            <tr><td>TRAN-MERCHANT-ZIP</td><td>X(10)</td><td>253</td><td>10</td><td>Merchant zip (SPACES for system txns)</td></tr>
+            <tr><td>TRAN-CARD-NUM</td><td>X(16)</td><td>263</td><td>16</td><td>Card number (from XREF lookup)</td></tr>
+            <tr><td>TRAN-ORIG-TS</td><td>X(26)</td><td>279</td><td>26</td><td>Origination timestamp (DB2 format)</td></tr>
+            <tr><td>TRAN-PROC-TS</td><td>X(26)</td><td>305</td><td>26</td><td>Processing timestamp (DB2 format)</td></tr>
+            <tr><td>FILLER</td><td>X(20)</td><td>331</td><td>20</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>CARD-XREF-RECORD (Copybook: CVACT03Y, 50 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>XREF-CARD-NUM</td><td>X(16)</td><td>16</td><td>Card number (primary key)</td></tr>
+            <tr><td>XREF-CUST-ID</td><td>9(09)</td><td>9</td><td>Customer identifier</td></tr>
+            <tr><td>XREF-ACCT-ID</td><td>9(11)</td><td>11</td><td>Account identifier (alternate key)</td></tr>
+            <tr><td>FILLER</td><td>X(14)</td><td>14</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.3 -->
+    <div class="subsection" id="s5-3">
+      <h3><span class="dot"></span> 5.3 File Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+  │  TCATBALF VSAM   │  │ DISCGRP VSAM     │  │ ACCTDATA VSAM    │
+  │  (KSDS, key=17)  │  │ (KSDS, key=16)   │  │ (KSDS, key=11)   │
+  │  LRECL=50        │  │ LRECL=50         │  │ LRECL=300        │
+  └────────┬─────────┘  └────────┬─────────┘  └────────┬─────────┘
+           │ READ seq            │ READ random          │ READ +
+           │                     │ by group key         │ REWRITE
+           ▼                     ▼                      ▼
+  ┌─────────────────────────────────────────────────────────────────┐
+  │  INTCALC STEP15: CBACT04C                                       │
+  │                                                                 │
+  │  For each TCATBAL record:                                       │
+  │    1. If new account: update prev acct bal, read new acct       │
+  │    2. Lookup DISCGRP for interest rate                          │
+  │    3. If rate &ne; 0: compute interest, write txn                 │
+  └────────┬──────────────────────┬─────────────────────────────────┘
+           │ WRITE                │ REWRITE
+           ▼                     ▼
+  ┌──────────────────┐    ┌──────────────────┐
+  │ SYSTRAN GDG(+1)  │    │ ACCTDATA VSAM    │
+  │ LRECL=350        │    │ (updated balance) │
+  └────────┬─────────┘    └──────────────────┘
+           │
+           ▼
+  ┌──────────────────┐    ┌──────────────────┐
+  │ SYSTRAN(0)       │    │ TRANSACT.BKUP(0) │
+  │ (interest txns)  │    │ (daily backup)   │
+  └────────┬─────────┘    └────────┬─────────┘
+           │                       │
+           └───────────┬───────────┘
+                       ▼
+  ┌─────────────────────────────────────────────────────────────────┐
+  │  COMBTRAN STEP05R: SORT (TRAN-ID ascending)                     │
+  └────────┬────────────────────────────────────────────────────────┘
+           │
+           ▼
+  ┌──────────────────────┐
+  │ TRANSACT.COMBINED(+1)│
+  │ (sorted merge)       │
+  └────────┬─────────────┘
+           │ REPRO
+           ▼
+  ┌──────────────────────┐
+  │ TRANSACT.VSAM.KSDS   │
+  │ (reloaded master)    │
+  └──────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 5.4 -->
+    <div class="subsection" id="s5-4">
+      <h3><span class="dot"></span> 5.4 File Dependency Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>Created In</th><th>Read In</th><th>Updated In</th><th>Must Exist Before Job?</th><th>Consumed Downstream?</th></tr></thead>
+          <tbody>
+            <tr><td>TCATBALF VSAM</td><td>POSTTRAN (daily posting)</td><td>INTCALC STEP15</td><td>&mdash;</td><td>Yes (must have balance records)</td><td>Yes &mdash; read here for interest calc</td></tr>
+            <tr><td>CARDXREF VSAM</td><td>XREFFILE job</td><td>INTCALC STEP15</td><td>&mdash;</td><td>Yes</td><td>Yes &mdash; CICS, POSTTRAN, CREASTMT</td></tr>
+            <tr><td>CARDXREF AIX Path</td><td>XREFFILE job (AIX define)</td><td>INTCALC STEP15</td><td>&mdash;</td><td>Yes (AIX must be built)</td><td>Yes</td></tr>
+            <tr><td>ACCTDATA VSAM</td><td>ACCTFILE job</td><td>INTCALC STEP15</td><td>INTCALC STEP15</td><td>Yes</td><td>Yes &mdash; CICS, POSTTRAN, CREASTMT</td></tr>
+            <tr><td>DISCGRP VSAM</td><td>DISCGRP refresh job</td><td>INTCALC STEP15</td><td>&mdash;</td><td>Yes (must have rate records)</td><td>Yes &mdash; CICS online</td></tr>
+            <tr><td>SYSTRAN GDG</td><td>INTCALC STEP15</td><td>COMBTRAN STEP05R</td><td>&mdash;</td><td>GDG base must exist</td><td>Yes &mdash; consumed by COMBTRAN</td></tr>
+            <tr><td>TRANSACT.BKUP GDG</td><td>TRANBKP (daily backup)</td><td>COMBTRAN STEP05R</td><td>&mdash;</td><td>Yes (latest generation)</td><td>Yes &mdash; consumed by COMBTRAN</td></tr>
+            <tr><td>TRANSACT.COMBINED GDG</td><td>COMBTRAN STEP05R</td><td>COMBTRAN STEP10</td><td>&mdash;</td><td>GDG base must exist</td><td>Intermediate only</td></tr>
+            <tr><td>TRANSACT VSAM</td><td>COMBTRAN STEP10 (REPRO)</td><td>&mdash;</td><td>&mdash;</td><td>Yes (VSAM cluster defined)</td><td>Yes &mdash; CICS, TRANREPT, CREASTMT</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 6 — Data Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">6</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 6.1 -->
+    <div class="subsection" id="s6-1">
+      <h3><span class="dot"></span> 6.1 Data Transformation Map</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Source Field</th><th>Source File</th><th>Transformation</th><th>Target Field</th><th>Target File</th></tr></thead>
+          <tbody>
+            <tr><td>TRAN-CAT-BAL</td><td>TCATBALF VSAM</td><td>COMPUTE: (TRAN-CAT-BAL &times; DIS-INT-RATE) / 1200 = WS-MONTHLY-INT</td><td>TRAN-AMT</td><td>SYSTRAN GDG</td></tr>
+            <tr><td>DIS-INT-RATE</td><td>DISCGRP VSAM</td><td>Divisor in interest formula</td><td>(used in computation)</td><td>&mdash;</td></tr>
+            <tr><td>PARM-DATE + WS-TRANID-SUFFIX</td><td>JCL PARM + Counter</td><td>STRING concatenation</td><td>TRAN-ID</td><td>SYSTRAN GDG</td></tr>
+            <tr><td>&lsquo;01&rsquo; (literal)</td><td>Hardcoded</td><td>Direct MOVE</td><td>TRAN-TYPE-CD</td><td>SYSTRAN GDG</td></tr>
+            <tr><td>&lsquo;05&rsquo; (literal)</td><td>Hardcoded</td><td>Direct MOVE</td><td>TRAN-CAT-CD</td><td>SYSTRAN GDG</td></tr>
+            <tr><td>&lsquo;System&rsquo; (literal)</td><td>Hardcoded</td><td>Direct MOVE</td><td>TRAN-SOURCE</td><td>SYSTRAN GDG</td></tr>
+            <tr><td>ACCT-ID</td><td>ACCTDATA VSAM</td><td>STRING &lsquo;Int. for a/c &rsquo; + ACCT-ID</td><td>TRAN-DESC</td><td>SYSTRAN GDG</td></tr>
+            <tr><td>XREF-CARD-NUM</td><td>CARDXREF VSAM</td><td>Direct MOVE</td><td>TRAN-CARD-NUM</td><td>SYSTRAN GDG</td></tr>
+            <tr><td>CURRENT-DATE</td><td>System (FUNCTION)</td><td>Formatted to DB2 timestamp (YYYY-MM-DD-HH.MM.SS.HH0000)</td><td>TRAN-ORIG-TS, TRAN-PROC-TS</td><td>SYSTRAN GDG</td></tr>
+            <tr><td>WS-TOTAL-INT (accumulated)</td><td>Computed per account</td><td>ADD to ACCT-CURR-BAL</td><td>ACCT-CURR-BAL</td><td>ACCTDATA VSAM</td></tr>
+            <tr><td>0 (literal)</td><td>Hardcoded</td><td>MOVE 0</td><td>ACCT-CURR-CYC-CREDIT, ACCT-CURR-CYC-DEBIT</td><td>ACCTDATA VSAM</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 6.2 -->
+    <div class="subsection" id="s6-2">
+      <h3><span class="dot"></span> 6.2 Data Lineage Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  TCATBALF VSAM (source: POSTTRAN daily posting)
+       │
+       │ TRAN-CAT-BAL (balance), TRANCAT-ACCT-ID, TYPE-CD, CAT-CD
+       ▼
+  CBACT04C ──▶ Lookup ACCTDATA by ACCT-ID
+       │           └── ACCT-GROUP-ID (for DISCGRP key)
+       │           └── ACCT-CURR-BAL (target for interest update)
+       │
+       ├──▶ Lookup DISCGRP by GROUP-ID + TYPE-CD + CAT-CD
+       │           └── DIS-INT-RATE (annual interest rate)
+       │
+       ├──▶ Lookup CARDXREF by ACCT-ID (alt key)
+       │           └── XREF-CARD-NUM (for generated txn)
+       │
+       ▼ (if rate &ne; 0)
+  ┌─────────────────────────────────────────────┐
+  │ 1300-COMPUTE-INTEREST                       │
+  │                                             │
+  │ WS-MONTHLY-INT = (TRAN-CAT-BAL * RATE)/1200│
+  │ WS-TOTAL-INT += WS-MONTHLY-INT              │
+  │                                             │
+  │ Build TRAN-RECORD:                          │
+  │   TRAN-ID = PARM-DATE + sequence#           │
+  │   TRAN-AMT = WS-MONTHLY-INT                 │
+  │   TRAN-CARD-NUM = XREF-CARD-NUM             │
+  │   TRAN-*-TS = CURRENT-DATE (DB2 format)     │
+  └──────────┬──────────────────────────────────┘
+             │
+  ┌──────────┴──────────┐
+  │  SYSTRAN GDG(+1)    │ WRITE interest txn
+  └─────────────────────┘
+
+  On account change:
+  ┌─────────────────────────────────────────────┐
+  │ 1050-UPDATE-ACCOUNT                         │
+  │  ADD WS-TOTAL-INT TO ACCT-CURR-BAL          │
+  │  MOVE 0 TO ACCT-CURR-CYC-CREDIT            │
+  │  MOVE 0 TO ACCT-CURR-CYC-DEBIT             │
+  │  REWRITE ACCTDATA                           │
+  └─────────────────────────────────────────────┘
+
+  COMBTRAN:
+  TRANSACT.BKUP(0) + SYSTRAN(0) ──SORT──▶ COMBINED(+1) ──REPRO──▶ TRANSACT.VSAM
+</pre>
+      </div>
+    </div>
+
+    <!-- 6.3 -->
+    <div class="subsection" id="s6-3">
+      <h3><span class="dot"></span> 6.3 Control Totals and Reconciliation</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Control Point</th><th>What&rsquo;s Counted</th><th>Where Stored</th><th>Reconciled Against</th></tr></thead>
+          <tbody>
+            <tr><td>WS-RECORD-COUNT</td><td>Total TCATBAL records read</td><td>SYSPRINT (DISPLAY, implied)</td><td>TCATBALF record count (IDCAMS LISTCAT)</td></tr>
+            <tr><td>WS-TRANID-SUFFIX</td><td>Total interest transactions written</td><td>Counter (implicit)</td><td>SYSTRAN GDG record count</td></tr>
+            <tr><td>SORT record counts</td><td>SORTIN records in, SORTOUT records out</td><td>SORT SYSOUT</td><td>TRANSACT.BKUP(0) + SYSTRAN(0) = COMBINED(+1)</td></tr>
+            <tr><td>IDCAMS REPRO count</td><td>Records REPRO&rsquo;d to VSAM</td><td>IDCAMS SYSPRINT</td><td>COMBINED(+1) record count = TRANSACT.VSAM records</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 7 — Sort/Merge and Utility Processing
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">7</span>
+    <h2>Sort/Merge and Utility Processing</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s7-1">
+      <h3><span class="dot"></span> 7.1 SORT Specification (COMBTRAN STEP05R)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Attribute</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Program</strong></td><td>SORT (DFSORT / SyncSort)</td></tr>
+            <tr><td><strong>SORTIN</strong></td><td>Concatenation: AWS.M2.CARDDEMO.TRANSACT.BKUP(0) + AWS.M2.CARDDEMO.SYSTRAN(0)</td></tr>
+            <tr><td><strong>SORTOUT</strong></td><td>AWS.M2.CARDDEMO.TRANSACT.COMBINED(+1)</td></tr>
+            <tr><td><strong>SYMNAMES</strong></td><td>TRAN-ID,1,16,CH (symbolic name for sort key)</td></tr>
+            <tr><td><strong>Sort Key</strong></td><td>TRAN-ID: position 1, length 16, type CHARACTER, ascending</td></tr>
+            <tr><td><strong>Record Format</strong></td><td>DCB=(*.SORTIN) &mdash; inherits from first SORTIN DD (F/350)</td></tr>
+            <tr><td><strong>Space</strong></td><td>CYL,(1,1),RLSE</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s7-2">
+      <h3><span class="dot"></span> 7.2 IDCAMS REPRO (COMBTRAN STEP10)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Attribute</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Program</strong></td><td>IDCAMS (Access Method Services)</td></tr>
+            <tr><td><strong>Command</strong></td><td><code>REPRO INFILE(TRANSACT) OUTFILE(TRANVSAM)</code></td></tr>
+            <tr><td><strong>INFILE</strong></td><td>AWS.M2.CARDDEMO.TRANSACT.COMBINED(+1) (sorted sequential)</td></tr>
+            <tr><td><strong>OUTFILE</strong></td><td>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS (VSAM KSDS)</td></tr>
+            <tr><td><strong>Purpose</strong></td><td>Load the sorted merged transactions into the VSAM transaction master</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>Note:</strong> The REPRO assumes the TRANSACT VSAM is empty (or that the input keys do not conflict). If duplicate keys exist, IDCAMS will return RC=12 with a &ldquo;DUPLICATE RECORD&rdquo; message.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 8 — Checkpoint, Restart, and Recovery
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">8</span>
+    <h2>Checkpoint, Restart, and Recovery</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s8-1">
+      <h3><span class="dot"></span> 8.1 Checkpoint Strategy</h3>
+      <div class="callout callout-red">
+        <strong>Warning:</strong> CBACT04C does <em>not</em> implement application-level checkpointing. There is no commit point or restart token. In the event of an abend mid-processing, the ACCTDATA VSAM will contain partially updated balances (some accounts with interest posted, others not), and the SYSTRAN GDG will be incomplete.
+      </div>
+    </div>
+
+    <div class="subsection" id="s8-2">
+      <h3><span class="dot"></span> 8.2 Restart Procedures</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Failure Scenario</th><th>Restart Point</th><th>Prerequisites</th><th>Data Reset Required</th></tr></thead>
+          <tbody>
+            <tr><td>CLOSEFIL failure (CICS files not closed)</td><td>CLOSEFIL (resubmit)</td><td>Verify CICS region is running; check SDSF output for error</td><td>None</td></tr>
+            <tr><td>INTCALC ABEND (mid-processing)</td><td>INTCALC (resubmit entire INTCALC)</td><td>1. Restore ACCTDATA from pre-job backup (IDCAMS REPRO)<br>2. Delete partial SYSTRAN(+1) if created<br>3. Fix root cause</td><td>Yes &mdash; restore ACCTDATA VSAM</td></tr>
+            <tr><td>COMBTRAN SORT failure</td><td>COMBTRAN (resubmit)</td><td>Verify SYSTRAN(0) and TRANSACT.BKUP(0) are available<br>Delete partial COMBINED(+1)</td><td>Delete partial output only</td></tr>
+            <tr><td>COMBTRAN REPRO failure</td><td>COMBTRAN STEP10 (restart from STEP10)</td><td>Verify COMBINED(+1) is complete; reset TRANSACT VSAM (DELETE/DEFINE)</td><td>Yes &mdash; reset TRANSACT VSAM</td></tr>
+            <tr><td>WAITSTEP failure</td><td>WAITSTEP (resubmit)</td><td>None</td><td>None</td></tr>
+            <tr><td>OPENFIL failure</td><td>OPENFIL (resubmit)</td><td>Verify CICS region is running</td><td>None</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s8-3">
+      <h3><span class="dot"></span> 8.3 Recovery Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  Normal:  CLOSEFIL → INTCALC → COMBTRAN → WAITSTEP → OPENFIL → Done
+
+  Failure at INTCALC (mid-processing):
+    1. Identify abend cause (SYSPRINT, SYSUDUMP)
+    2. ACCTDATA VSAM partially updated (some accounts have interest)
+       ├── Restore ACCTDATA from pre-monthly backup (IDCAMS REPRO)
+       └── Delete partial SYSTRAN(+1) GDG generation
+    3. Fix root cause
+    4. Restart from INTCALC
+
+  Failure at COMBTRAN STEP05R (SORT):
+    1. Check SORT SYSOUT for error details
+    2. Delete partial COMBINED(+1)
+    3. Verify SYSTRAN(0) and TRANSACT.BKUP(0) are intact
+    4. Restart from COMBTRAN
+
+  Failure at COMBTRAN STEP10 (REPRO):
+    1. Check IDCAMS SYSPRINT for error
+    2. TRANSACT VSAM may be partially loaded
+       └── DELETE/DEFINE TRANSACT VSAM cluster
+    3. Restart from STEP10 (or resubmit COMBTRAN)
+</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 9 — Error Handling and Abend Resolution
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">9</span>
+    <h2>Error Handling and Abend Resolution</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 9.1 -->
+    <div class="subsection" id="s9-1">
+      <h3><span class="dot"></span> 9.1 Error Flow Diagram (CBACT04C)</h3>
+      <div class="diagram-box">
+<pre>
+  File I/O Errors (fatal, ABEND immediately):
+  ──────────────────────────────────────────────
+    TCATBALF OPEN failure    → DISPLAY 'ERROR OPENING TRANSACTION CATEGORY BALANCE'
+                             → 9910-DISPLAY-IO-STATUS → 9999-ABEND-PROGRAM
+    XREFFILE OPEN failure    → DISPLAY 'ERROR OPENING CROSS REF FILE'
+                             → 9910-DISPLAY-IO-STATUS → 9999-ABEND-PROGRAM
+    DISCGRP  OPEN failure    → DISPLAY 'ERROR OPENING DALY REJECTS FILE' (misleading msg)
+                             → 9910-DISPLAY-IO-STATUS → 9999-ABEND-PROGRAM
+    ACCTFILE OPEN failure    → DISPLAY 'ERROR OPENING ACCOUNT MASTER FILE'
+                             → 9910-DISPLAY-IO-STATUS → 9999-ABEND-PROGRAM
+    TRANSACT OPEN failure    → DISPLAY 'ERROR OPENING TRANSACTION FILE'
+                             → 9910-DISPLAY-IO-STATUS → 9999-ABEND-PROGRAM
+    TCATBALF READ error      → DISPLAY 'ERROR READING TRANSACTION CATEGORY FILE'
+      (not status 00 or 10)  → 9910-DISPLAY-IO-STATUS → 9999-ABEND-PROGRAM
+    ACCTFILE READ failure    → DISPLAY 'ERROR READING ACCOUNT FILE'
+                             → 9910-DISPLAY-IO-STATUS → 9999-ABEND-PROGRAM
+    XREFFILE READ failure    → DISPLAY 'ERROR READING XREF FILE'
+                             → 9910-DISPLAY-IO-STATUS → 9999-ABEND-PROGRAM
+    DISCGRP  READ failure    → DISPLAY 'ERROR READING DISCLOSURE GROUP FILE'
+      (not status 00 or 23)  → 9910-DISPLAY-IO-STATUS → 9999-ABEND-PROGRAM
+    DEFAULT DISCGRP failure  → DISPLAY 'ERROR READING DEFAULT DISCLOSURE GROUP'
+                             → 9910-DISPLAY-IO-STATUS → 9999-ABEND-PROGRAM
+    ACCTFILE REWRITE failure → DISPLAY 'ERROR RE-WRITING ACCOUNT FILE'
+                             → 9910-DISPLAY-IO-STATUS → 9999-ABEND-PROGRAM
+    TRANSACT WRITE failure   → DISPLAY 'ERROR WRITING TRANSACTION RECORD'
+                             → 9910-DISPLAY-IO-STATUS → 9999-ABEND-PROGRAM
+    Any file CLOSE failure   → DISPLAY error message
+                             → 9910-DISPLAY-IO-STATUS → 9999-ABEND-PROGRAM
+
+  Non-fatal conditions:
+  ──────────────────────
+    DISCGRP status '23'      → DISPLAY 'DISCLOSURE GROUP RECORD MISSING'
+      (record not found)     → DISPLAY 'TRY WITH DEFAULT GROUP CODE'
+                             → Retry with 'DEFAULT' group (1200-A-GET-DEFAULT-INT-RATE)
+    DIS-INT-RATE = 0         → Skip interest computation (no error)
+    ACCT not found           → DISPLAY 'ACCOUNT NOT FOUND' + ABEND
+    XREF not found           → DISPLAY 'ACCOUNT NOT FOUND' + ABEND
+</pre>
+      </div>
+    </div>
+
+    <!-- 9.2 -->
+    <div class="subsection" id="s9-2">
+      <h3><span class="dot"></span> 9.2 Return Code Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Job</th><th>Step</th><th>RC=0</th><th>RC=4</th><th>RC=12/16</th><th>RC=999 (ABEND)</th></tr></thead>
+          <tbody>
+            <tr><td>CLOSEFIL</td><td>CLCIFIL</td><td>CEMT commands accepted</td><td>&mdash;</td><td>SDSF command error</td><td>&mdash;</td></tr>
+            <tr><td>INTCALC</td><td>STEP15</td><td>All interest computed and written; accounts updated</td><td>&mdash;</td><td>&mdash;</td><td>Fatal file I/O error. CALL CEE3ABD with ABCODE=999, TIMING=0.</td></tr>
+            <tr><td>COMBTRAN</td><td>STEP05R</td><td>Sort completed successfully</td><td>Sort warning</td><td>Sort failure (RC=16)</td><td>&mdash;</td></tr>
+            <tr><td>COMBTRAN</td><td>STEP10</td><td>REPRO successful</td><td>REPRO warning</td><td>REPRO failure (duplicates, I/O error)</td><td>&mdash;</td></tr>
+            <tr><td>WAITSTEP</td><td>WAIT</td><td>Wait completed</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+            <tr><td>OPENFIL</td><td>OPCIFIL</td><td>CEMT commands accepted</td><td>&mdash;</td><td>SDSF command error</td><td>&mdash;</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 9.3 -->
+    <div class="subsection" id="s9-3">
+      <h3><span class="dot"></span> 9.3 Common Abend Codes and Resolution</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Abend</th><th>Likely Cause</th><th>Resolution</th></tr></thead>
+          <tbody>
+            <tr><td>U0999</td><td>File I/O error detected by CBACT04C (file status &ne; &lsquo;00&rsquo;)</td><td>Check SYSPRINT for the &ldquo;FILE STATUS IS: NNNN&rdquo; message. Common: VSAM full (24), not found (35), not defined (93)</td></tr>
+            <tr><td>S0C7</td><td>Non-numeric data in PIC 9 field (e.g., corrupted TRAN-CAT-BAL or DIS-INT-RATE)</td><td>Check data quality in TCATBALF or DISCGRP VSAM; verify copybook alignment</td></tr>
+            <tr><td>S0C4</td><td>Invalid storage reference (e.g., reading past end of record)</td><td>Check SYSUDUMP; verify record layouts match data</td></tr>
+            <tr><td>S213-04</td><td>VSAM dataset not found (OPEN failure)</td><td>Verify all VSAM clusters exist; run IDCAMS LISTCAT</td></tr>
+            <tr><td>S913</td><td>RACF security violation on dataset access</td><td>Check job userid authority for all VSAM datasets and GDG bases</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 9.4 -->
+    <div class="subsection" id="s9-4">
+      <h3><span class="dot"></span> 9.4 I/O Status Code Handling</h3>
+      <p>Paragraph <code>9910-DISPLAY-IO-STATUS</code> handles both numeric and non-numeric VSAM file status codes:</p>
+      <ul>
+        <li>If <code>IO-STAT1 = '9'</code> or status is non-numeric: extracts the binary value from IO-STAT2 into <code>TWO-BYTES-BINARY</code> and displays as <code>FILE STATUS IS: NNNN&lt;value&gt;</code> (VSAM extended status code)</li>
+        <li>Otherwise: pads the 2-byte status into a 4-character field and displays as <code>FILE STATUS IS: NNNN&lt;IO-STATUS&gt;</code></li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 10 — Security and Authorization
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="subsection" id="s10-1">
+      <h3><span class="dot"></span> 10.1 Dataset Security Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Dataset Pattern</th><th>Access Required</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr><td>AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS</td><td>READ</td><td>Sequential input for interest calculation</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</td><td>READ</td><td>Cross-reference lookup (primary key)</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.CARDXREF.VSAM.AIX.PATH</td><td>READ</td><td>Cross-reference lookup (alternate index)</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS</td><td>UPDATE (READ + REWRITE)</td><td>Read account data; rewrite with updated balance</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.DISCGRP.VSAM.KSDS</td><td>READ</td><td>Disclosure group interest rate lookup</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.SYSTRAN</td><td>ALTER (create new generation)</td><td>Output GDG for system transactions</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.TRANSACT.BKUP</td><td>READ</td><td>Input to SORT (latest generation)</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.TRANSACT.COMBINED</td><td>ALTER (create + read)</td><td>SORT output GDG; REPRO input</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</td><td>UPDATE (REPRO load)</td><td>Target for IDCAMS REPRO</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.LOADLIB</td><td>READ (FETCH)</td><td>Program load library for CBACT04C and COBSWAIT</td></tr>
+            <tr><td>CICS Region CICSAWSA</td><td>CONSOLE (modify command authority)</td><td>SDSF /F commands to open/close CICS files</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 11 — Performance and Batch Window Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Performance and Batch Window Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s11-1">
+      <h3><span class="dot"></span> 11.1 Performance Characteristics</h3>
+      <p>CBACT04C processes each TCATBAL record with up to <strong>4 VSAM I/O operations</strong> per record:</p>
+      <ol>
+        <li>READ TCATBALF (sequential &mdash; efficient; VSAM CI/CA splits buffered)</li>
+        <li>READ DISCGRP (random, by composite key) &mdash; may require fallback DEFAULT read</li>
+        <li>WRITE TRANSACT/SYSTRAN (sequential output &mdash; efficient)</li>
+        <li>On account change only: READ ACCTFILE (random) + READ XREFFILE (random) + REWRITE ACCTFILE</li>
+      </ol>
+      <p>The COMBTRAN step adds:</p>
+      <ol>
+        <li>SORT of two concatenated inputs (I/O bound by total record count)</li>
+        <li>IDCAMS REPRO of sorted output to VSAM (sequential load)</li>
+      </ol>
+      <div class="callout">
+        <strong>Performance note:</strong> TCATBALF sequential read is optimal. The DISCGRP random reads are the main bottleneck in INTCALC. For large TCATBALF files, the number of DISCGRP reads equals the number of TCATBAL records (one per record). VSAM buffer tuning on DISCGRP (BUFND/BUFNI) can improve throughput. The SORT step handles the I/O-intensive merge efficiently via DFSORT&rsquo;s internal buffering.
+      </div>
+    </div>
+
+    <div class="subsection" id="s11-2">
+      <h3><span class="dot"></span> 11.2 Batch Window Fit</h3>
+      <div class="table-wrap">
+        <table>
+          <tbody>
+            <tr><td><strong>Window Opens</strong></td><td>After CLOSEFIL closes CICS VSAM files</td></tr>
+            <tr><td><strong>Window Closes</strong></td><td>When OPENFIL reopens CICS files</td></tr>
+            <tr><td><strong>Total Batch Duration</strong></td><td>INTCALC + COMBTRAN + 36-second WAITSTEP + CICS command overhead</td></tr>
+            <tr><td><strong>Predecessor</strong></td><td>Last daily POSTTRAN run of the month (must be complete)</td></tr>
+            <tr><td><strong>Successor</strong></td><td>CICS online operations (files reopened by OPENFIL)</td></tr>
+            <tr><td><strong>Critical Path</strong></td><td>Yes &mdash; CICS online system is unavailable for the entire job stream duration</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 12 — Testing Approach
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s12-1">
+      <h3><span class="dot"></span> 12.1 Test Scenarios</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Scenario</th><th>Input Setup</th><th>Expected Output</th><th>Verify Method</th></tr></thead>
+          <tbody>
+            <tr><td>TC-001</td><td>Normal run (single account, single category)</td><td>TCATBALF with 1 record; matching ACCTDATA, CARDXREF, DISCGRP records</td><td>1 interest txn in SYSTRAN; ACCT-CURR-BAL increased by computed interest; CYC accumulators reset to 0</td><td>IDCAMS PRINT SYSTRAN(+1); before/after ACCTDATA comparison</td></tr>
+            <tr><td>TC-002</td><td>Multiple categories per account</td><td>TCATBALF with 3 records for same account, different type/category codes</td><td>3 interest txns; ACCT-CURR-BAL = sum of all 3 monthly interest amounts</td><td>Sum TRAN-AMT in SYSTRAN should match delta in ACCT-CURR-BAL</td></tr>
+            <tr><td>TC-003</td><td>Multiple accounts</td><td>TCATBALF with records for 5 different accounts</td><td>Interest txns per account; each account balance updated independently</td><td>Per-account reconciliation of SYSTRAN amounts vs ACCTDATA balance changes</td></tr>
+            <tr><td>TC-004</td><td>Zero interest rate</td><td>DISCGRP record with DIS-INT-RATE = 0 for a given category</td><td>No interest txn generated for that category; ACCT-CURR-BAL unchanged for that component</td><td>SYSTRAN should not contain a txn for that category</td></tr>
+            <tr><td>TC-005</td><td>Missing disclosure group (fallback to DEFAULT)</td><td>No DISCGRP record for specific group/type/cat; DEFAULT record exists with rate</td><td>Interest computed using DEFAULT rate; DISPLAY messages in SYSPRINT</td><td>Check SYSPRINT for &lsquo;DISCLOSURE GROUP RECORD MISSING&rsquo; + &lsquo;TRY WITH DEFAULT GROUP CODE&rsquo;</td></tr>
+            <tr><td>TC-006</td><td>Missing DEFAULT disclosure group</td><td>No specific or DEFAULT DISCGRP record</td><td>ABEND U0999</td><td>Check SYSPRINT for &lsquo;ERROR READING DEFAULT DISCLOSURE GROUP&rsquo; + file status</td></tr>
+            <tr><td>TC-007</td><td>Account not found in ACCTDATA</td><td>TCATBALF record referencing non-existent account</td><td>ABEND U0999</td><td>Check SYSPRINT for &lsquo;ACCOUNT NOT FOUND&rsquo; + file status</td></tr>
+            <tr><td>TC-008</td><td>XREF not found for account</td><td>Account exists in ACCTDATA but no XREF record with matching ACCT-ID</td><td>ABEND U0999</td><td>Check SYSPRINT for &lsquo;ACCOUNT NOT FOUND&rsquo; + XREF file status</td></tr>
+            <tr><td>TC-009</td><td>Empty TCATBALF</td><td>0-record TCATBALF VSAM</td><td>RC=0; 0 interest txns; no accounts updated</td><td>SYSTRAN(+1) should be empty</td></tr>
+            <tr><td>TC-010</td><td>COMBTRAN sort-merge</td><td>TRANSACT.BKUP(0) with 5 records + SYSTRAN(0) with 3 records</td><td>COMBINED(+1) with 8 records sorted by TRAN-ID; TRANSACT VSAM loaded with 8 records</td><td>SORT record counts; IDCAMS PRINT TRANSACT VSAM</td></tr>
+            <tr><td>TC-011</td><td>Negative balance (credit balance)</td><td>TCATBALF with negative TRAN-CAT-BAL</td><td>Negative interest computed (credit to customer); ACCT-CURR-BAL reduced</td><td>Verify sign of TRAN-AMT and ACCT-CURR-BAL change</td></tr>
+            <tr><td>TC-012</td><td>Cycle accumulator reset</td><td>Account with non-zero CYC-CREDIT and CYC-DEBIT</td><td>After processing: ACCT-CURR-CYC-CREDIT = 0, ACCT-CURR-CYC-DEBIT = 0</td><td>Before/after ACCTDATA comparison</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s12-2">
+      <h3><span class="dot"></span> 12.2 Test Data Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>Records Needed</th><th>Setup Method</th></tr></thead>
+          <tbody>
+            <tr><td>TCATBALF VSAM</td><td>Variable (5&ndash;100+ records spanning multiple accounts/categories)</td><td>POSTTRAN daily runs or IDCAMS REPRO from test data</td></tr>
+            <tr><td>CARDXREF VSAM</td><td>Must contain XREF records for all accounts in TCATBALF (by alt key ACCT-ID)</td><td>XREFFILE job (IDCAMS DELETE/DEFINE/REPRO)</td></tr>
+            <tr><td>ACCTDATA VSAM</td><td>Must contain account records for all TCATBAL ACCT-IDs</td><td>ACCTFILE job or IDCAMS REPRO from test data</td></tr>
+            <tr><td>DISCGRP VSAM</td><td>Must contain disclosure group records for all GROUP-ID/TYPE/CAT combinations (or a DEFAULT record)</td><td>DISCGRP refresh job</td></tr>
+            <tr><td>TRANSACT.BKUP GDG</td><td>At least one generation with transaction records</td><td>TRANBKP job (daily backup)</td></tr>
+            <tr><td>SYSTRAN GDG base</td><td>GDG base must exist</td><td>IDCAMS DEFINE GDG</td></tr>
+            <tr><td>TRANSACT.COMBINED GDG base</td><td>GDG base must exist</td><td>IDCAMS DEFINE GDG</td></tr>
+            <tr><td>TRANSACT VSAM</td><td>Must be defined (empty or reset before REPRO)</td><td>IDCAMS DELETE/DEFINE</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 13 — Known Issues and Considerations
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s13">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">13</span>
+    <h2>Known Issues and Modernization Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s13-1">
+      <h3><span class="dot"></span> 13.1 Known Issues</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Description</th><th>Impact</th><th>Workaround</th></tr></thead>
+          <tbody>
+            <tr><td>KI-001</td><td>No checkpoint/restart in CBACT04C. Mid-job failure leaves ACCTDATA VSAM partially updated (some accounts with interest posted, others not).</td><td>High &mdash; recovery requires restoring ACCTDATA from backup and rerunning entire INTCALC step</td><td>Take VSAM backups before running INTCALC</td></tr>
+            <tr><td>KI-002</td><td>Misleading error message in <code>0200-DISCGRP-OPEN</code>: displays &lsquo;ERROR OPENING DALY REJECTS FILE&rsquo; when the DISCGRP file fails to open. This is a copy-paste error from CBTRN02C.</td><td>Medium &mdash; misleads operators during troubleshooting; DISCGRP open failure will display wrong file name in error message</td><td>Look at the file status code rather than the message text to identify the actual failing file</td></tr>
+            <tr><td>KI-003</td><td><code>1400-COMPUTE-FEES</code> paragraph is a stub (&lsquo;To be implemented&rsquo;). Monthly fees are never computed or posted.</td><td>Medium &mdash; incomplete business logic; monthly fees (late fees, annual fees, etc.) are not applied</td><td>Implement fee calculation logic if required by business rules</td></tr>
+            <tr><td>KI-004</td><td>Typo in <code>ACCT-EXPIRAION-DATE</code> (missing &lsquo;T&rsquo;) in copybook CVACT01Y. Carried through to all programs.</td><td>Low &mdash; cosmetic; does not affect processing</td><td>None needed</td></tr>
+            <tr><td>KI-005</td><td>PARM date is hardcoded in JCL (<code>PARM='2022071800'</code>). Should be parameterized or use system date for production runs.</td><td>Medium &mdash; all generated transaction IDs will use the same date prefix regardless of actual run date</td><td>Use symbolic PARM or SYSIN-based date input in production</td></tr>
+            <tr><td>KI-006</td><td>TRANSACT-FILE opened as OUTPUT (sequential). The generated transaction IDs rely on a monotonically increasing suffix (<code>WS-TRANID-SUFFIX</code>) starting at 0. If the suffix overflows 6 digits (999999 transactions), IDs will wrap.</td><td>Low &mdash; unlikely to exceed 999,999 interest transactions per monthly run</td><td>Add overflow check for WS-TRANID-SUFFIX</td></tr>
+            <tr><td>KI-007</td><td>The COMBTRAN REPRO step does not explicitly handle duplicate TRAN-ID keys. If a daily backup transaction has the same TRAN-ID as a generated interest transaction, REPRO will fail with RC=12.</td><td>Medium &mdash; unlikely but possible if PARM date matches an existing transaction date prefix</td><td>Ensure PARM date + &lsquo;01&rsquo;/&lsquo;05&rsquo; type/cat combination generates unique IDs not in TRANSACT.BKUP</td></tr>
+            <tr><td>KI-008</td><td>The hardcoded TRAN-TYPE-CD=&lsquo;01&rsquo; and TRAN-CAT-CD=&lsquo;05&rsquo; for all interest transactions means all interest charges share the same type/category regardless of the original category that generated them. This loses detail about which category&rsquo;s balance produced each interest charge.</td><td>Low &mdash; statement-level detail is reduced; all interest appears as one category</td><td>Consider preserving original TRANCAT-TYPE-CD and TRANCAT-CD in generated transactions</td></tr>
+            <tr><td>KI-009</td><td>No explicit RETURN-CODE setting in CBACT04C. The program either completes normally (implicit RC=0) or ABENDs. There is no RC=4 for warnings (unlike CBTRN02C).</td><td>Low &mdash; no way to distinguish &lsquo;all OK&rsquo; from &lsquo;OK with warnings&rsquo; at the job level</td><td>Add warning-level return codes for edge cases</td></tr>
+            <tr><td>KI-010</td><td>The COMBTRAN step references <code>TRANSACT.COMBINED(+1)</code> in both STEP05R (SORTOUT) and STEP10 (input). Within a single job, the same relative generation (+1) refers to the same dataset, but this depends on GDG catalog consistency.</td><td>Low &mdash; standard JCL GDG behavior; works correctly within a single job</td><td>None needed</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s13-2">
+      <h3><span class="dot"></span> 13.2 Modernization Considerations</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Area</th><th>Current State</th><th>Target State</th><th>Complexity</th></tr></thead>
+          <tbody>
+            <tr><td>Interest Calculation</td><td>Batch COBOL reading sequential VSAM, simple formula</td><td>Microservice with configurable rate engine (e.g., Spring Boot + rules engine)</td><td>Medium</td></tr>
+            <tr><td>Transaction Merge</td><td>SORT utility + IDCAMS REPRO (file-based)</td><td>Database INSERT/MERGE with ACID transactions; event-driven pipeline</td><td>Medium</td></tr>
+            <tr><td>Data Storage</td><td>VSAM KSDS (TCATBALF, ACCTDATA, DISCGRP, TRANSACT) + GDG files</td><td>Relational database (PostgreSQL/Aurora) with proper schema and referential integrity</td><td>High</td></tr>
+            <tr><td>Fee Computation</td><td>Stub (not implemented)</td><td>Configurable fee schedule; late fee, annual fee, overlimit fee logic</td><td>Medium</td></tr>
+            <tr><td>Recovery</td><td>No checkpoint; full restore on failure</td><td>Database transactions with automatic rollback; idempotent processing with deduplication</td><td>High</td></tr>
+            <tr><td>Scheduling</td><td>Control-M with INCOND/OUTCOND chaining</td><td>Cloud-native orchestration (AWS Step Functions, Airflow) with event triggers</td><td>Low</td></tr>
+            <tr><td>CICS File Management</td><td>SDSF /F commands to open/close CICS files</td><td>Eliminate file-level locking; use database-level concurrency control</td><td>High (architectural)</td></tr>
+            <tr><td>Date Handling</td><td>Hardcoded PARM date in JCL</td><td>System date with timezone-aware processing</td><td>Low</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /page-wrap-single -->
+
+<!-- ════════════════════  FOOTER  ════════════════════ -->
+<footer class="footer">
+  <p><strong>UniCredit CardDemo</strong> &mdash; Batch Process Analysis &mdash; MONTHLY-InterestCalculation (A2)</p>
+  <p>Generated from source: <code>app/jcl/CLOSEFIL.jcl</code> &middot; <code>app/jcl/INTCALC.jcl</code> &middot; <code>app/jcl/COMBTRAN.jcl</code> &middot; <code>app/jcl/WAITSTEP.jcl</code> &middot; <code>app/jcl/OPENFIL.jcl</code><br>
+  Programs: <code>app/cbl/CBACT04C.cbl</code> &middot; <code>app/cbl/COBSWAIT.cbl</code> &middot; Copybooks: CVTRA01Y, CVACT03Y, CVTRA02Y, CVACT01Y, CVTRA05Y</p>
+</footer>
+
+</body>
+</html>

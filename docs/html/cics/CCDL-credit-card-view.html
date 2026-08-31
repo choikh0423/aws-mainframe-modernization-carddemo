@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Credit Card View (CCDL) – CICS Transaction Analysis | UniCredit CardDemo</title>
+<link rel="stylesheet" href="../shared/theme.css">
+</head>
+<body>
+
+<!-- ════════════════════  HERO  ════════════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. &mdash; Milano</div>
+    </div>
+    <h1>Credit Card View &ndash; <span>CICS Transaction Analysis</span></h1>
+    <p class="hero-subtitle">
+      Transaction <code>CCDL</code> &middot; Program <code>COCRDSLC</code> &middot; Displays credit card detail for a given account/card number combination
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Transaction ID</dt><dd>CCDL</dd></div>
+      <div><dt>Entry Program</dt><dd>COCRDSLC</dd></div>
+      <div><dt>BMS Mapset</dt><dd>COCRDSL</dd></div>
+      <div><dt>Design Pattern</dt><dd>Pseudo-conversational</dd></div>
+      <div><dt>LOC</dt><dd>887</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ════════════════════  BREADCRUMB  ════════════════════ -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">&rsaquo;</span>
+  <a href="index.html">CICS Flows</a>
+  <span class="sep">&rsaquo;</span>
+  Credit Card View (CCDL)
+</div>
+
+<!-- ════════════════════  BODY  ════════════════════ -->
+<div class="page-wrap-single">
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 1 — Business Flow Analysis
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">1</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 1.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>1.1 Business Context</h3>
+      <p>
+        The <strong>Credit Card View</strong> transaction (<code>CCDL</code>) allows a CardDemo user to look up and display the detail of a specific credit card. The user provides an 11-digit account number and a 16-digit card number; the system reads the VSAM card file (<code>CARDDAT</code>) and returns the card&rsquo;s embossed name, active status, and expiration date. This is a <em>read-only</em> inquiry&mdash;no updates are performed.
+      </p>
+      <p>
+        The transaction is typically invoked from the <strong>Credit Card List</strong> screen (<code>CCLI / COCRDLIC</code>), where the user selects a card. It can also be accessed directly via the CICS terminal by entering the <code>CCDL</code> transaction code with an account and card number.
+      </p>
+    </div>
+
+    <!-- 1.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>1.2 Business Flow Diagram</h3>
+<pre>
+┌─────────────────────────────────────────────────────────────────┐
+│                  Credit Card View (CCDL)                        │
+│                  Program: COCRDSLC                               │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌──────────────┐     ┌──────────────────┐     ┌─────────────┐ │
+│  │ User enters  │────▶│ System validates │────▶│ READ CARDDAT│ │
+│  │ Acct# + Card#│     │ input fields     │     │ by card key │ │
+│  └──────────────┘     └──────────────────┘     └──────┬──────┘ │
+│                               │                       │         │
+│                        ┌──────┘                ┌──────┘         │
+│                        ▼                       ▼                │
+│              ┌─────────────────┐    ┌────────────────────────┐  │
+│              │ Validation Error│    │ Display card details:  │  │
+│              │ (highlight bad  │    │  • Embossed Name       │  │
+│              │  field in red)  │    │  • Active Status (Y/N) │  │
+│              └─────────────────┘    │  • Expiry Month/Year   │  │
+│                                     └────────────────────────┘  │
+│                                                                 │
+│  PF3 ──▶ Return to calling program (CCLI) or Main Menu (CM00)  │
+│  ENTER ─▶ Search / Re-display                                  │
+└─────────────────────────────────────────────────────────────────┘
+</pre>
+    </div>
+
+    <!-- 1.3 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>1.3 Business Rules</h3>
+      <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Rule</th><th>Source</th><th>Action on Failure</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>BR-1</td><td>Account number must be supplied (not blank/zero)</td><td>2210-EDIT-ACCOUNT</td><td>Set <code>INPUT-ERROR</code>, message &ldquo;Account number not provided&rdquo;</td></tr>
+          <tr><td>BR-2</td><td>Account number must be numeric (11 digits)</td><td>2210-EDIT-ACCOUNT</td><td>Set <code>INPUT-ERROR</code>, message &ldquo;ACCOUNT FILTER,IF SUPPLIED MUST BE A 11 DIGIT NUMBER&rdquo;</td></tr>
+          <tr><td>BR-3</td><td>Card number must be supplied (not blank/zero)</td><td>2220-EDIT-CARD</td><td>Set <code>INPUT-ERROR</code>, message &ldquo;Card number not provided&rdquo;</td></tr>
+          <tr><td>BR-4</td><td>Card number must be numeric (16 digits)</td><td>2220-EDIT-CARD</td><td>Set <code>INPUT-ERROR</code>, message &ldquo;CARD ID FILTER,IF SUPPLIED MUST BE A 16 DIGIT NUMBER&rdquo;</td></tr>
+          <tr><td>BR-5</td><td>Both account and card must be provided together</td><td>2200-EDIT-MAP-INPUTS</td><td>Set <code>NO-SEARCH-CRITERIA-RECEIVED</code> &ldquo;No input received&rdquo;</td></tr>
+          <tr><td>BR-6</td><td>Card record must exist in CARDDAT for the given card number</td><td>9100-GETCARD-BYACCTCARD</td><td><code>NOTFND</code> &rarr; &ldquo;Did not find cards for this search condition&rdquo;</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 1.4 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>1.4 User Interactions</h3>
+      <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Step</th><th>User Action</th><th>System Response</th><th>Business Meaning</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>Navigate from Credit Card List (CCLI) or enter CCDL directly</td><td>Display blank search form with prompt &ldquo;Please enter Account and Card Number&rdquo;</td><td>Transaction initialization</td></tr>
+          <tr><td>2</td><td>Enter 11-digit account number and 16-digit card number, press ENTER</td><td>Validate inputs, read CARDDAT, display card details (name, status, expiry)</td><td>Card detail lookup</td></tr>
+          <tr><td>3a</td><td>Press PF3</td><td>XCTL to calling program (COCRDLIC) or main menu (COMEN01C)</td><td>Exit / return to previous context</td></tr>
+          <tr><td>3b</td><td>Press ENTER again with modified criteria</td><td>Re-validate and re-read, display new card details</td><td>Search for different card</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 2 — Technical Flow Analysis
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">2</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 2.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>2.1 Technical Flow Diagram &mdash; Overview</h3>
+<pre>
+ ┌──────────┐    ┌───────────────────────────────────────────┐
+ │ 3270     │    │           CICS REGION                     │
+ │ TERMINAL │◄──▶│                                           │
+ │          │    │  CCDL ──▶ COCRDSLC ──READ──▶ CARDDAT     │
+ │          │    │              │                (VSAM KSDS) │
+ │          │    │              ├──XCTL──▶ COCRDLIC (PF3)    │
+ │          │    │              └──XCTL──▶ COMEN01C (PF3)    │
+ │          │    │                                           │
+ │          │    │  MAP: CCRDSLA / MAPSET: COCRDSL           │
+ └──────────┘    └───────────────────────────────────────────┘
+</pre>
+    </div>
+
+    <!-- 2.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>2.2 Technical Flow Diagram &mdash; Detailed</h3>
+<pre>
+ 0000-MAIN
+ │
+ ├─ HANDLE ABEND ──▶ ABEND-ROUTINE
+ ├─ INITIALIZE CC-WORK-AREA, WS-MISC-STORAGE, WS-COMMAREA
+ ├─ IF EIBCALEN = 0 OR (from menu &amp; not reenter)
+ │     INITIALIZE CARDDEMO-COMMAREA
+ │  ELSE
+ │     MOVE DFHCOMMAREA ──▶ CARDDEMO-COMMAREA + WS-THIS-PROGCOMMAREA
+ │
+ ├─ YYYY-STORE-PFKEY          (map EIBAID to CCARD-AID)
+ │
+ ├─ EVALUATE TRUE
+ │  ├─ WHEN CCARD-AID-PFK03       ──▶ XCTL to caller / COMEN01C
+ │  ├─ WHEN CDEMO-PGM-ENTER &amp;
+ │  │       from COCRDLIC          ──▶ 9000-READ-DATA ──▶ 1000-SEND-MAP ──▶ RETURN
+ │  ├─ WHEN CDEMO-PGM-ENTER       ──▶ 1000-SEND-MAP (blank form) ──▶ RETURN
+ │  ├─ WHEN CDEMO-PGM-REENTER     ──▶ 2000-PROCESS-INPUTS
+ │  │       IF INPUT-ERROR         ──▶ 1000-SEND-MAP ──▶ RETURN
+ │  │       ELSE                   ──▶ 9000-READ-DATA ──▶ 1000-SEND-MAP ──▶ RETURN
+ │  └─ WHEN OTHER                  ──▶ SEND-PLAIN-TEXT (ABEND code 0001)
+ │
+ └─ COMMON-RETURN
+       MOVE CARDDEMO-COMMAREA ──▶ WS-COMMAREA
+       EXEC CICS RETURN TRANSID('CCDL') COMMAREA(WS-COMMAREA)
+</pre>
+    </div>
+
+    <!-- 2.3 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>2.3 Pseudo-Conversational Flow</h3>
+      <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Iteration</th><th>EIBCALEN</th><th>Context</th><th>User Action</th><th>Entry Point</th><th>Screen Sent</th><th>Next TRANSID</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1 (from menu)</td><td>= 0 or CDEMO-PGM-ENTER from COMEN01C</td><td>First entry</td><td>&mdash;</td><td>0000-MAIN</td><td>CCRDSLA (blank prompt)</td><td>CCDL</td></tr>
+          <tr><td>1 (from CCLI)</td><td>&gt; 0, CDEMO-PGM-ENTER from COCRDLIC</td><td>Card pre-selected</td><td>Select from list</td><td>0000-MAIN</td><td>CCRDSLA (with card details)</td><td>CCDL</td></tr>
+          <tr><td>2+</td><td>&gt; 0, CDEMO-PGM-REENTER</td><td>Re-entry</td><td>ENTER with acct/card</td><td>2000-PROCESS-INPUTS</td><td>CCRDSLA (card details or error)</td><td>CCDL</td></tr>
+          <tr><td>Exit</td><td>&gt; 0</td><td>PF3 pressed</td><td>PF3</td><td>XCTL</td><td>(caller&rsquo;s map)</td><td>CCLI or CM00</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 2.4 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>2.4 CICS Command Flow</h3>
+      <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Command</th><th>Location</th><th>Purpose</th><th>RESP Handling</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>EXEC CICS HANDLE ABEND LABEL(ABEND-ROUTINE)</code></td><td>0000-MAIN</td><td>Register abend handler</td><td>N/A</td></tr>
+          <tr><td><code>EXEC CICS XCTL PROGRAM(CDEMO-TO-PROGRAM) COMMAREA</code></td><td>0000-MAIN (PF3)</td><td>Transfer control to caller or main menu</td><td>N/A</td></tr>
+          <tr><td><code>EXEC CICS SEND MAP(CCARD-NEXT-MAP) MAPSET(CCARD-NEXT-MAPSET) FROM(CCRDSLAO) CURSOR ERASE FREEKB</code></td><td>1400-SEND-SCREEN</td><td>Send the card detail screen to terminal</td><td>RESP(WS-RESP-CD)</td></tr>
+          <tr><td><code>EXEC CICS RECEIVE MAP(LIT-THISMAP) MAPSET(LIT-THISMAPSET) INTO(CCRDSLAI)</code></td><td>2100-RECEIVE-MAP</td><td>Receive user input from terminal</td><td>RESP(WS-RESP-CD) RESP2(WS-REAS-CD)</td></tr>
+          <tr><td><code>EXEC CICS READ FILE(LIT-CARDFILENAME) RIDFLD(WS-CARD-RID-CARDNUM) INTO(CARD-RECORD)</code></td><td>9100-GETCARD-BYACCTCARD</td><td>Read card record by card number key</td><td>RESP(WS-RESP-CD) RESP2(WS-REAS-CD)</td></tr>
+          <tr><td><code>EXEC CICS READ FILE(LIT-CARDFILENAME-ACCT-PATH) RIDFLD(WS-CARD-RID-ACCT-ID) INTO(CARD-RECORD)</code></td><td>9150-GETCARD-BYACCT</td><td>Read card record by alternate index (account ID)</td><td>RESP(WS-RESP-CD) RESP2(WS-REAS-CD)</td></tr>
+          <tr><td><code>EXEC CICS RETURN TRANSID(LIT-THISTRANID) COMMAREA(WS-COMMAREA)</code></td><td>COMMON-RETURN</td><td>Return to CICS, set next TRANSID to CCDL</td><td>N/A</td></tr>
+          <tr><td><code>EXEC CICS SEND TEXT FROM(WS-LONG-MSG)</code></td><td>SEND-LONG-TEXT</td><td>Debug: send long text to terminal</td><td>N/A</td></tr>
+          <tr><td><code>EXEC CICS SEND TEXT FROM(WS-RETURN-MSG)</code></td><td>SEND-PLAIN-TEXT</td><td>Send plain text error/debug message</td><td>N/A</td></tr>
+          <tr><td><code>EXEC CICS SEND FROM(ABEND-DATA)</code></td><td>ABEND-ROUTINE</td><td>Display abend information</td><td>NOHANDLE</td></tr>
+          <tr><td><code>EXEC CICS HANDLE ABEND CANCEL</code></td><td>ABEND-ROUTINE</td><td>Cancel abend handling before ABEND</td><td>N/A</td></tr>
+          <tr><td><code>EXEC CICS ABEND ABCODE('9999')</code></td><td>ABEND-ROUTINE</td><td>Force transaction abend</td><td>N/A</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 3 — Screen Flow and BMS Maps
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">3</span>
+    <h2>Screen Flow and BMS Maps</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 3.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>3.1 Screen Flow Diagram</h3>
+<pre>
+  ┌───────────────────┐                    ┌───────────────────┐
+  │  COCRDLIC (CCLI)  │                    │  COMEN01C (CM00)  │
+  │  Credit Card List │                    │  Main Menu        │
+  └────────┬──────────┘                    └────────▲──────────┘
+           │ (select card)                          │ PF3
+           ▼                                        │ (no caller)
+  ┌────────────────────────────────────────────────────────────┐
+  │                  CCRDSLA  (COCRDSL mapset)                 │
+  │                  "View Credit Card Detail"                 │
+  │                                                            │
+  │   Account Number : [___________]                           │
+  │   Card Number    : [________________]                      │
+  │                                                            │
+  │   Name on card   : XXXXXXXXXXXXXXXXXXXXXXX                 │
+  │   Card Active    : Y                                       │
+  │   Expiry Date    : MM/YYYY                                 │
+  │                                                            │
+  │   [info message]                                           │
+  │   [error message]                                          │
+  │   ENTER=Search Cards  F3=Exit                              │
+  └────────────────────────────────────────────────────────────┘
+           │ PF3                          │ ENTER
+           │ (has caller)                 │ (re-search)
+           ▼                              ▼
+  ┌───────────────────┐          (re-display with new data)
+  │  COCRDLIC (CCLI)  │
+  │  Credit Card List │
+  └───────────────────┘
+</pre>
+    </div>
+
+    <!-- 3.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>3.2 BMS Map Inventory</h3>
+      <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Map Name</th><th>Mapset</th><th>Purpose</th><th>Key Fields</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>CCRDSLA</td><td>COCRDSL</td><td>Credit card detail view / search screen</td><td>ACCTSID, CARDSID, CRDNAME, CRDSTCD, EXPMON, EXPYEAR</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 3.3 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>3.3 Screen Field Details</h3>
+      <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Field</th><th>Position</th><th>Length</th><th>Attribute</th><th>Color</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>TRNNAME</td><td>(1,7)</td><td>4</td><td>ASKIP, FSET, NORM</td><td>BLUE</td><td>Transaction name display</td></tr>
+          <tr><td>TITLE01</td><td>(1,21)</td><td>40</td><td>ASKIP, NORM</td><td>YELLOW</td><td>Screen title line 1</td></tr>
+          <tr><td>CURDATE</td><td>(1,71)</td><td>8</td><td>ASKIP, NORM</td><td>BLUE</td><td>Current date (mm/dd/yy)</td></tr>
+          <tr><td>PGMNAME</td><td>(2,7)</td><td>8</td><td>ASKIP, NORM</td><td>BLUE</td><td>Program name display</td></tr>
+          <tr><td>TITLE02</td><td>(2,21)</td><td>40</td><td>ASKIP, NORM</td><td>YELLOW</td><td>Screen title line 2</td></tr>
+          <tr><td>CURTIME</td><td>(2,71)</td><td>8</td><td>ASKIP, NORM</td><td>BLUE</td><td>Current time (hh:mm:ss)</td></tr>
+          <tr><td>ACCTSID</td><td>(7,45)</td><td>11</td><td>FSET, IC, NORM, UNPROT</td><td>DEFAULT (underlined)</td><td>Account number input</td></tr>
+          <tr><td>CARDSID</td><td>(8,45)</td><td>16</td><td>FSET, NORM, UNPROT</td><td>DEFAULT (underlined)</td><td>Card number input</td></tr>
+          <tr><td>CRDNAME</td><td>(11,25)</td><td>50</td><td>(default)</td><td>(underlined)</td><td>Name embossed on card (output)</td></tr>
+          <tr><td>CRDSTCD</td><td>(13,25)</td><td>1</td><td>ASKIP</td><td>(underlined)</td><td>Card active status Y/N (output)</td></tr>
+          <tr><td>EXPMON</td><td>(15,25)</td><td>2</td><td>ASKIP</td><td>(underlined)</td><td>Expiration month (output)</td></tr>
+          <tr><td>EXPYEAR</td><td>(15,30)</td><td>4</td><td>ASKIP</td><td>(underlined)</td><td>Expiration year (output)</td></tr>
+          <tr><td>INFOMSG</td><td>(20,25)</td><td>40</td><td>PROT</td><td>NEUTRAL</td><td>Informational message</td></tr>
+          <tr><td>ERRMSG</td><td>(23,1)</td><td>80</td><td>ASKIP, BRT, FSET</td><td>RED</td><td>Error message line</td></tr>
+          <tr><td>FKEYS</td><td>(24,1)</td><td>75</td><td>ASKIP, NORM</td><td>YELLOW</td><td>Function key legend</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 3.4 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>3.4 PF Key / AID Key Handling</h3>
+      <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Key</th><th>CCARD-AID Value</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>ENTER</td><td><code>CCARD-AID-ENTER</code></td><td>Valid key &mdash; process input (validate &amp; search) or re-display screen</td></tr>
+          <tr><td>PF3</td><td><code>CCARD-AID-PFK03</code></td><td>Valid key &mdash; XCTL to calling program (<code>CDEMO-FROM-PROGRAM</code>) or main menu (<code>COMEN01C</code>)</td></tr>
+          <tr><td>Any other</td><td>N/A</td><td>Invalid key &mdash; treated as ENTER (forced via <code>SET CCARD-AID-ENTER TO TRUE</code>)</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 4 — Program Inventory and Call Chain
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">4</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 4.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>4.1 Program Inventory</h3>
+      <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Program</th><th>Trans ID</th><th>Purpose</th><th>Entry Mechanism</th><th>LOC</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>COCRDSLC</td><td>CCDL</td><td>Credit card detail view &mdash; entry program</td><td>CICS TRANSID</td><td>887</td></tr>
+          <tr><td>COCRDLIC</td><td>CCLI</td><td>Credit card list &mdash; XCTL target (PF3 return)</td><td>XCTL from COCRDSLC</td><td>&mdash;</td></tr>
+          <tr><td>COMEN01C</td><td>CM00</td><td>Main menu &mdash; XCTL target (PF3 when no caller)</td><td>XCTL from COCRDSLC</td><td>&mdash;</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 4.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>4.2 Call Chain Diagram</h3>
+<pre>
+  CCDL (TRANSID)
+    │
+    └──▶ COCRDSLC (entry program)
+            │
+            ├──READ──▶ CARDDAT  (VSAM KSDS, primary key)
+            ├──READ──▶ CARDAIX  (VSAM KSDS, alt index — unused in main path)
+            │
+            ├──XCTL──▶ COCRDLIC (return to card list)
+            └──XCTL──▶ COMEN01C (return to main menu)
+</pre>
+    </div>
+
+    <!-- 4.3 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>4.3 Call Details</h3>
+      <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Caller</th><th>Called</th><th>Mechanism</th><th>Data Passed</th><th>When</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>COCRDSLC</td><td>COCRDLIC</td><td>XCTL</td><td>CARDDEMO-COMMAREA</td><td>PF3 when <code>CDEMO-FROM-PROGRAM = COCRDLIC</code></td></tr>
+          <tr><td>COCRDSLC</td><td>COMEN01C</td><td>XCTL</td><td>CARDDEMO-COMMAREA</td><td>PF3 when no caller or caller is menu</td></tr>
+          <tr><td>COCRDLIC</td><td>COCRDSLC</td><td>XCTL (inbound)</td><td>CARDDEMO-COMMAREA with CDEMO-ACCT-ID, CDEMO-CARD-NUM pre-populated</td><td>User selects a card from list</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 5 — File and Data Store Inventory
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">5</span>
+    <h2>File and Data Store Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 5.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>5.1 File Inventory</h3>
+      <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>FCT Name</th><th>Type</th><th>Access Mode</th><th>Program</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>CARDDAT</td><td>VSAM KSDS</td><td>READ</td><td>COCRDSLC</td><td>Credit card master file &mdash; primary key lookup by card number</td></tr>
+          <tr><td>CARDAIX</td><td>VSAM KSDS (alternate index)</td><td>READ</td><td>COCRDSLC</td><td>Credit card file via alternate index path &mdash; lookup by account ID</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 5.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>5.2 File Access Details</h3>
+      <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>File</th><th>Record Layout</th><th>Key Field</th><th>Key Length</th><th>Access Mode</th><th>Locking</th><th>Pattern</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>CARDDAT</td>
+            <td><code>CARD-RECORD</code> (copybook CVACT02Y, 150 bytes)</td>
+            <td><code>WS-CARD-RID-CARDNUM</code> (CARD-NUM)</td>
+            <td>16 bytes</td>
+            <td>READ (direct)</td>
+            <td>None (read-only)</td>
+            <td>Single record read by card number in <code>9100-GETCARD-BYACCTCARD</code></td>
+          </tr>
+          <tr>
+            <td>CARDAIX</td>
+            <td><code>CARD-RECORD</code> (copybook CVACT02Y, 150 bytes)</td>
+            <td><code>WS-CARD-RID-ACCT-ID</code> (account ID)</td>
+            <td>11 bytes</td>
+            <td>READ (direct via alternate index)</td>
+            <td>None (read-only)</td>
+            <td>Single record read by account ID in <code>9150-GETCARD-BYACCT</code> (alternative path)</td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 5.3 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>5.3 TSQ Usage</h3>
+      <p>N/A &mdash; This transaction does not use Temporary Storage Queues.</p>
+    </div>
+
+    <!-- 5.4 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>5.4 TDQ Usage</h3>
+      <p>N/A &mdash; This transaction does not use Transient Data Queues.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 6 — Data Flow Analysis
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">6</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 6.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>6.1 Data Flow Through Transaction</h3>
+<pre>
+ ┌─────────────┐     ┌──────────────────┐     ┌─────────────────┐
+ │  TERMINAL   │     │  WORKING STORAGE │     │    CARDDAT      │
+ │  (CCRDSLA)  │     │                  │     │  (VSAM KSDS)    │
+ └──────┬──────┘     └────────┬─────────┘     └────────┬────────┘
+        │                     │                        │
+  RECEIVE MAP                 │                        │
+        │                     │                        │
+        ├─▶ ACCTSIDI ────▶ CC-ACCT-ID                  │
+        ├─▶ CARDSIDI ────▶ CC-CARD-NUM                 │
+        │                     │                        │
+        │              ┌──────┘                        │
+        │              ▼                               │
+        │   2200-EDIT-MAP-INPUTS                       │
+        │   (validate account &amp; card)                  │
+        │              │                               │
+        │              ▼                               │
+        │   CC-CARD-NUM ──▶ WS-CARD-RID-CARDNUM       │
+        │              │                               │
+        │              └──────── READ ────────────────▶│
+        │                                              │
+        │              ┌──────── CARD-RECORD ◀─────────┤
+        │              ▼                               │
+        │   CARD-EMBOSSED-NAME ──▶ CRDNAMEO            │
+        │   CARD-ACTIVE-STATUS ──▶ CRDSTCDO            │
+        │   CARD-EXPIRY-MONTH  ──▶ EXPMONO             │
+        │   CARD-EXPIRY-YEAR   ──▶ EXPYEARO            │
+        │                                              │
+  SEND MAP ◀──────────┘                               │
+        │                                              │
+        ▼                                              │
+ ┌─────────────┐                                       │
+ │  TERMINAL   │                                       │
+ │ (displays)  │                                       │
+ └─────────────┘                                       │
+</pre>
+    </div>
+
+    <!-- 6.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>6.2 Data Transformation Map</h3>
+      <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Source</th><th>Transformation</th><th>Target</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>ACCTSIDI</code> (map input)</td><td>Copy; replace &lsquo;*&rsquo; or spaces with LOW-VALUES</td><td><code>CC-ACCT-ID</code></td></tr>
+          <tr><td><code>CARDSIDI</code> (map input)</td><td>Copy; replace &lsquo;*&rsquo; or spaces with LOW-VALUES</td><td><code>CC-CARD-NUM</code></td></tr>
+          <tr><td><code>CC-ACCT-ID</code></td><td>Numeric validation, MOVE to COMMAREA</td><td><code>CDEMO-ACCT-ID</code></td></tr>
+          <tr><td><code>CC-CARD-NUM-N</code></td><td>Numeric validation, MOVE to COMMAREA</td><td><code>CDEMO-CARD-NUM</code></td></tr>
+          <tr><td><code>CC-CARD-NUM</code></td><td>MOVE to RIDFLD</td><td><code>WS-CARD-RID-CARDNUM</code></td></tr>
+          <tr><td><code>CARD-EMBOSSED-NAME</code> (file)</td><td>Direct MOVE</td><td><code>CRDNAMEO</code> (map output)</td></tr>
+          <tr><td><code>CARD-EXPIRAION-DATE</code> (file)</td><td>Redefine then extract month/year</td><td><code>EXPMONO</code>, <code>EXPYEARO</code> (map output)</td></tr>
+          <tr><td><code>CARD-ACTIVE-STATUS</code> (file)</td><td>Direct MOVE</td><td><code>CRDSTCDO</code> (map output)</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 7 — COMMAREA and Interface Contracts
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">7</span>
+    <h2>COMMAREA and Interface Contracts</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 7.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>7.1 COMMAREA Layout</h3>
+      <p>The transaction uses the shared <code>CARDDEMO-COMMAREA</code> (copybook <code>COCOM01Y</code>) plus a program-local extension <code>WS-THIS-PROGCOMMAREA</code>. Both are concatenated into <code>WS-COMMAREA</code> (PIC X(2000)) for the RETURN.</p>
+      <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Field</th><th>PIC</th><th>Length</th><th>Direction</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>CDEMO-FROM-TRANID</code></td><td>X(04)</td><td>4</td><td>IN/OUT</td><td>Calling transaction ID</td></tr>
+          <tr><td><code>CDEMO-FROM-PROGRAM</code></td><td>X(08)</td><td>8</td><td>IN/OUT</td><td>Calling program name</td></tr>
+          <tr><td><code>CDEMO-TO-TRANID</code></td><td>X(04)</td><td>4</td><td>OUT</td><td>Target transaction ID for XCTL</td></tr>
+          <tr><td><code>CDEMO-TO-PROGRAM</code></td><td>X(08)</td><td>8</td><td>OUT</td><td>Target program name for XCTL</td></tr>
+          <tr><td><code>CDEMO-USER-ID</code></td><td>X(08)</td><td>8</td><td>IN</td><td>Signed-on user ID</td></tr>
+          <tr><td><code>CDEMO-USER-TYPE</code></td><td>X(01)</td><td>1</td><td>IN</td><td>User type: &lsquo;A&rsquo; = Admin, &lsquo;U&rsquo; = User</td></tr>
+          <tr><td><code>CDEMO-PGM-CONTEXT</code></td><td>9(01)</td><td>1</td><td>IN/OUT</td><td>0 = first entry, 1 = re-entry</td></tr>
+          <tr><td><code>CDEMO-ACCT-ID</code></td><td>9(11)</td><td>11</td><td>IN/OUT</td><td>Account ID for card lookup</td></tr>
+          <tr><td><code>CDEMO-CARD-NUM</code></td><td>9(16)</td><td>16</td><td>IN/OUT</td><td>Card number for card lookup</td></tr>
+          <tr><td><code>CDEMO-LAST-MAP</code></td><td>X(7)</td><td>7</td><td>OUT</td><td>Last map sent (CCRDSLA)</td></tr>
+          <tr><td><code>CDEMO-LAST-MAPSET</code></td><td>X(7)</td><td>7</td><td>OUT</td><td>Last mapset sent (COCRDSL)</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <h4>Program-Local COMMAREA Extension: WS-THIS-PROGCOMMAREA</h4>
+      <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Field</th><th>PIC</th><th>Length</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>CA-FROM-PROGRAM</code></td><td>X(08)</td><td>8</td><td>Stores the original calling program</td></tr>
+          <tr><td><code>CA-FROM-TRANID</code></td><td>X(04)</td><td>4</td><td>Stores the original calling transaction</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 7.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>7.2 Return Code Conventions</h3>
+      <p>
+        The program uses <code>WS-RESP-CD</code> (PIC S9(09) COMP) and <code>WS-REAS-CD</code> (PIC S9(09) COMP) to capture CICS RESP and RESP2 codes from file operations. On error, these are formatted into <code>WS-FILE-ERROR-MESSAGE</code> and displayed to the user. The 88-level flags on <code>WS-INPUT-FLAG</code> (<code>INPUT-OK</code> / <code>INPUT-ERROR</code>) control flow between validation and display.
+      </p>
+    </div>
+
+    <!-- 7.3 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>7.3 Conversation State Management</h3>
+      <p>
+        State is preserved between pseudo-conversational iterations via the <code>WS-COMMAREA</code> (2000 bytes), which concatenates <code>CARDDEMO-COMMAREA</code> and <code>WS-THIS-PROGCOMMAREA</code>. On each RETURN, the combined data is passed back. On re-entry, the program splits <code>DFHCOMMAREA</code> back into the two areas. The key state fields are:
+      </p>
+      <ul>
+        <li><code>CDEMO-PGM-CONTEXT</code>: 0 = first entry (<code>CDEMO-PGM-ENTER</code>), 1 = re-entry (<code>CDEMO-PGM-REENTER</code>)</li>
+        <li><code>CDEMO-ACCT-ID</code> / <code>CDEMO-CARD-NUM</code>: persisted search criteria</li>
+        <li><code>CDEMO-FROM-PROGRAM</code> / <code>CDEMO-FROM-TRANID</code>: calling context for PF3 return routing</li>
+        <li><code>CDEMO-LAST-MAPSET</code> / <code>CDEMO-LAST-MAP</code>: last screen sent (used for attribute logic)</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 8 — Error Handling and User Feedback
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">8</span>
+    <h2>Error Handling and User Feedback</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 8.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>8.1 Error Flow Diagram</h3>
+<pre>
+  ┌─────────────────┐
+  │ RECEIVE MAP     │
+  └────────┬────────┘
+           ▼
+  ┌─────────────────┐     ┌────────────────────────────────┐
+  │ 2200-EDIT-MAP   │────▶│ INPUT-ERROR?                   │
+  │ -INPUTS         │     │  YES ──▶ Set WS-RETURN-MSG     │
+  └─────────────────┘     │          Highlight field RED    │
+                          │          SEND MAP with error    │
+                          │  NO  ──▶ 9000-READ-DATA        │
+                          └──────────────┬─────────────────┘
+                                         ▼
+                          ┌────────────────────────────────┐
+                          │ EVALUATE WS-RESP-CD            │
+                          │  NORMAL  ──▶ Display details   │
+                          │  NOTFND  ──▶ "Did not find..." │
+                          │  OTHER   ──▶ File error msg    │
+                          └────────────────────────────────┘
+</pre>
+    </div>
+
+    <!-- 8.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>8.2 Error Handling Matrix</h3>
+      <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Condition</th><th>RESP Code</th><th>Program Action</th><th>User Message</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Account blank/zero</td><td>N/A (input edit)</td><td>Set <code>INPUT-ERROR</code>, <code>FLG-ACCTFILTER-BLANK</code></td><td>&ldquo;Account number not provided&rdquo;</td></tr>
+          <tr><td>Account not numeric</td><td>N/A (input edit)</td><td>Set <code>INPUT-ERROR</code>, <code>FLG-ACCTFILTER-NOT-OK</code></td><td>&ldquo;ACCOUNT FILTER,IF SUPPLIED MUST BE A 11 DIGIT NUMBER&rdquo;</td></tr>
+          <tr><td>Card blank/zero</td><td>N/A (input edit)</td><td>Set <code>INPUT-ERROR</code>, <code>FLG-CARDFILTER-BLANK</code></td><td>&ldquo;Card number not provided&rdquo;</td></tr>
+          <tr><td>Card not numeric</td><td>N/A (input edit)</td><td>Set <code>INPUT-ERROR</code>, <code>FLG-CARDFILTER-NOT-OK</code></td><td>&ldquo;CARD ID FILTER,IF SUPPLIED MUST BE A 16 DIGIT NUMBER&rdquo;</td></tr>
+          <tr><td>Both fields blank</td><td>N/A (cross-field)</td><td>Set <code>NO-SEARCH-CRITERIA-RECEIVED</code></td><td>&ldquo;No input received&rdquo;</td></tr>
+          <tr><td>Card not found (primary)</td><td>DFHRESP(NOTFND)</td><td>Set <code>INPUT-ERROR</code>, flag both fields</td><td>&ldquo;Did not find cards for this search condition&rdquo;</td></tr>
+          <tr><td>Card not found (alt index)</td><td>DFHRESP(NOTFND)</td><td>Set <code>INPUT-ERROR</code>, flag acct field</td><td>&ldquo;Did not find this account in cards database&rdquo;</td></tr>
+          <tr><td>File read error (primary)</td><td>OTHER</td><td>Set <code>INPUT-ERROR</code>, build <code>WS-FILE-ERROR-MESSAGE</code></td><td>&ldquo;File Error: READ on CARDDAT returned RESP &lt;code&gt;,RESP2 &lt;code&gt;&rdquo;</td></tr>
+          <tr><td>File read error (alt index)</td><td>OTHER</td><td>Set <code>INPUT-ERROR</code>, build <code>WS-FILE-ERROR-MESSAGE</code></td><td>&ldquo;File Error: READ on CARDAIX returned RESP &lt;code&gt;,RESP2 &lt;code&gt;&rdquo;</td></tr>
+          <tr><td>Unexpected data scenario</td><td>N/A</td><td>ABEND-CODE &lsquo;0001&rsquo;, <code>SEND-PLAIN-TEXT</code></td><td>&ldquo;UNEXPECTED DATA SCENARIO&rdquo;</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 8.3 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>8.3 HANDLE ABEND / HANDLE CONDITION</h3>
+      <p>
+        The program registers an abend handler at entry:
+      </p>
+      <ul>
+        <li><code>EXEC CICS HANDLE ABEND LABEL(ABEND-ROUTINE)</code> &mdash; registered in <code>0000-MAIN</code></li>
+      </ul>
+      <p>
+        The <code>ABEND-ROUTINE</code> paragraph: sets the culprit to <code>COCRDSLC</code>, sends the <code>ABEND-DATA</code> structure to the terminal (NOHANDLE), cancels the abend handler, and issues <code>EXEC CICS ABEND ABCODE('9999')</code>.
+      </p>
+    </div>
+
+    <!-- 8.4 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>8.4 User Error Messages</h3>
+      <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>88-Level / Source</th><th>Message Text</th><th>Destination</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>WS-PROMPT-FOR-INPUT</code></td><td>Please enter Account and Card Number</td><td>INFOMSG (informational)</td></tr>
+          <tr><td><code>FOUND-CARDS-FOR-ACCOUNT</code></td><td>Displaying requested details</td><td>INFOMSG (informational)</td></tr>
+          <tr><td><code>WS-EXIT-MESSAGE</code></td><td>PF03 pressed.Exiting</td><td>ERRMSG</td></tr>
+          <tr><td><code>WS-PROMPT-FOR-ACCT</code></td><td>Account number not provided</td><td>ERRMSG</td></tr>
+          <tr><td><code>WS-PROMPT-FOR-CARD</code></td><td>Card number not provided</td><td>ERRMSG</td></tr>
+          <tr><td><code>NO-SEARCH-CRITERIA-RECEIVED</code></td><td>No input received</td><td>ERRMSG</td></tr>
+          <tr><td><code>SEARCHED-ACCT-ZEROES</code></td><td>Account number must be a non zero 11 digit number</td><td>ERRMSG</td></tr>
+          <tr><td><code>SEARCHED-ACCT-NOT-NUMERIC</code></td><td>Account number must be a non zero 11 digit number</td><td>ERRMSG</td></tr>
+          <tr><td><code>SEARCHED-CARD-NOT-NUMERIC</code></td><td>Card number if supplied must be a 16 digit number</td><td>ERRMSG</td></tr>
+          <tr><td><code>DID-NOT-FIND-ACCT-IN-CARDXREF</code></td><td>Did not find this account in cards database</td><td>ERRMSG</td></tr>
+          <tr><td><code>DID-NOT-FIND-ACCTCARD-COMBO</code></td><td>Did not find cards for this search condition</td><td>ERRMSG</td></tr>
+          <tr><td><code>XREF-READ-ERROR</code></td><td>Error reading Card Data File</td><td>ERRMSG</td></tr>
+          <tr><td><code>CODING-TO-BE-DONE</code></td><td>Looks Good.... so far</td><td>ERRMSG (debug)</td></tr>
+          <tr><td>Inline MOVE (2210)</td><td>ACCOUNT FILTER,IF SUPPLIED MUST BE A 11 DIGIT NUMBER</td><td>ERRMSG</td></tr>
+          <tr><td>Inline MOVE (2220)</td><td>CARD ID FILTER,IF SUPPLIED MUST BE A 16 DIGIT NUMBER</td><td>ERRMSG</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 9 — Security and Authorization
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">9</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 9.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>9.1 Transaction Security</h3>
+      <p>
+        Access to the <code>CCDL</code> transaction is controlled at the menu level. The sign-on program (<code>COSGN00C</code>) authenticates users and routes them based on <code>CDEMO-USER-TYPE</code>: regular users (&lsquo;U&rsquo;) go to the main menu (<code>COMEN01C</code>), admin users (&lsquo;A&rsquo;) go to the admin menu (<code>COADM01C</code>). Credit Card View is available from the main menu flow (Credit Card List &rarr; Credit Card View), making it accessible to both regular and admin users.
+      </p>
+      <p>
+        Within <code>COCRDSLC</code>, on PF3 exit the program sets <code>CDEMO-USRTYP-USER</code> unconditionally, meaning the return context always assumes regular user type regardless of the original user type.
+      </p>
+    </div>
+
+    <!-- 9.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>9.2 Data Access Authorization</h3>
+      <p>
+        No data-level security checks are performed within the program. Any authenticated user who reaches this screen can view any card record by providing the card number. There is no row-level access control or ownership verification.
+      </p>
+    </div>
+
+    <!-- 9.3 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>9.3 Audit Trail</h3>
+      <p>
+        No explicit audit logging is implemented in <code>COCRDSLC</code>. Standard CICS journal/log facilities would capture transaction-level activity at the region level, but the program does not write audit records to any application log file or queue.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 10 — Performance Characteristics
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Performance Characteristics</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 10.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>10.1 Performance Profile</h3>
+      <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Metric</th><th>Value</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>File I/Os per iteration</td><td>1</td><td>Single READ on CARDDAT per search (9100-GETCARD-BYACCTCARD)</td></tr>
+          <tr><td>Map SENDs per iteration</td><td>1</td><td>Single SEND MAP (CCRDSLA) per iteration</td></tr>
+          <tr><td>Map RECEIVEs per iteration</td><td>0&ndash;1</td><td>RECEIVE MAP only on re-entry (CDEMO-PGM-REENTER)</td></tr>
+          <tr><td>COMMAREA size</td><td>2000 bytes</td><td>WS-COMMAREA = CARDDEMO-COMMAREA + WS-THIS-PROGCOMMAREA</td></tr>
+          <tr><td>CARD-RECORD size</td><td>150 bytes</td><td>Per CVACT02Y copybook</td></tr>
+          <tr><td>Working storage</td><td>~3 KB</td><td>WS-MISC-STORAGE + CC-WORK-AREAS + copybook areas</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 10.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>10.2 Performance Considerations</h3>
+      <ul>
+        <li><strong>Minimal I/O footprint:</strong> Only one direct-key VSAM READ per iteration makes this a very lightweight transaction.</li>
+        <li><strong>No BROWSE operations:</strong> Unlike the list screens (CCLI, CT00), this transaction performs only keyed reads, avoiding sequential I/O overhead.</li>
+        <li><strong>COMMAREA overhead:</strong> The 2000-byte COMMAREA is larger than strictly necessary for this transaction (most fields are unused), but within acceptable CICS limits.</li>
+        <li><strong>Alternate index path:</strong> The <code>9150-GETCARD-BYACCT</code> paragraph reads via the CARDAIX alternate index but is not invoked in the main flow &mdash; it exists as an alternative lookup method.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 11 — Testing Approach
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 11.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>11.1 Test Scenarios</h3>
+      <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Scenario</th><th>Input</th><th>Expected Result</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>TC-01</td><td>Normal card lookup</td><td>Valid 11-digit account + valid 16-digit card number</td><td>Card details displayed (name, status, expiry)</td></tr>
+          <tr><td>TC-02</td><td>Entry from CCLI with pre-populated criteria</td><td>Select card from Credit Card List</td><td>Card details displayed immediately without manual entry</td></tr>
+          <tr><td>TC-03</td><td>Account number blank</td><td>Leave account empty, enter card number, press ENTER</td><td>Error: &ldquo;Account number not provided&rdquo;, account field highlighted red</td></tr>
+          <tr><td>TC-04</td><td>Card number blank</td><td>Enter account, leave card empty, press ENTER</td><td>Error: &ldquo;Card number not provided&rdquo;, card field highlighted red</td></tr>
+          <tr><td>TC-05</td><td>Both fields blank</td><td>Press ENTER with no input</td><td>Error: &ldquo;No input received&rdquo;, both fields marked with &lsquo;*&rsquo; in red</td></tr>
+          <tr><td>TC-06</td><td>Non-numeric account</td><td>Enter &ldquo;ABC12345678&rdquo; as account</td><td>Error: &ldquo;ACCOUNT FILTER,IF SUPPLIED MUST BE A 11 DIGIT NUMBER&rdquo;</td></tr>
+          <tr><td>TC-07</td><td>Non-numeric card</td><td>Enter valid account, &ldquo;123ABC&rdquo; as card</td><td>Error: &ldquo;CARD ID FILTER,IF SUPPLIED MUST BE A 16 DIGIT NUMBER&rdquo;</td></tr>
+          <tr><td>TC-08</td><td>Card not found</td><td>Valid numeric account and card that don&rsquo;t exist in CARDDAT</td><td>Error: &ldquo;Did not find cards for this search condition&rdquo;</td></tr>
+          <tr><td>TC-09</td><td>PF3 exit to caller</td><td>Navigate from CCLI, press PF3</td><td>XCTL back to COCRDLIC</td></tr>
+          <tr><td>TC-10</td><td>PF3 exit to menu</td><td>Enter CCDL directly (no caller), press PF3</td><td>XCTL to COMEN01C (main menu)</td></tr>
+          <tr><td>TC-11</td><td>Invalid PF key</td><td>Press PF7</td><td>Treated as ENTER; re-processes current input</td></tr>
+          <tr><td>TC-12</td><td>Fields protected from CCLI context</td><td>Navigate from CCLI</td><td>Account and card fields are protected (DFHBMPRF); user cannot modify</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 11.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>11.2 Test Data Requirements</h3>
+      <ul>
+        <li><strong>CARDDAT file:</strong> At least 2&ndash;3 card records with known card numbers, account IDs, embossed names, active statuses (Y and N), and expiration dates</li>
+        <li><strong>User account:</strong> A valid CardDemo user (any type) authenticated via <code>COSGN00C</code></li>
+        <li><strong>Navigation context:</strong> Access via both CCLI (card list) and direct CCDL entry to test both entry paths</li>
+        <li><strong>Edge cases:</strong> Card numbers with leading zeros, accounts at boundary of 11-digit range, expired cards</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 12 — Known Issues and Considerations
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Known Issues and Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 12.1 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>12.1 Known Issues</h3>
+      <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Issue</th><th>Severity</th><th>Details</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>KI-1</td><td>User type forced to &lsquo;U&rsquo; on PF3 exit</td><td>Low</td><td><code>SET CDEMO-USRTYP-USER TO TRUE</code> is called unconditionally before XCTL on PF3, overwriting the original user type. Admin users returning to the card list will be treated as regular users.</td></tr>
+          <tr><td>KI-2</td><td>Account ID not verified against card</td><td>Medium</td><td>The primary lookup (<code>9100-GETCARD-BYACCTCARD</code>) uses only the card number as the READ key. The account number is accepted and stored but not verified against the <code>CARD-ACCT-ID</code> field in the returned record. A user could enter a mismatched account/card combination and still see card details.</td></tr>
+          <tr><td>KI-3</td><td>Alternate index path (<code>9150-GETCARD-BYACCT</code>) is unused</td><td>Low</td><td>The paragraph <code>9150-GETCARD-BYACCT</code> reads CARDAIX by account ID but is never PERFORMed in the main flow. It appears to be dead code or reserved for future use.</td></tr>
+          <tr><td>KI-4</td><td>No RESP handling on SEND MAP</td><td>Low</td><td>The <code>1400-SEND-SCREEN</code> captures <code>WS-RESP-CD</code> from the SEND MAP but does not evaluate it. A map send failure would go undetected.</td></tr>
+          <tr><td>KI-5</td><td>Hardcoded program/transaction literals</td><td>Low</td><td>Program names (<code>COCRDLIC</code>, <code>COMEN01C</code>), transaction IDs (<code>CCLI</code>, <code>CM00</code>), and file names (<code>CARDDAT</code>, <code>CARDAIX</code>) are hardcoded as working-storage literals rather than being configurable.</td></tr>
+          <tr><td>KI-6</td><td>Oversized COMMAREA</td><td>Low</td><td><code>WS-COMMAREA</code> is PIC X(2000) but the actual data (CARDDEMO-COMMAREA + WS-THIS-PROGCOMMAREA) is much smaller. The excess bytes are wasted on each RETURN.</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 12.2 -->
+    <div class="subsection">
+      <h3><span class="dot"></span>12.2 Modernization Considerations</h3>
+      <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Aspect</th><th>Current State</th><th>Target State</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Screen I/O</td><td>BMS MAP SEND/RECEIVE (3270 terminal)</td><td>REST API endpoint returning JSON; React/Angular front-end form</td></tr>
+          <tr><td>Data Access</td><td>EXEC CICS READ on VSAM KSDS (CARDDAT)</td><td>SQL SELECT on relational DB (e.g., PostgreSQL, Aurora)</td></tr>
+          <tr><td>State Management</td><td>Pseudo-conversational COMMAREA (2000 bytes)</td><td>Stateless REST; session state in JWT or server-side cache</td></tr>
+          <tr><td>Navigation</td><td>XCTL between COBOL programs</td><td>Client-side routing (SPA) or URL-based navigation</td></tr>
+          <tr><td>Validation</td><td>Inline COBOL IF/EVALUATE checks</td><td>Schema validation (JSON Schema, Bean Validation) + client-side validation</td></tr>
+          <tr><td>Error Handling</td><td>88-level flags + MOVE message to map field</td><td>Structured error responses (HTTP 4xx/5xx, error codes, i18n messages)</td></tr>
+          <tr><td>Security</td><td>Menu-level access control; no data-level checks</td><td>RBAC/ABAC with row-level security; OAuth2/OIDC authentication</td></tr>
+          <tr><td>Audit</td><td>None (CICS region-level only)</td><td>Application-level audit log (structured events to SIEM)</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /page-wrap-single -->
+
+<!-- ════════════════════  FOOTER  ════════════════════ -->
+<footer class="footer">
+  <strong>UniCredit S.p.A.</strong> &mdash; CardDemo CICS Transaction Analysis &middot; Auto-generated
+</footer>
+
+</body>
+</html>

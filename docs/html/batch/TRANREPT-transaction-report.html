@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRANREPT – Transaction Report | Batch Process Analysis | UniCredit CardDemo</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   UniCredit CardDemo — Shared Theme (inlined for standalone viewing)
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --uc-red:        #E4002B;
+  --uc-red-dark:   #B8001F;
+  --uc-red-light:  #FF3354;
+  --uc-navy:       #1D2B4E;
+  --uc-navy-light: #2A3D6B;
+  --uc-gold:       #C5A44E;
+  --uc-gold-light: #E2C97A;
+  --uc-white:      #FFFFFF;
+  --uc-gray-50:    #F8F9FA;
+  --uc-gray-100:   #F0F1F3;
+  --uc-gray-200:   #E2E4E8;
+  --uc-gray-400:   #9EA3AE;
+  --uc-gray-600:   #6B7280;
+  --uc-gray-800:   #374151;
+  --uc-text:       #1F2937;
+  --uc-shadow:     0 4px 24px rgba(29,43,78,.08);
+  --uc-shadow-lg:  0 12px 48px rgba(29,43,78,.12);
+  --uc-radius:     12px;
+  --uc-radius-sm:  8px;
+  --uc-transition: .25s cubic-bezier(.4,0,.2,1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--uc-text);
+  background: var(--uc-gray-50);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+.hero {
+  background: linear-gradient(135deg, var(--uc-navy) 0%, var(--uc-navy-light) 50%, var(--uc-red-dark) 100%);
+  color: var(--uc-white);
+  padding: 3rem 2rem 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -60%; right: -20%;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(228,0,43,.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute; bottom: -30%; left: -10%;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(197,164,78,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-inner { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+.hero-brand { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.hero-logo { height: 48px; flex-shrink: 0; }
+.hero-logo img { height: 100%; width: auto; display: block; }
+.hero-brand-text { font-size: .95rem; opacity: .85; letter-spacing: .04em; text-transform: uppercase; }
+.hero h1 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; letter-spacing: -.02em; line-height: 1.15; margin-bottom: .75rem; }
+.hero h1 span { color: var(--uc-gold-light); }
+.hero-subtitle { font-size: 1.15rem; opacity: .88; max-width: 720px; }
+.hero-meta { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,.15); }
+.hero-meta dt { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin-bottom: .15rem; }
+.hero-meta dd { font-size: .95rem; font-weight: 600; }
+.breadcrumb { max-width: 1200px; margin: 1.25rem auto .5rem; padding: 0 2rem; font-size: .8rem; color: var(--uc-gray-400); }
+.breadcrumb a { color: var(--uc-red); text-decoration: none; font-weight: 600; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb .sep { margin: 0 .4rem; opacity: .5; }
+.page-wrap-single { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+.section { background: var(--uc-white); border-radius: var(--uc-radius); box-shadow: var(--uc-shadow); margin-bottom: 2rem; overflow: hidden; }
+.section-header { display: flex; align-items: center; gap: .75rem; padding: 1.25rem 1.5rem; background: linear-gradient(90deg, var(--uc-navy) 0%, var(--uc-navy-light) 100%); color: var(--uc-white); cursor: pointer; user-select: none; }
+.section-header:hover { filter: brightness(1.1); }
+.section-num { background: var(--uc-red); color: var(--uc-white); font-size: .72rem; font-weight: 700; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.section-header h2 { font-size: 1.1rem; font-weight: 700; letter-spacing: -.01em; flex: 1; }
+.section-toggle { width: 24px; height: 24px; transition: transform var(--uc-transition); opacity: .7; }
+.section.collapsed .section-toggle { transform: rotate(-90deg); }
+.section-body { padding: 1.5rem; }
+.section.collapsed .section-body { display: none; }
+.subsection { margin-bottom: 1.75rem; }
+.subsection:last-child { margin-bottom: 0; }
+.subsection h3 { font-size: .95rem; font-weight: 700; color: var(--uc-navy); margin-bottom: .75rem; padding-bottom: .4rem; border-bottom: 2px solid var(--uc-gray-200); display: flex; align-items: center; gap: .5rem; }
+.subsection h3 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--uc-red); flex-shrink: 0; }
+.subsection h4 { font-size: .88rem; font-weight: 600; color: var(--uc-gray-800); margin: 1rem 0 .5rem; }
+.subsection p, .subsection li { font-size: .88rem; color: var(--uc-gray-800); line-height: 1.7; }
+.subsection ul, .subsection ol { padding-left: 1.4rem; margin-top: .35rem; }
+.subsection li { margin-bottom: .25rem; }
+.table-wrap { overflow-x: auto; margin: .75rem 0; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .82rem; }
+thead th { background: var(--uc-navy); color: var(--uc-white); text-align: left; padding: .6rem .75rem; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
+thead th:first-child { border-radius: var(--uc-radius-sm) 0 0 0; }
+thead th:last-child  { border-radius: 0 var(--uc-radius-sm) 0 0; }
+tbody td { padding: .55rem .75rem; border-bottom: 1px solid var(--uc-gray-200); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:nth-child(even) { background: var(--uc-gray-50); }
+tbody tr:hover { background: rgba(228,0,43,.04); }
+pre { background: var(--uc-navy); color: #E2E8F0; border-radius: var(--uc-radius-sm); padding: 1rem 1.25rem; font-size: .78rem; font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; overflow-x: auto; line-height: 1.65; margin: .75rem 0; }
+code { font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; font-size: .82em; background: var(--uc-gray-100); padding: .1em .35em; border-radius: 4px; color: var(--uc-red-dark); }
+pre code { background: none; padding: 0; color: inherit; }
+.callout { border-left: 4px solid var(--uc-gold); background: rgba(197,164,78,.08); padding: .85rem 1rem; border-radius: 0 var(--uc-radius-sm) var(--uc-radius-sm) 0; margin: .75rem 0; font-size: .85rem; }
+.callout-red { border-left-color: var(--uc-red); background: rgba(228,0,43,.05); }
+.callout strong { color: var(--uc-navy); }
+.diagram-box { background: var(--uc-gray-100); border: 2px dashed var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1.5rem; text-align: center; margin: .75rem 0; }
+.diagram-box pre { text-align: left; background: var(--uc-navy); display: inline-block; max-width: 100%; }
+.badge { display: inline-block; font-size: .68rem; font-weight: 700; padding: .15em .55em; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; line-height: 1.6; }
+.badge-red    { background: var(--uc-red);   color: #fff; }
+.badge-navy   { background: var(--uc-navy);  color: #fff; }
+.badge-gold   { background: var(--uc-gold);  color: var(--uc-navy); }
+.badge-gray   { background: var(--uc-gray-200); color: var(--uc-gray-800); }
+.kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin: 1rem 0; }
+.kpi-card { background: var(--uc-gray-50); border: 1px solid var(--uc-gray-200); border-radius: var(--uc-radius-sm); padding: 1rem; text-align: center; transition: var(--uc-transition); }
+.kpi-card:hover { border-color: var(--uc-red); box-shadow: var(--uc-shadow); transform: translateY(-2px); }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--uc-red); line-height: 1.2; }
+.kpi-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--uc-gray-600); margin-top: .25rem; }
+.footer { background: var(--uc-navy); color: rgba(255,255,255,.6); text-align: center; padding: 2rem; font-size: .78rem; }
+.footer strong { color: var(--uc-gold-light); }
+@media print {
+  .section.collapsed .section-body { display: block; }
+  .hero { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════  HERO  ════════════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. &mdash; Milano</div>
+    </div>
+    <h1>TRANREPT &ndash; <span>Batch Process Analysis</span></h1>
+    <p class="hero-subtitle">
+      Job <code>TRANREPT</code> &middot; Program <code>CBTRN03C</code> &middot; Unload TRANSACT VSAM to sequential backup, filter by date range, sort by card number, and produce a formatted transaction detail report with page, account, and grand totals
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Job Name</dt><dd>TRANREPT</dd></div>
+      <div><dt>Entry Program</dt><dd>CBTRN03C</dd></div>
+      <div><dt>Frequency</dt><dd>On-demand</dd></div>
+      <div><dt>LOC</dt><dd>649</dd></div>
+      <div><dt>Files Touched</dt><dd>6</dd></div>
+      <div><dt>JCL Steps</dt><dd>3</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ════════════════════  BREADCRUMB  ════════════════════ -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">&rsaquo;</span>
+  <a href="index.html">Batch Flows</a>
+  <span class="sep">&rsaquo;</span>
+  TRANREPT &ndash; Transaction Report
+</div>
+
+<!-- ════════════════════  BODY  ════════════════════ -->
+<div class="page-wrap-single">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     IDENTIFICATION
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s0">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">ID</span>
+    <h2>Identification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <tbody>
+          <tr><td><strong>Job Name</strong></td><td><code>TRANREPT</code></td></tr>
+          <tr><td><strong>Job Stream / Schedule</strong></td><td>On-demand (not in Control-M scheduler; triggered as needed for reporting)</td></tr>
+          <tr><td><strong>Business Domain</strong></td><td>Transaction Reporting / Business Intelligence</td></tr>
+          <tr><td><strong>Owning Team</strong></td><td>CardDemo Batch Operations</td></tr>
+          <tr><td><strong>Frequency</strong></td><td>On-demand</td></tr>
+          <tr><td><strong>Batch Window</strong></td><td>Can run anytime; no exclusive file locking required (all VSAM files opened INPUT or SHR)</td></tr>
+          <tr><td><strong>Criticality</strong></td><td><span class="badge badge-navy">Medium</span></td></tr>
+          <tr><td><strong>Elapsed Time SLA</strong></td><td>No hard SLA; report generation is non-critical to daily cycle</td></tr>
+          <tr><td><strong>Primary Program</strong></td><td><code>CBTRN03C</code> (COBOL Batch, 649 LOC)</td></tr>
+          <tr><td><strong>Source Location</strong></td><td><code>app/cbl/CBTRN03C.cbl</code> &middot; JCL: <code>app/jcl/TRANREPT.jcl</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 1 — Business Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">1</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 1.1 -->
+    <div class="subsection" id="s1-1">
+      <h3><span class="dot"></span> 1.1 Business Context</h3>
+      <ul>
+        <li><strong>What:</strong> A multi-step job that (1) unloads the TRANSACT VSAM to a sequential backup, (2) filters the backup by a configurable date range and sorts by card number, then (3) produces a formatted, paginated transaction detail report enriched with transaction type descriptions, category descriptions, and account IDs from cross-reference lookups.</li>
+        <li><strong>Who:</strong> Consumed by operations, finance, and audit teams. Downstream of the <em>Daily Transaction Posting</em> job (POSTTRAN/CBTRN02C) which populates the TRANSACT VSAM.</li>
+        <li><strong>When:</strong> Triggered on demand when business users require a transaction listing for a specific date range. Typically run after POSTTRAN has completed for the reporting period.</li>
+        <li><strong>Why:</strong> Provides a human-readable, print-ready report of card transactions grouped by card number with running totals at page, account, and grand levels for reconciliation and audit purposes.</li>
+        <li><strong>Outcome:</strong> A GDG-versioned report file (<code>TRANREPT(+1)</code>) containing a formatted 133-byte print report with headers, detail lines, and three levels of totals (page, account, grand).</li>
+      </ul>
+    </div>
+
+    <!-- 1.2 -->
+    <div class="subsection" id="s1-2">
+      <h3><span class="dot"></span> 1.2 Business Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────────┐
+  │             TRANSACTION REPORT GENERATION FLOW                  │
+  └─────────────────────────────────────────────────────────────────┘
+
+  TRANSACT VSAM (KSDS)
+       │
+       ▼
+  ┌──────────────────────┐
+  │ STEP05R (REPROC)     │  IDCAMS REPRO
+  │ Unload VSAM → Seq    │  TRANSACT.VSAM.KSDS → TRANSACT.BKUP(+1)
+  └──────────┬───────────┘
+             │
+             ▼
+  ┌──────────────────────┐
+  │ STEP05R (SORT)       │  DFSORT
+  │ Filter: date range   │  PARM-START-DATE to PARM-END-DATE
+  │ Sort: card number    │  TRANSACT.BKUP(+1) → TRANSACT.DALY(+1)
+  └──────────┬───────────┘
+             │
+             ▼
+  ┌──────────────────────┐     ┌──────────────────────┐
+  │ STEP10R: CBTRN03C    │     │ CARDXREF VSAM        │
+  │ Read sorted trans    │────▶│ Lookup account ID    │
+  │ Enrich with lookups  │     └──────────────────────┘
+  │                      │     ┌──────────────────────┐
+  │                      │────▶│ TRANTYPE VSAM        │
+  │                      │     │ Lookup type desc      │
+  │                      │     └──────────────────────┘
+  │                      │     ┌──────────────────────┐
+  │                      │────▶│ TRANCATG VSAM        │
+  │                      │     │ Lookup category desc   │
+  │                      │     └──────────────────────┘
+  │                      │     ┌──────────────────────┐
+  │                      │────▶│ DATEPARM             │
+  │                      │     │ Read date range       │
+  └──────────┬───────────┘     └──────────────────────┘
+             │
+             ▼
+  ┌──────────────────────┐
+  │ TRANREPT GDG(+1)     │  Formatted 133-byte report
+  │ Page / Account /     │  with headers, detail lines,
+  │ Grand Totals         │  and three levels of totals
+  └──────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 1.3 -->
+    <div class="subsection" id="s1-3">
+      <h3><span class="dot"></span> 1.3 Business Rules Applied in This Process</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Rule ID</th><th>Description</th><th>Applied At</th><th>Exception Handling</th></tr></thead>
+          <tbody>
+            <tr><td>BR-001</td><td>Only transactions within the PARM date range (PARM-START-DATE to PARM-END-DATE) are included in the SORT output</td><td>STEP05R (SORT) INCLUDE COND</td><td>Out-of-range records are excluded from SORTOUT</td></tr>
+            <tr><td>BR-002</td><td>CBTRN03C applies a secondary date filter using DATEPARM file (WS-START-DATE to WS-END-DATE) against <code>TRAN-PROC-TS(1:10)</code></td><td>Main loop, lines 173&ndash;178</td><td>Records outside range are skipped via NEXT SENTENCE</td></tr>
+            <tr><td>BR-003</td><td>Transactions are grouped by card number (control break); account totals are printed when card number changes</td><td>1120-WRITE-ACCOUNT-TOTALS</td><td>N/A</td></tr>
+            <tr><td>BR-004</td><td>Page totals are printed every 20 detail lines (WS-PAGE-SIZE = 20); page total is accumulated into the grand total</td><td>1110-WRITE-PAGE-TOTALS, 1100-WRITE-TRANSACTION-REPORT</td><td>N/A</td></tr>
+            <tr><td>BR-005</td><td>Card number must exist in Card Cross-Reference (CARDXREF) for account ID enrichment</td><td>1500-A-LOOKUP-XREF</td><td>INVALID KEY &rarr; DISPLAY error &rarr; ABEND (U0999)</td></tr>
+            <tr><td>BR-006</td><td>Transaction type code must exist in TRANTYPE for type description enrichment</td><td>1500-B-LOOKUP-TRANTYPE</td><td>INVALID KEY &rarr; DISPLAY error &rarr; ABEND (U0999)</td></tr>
+            <tr><td>BR-007</td><td>Transaction type + category code must exist in TRANCATG for category description enrichment</td><td>1500-C-LOOKUP-TRANCATG</td><td>INVALID KEY &rarr; DISPLAY error &rarr; ABEND (U0999)</td></tr>
+            <tr><td>BR-008</td><td>Report output is sorted ascending by card number (from SORT step)</td><td>STEP05R (SORT) FIELDS=(TRAN-CARD-NUM,A)</td><td>N/A</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 1.4 -->
+    <div class="subsection" id="s1-4">
+      <h3><span class="dot"></span> 1.4 Business Inputs and Outputs</h3>
+      <h4>Inputs</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Input</th><th>Source System</th><th>Business Description</th><th>Timing</th></tr></thead>
+          <tbody>
+            <tr><td>Transaction Master (<code>TRANSACT.VSAM.KSDS</code>)</td><td>POSTTRAN batch job</td><td>All posted credit-card transactions</td><td>Must be populated before job run</td></tr>
+            <tr><td>Card Cross-Reference (<code>CARDXREF.VSAM.KSDS</code>)</td><td>Account setup</td><td>Maps card numbers to customer and account IDs</td><td>Static reference</td></tr>
+            <tr><td>Transaction Type (<code>TRANTYPE.VSAM.KSDS</code>)</td><td>Reference data</td><td>Maps 2-byte type codes to 50-byte descriptions</td><td>Static reference</td></tr>
+            <tr><td>Transaction Category (<code>TRANCATG.VSAM.KSDS</code>)</td><td>Reference data</td><td>Maps type+category composite key to 50-byte descriptions</td><td>Static reference</td></tr>
+            <tr><td>Date Parameters (<code>DATEPARM</code>)</td><td>Operations</td><td>Start and end dates for report filtering (format: YYYY-MM-DD YYYY-MM-DD)</td><td>Prepared before job run</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h4>Outputs</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Output</th><th>Destination</th><th>Business Description</th><th>Timing</th></tr></thead>
+          <tbody>
+            <tr><td>VSAM Backup (<code>TRANSACT.BKUP(+1)</code>)</td><td>Operations / recovery</td><td>Sequential copy of TRANSACT VSAM for backup</td><td>Created in STEP05R (REPROC)</td></tr>
+            <tr><td>Filtered Transactions (<code>TRANSACT.DALY(+1)</code>)</td><td>STEP10R (CBTRN03C)</td><td>Date-filtered, card-number-sorted transaction extract</td><td>Created in STEP05R (SORT)</td></tr>
+            <tr><td>Transaction Report (<code>TRANREPT(+1)</code>)</td><td>Operations, Finance, Audit</td><td>Formatted 133-byte print report with detail lines, page/account/grand totals</td><td>Available immediately after STEP10R</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 2 — Technical Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">2</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 2.1 -->
+    <div class="subsection" id="s2-1">
+      <h3><span class="dot"></span> 2.1 Technical Flow Diagram &ndash; Overview</h3>
+      <div class="diagram-box">
+<pre>
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ JOB: TRANREPT  (3-step multi-program job)                      │
+  │                                                                 │
+  │  STEP05R(1): PROC=REPROC → PGM=IDCAMS                         │
+  │  ┌─────────────────────────────────────────────────────────┐   │
+  │  │  TRANSACT.VSAM.KSDS ──(REPRO)──▶ TRANSACT.BKUP(+1)    │   │
+  │  └─────────────────────────────────────────────────────────┘   │
+  │                              │                                  │
+  │  STEP05R(2): PGM=SORT        ▼                                  │
+  │  ┌─────────────────────────────────────────────────────────┐   │
+  │  │  TRANSACT.BKUP(+1) ──(INCLUDE date range)──┐           │   │
+  │  │                        (SORT by card num)    │           │   │
+  │  │                              ▼               │           │   │
+  │  │                   TRANSACT.DALY(+1)          │           │   │
+  │  └─────────────────────────────────────────────────────────┘   │
+  │                              │                                  │
+  │  STEP10R: PGM=CBTRN03C      ▼                                  │
+  │  ┌─────────────────────────────────────────────────────────┐   │
+  │  │  TRANSACT.DALY(+1) ──(Sequential READ)──┐              │   │
+  │  │  DATEPARM ──(Sequential READ)────────────┤              │   │
+  │  │  CARDXREF.VSAM ──(Keyed READ)───────────┤  GENERATE    │   │
+  │  │  TRANTYPE.VSAM ──(Keyed READ)───────────┤  REPORT      │   │
+  │  │  TRANCATG.VSAM ──(Keyed READ)───────────┘              │   │
+  │  │                       │                                 │   │
+  │  │                       ▼                                 │   │
+  │  │              TRANREPT GDG(+1)                           │   │
+  │  │              (133-byte formatted report)                │   │
+  │  └─────────────────────────────────────────────────────────┘   │
+  └─────────────────────────────────────────────────────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.2 -->
+    <div class="subsection" id="s2-2">
+      <h3><span class="dot"></span> 2.2 Technical Flow Diagram &ndash; Detailed (Step-by-Step)</h3>
+      <div class="diagram-box">
+<pre>
+  STEP05R (REPROC) — EXEC PROC=REPROC, CNTLLIB=AWS.M2.CARDDEMO.CNTL
+    PRC001: EXEC PGM=IDCAMS
+    INPUTS:
+      - FILEIN:  AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS  (VSAM KSDS input)
+    OUTPUTS:
+      - FILEOUT: AWS.M2.CARDDEMO.TRANSACT.BKUP(+1)   (sequential, FB/350)
+    PROCESSING:
+      REPRO INFILE(FILEIN) OUTFILE(FILEOUT)
+      (Full unload of TRANSACT VSAM to sequential backup)
+    RC: 0=Success, 4=Empty input, 12+=Fatal error
+
+  STEP05R (SORT) — EXEC PGM=SORT
+    INPUTS:
+      - SORTIN: AWS.M2.CARDDEMO.TRANSACT.BKUP(+1)    (sequential, FB/350)
+    OUTPUTS:
+      - SORTOUT: AWS.M2.CARDDEMO.TRANSACT.DALY(+1)    (sequential, FB/350)
+    SYMNAMES:
+      TRAN-CARD-NUM: offset 263, length 16, ZD
+      TRAN-PROC-DT:  offset 305, length 10, CH
+      PARM-START-DATE: C'2022-01-01'
+      PARM-END-DATE:   C'2022-07-06'
+    PROCESSING:
+      SORT FIELDS=(TRAN-CARD-NUM,A)
+      INCLUDE COND=(TRAN-PROC-DT,GE,PARM-START-DATE,AND,
+                    TRAN-PROC-DT,LE,PARM-END-DATE)
+    RC: 0=Success, 16=Fatal
+
+  STEP10R — EXEC PGM=CBTRN03C
+    INPUTS:
+      - TRANFILE: AWS.M2.CARDDEMO.TRANSACT.DALY(+1)         (sequential)
+      - CARDXREF: AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS        (keyed random)
+      - TRANTYPE: AWS.M2.CARDDEMO.TRANTYPE.VSAM.KSDS        (keyed random)
+      - TRANCATG: AWS.M2.CARDDEMO.TRANCATG.VSAM.KSDS        (keyed random)
+      - DATEPARM: AWS.M2.CARDDEMO.DATEPARM                    (sequential)
+    OUTPUTS:
+      - TRANREPT: AWS.M2.CARDDEMO.TRANREPT(+1)               (sequential)
+    PROCESSING:
+      1. Open all 6 files (ABEND if any open fails)
+      2. Read DATEPARM → WS-START-DATE, WS-END-DATE
+      3. Loop: READ TRANFILE until EOF
+         a. Secondary date filter: TRAN-PROC-TS(1:10) in range
+         b. Control break on TRAN-CARD-NUM change:
+            - Write account totals for previous card
+            - Lookup CARDXREF by new card number → XREF-ACCT-ID
+         c. Lookup TRANTYPE by TRAN-TYPE-CD → TRAN-TYPE-DESC
+         d. Lookup TRANCATG by TRAN-TYPE-CD + TRAN-CAT-CD → TRAN-CAT-TYPE-DESC
+         e. Write detail line (1120-WRITE-DETAIL)
+         f. Every 20 lines: write page totals, new headers
+      4. At EOF: write final page totals and grand totals
+      5. Close all files
+    RC: 0=Normal completion, 999=ABEND (file I/O or lookup error)
+</pre>
+      </div>
+    </div>
+
+    <!-- 2.3 -->
+    <div class="subsection" id="s2-3">
+      <h3><span class="dot"></span> 2.3 Step Dependency and Condition Code Logic</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>Program</th><th>Executes If</th><th>Condition Code Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>STEP05R (REPROC)</td><td>IDCAMS</td><td>Always (first step)</td><td>0 = VSAM unloaded successfully<br>4 = Empty input VSAM (no records to copy)<br>12+ = Fatal IDCAMS error</td></tr>
+            <tr><td>STEP05R (SORT)</td><td>SORT</td><td>Always (no COND= coded)</td><td>0 = Sort and filter completed successfully<br>16 = Fatal sort error</td></tr>
+            <tr><td>STEP10R</td><td>CBTRN03C</td><td>Always (no COND= coded)</td><td>0 = Report generated (no explicit RETURN-CODE set)<br>999 = ABEND via CEE3ABD (file I/O or reference lookup failure)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-red">
+        <strong>Design gap:</strong> No COND= parameters exist on any step. If STEP05R (REPROC) fails with RC=12, the SORT and CBTRN03C steps will still execute against missing or empty input, likely causing cascading failures.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 3 — JCL Job Stream Specification
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">3</span>
+    <h2>JCL Job Stream Specification</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 3.1 -->
+    <div class="subsection" id="s3-1">
+      <h3><span class="dot"></span> 3.1 JCL Overview</h3>
+<pre><code>//TRANREPT JOB 'TRANSACTION REPORT',CLASS=A,MSGCLASS=0,
+//   NOTIFY=&amp;SYSUID
+//JOBLIB JCLLIB ORDER=('AWS.M2.CARDDEMO.PROC')
+//*
+//* Unload the processed transaction file
+//*
+//STEP05R EXEC PROC=REPROC,CNTLLIB=AWS.M2.CARDDEMO.CNTL
+//PRC001.FILEIN  DD DISP=SHR,DSN=AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS
+//PRC001.FILEOUT DD DISP=(NEW,CATLG,DELETE),UNIT=SYSDA,
+//   DCB=(LRECL=350,RECFM=FB,BLKSIZE=0),SPACE=(CYL,(1,1),RLSE),
+//   DSN=AWS.M2.CARDDEMO.TRANSACT.BKUP(+1)
+//*
+//* Filter transactions for date range and sort by card number
+//*
+//STEP05R  EXEC PGM=SORT
+//SORTIN   DD DISP=SHR,DSN=AWS.M2.CARDDEMO.TRANSACT.BKUP(+1)
+//SYMNAMES DD *  (TRAN-CARD-NUM, TRAN-PROC-DT, PARM dates)
+//SYSIN    DD *
+// SORT FIELDS=(TRAN-CARD-NUM,A)
+// INCLUDE COND=(TRAN-PROC-DT,GE,PARM-START-DATE,AND,
+//         TRAN-PROC-DT,LE,PARM-END-DATE)
+//SORTOUT  DD DISP=(NEW,CATLG,DELETE),UNIT=SYSDA,
+//   DCB=(*.SORTIN),SPACE=(CYL,(1,1),RLSE),
+//   DSN=AWS.M2.CARDDEMO.TRANSACT.DALY(+1)
+//*
+//* Produce formatted transaction report
+//*
+//STEP10R EXEC PGM=CBTRN03C
+//STEPLIB  DD DISP=SHR,DSN=AWS.M2.CARDDEMO.LOADLIB
+//TRANFILE DD DISP=SHR,DSN=AWS.M2.CARDDEMO.TRANSACT.DALY(+1)
+//CARDXREF DD DISP=SHR,DSN=AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS
+//TRANTYPE DD DISP=SHR,DSN=AWS.M2.CARDDEMO.TRANTYPE.VSAM.KSDS
+//TRANCATG DD DISP=SHR,DSN=AWS.M2.CARDDEMO.TRANCATG.VSAM.KSDS
+//DATEPARM DD DISP=SHR,DSN=AWS.M2.CARDDEMO.DATEPARM
+//TRANREPT DD DISP=(NEW,CATLG,DELETE),UNIT=SYSDA,
+//   DCB=(LRECL=133,RECFM=FB,BLKSIZE=0),SPACE=(CYL,(1,1),RLSE),
+//   DSN=AWS.M2.CARDDEMO.TRANREPT(+1)</code></pre>
+    </div>
+
+    <!-- 3.2 -->
+    <div class="subsection" id="s3-2">
+      <h3><span class="dot"></span> 3.2 DD Statement Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>DD Name</th><th>Disposition</th><th>Dataset Name</th><th>Type</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>STEP05R (REPROC)</td><td>PRC001.FILEIN</td><td>SHR</td><td>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</td><td>VSAM KSDS</td><td>Input: TRANSACT VSAM to unload</td></tr>
+            <tr><td>STEP05R (REPROC)</td><td>PRC001.FILEOUT</td><td>(NEW,CATLG,DELETE)</td><td>AWS.M2.CARDDEMO.TRANSACT.BKUP(+1)</td><td>GDG / Sequential</td><td>Output: Sequential backup of TRANSACT</td></tr>
+            <tr><td>STEP05R (REPROC)</td><td>SYSPRINT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>IDCAMS messages</td></tr>
+            <tr><td>STEP05R (SORT)</td><td>SORTIN</td><td>SHR</td><td>AWS.M2.CARDDEMO.TRANSACT.BKUP(+1)</td><td>Sequential</td><td>Input: backup to filter and sort</td></tr>
+            <tr><td>STEP05R (SORT)</td><td>SYMNAMES</td><td>Inline (*)</td><td>&mdash;</td><td>Inline</td><td>SORT symbolic names for fields and parm dates</td></tr>
+            <tr><td>STEP05R (SORT)</td><td>SYSIN</td><td>Inline (*)</td><td>&mdash;</td><td>Inline</td><td>SORT control statements</td></tr>
+            <tr><td>STEP05R (SORT)</td><td>SORTOUT</td><td>(NEW,CATLG,DELETE)</td><td>AWS.M2.CARDDEMO.TRANSACT.DALY(+1)</td><td>GDG / Sequential</td><td>Output: filtered/sorted transactions</td></tr>
+            <tr><td>STEP05R (SORT)</td><td>SYSOUT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>SORT messages</td></tr>
+            <tr><td>STEP10R</td><td>STEPLIB</td><td>SHR</td><td>AWS.M2.CARDDEMO.LOADLIB</td><td>PDS</td><td>Program load library</td></tr>
+            <tr><td>STEP10R</td><td>SYSOUT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>System output</td></tr>
+            <tr><td>STEP10R</td><td>SYSPRINT</td><td>SYSOUT=*</td><td>&mdash;</td><td>Spool</td><td>COBOL DISPLAY output</td></tr>
+            <tr><td>STEP10R</td><td>TRANFILE</td><td>SHR</td><td>AWS.M2.CARDDEMO.TRANSACT.DALY(+1)</td><td>Sequential</td><td>Input: filtered/sorted transactions</td></tr>
+            <tr><td>STEP10R</td><td>CARDXREF</td><td>SHR</td><td>AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</td><td>VSAM KSDS</td><td>Input: card cross-reference (READ)</td></tr>
+            <tr><td>STEP10R</td><td>TRANTYPE</td><td>SHR</td><td>AWS.M2.CARDDEMO.TRANTYPE.VSAM.KSDS</td><td>VSAM KSDS</td><td>Input: transaction type lookup (READ)</td></tr>
+            <tr><td>STEP10R</td><td>TRANCATG</td><td>SHR</td><td>AWS.M2.CARDDEMO.TRANCATG.VSAM.KSDS</td><td>VSAM KSDS</td><td>Input: transaction category lookup (READ)</td></tr>
+            <tr><td>STEP10R</td><td>DATEPARM</td><td>SHR</td><td>AWS.M2.CARDDEMO.DATEPARM</td><td>Sequential</td><td>Input: date range parameters</td></tr>
+            <tr><td>STEP10R</td><td>TRANREPT</td><td>(NEW,CATLG,DELETE)</td><td>AWS.M2.CARDDEMO.TRANREPT(+1)</td><td>GDG / Sequential</td><td>Output: formatted transaction report</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.3 -->
+    <div class="subsection" id="s3-3">
+      <h3><span class="dot"></span> 3.3 GDG Usage</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>GDG Base</th><th>Generation</th><th>RECFM/LRECL</th><th>Retention</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANSACT.BKUP</code></td><td>+1 (new)</td><td>FB / 350</td><td>Not specified in JCL</td><td>Sequential backup of TRANSACT VSAM (IDCAMS REPRO output)</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANSACT.DALY</code></td><td>+1 (new)</td><td>FB / 350 (DCB=*.SORTIN)</td><td>Not specified in JCL</td><td>Date-filtered and card-number-sorted transaction extract</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANREPT</code></td><td>+1 (new)</td><td>FB / 133</td><td>Not specified in JCL</td><td>Formatted transaction report output</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.4 -->
+    <div class="subsection" id="s3-4">
+      <h3><span class="dot"></span> 3.4 Scheduler Dependencies</h3>
+      <div class="callout">
+        <strong>Note:</strong> TRANREPT is not in the Control-M schedule (<code>CardDemo.controlm</code>). It is an on-demand job that can be submitted whenever a transaction report is required. It must run <strong>after</strong> POSTTRAN has populated the TRANSACT VSAM for the desired reporting period. Since all VSAM files are opened with DISP=SHR, this job can run concurrently with CICS online processing.
+      </div>
+      <div class="diagram-box">
+<pre>
+  POSTTRAN (populates TRANSACT VSAM)
+       │
+       │  (TRANSACT VSAM must contain data for report period)
+       ▼
+  TRANREPT (on-demand)
+  ├── STEP05R (REPROC): Unload VSAM → TRANSACT.BKUP(+1)
+  ├── STEP05R (SORT):   Filter + Sort → TRANSACT.DALY(+1)
+  └── STEP10R (CBTRN03C): Generate report → TRANREPT(+1)
+       │
+       ▼
+  Report available for viewing / printing
+</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 4 — Program Inventory and Call Chain
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">4</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 4.1 -->
+    <div class="subsection" id="s4-1">
+      <h3><span class="dot"></span> 4.1 Program Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Program ID</th><th>Step</th><th>Purpose</th><th>Language</th><th>LOC</th><th>Source Location</th></tr></thead>
+          <tbody>
+            <tr><td><code>IDCAMS</code></td><td>STEP05R (REPROC)</td><td>VSAM utility &mdash; REPRO to unload TRANSACT VSAM to sequential</td><td>System</td><td>&mdash;</td><td>z/OS system utility</td></tr>
+            <tr><td><code>SORT</code></td><td>STEP05R (SORT)</td><td>DFSORT &mdash; filter by date range and sort by card number</td><td>System</td><td>&mdash;</td><td>z/OS system utility</td></tr>
+            <tr><td><code>CBTRN03C</code></td><td>STEP10R</td><td>Main report program &mdash; reads sorted transactions, enriches with lookups, produces formatted report</td><td>COBOL</td><td>649</td><td><code>app/cbl/CBTRN03C.cbl</code></td></tr>
+            <tr><td><code>CEE3ABD</code></td><td>STEP10R (called)</td><td>LE abend service &mdash; invoked on fatal I/O or lookup errors</td><td>System</td><td>&mdash;</td><td>Language Environment runtime</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4.2 -->
+    <div class="subsection" id="s4-2">
+      <h3><span class="dot"></span> 4.2 Paragraph Call Hierarchy</h3>
+      <div class="diagram-box">
+<pre>
+CBTRN03C (PROCEDURE DIVISION)
+│
+├── 0000-TRANFILE-OPEN       (Open transaction input file)
+├── 0100-REPTFILE-OPEN       (Open report output file)
+├── 0200-CARDXREF-OPEN       (Open card cross-reference)
+├── 0300-TRANTYPE-OPEN       (Open transaction type file)
+├── 0400-TRANCATG-OPEN       (Open transaction category file)
+├── 0500-DATEPARM-OPEN       (Open date parameters file)
+│
+├── 0550-DATEPARM-READ       (Read WS-START-DATE, WS-END-DATE)
+│
+├── [MAIN LOOP: PERFORM UNTIL END-OF-FILE = 'Y']
+│   ├── 1000-TRANFILE-GET-NEXT   (Read next transaction record)
+│   ├── [Date filter: TRAN-PROC-TS(1:10) in range → CONTINUE]
+│   │   [Out of range → NEXT SENTENCE (skip record)]
+│   │
+│   ├── [Control break: card number changed]
+│   │   ├── 1120-WRITE-ACCOUNT-TOTALS  (Print account total line)
+│   │   │   └── 1111-WRITE-REPORT-REC  (Physical WRITE)
+│   │   └── 1500-A-LOOKUP-XREF        (Read CARDXREF for new card)
+│   │
+│   ├── 1500-B-LOOKUP-TRANTYPE        (Read TRANTYPE for type desc)
+│   ├── 1500-C-LOOKUP-TRANCATG        (Read TRANCATG for cat desc)
+│   │
+│   └── 1100-WRITE-TRANSACTION-REPORT (Write detail line)
+│       ├── [First time: write headers]
+│       │   └── 1120-WRITE-HEADERS
+│       │       └── 1111-WRITE-REPORT-REC  (×4: name, blank, hdr1, hdr2)
+│       ├── [Every 20 lines: page break]
+│       │   ├── 1110-WRITE-PAGE-TOTALS
+│       │   │   └── 1111-WRITE-REPORT-REC  (page total + separator)
+│       │   └── 1120-WRITE-HEADERS
+│       └── 1120-WRITE-DETAIL         (Format and write detail line)
+│           └── 1111-WRITE-REPORT-REC
+│
+├── [EOF: Write final totals]
+│   ├── 1110-WRITE-PAGE-TOTALS   (Final page total)
+│   └── 1110-WRITE-GRAND-TOTALS  (Grand total line)
+│       └── 1111-WRITE-REPORT-REC
+│
+├── 9000-TRANFILE-CLOSE      (Close transaction file)
+├── 9100-REPTFILE-CLOSE      (Close report file)
+├── 9200-CARDXREF-CLOSE      (Close cross-reference)
+├── 9300-TRANTYPE-CLOSE      (Close transaction type)
+├── 9400-TRANCATG-CLOSE      (Close transaction category)
+├── 9500-DATEPARM-CLOSE      (Close date parameters)
+│
+├── 9910-DISPLAY-IO-STATUS   (Format &amp; display file status code)
+└── 9999-ABEND-PROGRAM       (CALL CEE3ABD with abend code 999)
+</pre>
+      </div>
+    </div>
+
+    <!-- 4.3 -->
+    <div class="subsection" id="s4-3">
+      <h3><span class="dot"></span> 4.3 Copybooks Used</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Copybook</th><th>Record</th><th>LRECL</th><th>Key Fields</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>CVTRA05Y</code></td><td>TRAN-RECORD</td><td>350</td><td>TRAN-ID (PIC X(16))</td><td>Transaction master record layout</td></tr>
+            <tr><td><code>CVACT03Y</code></td><td>CARD-XREF-RECORD</td><td>50</td><td>XREF-CARD-NUM (PIC X(16))</td><td>Card cross-reference record layout</td></tr>
+            <tr><td><code>CVTRA03Y</code></td><td>TRAN-TYPE-RECORD</td><td>60</td><td>TRAN-TYPE (PIC X(02))</td><td>Transaction type record layout</td></tr>
+            <tr><td><code>CVTRA04Y</code></td><td>TRAN-CAT-RECORD</td><td>60</td><td>TRAN-CAT-KEY: TRAN-TYPE-CD X(02) + TRAN-CAT-CD 9(04)</td><td>Transaction category record layout</td></tr>
+            <tr><td><code>CVTRA07Y</code></td><td>Report structures (5 group items)</td><td>133 each</td><td>&mdash;</td><td>Report header, detail, page/account/grand totals layouts</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 5 — File and Dataset Inventory
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">5</span>
+    <h2>File and Dataset Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 5.1 -->
+    <div class="subsection" id="s5-1">
+      <h3><span class="dot"></span> 5.1 Complete File Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File/Dataset</th><th>Type</th><th>Access</th><th>LRECL</th><th>Key</th><th>Purpose in Flow</th></tr></thead>
+          <tbody>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>INPUT (REPRO)</td><td>350</td><td>TRAN-ID (16 bytes)</td><td>Source VSAM unloaded by IDCAMS REPRO</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANSACT.BKUP(+1)</code></td><td>GDG / Sequential</td><td>OUTPUT → INPUT</td><td>350</td><td>&mdash;</td><td>Sequential backup; input to SORT step</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANSACT.DALY(+1)</code></td><td>GDG / Sequential</td><td>OUTPUT → INPUT</td><td>350</td><td>&mdash;</td><td>Filtered/sorted extract; input to CBTRN03C</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>INPUT</td><td>50</td><td>XREF-CARD-NUM (16 bytes)</td><td>Card-to-account cross-reference lookup</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANTYPE.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>INPUT</td><td>60</td><td>TRAN-TYPE (2 bytes)</td><td>Transaction type description lookup</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANCATG.VSAM.KSDS</code></td><td>VSAM KSDS</td><td>INPUT</td><td>60</td><td>TRAN-CAT-KEY (6 bytes)</td><td>Transaction category description lookup</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.DATEPARM</code></td><td>Sequential</td><td>INPUT</td><td>80</td><td>&mdash;</td><td>Date range parameters (start + end dates)</td></tr>
+            <tr><td><code>AWS.M2.CARDDEMO.TRANREPT(+1)</code></td><td>GDG / Sequential</td><td>OUTPUT</td><td>133</td><td>&mdash;</td><td>Formatted transaction report</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.2 -->
+    <div class="subsection" id="s5-2">
+      <h3><span class="dot"></span> 5.2 Key Record Layouts</h3>
+
+      <h4>TRAN-RECORD (Copybook: CVTRA05Y, 350 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Offset</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>TRAN-ID</td><td>X(16)</td><td>1</td><td>16</td><td>Transaction ID (unique key)</td></tr>
+            <tr><td>TRAN-TYPE-CD</td><td>X(02)</td><td>17</td><td>2</td><td>Transaction type code</td></tr>
+            <tr><td>TRAN-CAT-CD</td><td>9(04)</td><td>19</td><td>4</td><td>Transaction category code</td></tr>
+            <tr><td>TRAN-SOURCE</td><td>X(10)</td><td>23</td><td>10</td><td>Transaction source identifier</td></tr>
+            <tr><td>TRAN-DESC</td><td>X(100)</td><td>33</td><td>100</td><td>Transaction description</td></tr>
+            <tr><td>TRAN-AMT</td><td>S9(09)V99</td><td>133</td><td>11</td><td>Transaction amount (signed decimal)</td></tr>
+            <tr><td>TRAN-MERCHANT-ID</td><td>9(09)</td><td>144</td><td>9</td><td>Merchant identifier</td></tr>
+            <tr><td>TRAN-MERCHANT-NAME</td><td>X(50)</td><td>153</td><td>50</td><td>Merchant name</td></tr>
+            <tr><td>TRAN-MERCHANT-CITY</td><td>X(50)</td><td>203</td><td>50</td><td>Merchant city</td></tr>
+            <tr><td>TRAN-MERCHANT-ZIP</td><td>X(10)</td><td>253</td><td>10</td><td>Merchant zip code</td></tr>
+            <tr><td>TRAN-CARD-NUM</td><td>X(16)</td><td>263</td><td>16</td><td>Card number (used for control break and XREF lookup)</td></tr>
+            <tr><td>TRAN-ORIG-TS</td><td>X(26)</td><td>279</td><td>26</td><td>Origination timestamp</td></tr>
+            <tr><td>TRAN-PROC-TS</td><td>X(26)</td><td>305</td><td>26</td><td>Processing timestamp (used for date filtering)</td></tr>
+            <tr><td>FILLER</td><td>X(20)</td><td>331</td><td>20</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>CARD-XREF-RECORD (Copybook: CVACT03Y, 50 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>XREF-CARD-NUM</td><td>X(16)</td><td>16</td><td>Card number (key)</td></tr>
+            <tr><td>XREF-CUST-ID</td><td>9(09)</td><td>9</td><td>Customer identifier</td></tr>
+            <tr><td>XREF-ACCT-ID</td><td>9(11)</td><td>11</td><td>Account identifier (used in report detail line)</td></tr>
+            <tr><td>FILLER</td><td>X(14)</td><td>14</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>TRAN-TYPE-RECORD (Copybook: CVTRA03Y, 60 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>TRAN-TYPE</td><td>X(02)</td><td>2</td><td>Transaction type code (key)</td></tr>
+            <tr><td>TRAN-TYPE-DESC</td><td>X(50)</td><td>50</td><td>Transaction type description (printed on report)</td></tr>
+            <tr><td>FILLER</td><td>X(08)</td><td>8</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>TRAN-CAT-RECORD (Copybook: CVTRA04Y, 60 bytes)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>PIC</th><th>Length</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>TRAN-CAT-KEY</td><td>&mdash;</td><td>6</td><td>Composite key (group item)</td></tr>
+            <tr><td>&nbsp;&nbsp;TRAN-TYPE-CD</td><td>X(02)</td><td>2</td><td>Transaction type code</td></tr>
+            <tr><td>&nbsp;&nbsp;TRAN-CAT-CD</td><td>9(04)</td><td>4</td><td>Transaction category code</td></tr>
+            <tr><td>TRAN-CAT-TYPE-DESC</td><td>X(50)</td><td>50</td><td>Category description (printed on report)</td></tr>
+            <tr><td>FILLER</td><td>X(04)</td><td>4</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>Report Structures (Copybook: CVTRA07Y, 133 bytes each)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Structure</th><th>Content</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>REPORT-NAME-HEADER</td><td><code>DALYREPT</code> + <code>Daily Transaction Report</code> + <code>Date Range:</code> + start/end dates</td><td>Report title and date range header</td></tr>
+            <tr><td>TRANSACTION-HEADER-1</td><td>Column headers: Transaction ID, Account ID, Transaction Type, Tran Category, Tran Source, Amount</td><td>Column headings line</td></tr>
+            <tr><td>TRANSACTION-HEADER-2</td><td>ALL &lsquo;-&rsquo; (133 dashes)</td><td>Separator line</td></tr>
+            <tr><td>TRANSACTION-DETAIL-REPORT</td><td>TRAN-ID(16) + ACCT-ID(11) + TYPE-CD(2)-DESC(15) + CAT-CD(4)-DESC(29) + SOURCE(10) + AMT(-ZZZ,ZZZ,ZZZ.ZZ)</td><td>Detail line per transaction</td></tr>
+            <tr><td>REPORT-PAGE-TOTALS</td><td><code>Page Total</code> + dots(86) + amount</td><td>Page subtotal line</td></tr>
+            <tr><td>REPORT-ACCOUNT-TOTALS</td><td><code>Account Total</code> + dots(84) + amount</td><td>Account subtotal line (control break)</td></tr>
+            <tr><td>REPORT-GRAND-TOTALS</td><td><code>Grand Total</code> + dots(86) + amount</td><td>Grand total line (end of report)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.3 -->
+    <div class="subsection" id="s5-3">
+      <h3><span class="dot"></span> 5.3 File Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  ┌──────────────────┐
+  │ TRANSACT VSAM    │
+  │ (KSDS, key=16)   │
+  │ LRECL=350        │
+  └────────┬─────────┘
+           │ REPRO (IDCAMS)
+           ▼
+  ┌──────────────────┐
+  │ TRANSACT.BKUP    │
+  │ GDG(+1), FB/350  │
+  └────────┬─────────┘
+           │ SORT + INCLUDE
+           ▼
+  ┌──────────────────┐
+  │ TRANSACT.DALY    │
+  │ GDG(+1), FB/350  │
+  │ (filtered/sorted) │
+  └────────┬─────────┘
+           │ Sequential READ
+           ▼
+  ┌─────────────────────────────────────────────────────────────────┐
+  │  STEP10R: CBTRN03C                                              │
+  │                                                                 │
+  │  CARDXREF VSAM ──(Keyed READ by card#)──┐                      │
+  │  TRANTYPE VSAM ──(Keyed READ by type)───┤  ENRICH &amp; FORMAT    │
+  │  TRANCATG VSAM ──(Keyed READ by key)────┤                      │
+  │  DATEPARM ──(Sequential READ)────────────┘                      │
+  └─────────────────────────┬───────────────────────────────────────┘
+                            │ Sequential WRITE
+                            ▼
+  ┌──────────────────┐
+  │ TRANREPT GDG(+1) │
+  │ FB/133            │
+  │ (formatted report)│
+  └──────────────────┘
+</pre>
+      </div>
+    </div>
+
+    <!-- 5.4 -->
+    <div class="subsection" id="s5-4">
+      <h3><span class="dot"></span> 5.4 File Dependency Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>Created In</th><th>Read In</th><th>Updated In</th><th>Must Exist Before Job?</th><th>Consumed Downstream?</th></tr></thead>
+          <tbody>
+            <tr><td>TRANSACT VSAM</td><td>POSTTRAN</td><td>STEP05R (REPROC)</td><td>&mdash;</td><td>Yes</td><td>Yes &mdash; CICS, CREASTMT, COMBTRAN</td></tr>
+            <tr><td>TRANSACT.BKUP GDG</td><td>STEP05R (REPROC)</td><td>STEP05R (SORT)</td><td>&mdash;</td><td>GDG base must exist</td><td>Operations / recovery</td></tr>
+            <tr><td>TRANSACT.DALY GDG</td><td>STEP05R (SORT)</td><td>STEP10R</td><td>&mdash;</td><td>GDG base must exist</td><td>Consumed in this job only</td></tr>
+            <tr><td>CARDXREF VSAM</td><td>XREFFILE job</td><td>STEP10R</td><td>&mdash;</td><td>Yes</td><td>Yes &mdash; POSTTRAN, CREASTMT</td></tr>
+            <tr><td>TRANTYPE VSAM</td><td>TRANTYPE job</td><td>STEP10R</td><td>&mdash;</td><td>Yes</td><td>Yes &mdash; CICS online</td></tr>
+            <tr><td>TRANCATG VSAM</td><td>TRANCATG job</td><td>STEP10R</td><td>&mdash;</td><td>Yes</td><td>Yes &mdash; CICS online</td></tr>
+            <tr><td>DATEPARM</td><td>Operations</td><td>STEP10R</td><td>&mdash;</td><td>Yes</td><td>Other reporting jobs</td></tr>
+            <tr><td>TRANREPT GDG</td><td>STEP10R</td><td>&mdash;</td><td>&mdash;</td><td>GDG base must exist</td><td>Operations, Finance, Audit</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 6 — Data Flow Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">6</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 6.1 -->
+    <div class="subsection" id="s6-1">
+      <h3><span class="dot"></span> 6.1 Data Transformation Map</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Source Field</th><th>Source File</th><th>Transformation</th><th>Target Field</th><th>Target File</th></tr></thead>
+          <tbody>
+            <tr><td>TRAN-ID</td><td>TRANSACT.DALY</td><td>Direct copy (MOVE)</td><td>TRAN-REPORT-TRANS-ID</td><td>TRANREPT report</td></tr>
+            <tr><td>XREF-ACCT-ID</td><td>CARDXREF VSAM (via TRAN-CARD-NUM lookup)</td><td>Direct copy (MOVE)</td><td>TRAN-REPORT-ACCOUNT-ID</td><td>TRANREPT report</td></tr>
+            <tr><td>TRAN-TYPE-CD</td><td>TRANSACT.DALY</td><td>Direct copy (MOVE)</td><td>TRAN-REPORT-TYPE-CD</td><td>TRANREPT report</td></tr>
+            <tr><td>TRAN-TYPE-DESC</td><td>TRANTYPE VSAM (via TRAN-TYPE-CD lookup)</td><td>Direct copy (MOVE)</td><td>TRAN-REPORT-TYPE-DESC</td><td>TRANREPT report (truncated to 15 chars)</td></tr>
+            <tr><td>TRAN-CAT-CD</td><td>TRANSACT.DALY</td><td>Direct copy (MOVE)</td><td>TRAN-REPORT-CAT-CD</td><td>TRANREPT report</td></tr>
+            <tr><td>TRAN-CAT-TYPE-DESC</td><td>TRANCATG VSAM (via type+cat key lookup)</td><td>Direct copy (MOVE)</td><td>TRAN-REPORT-CAT-DESC</td><td>TRANREPT report (truncated to 29 chars)</td></tr>
+            <tr><td>TRAN-SOURCE</td><td>TRANSACT.DALY</td><td>Direct copy (MOVE)</td><td>TRAN-REPORT-SOURCE</td><td>TRANREPT report</td></tr>
+            <tr><td>TRAN-AMT</td><td>TRANSACT.DALY</td><td>Direct copy (MOVE) + ADD to running totals</td><td>TRAN-REPORT-AMT (edit mask: -ZZZ,ZZZ,ZZZ.ZZ)</td><td>TRANREPT report</td></tr>
+            <tr><td>WS-START-DATE</td><td>DATEPARM</td><td>Direct copy (MOVE)</td><td>REPT-START-DATE</td><td>Report header</td></tr>
+            <tr><td>WS-END-DATE</td><td>DATEPARM</td><td>Direct copy (MOVE)</td><td>REPT-END-DATE</td><td>Report header</td></tr>
+            <tr><td>TRAN-AMT (accumulated)</td><td>TRANSACT.DALY</td><td>ADD per page (up to 20 lines)</td><td>REPT-PAGE-TOTAL</td><td>Page totals line</td></tr>
+            <tr><td>TRAN-AMT (accumulated)</td><td>TRANSACT.DALY</td><td>ADD per card number group</td><td>REPT-ACCOUNT-TOTAL</td><td>Account totals line</td></tr>
+            <tr><td>WS-PAGE-TOTAL (accumulated)</td><td>Working storage</td><td>ADD of page totals</td><td>REPT-GRAND-TOTAL</td><td>Grand totals line</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 6.2 -->
+    <div class="subsection" id="s6-2">
+      <h3><span class="dot"></span> 6.2 Data Lineage Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  TRANSACT.VSAM.KSDS (source: POSTTRAN batch posting)
+       │
+       │ IDCAMS REPRO (full unload)
+       ▼
+  TRANSACT.BKUP(+1) (sequential copy)
+       │
+       │ DFSORT: INCLUDE date range + SORT by card#
+       ▼
+  TRANSACT.DALY(+1) (filtered/sorted subset)
+       │
+       │ TRAN-CARD-NUM
+       ▼
+  CARDXREF VSAM ──▶ XREF-ACCT-ID (derived account number)
+       │
+       │ TRAN-TYPE-CD
+       ▼
+  TRANTYPE VSAM ──▶ TRAN-TYPE-DESC (type description)
+       │
+       │ TRAN-TYPE-CD + TRAN-CAT-CD
+       ▼
+  TRANCATG VSAM ──▶ TRAN-CAT-TYPE-DESC (category description)
+       │
+       │ DATEPARM ──▶ WS-START-DATE, WS-END-DATE (header dates)
+       │
+       ▼
+  ┌─────────────────────────────────────────────┐
+  │ 1120-WRITE-DETAIL                           │
+  │                                             │
+  │ TRAN-ID ──MOVE──▶ TRAN-REPORT-TRANS-ID      │
+  │ XREF-ACCT-ID ──MOVE──▶ TRAN-REPORT-ACCT-ID │
+  │ TYPE-CD + DESC ──MOVE──▶ TYPE columns       │
+  │ CAT-CD + DESC ──MOVE──▶ CATEGORY columns    │
+  │ TRAN-SOURCE ──MOVE──▶ SOURCE column         │
+  │ TRAN-AMT ──MOVE──▶ AMOUNT column            │
+  │          ──ADD──▶ WS-PAGE-TOTAL             │
+  │          ──ADD──▶ WS-ACCOUNT-TOTAL          │
+  └─────────────────────────────────────────────┘
+       │
+       ▼
+  TRANREPT GDG(+1) (formatted 133-byte report)
+</pre>
+      </div>
+    </div>
+
+    <!-- 6.3 -->
+    <div class="subsection" id="s6-3">
+      <h3><span class="dot"></span> 6.3 Control Totals and Reconciliation</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Control Point</th><th>What&rsquo;s Counted</th><th>Where Stored</th><th>Reconciled Against</th></tr></thead>
+          <tbody>
+            <tr><td>WS-PAGE-TOTAL</td><td>Sum of TRAN-AMT per page (20 lines)</td><td>Report page total line</td><td>Manual verification against detail lines</td></tr>
+            <tr><td>WS-ACCOUNT-TOTAL</td><td>Sum of TRAN-AMT per card number group</td><td>Report account total line</td><td>Sum of page totals within account group</td></tr>
+            <tr><td>WS-GRAND-TOTAL</td><td>Sum of all WS-PAGE-TOTAL values</td><td>Report grand total line</td><td>Sum of all account totals; cross-check with source VSAM</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-red">
+        <strong>Issue:</strong> The program does not maintain or display a record count. There is no WS-TRANSACTION-COUNT or similar counter, making it difficult to reconcile the number of detail lines against the input file record count.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 7 — Sort/Merge and Utility Processing
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">7</span>
+    <h2>Sort/Merge and Utility Processing</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s7-1">
+      <h3><span class="dot"></span> 7.1 IDCAMS REPRO (STEP05R &mdash; REPROC proc)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Attribute</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>Utility</td><td>IDCAMS</td></tr>
+            <tr><td>Operation</td><td>REPRO INFILE(FILEIN) OUTFILE(FILEOUT)</td></tr>
+            <tr><td>Input</td><td>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS (VSAM KSDS)</td></tr>
+            <tr><td>Output</td><td>AWS.M2.CARDDEMO.TRANSACT.BKUP(+1) (Sequential, FB/350)</td></tr>
+            <tr><td>Purpose</td><td>Full unload of TRANSACT VSAM to sequential dataset for downstream SORT processing</td></tr>
+            <tr><td>Control Card</td><td><code>app/ctl/REPROCT.ctl</code> (referenced via <code>&amp;CNTLLIB(REPROCT)</code>)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s7-2">
+      <h3><span class="dot"></span> 7.2 DFSORT (STEP05R &mdash; SORT)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Attribute</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>Utility</td><td>DFSORT (PGM=SORT)</td></tr>
+            <tr><td>Input</td><td>AWS.M2.CARDDEMO.TRANSACT.BKUP(+1)</td></tr>
+            <tr><td>Output</td><td>AWS.M2.CARDDEMO.TRANSACT.DALY(+1)</td></tr>
+            <tr><td>Sort Key</td><td>TRAN-CARD-NUM (offset 263, length 16, ZD, ascending)</td></tr>
+            <tr><td>Include Condition</td><td>TRAN-PROC-DT (offset 305, 10 chars) between PARM-START-DATE and PARM-END-DATE</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h4>SORT Control Statements</h4>
+<pre><code>SYMNAMES:
+  TRAN-CARD-NUM,263,16,ZD
+  TRAN-PROC-DT,305,10,CH
+  PARM-START-DATE,C'2022-01-01'
+  PARM-END-DATE,C'2022-07-06'
+
+SYSIN:
+  SORT FIELDS=(TRAN-CARD-NUM,A)
+  INCLUDE COND=(TRAN-PROC-DT,GE,PARM-START-DATE,AND,
+          TRAN-PROC-DT,LE,PARM-END-DATE)</code></pre>
+      <div class="callout callout-red">
+        <strong>Issue:</strong> The PARM-START-DATE and PARM-END-DATE values are <em>hardcoded</em> in the SYMNAMES DD as <code>C'2022-01-01'</code> and <code>C'2022-07-06'</code>. These must be manually edited in the JCL before each job submission. They should be parameterized or read from the same DATEPARM file used by CBTRN03C.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 8 — Checkpoint, Restart, and Recovery
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">8</span>
+    <h2>Checkpoint, Restart, and Recovery</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s8-1">
+      <h3><span class="dot"></span> 8.1 Checkpoint Strategy</h3>
+      <div class="callout callout-red">
+        <strong>Warning:</strong> CBTRN03C does <em>not</em> implement application-level checkpointing. However, since this is a read-only reporting job (no VSAM files are updated), the impact of mid-job failure is limited to the loss of the partial report output. No data corruption risk exists.
+      </div>
+    </div>
+
+    <div class="subsection" id="s8-2">
+      <h3><span class="dot"></span> 8.2 Restart Procedures</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Failure Scenario</th><th>Restart Step</th><th>Prerequisites</th><th>Data Reset Required</th></tr></thead>
+          <tbody>
+            <tr><td>Abend in STEP05R (REPROC)</td><td>STEP05R (resubmit job)</td><td>1. Delete partial TRANSACT.BKUP(+1) if created<br>2. Fix root cause</td><td>None (source VSAM unchanged)</td></tr>
+            <tr><td>Abend in STEP05R (SORT)</td><td>STEP05R SORT (resubmit from SORT step)</td><td>1. Delete partial TRANSACT.DALY(+1) if created<br>2. TRANSACT.BKUP(+1) must still exist</td><td>None</td></tr>
+            <tr><td>Abend in STEP10R (CBTRN03C)</td><td>STEP10R (resubmit from STEP10R)</td><td>1. Delete partial TRANREPT(+1) if created<br>2. TRANSACT.DALY(+1) must still exist<br>3. Fix lookup data if ABEND was due to missing reference</td><td>None (all files are read-only)</td></tr>
+            <tr><td>JCL error (before any step)</td><td>Resubmit</td><td>Fix JCL</td><td>None</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s8-3">
+      <h3><span class="dot"></span> 8.3 Recovery Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  Normal:
+    STEP05R(REPROC) → STEP05R(SORT) → STEP10R(CBTRN03C) → Done
+
+  Failure at any step:
+    1. Identify abend cause (SYSPRINT, SYSOUT)
+    2. This is a read-only job — no VSAM data corruption possible
+    3. Delete any partial GDG generations created:
+       ├── TRANSACT.BKUP(+1) (if REPROC failed mid-copy)
+       ├── TRANSACT.DALY(+1) (if SORT failed)
+       └── TRANREPT(+1)      (if CBTRN03C failed)
+    4. Fix root cause (missing reference data, VSAM access, etc.)
+    5. Resubmit from the failed step
+</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 9 — Error Handling and Abend Resolution
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">9</span>
+    <h2>Error Handling and Abend Resolution</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 9.1 -->
+    <div class="subsection" id="s9-1">
+      <h3><span class="dot"></span> 9.1 Error Flow Diagram</h3>
+      <div class="diagram-box">
+<pre>
+  All errors in CBTRN03C are FATAL (no graceful skip/continue):
+  ──────────────────────────────────────────────────────────────
+
+  File OPEN Errors (any of 6 files):
+    Status ≠ '00' → DISPLAY error message → 9910-DISPLAY-IO-STATUS
+                   → 9999-ABEND-PROGRAM (CEE3ABD, ABCODE=999)
+
+  DATEPARM READ Error:
+    Status '10' (EOF)    → Set END-OF-FILE = 'Y' (no data to process)
+    Status OTHER         → DISPLAY 'ERROR READING DATEPARM FILE'
+                         → 9910-DISPLAY-IO-STATUS → 9999-ABEND-PROGRAM
+
+  Transaction File READ Error:
+    Status '00'          → Continue processing
+    Status '10' (EOF)    → Set END-OF-FILE = 'Y' (normal termination)
+    Status OTHER         → DISPLAY 'ERROR READING TRANSACTION FILE'
+                         → 9910-DISPLAY-IO-STATUS → 9999-ABEND-PROGRAM
+
+  Reference Lookup Errors (CARDXREF, TRANTYPE, TRANCATG):
+    INVALID KEY          → DISPLAY 'INVALID &lt;entity&gt;: &lt;key value&gt;'
+                         → 9910-DISPLAY-IO-STATUS → 9999-ABEND-PROGRAM
+    (No graceful skip — a single missing reference record ABENDs the job)
+
+  Report WRITE Error:
+    Status ≠ '00'       → DISPLAY 'ERROR WRITING REPTFILE'
+                         → 9910-DISPLAY-IO-STATUS → 9999-ABEND-PROGRAM
+
+  File CLOSE Errors (any of 6 files):
+    Status ≠ '00'       → DISPLAY error message → 9910-DISPLAY-IO-STATUS
+                         → 9999-ABEND-PROGRAM
+</pre>
+      </div>
+    </div>
+
+    <!-- 9.2 -->
+    <div class="subsection" id="s9-2">
+      <h3><span class="dot"></span> 9.2 Return Code Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>RC=0</th><th>RC=4</th><th>RC=999 (ABEND)</th></tr></thead>
+          <tbody>
+            <tr><td>STEP05R (REPROC)</td><td>VSAM unloaded successfully</td><td>Empty VSAM (no records)</td><td>IDCAMS fatal error (e.g., dataset not found)</td></tr>
+            <tr><td>STEP05R (SORT)</td><td>Sort and filter completed</td><td>&mdash;</td><td>RC=16: fatal sort error</td></tr>
+            <tr><td>STEP10R</td><td>Report generated (program does not explicitly set RETURN-CODE; always 0 on success)</td><td>&mdash;</td><td>ABEND via CEE3ABD (ABCODE=999). Triggered by: file open/close failure, transaction file read error, any INVALID KEY on CARDXREF/TRANTYPE/TRANCATG, or report write error.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 9.3 -->
+    <div class="subsection" id="s9-3">
+      <h3><span class="dot"></span> 9.3 Common Abend Codes and Resolution</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Abend</th><th>Likely Cause</th><th>Resolution</th></tr></thead>
+          <tbody>
+            <tr><td>U0999</td><td>File I/O or reference lookup error detected by CBTRN03C</td><td>Check SYSPRINT for &ldquo;FILE STATUS IS:&rdquo; or &ldquo;INVALID &lt;entity&gt;&rdquo; messages. Common: missing TRANTYPE/TRANCATG record for a type/category code in the transaction data.</td></tr>
+            <tr><td>S0C7</td><td>Non-numeric data in PIC 9 field (e.g., corrupted TRAN-AMT or TRAN-CAT-CD)</td><td>Check input data quality in TRANSACT.DALY; verify record layout alignment</td></tr>
+            <tr><td>S0C4</td><td>Invalid storage reference</td><td>Check SYSUDUMP for failing instruction; likely data alignment issue</td></tr>
+            <tr><td>S213-04</td><td>VSAM dataset not found (OPEN failure)</td><td>Verify CARDXREF/TRANTYPE/TRANCATG VSAM clusters exist; run IDCAMS LISTCAT</td></tr>
+            <tr><td>S913</td><td>RACF security violation on dataset access</td><td>Check job userid authority for all datasets</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 9.4 -->
+    <div class="subsection" id="s9-4">
+      <h3><span class="dot"></span> 9.4 I/O Status Code Handling</h3>
+      <p>Paragraph <code>9910-DISPLAY-IO-STATUS</code> handles both numeric and non-numeric VSAM file status codes:</p>
+      <ul>
+        <li>If <code>IO-STAT1 = '9'</code> or status is non-numeric: extracts the binary value from IO-STAT2 using a REDEFINES on TWO-BYTES-BINARY and displays as <code>FILE STATUS IS: NNNN&lt;value&gt;</code> (VSAM extended status)</li>
+        <li>Otherwise: displays the 2-byte status directly as <code>FILE STATUS IS: NNNN&lt;IO-STATUS&gt;</code></li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 10 — Security and Authorization
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+    <div class="subsection" id="s10-1">
+      <h3><span class="dot"></span> 10.1 Dataset Security Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Dataset Pattern</th><th>Access Required</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr><td>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</td><td>READ</td><td>IDCAMS REPRO input</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.TRANSACT.BKUP</td><td>ALTER (create new generation)</td><td>GDG output from REPRO</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.TRANSACT.DALY</td><td>ALTER (create new generation)</td><td>GDG output from SORT</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</td><td>READ</td><td>Cross-reference lookup</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.TRANTYPE.VSAM.KSDS</td><td>READ</td><td>Transaction type lookup</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.TRANCATG.VSAM.KSDS</td><td>READ</td><td>Transaction category lookup</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.DATEPARM</td><td>READ</td><td>Date range parameters</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.TRANREPT</td><td>ALTER (create new generation)</td><td>Report output</td></tr>
+            <tr><td>AWS.M2.CARDDEMO.LOADLIB</td><td>READ (FETCH)</td><td>Program load library</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>Note:</strong> This is a read-only reporting job. No VSAM files are modified. Only GDG output datasets require ALTER authority for generation creation.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 11 — Performance and Batch Window Analysis
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Performance and Batch Window Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s11-1">
+      <h3><span class="dot"></span> 11.1 Performance Characteristics</h3>
+      <p>The job has three distinct I/O phases:</p>
+      <ol>
+        <li><strong>STEP05R (REPROC):</strong> Sequential REPRO of TRANSACT VSAM &mdash; I/O bound, typically fast for moderate volumes</li>
+        <li><strong>STEP05R (SORT):</strong> DFSORT with INCLUDE filtering and ascending sort by card number &mdash; efficient for volumes typical of daily transactions</li>
+        <li><strong>STEP10R (CBTRN03C):</strong> For each input record, up to <strong>3 random VSAM READ operations</strong> (CARDXREF, TRANTYPE, TRANCATG) plus one sequential WRITE to the report file. The XREF lookup is optimized by control break &mdash; only performed when the card number changes.</li>
+      </ol>
+      <div class="callout">
+        <strong>Performance note:</strong> Since input is pre-sorted by card number (from the SORT step), CARDXREF lookups are minimized to one per unique card. TRANTYPE and TRANCATG lookups occur for every record but these are small VSAM files with fast random access. The report WRITE is sequential and inherently fast.
+      </div>
+    </div>
+
+    <div class="subsection" id="s11-2">
+      <h3><span class="dot"></span> 11.2 Batch Window Fit</h3>
+      <div class="table-wrap">
+        <table>
+          <tbody>
+            <tr><td><strong>Window</strong></td><td>No fixed window &mdash; on-demand job</td></tr>
+            <tr><td><strong>Prerequisite</strong></td><td>POSTTRAN must have populated TRANSACT VSAM for the reporting period</td></tr>
+            <tr><td><strong>Concurrency</strong></td><td>Can run concurrently with CICS online (all files opened DISP=SHR / INPUT only)</td></tr>
+            <tr><td><strong>Critical Path</strong></td><td>No &mdash; does not block any downstream jobs or CICS operations</td></tr>
+            <tr><td><strong>Successor</strong></td><td>None &mdash; report is a terminal output</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 12 — Testing Approach
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s12-1">
+      <h3><span class="dot"></span> 12.1 Test Scenarios</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Scenario</th><th>Input Setup</th><th>Expected Output</th><th>Verify Method</th></tr></thead>
+          <tbody>
+            <tr><td>TC-001</td><td>Normal run (all records in date range)</td><td>TRANSACT VSAM with records in PARM date range; all card numbers, types, categories exist in reference files</td><td>RC=0; report with detail lines, page/account/grand totals</td><td>Open TRANREPT output; verify headers, detail lines, and totals manually</td></tr>
+            <tr><td>TC-002</td><td>No records in date range</td><td>TRANSACT VSAM populated but no records within PARM-START/END-DATE range</td><td>RC=0; SORT produces empty SORTOUT; CBTRN03C reads DATEPARM, hits EOF on TRANFILE immediately</td><td>Check SORTOUT record count = 0; TRANREPT contains minimal or no output</td></tr>
+            <tr><td>TC-003</td><td>Multiple card numbers (control break)</td><td>Transactions for 3+ distinct card numbers within date range</td><td>Account totals printed at each card number boundary; grand total = sum of all account totals</td><td>Verify account total lines appear between card groups; cross-foot grand total</td></tr>
+            <tr><td>TC-004</td><td>Page break at 20 lines</td><td>25+ transactions for a single card number</td><td>Page total after line 20; new headers; remaining lines on next page</td><td>Count detail lines between page total lines; verify exactly 20</td></tr>
+            <tr><td>TC-005</td><td>Invalid card number (not in CARDXREF)</td><td>Transaction with card number not in CARDXREF VSAM</td><td>ABEND U0999; SYSPRINT shows &ldquo;INVALID CARD NUMBER&rdquo;</td><td>Check SYSPRINT for error message and file status code</td></tr>
+            <tr><td>TC-006</td><td>Invalid transaction type (not in TRANTYPE)</td><td>Transaction with type code not in TRANTYPE VSAM</td><td>ABEND U0999; SYSPRINT shows &ldquo;INVALID TRANSACTION TYPE&rdquo;</td><td>Check SYSPRINT for error message</td></tr>
+            <tr><td>TC-007</td><td>Invalid category key (not in TRANCATG)</td><td>Transaction with type+category combination not in TRANCATG VSAM</td><td>ABEND U0999; SYSPRINT shows &ldquo;INVALID TRAN CATG KEY&rdquo;</td><td>Check SYSPRINT for error message</td></tr>
+            <tr><td>TC-008</td><td>Empty TRANSACT VSAM</td><td>TRANSACT VSAM defined but empty (0 records)</td><td>REPROC RC=4 (empty input); SORT produces empty output; CBTRN03C produces minimal report</td><td>Check step return codes; verify TRANREPT output</td></tr>
+            <tr><td>TC-009</td><td>Mixed positive and negative amounts</td><td>Transactions with both credit (positive) and debit (negative) amounts</td><td>Amount column shows signed values; totals reflect net amounts</td><td>Verify edit mask (-ZZZ,ZZZ,ZZZ.ZZ) displays correctly for both signs</td></tr>
+            <tr><td>TC-010</td><td>DATEPARM file missing or empty</td><td>DATEPARM file empty (EOF on first read)</td><td>END-OF-FILE set to &lsquo;Y&rsquo; immediately; no transactions processed; empty report</td><td>Check SYSPRINT output; verify TRANREPT is empty or header-only</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s12-2">
+      <h3><span class="dot"></span> 12.2 Test Data Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>Records Needed</th><th>Setup Method</th></tr></thead>
+          <tbody>
+            <tr><td>TRANSACT VSAM</td><td>Variable (50&ndash;500+); must span the PARM date range</td><td>Run POSTTRAN to populate, or IDCAMS REPRO from test data</td></tr>
+            <tr><td>CARDXREF VSAM</td><td>Must contain all card numbers referenced in TRANSACT</td><td>XREFFILE job (IDCAMS DELETE/DEFINE/REPRO)</td></tr>
+            <tr><td>TRANTYPE VSAM</td><td>Must contain all transaction type codes</td><td>TRANTYPE load job</td></tr>
+            <tr><td>TRANCATG VSAM</td><td>Must contain all type+category combinations</td><td>TRANCATG load job</td></tr>
+            <tr><td>DATEPARM</td><td>1 record: YYYY-MM-DD YYYY-MM-DD (21 bytes: start + space + end)</td><td>IEBGENER from inline data</td></tr>
+            <tr><td>TRANSACT.BKUP GDG base</td><td>GDG base must exist</td><td>IDCAMS DEFINE GDG</td></tr>
+            <tr><td>TRANSACT.DALY GDG base</td><td>GDG base must exist</td><td>IDCAMS DEFINE GDG</td></tr>
+            <tr><td>TRANREPT GDG base</td><td>GDG base must exist</td><td>IDCAMS DEFINE GDG</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 13 — Known Issues and Considerations
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s13">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">13</span>
+    <h2>Known Issues and Modernization Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="section-body">
+
+    <div class="subsection" id="s13-1">
+      <h3><span class="dot"></span> 13.1 Known Issues</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Description</th><th>Impact</th><th>Workaround</th></tr></thead>
+          <tbody>
+            <tr><td>KI-001</td><td>Duplicate step name <code>STEP05R</code> in JCL. Both the REPROC proc invocation and the SORT step share the same name. While z/OS allows this (the JES treats them as separate steps), it creates ambiguity for operators and automation tools referencing steps by name.</td><td>Medium &mdash; confusing for restart procedures and job monitoring</td><td>Rename the SORT step to a unique name (e.g., <code>STEP06R</code> or <code>SORTST</code>)</td></tr>
+            <tr><td>KI-002</td><td>SORT date parameters are <em>hardcoded</em> in SYMNAMES: <code>PARM-START-DATE,C'2022-01-01'</code> and <code>PARM-END-DATE,C'2022-07-06'</code>. These must be manually edited before each job submission.</td><td>High &mdash; operational risk of running with stale dates; disconnected from DATEPARM file used by CBTRN03C</td><td>Edit JCL SYMNAMES before each run; long-term: parameterize via symbolic or use SET statements</td></tr>
+            <tr><td>KI-003</td><td>Dual date filtering. The SORT step filters by PARM-START/END-DATE, and CBTRN03C independently filters by WS-START/END-DATE from DATEPARM. If these dates differ (they are configured in two separate places), the report may silently exclude records or include unexpected records.</td><td>Medium &mdash; potential data inconsistency between SORT output and report content</td><td>Ensure SORT SYMNAMES dates and DATEPARM file contain identical date ranges</td></tr>
+            <tr><td>KI-004</td><td>No graceful error handling for reference lookup failures. A single missing card number in CARDXREF, missing type code in TRANTYPE, or missing category key in TRANCATG causes an immediate ABEND (U0999). The program does not skip the record or write an error line.</td><td>High &mdash; one bad reference record stops the entire report</td><td>Ensure all reference data is complete before running; validate data independently</td></tr>
+            <tr><td>KI-005</td><td>EOF totals logic is fragile. When the last READ returns EOF, whether the final page and grand totals are written depends on the stale buffer&rsquo;s TRAN-PROC-TS passing the date range check. If it does pass, TRAN-AMT from the stale buffer is added to WS-PAGE-TOTAL and WS-ACCOUNT-TOTAL a second time, causing a <em>double-count</em> of the last transaction&rsquo;s amount.</td><td>Medium &mdash; potential incorrect totals on the last page; grand total may be inflated by one transaction amount</td><td>None available without code fix; verify totals manually against source data</td></tr>
+            <tr><td>KI-006</td><td>No COND= parameters on any step. If STEP05R (REPROC) ABENDs or returns a high RC, the SORT and CBTRN03C steps still execute against missing or empty input, leading to cascading failures.</td><td>Medium &mdash; wasted processing and confusing error messages on cascading failures</td><td>Add COND= parameters to SORT and STEP10R steps</td></tr>
+            <tr><td>KI-007</td><td>Report name header says &ldquo;DALYREPT&rdquo; and &ldquo;Daily Transaction Report&rdquo; (from copybook CVTRA07Y), even though TRANREPT is an on-demand report filtered by arbitrary date range &mdash; not necessarily a daily report.</td><td>Low &mdash; cosmetic mislabel</td><td>None without copybook change</td></tr>
+            <tr><td>KI-008</td><td>No record count tracking. The program does not count or display the total number of records processed or report lines written. This makes reconciliation with the input file difficult.</td><td>Low &mdash; limits auditability</td><td>Add record counting with DISPLAY at end of job</td></tr>
+            <tr><td>KI-009</td><td>Program does not set RETURN-CODE. CBTRN03C always returns RC=0 on normal completion regardless of whether any records were processed, making it impossible to distinguish between a successful report with data and an empty run.</td><td>Low &mdash; no differentiation between empty and normal run</td><td>Set RETURN-CODE = 4 if no records processed</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection" id="s13-2">
+      <h3><span class="dot"></span> 13.2 Modernization Considerations</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Area</th><th>Current State</th><th>Target State</th><th>Complexity</th></tr></thead>
+          <tbody>
+            <tr><td>Report Generation</td><td>Batch COBOL program producing 133-byte fixed-format print lines</td><td>SQL query + reporting tool (Crystal Reports, Jasper, Power BI) or API endpoint returning JSON/CSV</td><td>Medium</td></tr>
+            <tr><td>Data Access</td><td>IDCAMS REPRO + DFSORT + sequential COBOL processing</td><td>Direct SQL query against relational database with WHERE clause for date filtering and ORDER BY for sorting</td><td>Low</td></tr>
+            <tr><td>Reference Lookups</td><td>Random VSAM READ against 3 separate KSDS files (CARDXREF, TRANTYPE, TRANCATG)</td><td>SQL JOINs in a single query</td><td>Low</td></tr>
+            <tr><td>Date Parameterization</td><td>Hardcoded SORT dates + separate DATEPARM file, manually synchronized</td><td>Single parameter source (API request parameters, config file, or database-driven)</td><td>Low</td></tr>
+            <tr><td>Error Handling</td><td>ABEND on any reference lookup failure</td><td>Graceful handling with default values or error rows in output; structured logging</td><td>Low</td></tr>
+            <tr><td>Output Format</td><td>Fixed 133-byte print file (GDG versioned)</td><td>PDF, Excel, or web-based interactive dashboard</td><td>Medium</td></tr>
+            <tr><td>Scheduling</td><td>Manual JCL submission with hardcoded dates</td><td>Self-service web interface or scheduled via orchestration (Airflow, Step Functions) with parameterized dates</td><td>Low</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /page-wrap-single -->
+
+<!-- ════════════════════  FOOTER  ════════════════════ -->
+<footer class="footer">
+  <p><strong>UniCredit CardDemo</strong> &mdash; Batch Process Analysis &mdash; TRANREPT / CBTRN03C</p>
+  <p>Generated from source: <code>app/jcl/TRANREPT.jcl</code> &middot; <code>app/cbl/CBTRN03C.cbl</code> &middot; Copybooks: CVTRA05Y, CVACT03Y, CVTRA03Y, CVTRA04Y, CVTRA07Y</p>
+</footer>
+
+</body>
+</html>

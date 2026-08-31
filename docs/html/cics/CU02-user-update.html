@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Update (CU02) – CICS Transaction Analysis | UniCredit CardDemo</title>
+<link rel="stylesheet" href="../shared/theme.css">
+</head>
+<body>
+
+<!-- ════════════════════  HERO  ════════════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-brand">
+      <div class="hero-logo"><img src="https://companieslogo.com/img/orig/UCG.MI_BIG.D-d06d29df.png?t=1720244494" alt="UniCredit Logo"></div>
+      <div class="hero-brand-text">UniCredit S.p.A. &mdash; Milano</div>
+    </div>
+    <h1>User Update &ndash; <span>CICS Transaction Analysis</span></h1>
+    <p class="hero-subtitle">
+      Transaction <code>CU02</code> &middot; Program <code>COUSR02C</code> &middot; Admin-only user profile update with VSAM USRSEC REWRITE
+    </p>
+    <dl class="hero-meta">
+      <div><dt>Transaction ID</dt><dd>CU02</dd></div>
+      <div><dt>Entry Program</dt><dd>COUSR02C</dd></div>
+      <div><dt>BMS Mapset</dt><dd>COUSR02</dd></div>
+      <div><dt>Design Pattern</dt><dd>Pseudo-conversational</dd></div>
+      <div><dt>LOC</dt><dd>414</dd></div>
+      <div><dt>Status</dt><dd><span class="badge badge-gold">Generated</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ════════════════════  BREADCRUMB  ════════════════════ -->
+<div class="breadcrumb">
+  <a href="../unicredit-carddemo-analysis.html">Main Analysis</a>
+  <span class="sep">&rsaquo;</span>
+  <a href="index.html">CICS Flows</a>
+  <span class="sep">&rsaquo;</span>
+  User Update (CU02)
+</div>
+
+<!-- ════════════════════  BODY  ════════════════════ -->
+<div class="page-wrap-single">
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 1 — Business Flow Analysis
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">01</span>
+    <h2>Business Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 1.1 -->
+    <div class="subsection" id="s1-1">
+      <h3><span class="dot"></span>1.1 Business Context</h3>
+      <p>
+        The <strong>User Update</strong> transaction (<code>CU02</code>) allows a system administrator to modify an existing user record in the CardDemo security file (<code>USRSEC</code>).
+        The administrator navigates to this screen from the Admin Menu (option 3 &mdash; &ldquo;User Update (Security)&rdquo;) or from the User List screen which pre-populates the User ID.
+        Editable fields include First Name, Last Name, Password, and User Type (Admin/User).
+        After validation, the record is rewritten to the VSAM KSDS file. This is an <strong>admin-only</strong> function; regular users cannot reach this transaction.
+      </p>
+    </div>
+
+    <!-- 1.2 -->
+    <div class="subsection" id="s1-2">
+      <h3><span class="dot"></span>1.2 Business Flow Diagram</h3>
+      <div class="diagram-box">
+<pre><code>
+  ┌─────────────────────┐
+  │   Admin Menu (CA00)  │
+  │   Option 3: User Upd │
+  └──────────┬──────────┘
+             │ XCTL → COUSR02C
+             ▼
+  ┌─────────────────────┐
+  │  Enter User ID       │◄──── User List (CU00) may
+  │  (or pre-populated)  │      pre-populate via COMMAREA
+  └──────────┬──────────┘
+             │ ENTER key
+             ▼
+  ┌─────────────────────┐
+  │  READ USRSEC file    │
+  │  Display user fields │
+  │  (FName, LName,      │
+  │   Password, Type)    │
+  └──────────┬──────────┘
+             │ Modify fields
+             ▼
+  ┌─────────────────────┐       ┌──────────────────┐
+  │  PF5 = Save          │──YES──│ Validate all     │
+  │  PF3 = Save &amp; Exit   │       │ fields non-empty │
+  └──────────┬──────────┘       └────────┬─────────┘
+             │                           │
+             ▼ pass                      ▼ fail
+  ┌─────────────────────┐    ┌───────────────────────┐
+  │  Compare to original │    │ Error: "Field can NOT  │
+  │  If changed →        │    │ be empty..."           │
+  │    REWRITE USRSEC    │    └───────────────────────┘
+  │  If unchanged →      │
+  │    "Please modify"   │
+  └──────────┬──────────┘
+             │
+             ▼
+  ┌─────────────────────┐
+  │  "User X has been    │
+  │   updated..."        │
+  └─────────────────────┘
+</code></pre>
+      </div>
+    </div>
+
+    <!-- 1.3 -->
+    <div class="subsection" id="s1-3">
+      <h3><span class="dot"></span>1.3 Business Rules</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Rule</th><th>Source (Code Reference)</th><th>Action on Violation</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>BR-1</td><td>User ID must not be empty</td><td><code>PROCESS-ENTER-KEY</code> &amp; <code>UPDATE-USER-INFO</code> &mdash; EVALUATE checks <code>USRIDINI = SPACES OR LOW-VALUES</code></td><td>Error &ldquo;User ID can NOT be empty...&rdquo;</td></tr>
+            <tr><td>BR-2</td><td>User ID must exist in USRSEC</td><td><code>READ-USER-SEC-FILE</code> &mdash; DFHRESP(NOTFND) check</td><td>Error &ldquo;User ID NOT found...&rdquo;</td></tr>
+            <tr><td>BR-3</td><td>First Name must not be empty</td><td><code>UPDATE-USER-INFO</code> &mdash; <code>FNAMEI = SPACES OR LOW-VALUES</code></td><td>Error &ldquo;First Name can NOT be empty...&rdquo;</td></tr>
+            <tr><td>BR-4</td><td>Last Name must not be empty</td><td><code>UPDATE-USER-INFO</code> &mdash; <code>LNAMEI = SPACES OR LOW-VALUES</code></td><td>Error &ldquo;Last Name can NOT be empty...&rdquo;</td></tr>
+            <tr><td>BR-5</td><td>Password must not be empty</td><td><code>UPDATE-USER-INFO</code> &mdash; <code>PASSWDI = SPACES OR LOW-VALUES</code></td><td>Error &ldquo;Password can NOT be empty...&rdquo;</td></tr>
+            <tr><td>BR-6</td><td>User Type must not be empty</td><td><code>UPDATE-USER-INFO</code> &mdash; <code>USRTYPEI = SPACES OR LOW-VALUES</code></td><td>Error &ldquo;User Type can NOT be empty...&rdquo;</td></tr>
+            <tr><td>BR-7</td><td>At least one field must be modified before save</td><td><code>UPDATE-USER-INFO</code> &mdash; <code>IF USR-MODIFIED-YES</code> check</td><td>Warning &ldquo;Please modify to update ...&rdquo;</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 1.4 -->
+    <div class="subsection" id="s1-4">
+      <h3><span class="dot"></span>1.4 User Interactions</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Step</th><th>User Action</th><th>System Response</th><th>Business Meaning</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>Navigate from Admin Menu (option 3) or User List</td><td>Blank Update User screen displayed; User ID field may be pre-populated from <code>CDEMO-CU02-USR-SELECTED</code></td><td>Begin user update workflow</td></tr>
+            <tr><td>2</td><td>Enter/confirm User ID, press ENTER</td><td>READ USRSEC; populate First Name, Last Name, Password, User Type</td><td>Fetch current user record for editing</td></tr>
+            <tr><td>3</td><td>Modify one or more fields</td><td>Screen accepts input in unprotected fields</td><td>Prepare changes to user profile</td></tr>
+            <tr><td>4a</td><td>Press PF5 (Save)</td><td>Validate fields &rarr; REWRITE USRSEC &rarr; success message in green</td><td>Persist changes, remain on screen</td></tr>
+            <tr><td>4b</td><td>Press PF3 (Save &amp; Exit)</td><td>Validate &rarr; REWRITE &rarr; XCTL back to caller (Admin Menu or prior program)</td><td>Persist changes and return</td></tr>
+            <tr><td>4c</td><td>Press PF4 (Clear)</td><td>All fields cleared, cursor on User ID</td><td>Reset screen for new lookup</td></tr>
+            <tr><td>4d</td><td>Press PF12 (Cancel)</td><td>XCTL to COADM01C without saving</td><td>Abandon changes</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 2 — Technical Flow Analysis
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">02</span>
+    <h2>Technical Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 2.1 -->
+    <div class="subsection" id="s2-1">
+      <h3><span class="dot"></span>2.1 Technical Flow Diagram &mdash; Overview</h3>
+      <div class="diagram-box">
+<pre><code>
+  ┌──────────┐   SEND MAP    ┌───────────────────┐   READ/REWRITE   ┌──────────┐
+  │ 3270     │◄──────────────│   CICS REGION      │────────────────►│  VSAM    │
+  │ TERMINAL │               │                    │                 │  USRSEC  │
+  │          │──────────────►│  Program: COUSR02C │                 │  (KSDS)  │
+  └──────────┘   RECEIVE MAP │  Mapset:  COUSR02  │                 └──────────┘
+                              │  Map:     COUSR2A  │
+                              │  Trans:   CU02     │
+                              └────────┬───────────┘
+                                       │ XCTL
+                                       ▼
+                              ┌───────────────────┐
+                              │ COADM01C / caller  │
+                              │ (return navigation)│
+                              └───────────────────┘
+</code></pre>
+      </div>
+    </div>
+
+    <!-- 2.2 -->
+    <div class="subsection" id="s2-2">
+      <h3><span class="dot"></span>2.2 Technical Flow Diagram &mdash; Detailed</h3>
+      <div class="diagram-box">
+<pre><code>
+  MAIN-PARA
+  │
+  ├── EIBCALEN = 0 ?
+  │     YES → XCTL to COSGN00C (not authenticated)
+  │
+  ├── NOT CDEMO-PGM-REENTER (first entry)?
+  │     YES → SET CDEMO-PGM-REENTER = TRUE
+  │            MOVE LOW-VALUES → COUSR2AO
+  │            If CDEMO-CU02-USR-SELECTED ≠ SPACES
+  │              → Copy to USRIDINI, PERFORM PROCESS-ENTER-KEY
+  │            → PERFORM SEND-USRUPD-SCREEN
+  │
+  └── CDEMO-PGM-REENTER (subsequent entry)
+        → PERFORM RECEIVE-USRUPD-SCREEN
+           (EXEC CICS RECEIVE MAP('COUSR2A') MAPSET('COUSR02'))
+        → EVALUATE EIBAID
+            DFHENTER  → PROCESS-ENTER-KEY
+            DFHPF3    → UPDATE-USER-INFO → RETURN-TO-PREV-SCREEN
+            DFHPF4    → CLEAR-CURRENT-SCREEN
+            DFHPF5    → UPDATE-USER-INFO
+            DFHPF12   → RETURN-TO-PREV-SCREEN (COADM01C)
+            OTHER     → Error "Invalid key pressed"
+
+  │
+  └── EXEC CICS RETURN TRANSID('CU02') COMMAREA(CARDDEMO-COMMAREA)
+</code></pre>
+      </div>
+    </div>
+
+    <!-- 2.3 -->
+    <div class="subsection" id="s2-3">
+      <h3><span class="dot"></span>2.3 Pseudo-Conversational Flow</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Iteration</th><th>EIBCALEN</th><th>User Action</th><th>Entry Point</th><th>Screen Sent</th><th>Next TRANSID</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>0 (initial)</td><td>0</td><td>N/A &mdash; redirected</td><td>MAIN-PARA</td><td>N/A &mdash; XCTL to COSGN00C</td><td>N/A</td></tr>
+            <tr><td>1 (first entry via XCTL)</td><td>&gt;0</td><td>Selected from Admin Menu / User List</td><td>MAIN-PARA, NOT CDEMO-PGM-REENTER</td><td>COUSR2A (blank or pre-populated)</td><td>CU02</td></tr>
+            <tr><td>2+</td><td>&gt;0</td><td>ENTER &mdash; fetch user</td><td>MAIN-PARA, CDEMO-PGM-REENTER → PROCESS-ENTER-KEY</td><td>COUSR2A with user data</td><td>CU02</td></tr>
+            <tr><td>N</td><td>&gt;0</td><td>PF5 &mdash; save</td><td>MAIN-PARA, CDEMO-PGM-REENTER → UPDATE-USER-INFO</td><td>COUSR2A with success/error msg</td><td>CU02</td></tr>
+            <tr><td>N</td><td>&gt;0</td><td>PF3 &mdash; save &amp; exit</td><td>MAIN-PARA, CDEMO-PGM-REENTER → UPDATE-USER-INFO → RETURN-TO-PREV-SCREEN</td><td>N/A (XCTL out)</td><td>N/A</td></tr>
+            <tr><td>N</td><td>&gt;0</td><td>PF12 &mdash; cancel</td><td>MAIN-PARA, CDEMO-PGM-REENTER → RETURN-TO-PREV-SCREEN</td><td>N/A (XCTL out)</td><td>N/A</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 2.4 -->
+    <div class="subsection" id="s2-4">
+      <h3><span class="dot"></span>2.4 CICS Command Flow</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Command</th><th>Paragraph</th><th>Purpose</th><th>RESP Handling</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>EXEC CICS RECEIVE MAP('COUSR2A') MAPSET('COUSR02')</code></td><td>RECEIVE-USRUPD-SCREEN</td><td>Receive user input from terminal</td><td><code>WS-RESP-CD</code>, <code>WS-REAS-CD</code></td></tr>
+            <tr><td><code>EXEC CICS SEND MAP('COUSR2A') MAPSET('COUSR02') ERASE CURSOR</code></td><td>SEND-USRUPD-SCREEN</td><td>Send update screen to terminal</td><td>None</td></tr>
+            <tr><td><code>EXEC CICS READ DATASET('USRSEC') INTO(SEC-USER-DATA) RIDFLD(SEC-USR-ID) UPDATE</code></td><td>READ-USER-SEC-FILE</td><td>Read user record for update (with lock)</td><td>NORMAL, NOTFND, OTHER</td></tr>
+            <tr><td><code>EXEC CICS REWRITE DATASET('USRSEC') FROM(SEC-USER-DATA)</code></td><td>UPDATE-USER-SEC-FILE</td><td>Rewrite modified user record</td><td>NORMAL, NOTFND, OTHER</td></tr>
+            <tr><td><code>EXEC CICS RETURN TRANSID('CU02') COMMAREA(CARDDEMO-COMMAREA)</code></td><td>MAIN-PARA</td><td>Return control to CICS, preserve state</td><td>None</td></tr>
+            <tr><td><code>EXEC CICS XCTL PROGRAM(CDEMO-TO-PROGRAM) COMMAREA(CARDDEMO-COMMAREA)</code></td><td>RETURN-TO-PREV-SCREEN</td><td>Transfer control to previous program</td><td>None</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 3 — Screen Flow and BMS Maps
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">03</span>
+    <h2>Screen Flow and BMS Maps</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 3.1 -->
+    <div class="subsection" id="s3-1">
+      <h3><span class="dot"></span>3.1 Screen Flow Diagram</h3>
+      <div class="diagram-box">
+<pre><code>
+  ┌──────────────────┐          ┌──────────────────┐
+  │  Admin Menu       │  XCTL   │  User List (CU00) │
+  │  COADM01C         │──opt 3──►  COUSR00C          │
+  └──────────────────┘          └────────┬─────────┘
+                                         │ select user
+                                         ▼
+                                ┌──────────────────┐
+                          ┌────►│  COUSR2A           │◄────┐
+                          │     │  "Update User"     │     │
+                          │     │                    │     │
+                          │     │  [USRIDIN] ________│     │
+                          │     │  [FNAME]   ________│     │
+                          │     │  [LNAME]   ________│     │
+                          │     │  [PASSWD]  ________│     │
+                          │     │  [USRTYPE] _       │     │
+                          │     │  [ERRMSG]          │     │
+                          │     └──┬──┬──┬──┬───────┘     │
+                          │        │  │  │  │              │
+                     PF4  │  ENTER │  │  │  │ PF5          │
+                    Clear │  Fetch │  │  │  │ Save         │
+                          │        │  │  │  └──────────────┘
+                          └────────┘  │  │
+                              PF3     │  │ PF12
+                            Save+Exit │  │ Cancel
+                                      ▼  ▼
+                              ┌──────────────────┐
+                              │  Admin Menu       │
+                              │  COADM01C         │
+                              └──────────────────┘
+</code></pre>
+      </div>
+    </div>
+
+    <!-- 3.2 -->
+    <div class="subsection" id="s3-2">
+      <h3><span class="dot"></span>3.2 BMS Map Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Map Name</th><th>Mapset</th><th>Size</th><th>Purpose</th><th>Key Fields</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>COUSR2A</code></td><td><code>COUSR02</code></td><td>24&times;80</td><td>User Update entry and display form</td><td>USRIDIN, FNAME, LNAME, PASSWD, USRTYPE, ERRMSG</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.3 -->
+    <div class="subsection" id="s3-3">
+      <h3><span class="dot"></span>3.3 Screen Field Details</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Field</th><th>Position</th><th>Length</th><th>Attribute</th><th>Color</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>TRNNAME</code></td><td>(1,7)</td><td>4</td><td>ASKIP, FSET, NORM</td><td>Blue</td><td>Transaction ID display</td></tr>
+            <tr><td><code>TITLE01</code></td><td>(1,21)</td><td>40</td><td>ASKIP, FSET, NORM</td><td>Yellow</td><td>Application title line 1</td></tr>
+            <tr><td><code>CURDATE</code></td><td>(1,71)</td><td>8</td><td>ASKIP, FSET, NORM</td><td>Blue</td><td>Current date (mm/dd/yy)</td></tr>
+            <tr><td><code>PGMNAME</code></td><td>(2,7)</td><td>8</td><td>ASKIP, FSET, NORM</td><td>Blue</td><td>Program name display</td></tr>
+            <tr><td><code>TITLE02</code></td><td>(2,21)</td><td>40</td><td>ASKIP, FSET, NORM</td><td>Yellow</td><td>Application title line 2</td></tr>
+            <tr><td><code>CURTIME</code></td><td>(2,71)</td><td>8</td><td>ASKIP, FSET, NORM</td><td>Blue</td><td>Current time (hh:mm:ss)</td></tr>
+            <tr><td><code>USRIDIN</code></td><td>(6,21)</td><td>8</td><td>FSET, IC, NORM, UNPROT</td><td>Green</td><td>User ID input (initial cursor)</td></tr>
+            <tr><td><code>FNAME</code></td><td>(11,18)</td><td>20</td><td>FSET, NORM, UNPROT</td><td>Green</td><td>First Name input</td></tr>
+            <tr><td><code>LNAME</code></td><td>(11,56)</td><td>20</td><td>FSET, NORM, UNPROT</td><td>Green</td><td>Last Name input</td></tr>
+            <tr><td><code>PASSWD</code></td><td>(13,16)</td><td>8</td><td>DRK, FSET, UNPROT</td><td>Green</td><td>Password input (dark/hidden)</td></tr>
+            <tr><td><code>USRTYPE</code></td><td>(15,17)</td><td>1</td><td>FSET, NORM, UNPROT</td><td>Green</td><td>User Type (A=Admin, U=User)</td></tr>
+            <tr><td><code>ERRMSG</code></td><td>(23,1)</td><td>78</td><td>ASKIP, BRT, FSET</td><td>Red</td><td>Error/status message display</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.4 -->
+    <div class="subsection" id="s3-4">
+      <h3><span class="dot"></span>3.4 PF Key / AID Key Handling</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Key</th><th>EIBAID Constant</th><th>Action</th><th>Code Reference</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>ENTER</td><td><code>DFHENTER</code></td><td>Fetch user record &mdash; validate User ID, READ USRSEC, populate fields</td><td><code>PROCESS-ENTER-KEY</code></td></tr>
+            <tr><td>PF3</td><td><code>DFHPF3</code></td><td>Save changes &amp; exit &mdash; validate, REWRITE, XCTL to caller</td><td><code>UPDATE-USER-INFO</code> &rarr; <code>RETURN-TO-PREV-SCREEN</code></td></tr>
+            <tr><td>PF4</td><td><code>DFHPF4</code></td><td>Clear screen &mdash; reset all fields to spaces</td><td><code>CLEAR-CURRENT-SCREEN</code></td></tr>
+            <tr><td>PF5</td><td><code>DFHPF5</code></td><td>Save changes (stay) &mdash; validate, REWRITE, re-display</td><td><code>UPDATE-USER-INFO</code></td></tr>
+            <tr><td>PF12</td><td><code>DFHPF12</code></td><td>Cancel &mdash; XCTL to COADM01C without saving</td><td><code>RETURN-TO-PREV-SCREEN</code></td></tr>
+            <tr><td>Other</td><td>Any other AID</td><td>Error &mdash; &ldquo;Invalid key pressed. Please see below...&rdquo;</td><td><code>CCDA-MSG-INVALID-KEY</code> &rarr; <code>SEND-USRUPD-SCREEN</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 4 — Program Inventory and Call Chain
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">04</span>
+    <h2>Program Inventory and Call Chain</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 4.1 -->
+    <div class="subsection" id="s4-1">
+      <h3><span class="dot"></span>4.1 Program Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Program</th><th>Type</th><th>Entry Mechanism</th><th>Purpose</th><th>LOC</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>COUSR02C</code></td><td>CICS COBOL</td><td>XCTL from Admin Menu / User List</td><td>User Update &mdash; main entry program</td><td>414</td></tr>
+            <tr><td><code>COADM01C</code></td><td>CICS COBOL</td><td>XCTL from COUSR02C (PF3/PF12)</td><td>Admin Menu &mdash; return target</td><td>&mdash;</td></tr>
+            <tr><td><code>COSGN00C</code></td><td>CICS COBOL</td><td>XCTL from COUSR02C (EIBCALEN=0)</td><td>Sign-On &mdash; authentication redirect</td><td>&mdash;</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4.2 -->
+    <div class="subsection" id="s4-2">
+      <h3><span class="dot"></span>4.2 Call Chain Diagram</h3>
+      <div class="diagram-box">
+<pre><code>
+  Trans CU02
+  │
+  └── COUSR02C (entry program)
+        │
+        ├── READ  USRSEC  (VSAM KSDS)
+        ├── REWRITE USRSEC
+        │
+        ├── XCTL → COADM01C  (PF3 save-exit / PF12 cancel)
+        ├── XCTL → COSGN00C  (EIBCALEN=0, unauthenticated)
+        └── XCTL → CDEMO-FROM-PROGRAM (if set by calling program)
+</code></pre>
+      </div>
+    </div>
+
+    <!-- 4.3 -->
+    <div class="subsection" id="s4-3">
+      <h3><span class="dot"></span>4.3 Call Details</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Caller</th><th>Called Program</th><th>Mechanism</th><th>Data Passed</th><th>When</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>COUSR02C</code></td><td><code>COADM01C</code></td><td>XCTL</td><td><code>CARDDEMO-COMMAREA</code></td><td>PF3 (save &amp; exit) when <code>CDEMO-FROM-PROGRAM</code> is empty, or PF12 (cancel)</td></tr>
+            <tr><td><code>COUSR02C</code></td><td><code>CDEMO-FROM-PROGRAM</code></td><td>XCTL</td><td><code>CARDDEMO-COMMAREA</code></td><td>PF3 (save &amp; exit) when <code>CDEMO-FROM-PROGRAM</code> was set by caller</td></tr>
+            <tr><td><code>COUSR02C</code></td><td><code>COSGN00C</code></td><td>XCTL</td><td><code>CARDDEMO-COMMAREA</code></td><td>EIBCALEN = 0 (no COMMAREA &mdash; unauthenticated)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 5 — File and Data Store Inventory
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">05</span>
+    <h2>File and Data Store Inventory</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 5.1 -->
+    <div class="subsection" id="s5-1">
+      <h3><span class="dot"></span>5.1 File Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>FCT Name</th><th>Type</th><th>Access Mode</th><th>Program</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>USRSEC</code></td><td>VSAM KSDS</td><td>READ (UPDATE) / REWRITE</td><td><code>COUSR02C</code></td><td>User security file &mdash; stores user ID, name, password, and type</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.2 -->
+    <div class="subsection" id="s5-2">
+      <h3><span class="dot"></span>5.2 File Access Details</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Attribute</th><th>Value</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>FCT Name</td><td><code>USRSEC</code></td></tr>
+            <tr><td>Record Layout Copybook</td><td><code>CSUSR01Y.cpy</code> &rarr; <code>SEC-USER-DATA</code></td></tr>
+            <tr><td>Record Length</td><td>80 bytes (8 + 20 + 20 + 8 + 1 + 23 filler)</td></tr>
+            <tr><td>Key Field</td><td><code>SEC-USR-ID</code> (PIC X(08), offset 0)</td></tr>
+            <tr><td>Access Mode</td><td>READ with UPDATE option (acquires exclusive lock), REWRITE</td></tr>
+            <tr><td>Locking</td><td>Record-level lock via <code>UPDATE</code> keyword on READ; released on REWRITE or task end</td></tr>
+            <tr><td>Access Pattern</td><td>Direct keyed read by User ID &rarr; display &rarr; conditional rewrite if fields changed</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5.3 -->
+    <div class="subsection" id="s5-3">
+      <h3><span class="dot"></span>5.3 TSQ Usage</h3>
+      <p>N/A &mdash; This transaction does not use Temporary Storage Queues.</p>
+    </div>
+
+    <!-- 5.4 -->
+    <div class="subsection" id="s5-4">
+      <h3><span class="dot"></span>5.4 TDQ Usage</h3>
+      <p>N/A &mdash; This transaction does not use Transient Data Queues.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 6 — Data Flow Analysis
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">06</span>
+    <h2>Data Flow Analysis</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 6.1 -->
+    <div class="subsection" id="s6-1">
+      <h3><span class="dot"></span>6.1 Data Flow Through Transaction</h3>
+      <div class="diagram-box">
+<pre><code>
+  ┌──────────────┐        ┌────────────────────┐        ┌──────────────┐
+  │  TERMINAL     │        │  WORKING STORAGE    │        │  VSAM USRSEC │
+  │  (Map Input)  │        │                     │        │  (KSDS)      │
+  └──────┬───────┘        └──────────┬──────────┘        └──────┬───────┘
+         │                           │                          │
+  1. RECEIVE MAP                     │                          │
+         │  COUSR2AI ───────────────►│                          │
+         │  (USRIDINI)               │                          │
+         │                           │  2. MOVE USRIDINI        │
+         │                           │     → SEC-USR-ID         │
+         │                           │                          │
+         │                           │  3. READ USRSEC ────────►│
+         │                           │     ◄──── SEC-USER-DATA  │
+         │                           │                          │
+         │  4. MOVE SEC-USR-FNAME    │                          │
+         │     → FNAMEI, etc.        │                          │
+         │  ◄────────────────────────│                          │
+         │                           │                          │
+  5. SEND MAP (display)              │                          │
+         │                           │                          │
+  6. User modifies fields            │                          │
+         │                           │                          │
+  7. RECEIVE MAP                     │                          │
+         │  COUSR2AI ───────────────►│                          │
+         │  (modified values)        │                          │
+         │                           │  8. Compare input vs     │
+         │                           │     SEC-USER-DATA fields │
+         │                           │     Copy changed fields  │
+         │                           │                          │
+         │                           │  9. REWRITE ────────────►│
+         │                           │     SEC-USER-DATA        │
+         │                           │                          │
+  10. SEND MAP (success msg)         │                          │
+         │  ◄────────────────────────│                          │
+         ▼                           ▼                          ▼
+</code></pre>
+      </div>
+    </div>
+
+    <!-- 6.2 -->
+    <div class="subsection" id="s6-2">
+      <h3><span class="dot"></span>6.2 Data Transformation Map</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Source</th><th>Transformation</th><th>Target</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>USRIDINI OF COUSR2AI</code></td><td>Direct move (User ID lookup key)</td><td><code>SEC-USR-ID</code></td></tr>
+            <tr><td><code>SEC-USR-FNAME</code></td><td>Direct move (populate display)</td><td><code>FNAMEI OF COUSR2AI</code></td></tr>
+            <tr><td><code>SEC-USR-LNAME</code></td><td>Direct move (populate display)</td><td><code>LNAMEI OF COUSR2AI</code></td></tr>
+            <tr><td><code>SEC-USR-PWD</code></td><td>Direct move (populate display)</td><td><code>PASSWDI OF COUSR2AI</code></td></tr>
+            <tr><td><code>SEC-USR-TYPE</code></td><td>Direct move (populate display)</td><td><code>USRTYPEI OF COUSR2AI</code></td></tr>
+            <tr><td><code>FNAMEI OF COUSR2AI</code></td><td>Conditional copy if changed from original</td><td><code>SEC-USR-FNAME</code></td></tr>
+            <tr><td><code>LNAMEI OF COUSR2AI</code></td><td>Conditional copy if changed from original</td><td><code>SEC-USR-LNAME</code></td></tr>
+            <tr><td><code>PASSWDI OF COUSR2AI</code></td><td>Conditional copy if changed from original</td><td><code>SEC-USR-PWD</code></td></tr>
+            <tr><td><code>USRTYPEI OF COUSR2AI</code></td><td>Conditional copy if changed from original</td><td><code>SEC-USR-TYPE</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 7 — COMMAREA and Interface Contracts
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">07</span>
+    <h2>COMMAREA and Interface Contracts</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 7.1 -->
+    <div class="subsection" id="s7-1">
+      <h3><span class="dot"></span>7.1 COMMAREA Layout</h3>
+      <p>The program uses the shared <code>CARDDEMO-COMMAREA</code> (copybook <code>COCOM01Y.cpy</code>) plus a program-specific extension <code>CDEMO-CU02-INFO</code> defined inline.</p>
+      <h4>Shared COMMAREA (COCOM01Y)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Field</th><th>PIC</th><th>Length</th><th>Direction</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>CDEMO-FROM-TRANID</code></td><td>X(04)</td><td>4</td><td>IN/OUT</td><td>Calling transaction ID</td></tr>
+            <tr><td><code>CDEMO-FROM-PROGRAM</code></td><td>X(08)</td><td>8</td><td>IN/OUT</td><td>Calling program name (return target)</td></tr>
+            <tr><td><code>CDEMO-TO-TRANID</code></td><td>X(04)</td><td>4</td><td>OUT</td><td>Target transaction ID</td></tr>
+            <tr><td><code>CDEMO-TO-PROGRAM</code></td><td>X(08)</td><td>8</td><td>OUT</td><td>Target program for XCTL</td></tr>
+            <tr><td><code>CDEMO-USER-ID</code></td><td>X(08)</td><td>8</td><td>IN</td><td>Authenticated user ID</td></tr>
+            <tr><td><code>CDEMO-USER-TYPE</code></td><td>X(01)</td><td>1</td><td>IN</td><td>User type (A=Admin, U=User)</td></tr>
+            <tr><td><code>CDEMO-PGM-CONTEXT</code></td><td>9(01)</td><td>1</td><td>IN/OUT</td><td>0=first entry, 1=reenter</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h4>Program-Specific Extension (CDEMO-CU02-INFO)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Field</th><th>PIC</th><th>Length</th><th>Direction</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>CDEMO-CU02-USRID-FIRST</code></td><td>X(08)</td><td>8</td><td>IN</td><td>First user ID in browse range</td></tr>
+            <tr><td><code>CDEMO-CU02-USRID-LAST</code></td><td>X(08)</td><td>8</td><td>IN</td><td>Last user ID in browse range</td></tr>
+            <tr><td><code>CDEMO-CU02-PAGE-NUM</code></td><td>9(08)</td><td>8</td><td>IN</td><td>Current page number</td></tr>
+            <tr><td><code>CDEMO-CU02-NEXT-PAGE-FLG</code></td><td>X(01)</td><td>1</td><td>IN</td><td>Next page available flag (Y/N)</td></tr>
+            <tr><td><code>CDEMO-CU02-USR-SEL-FLG</code></td><td>X(01)</td><td>1</td><td>IN</td><td>User selection flag</td></tr>
+            <tr><td><code>CDEMO-CU02-USR-SELECTED</code></td><td>X(08)</td><td>8</td><td>IN</td><td>Pre-selected User ID (from User List)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 7.2 -->
+    <div class="subsection" id="s7-2">
+      <h3><span class="dot"></span>7.2 Return Code Conventions</h3>
+      <p>
+        The program uses <code>WS-RESP-CD</code> (PIC S9(09) COMP) and <code>WS-REAS-CD</code> (PIC S9(09) COMP) to capture CICS RESP/RESP2 codes from READ and REWRITE operations. Response codes are evaluated via <code>DFHRESP(NORMAL)</code>, <code>DFHRESP(NOTFND)</code>, and a catch-all OTHER branch. The error flag <code>WS-ERR-FLG</code> (PIC X(01), 88-levels <code>ERR-FLG-ON</code> / <code>ERR-FLG-OFF</code>) gates subsequent processing.
+      </p>
+    </div>
+
+    <!-- 7.3 -->
+    <div class="subsection" id="s7-3">
+      <h3><span class="dot"></span>7.3 Conversation State Management</h3>
+      <p>
+        State is preserved between pseudo-conversational iterations via the <code>CARDDEMO-COMMAREA</code> passed on <code>EXEC CICS RETURN TRANSID('CU02') COMMAREA(CARDDEMO-COMMAREA)</code>.
+        The <code>CDEMO-PGM-CONTEXT</code> field distinguishes first entry (value 0, <code>CDEMO-PGM-ENTER</code>) from re-entry (value 1, <code>CDEMO-PGM-REENTER</code>).
+        On first entry, the program sets <code>CDEMO-PGM-REENTER</code> to TRUE and initializes the screen.
+        If <code>CDEMO-CU02-USR-SELECTED</code> was set by the calling program (User List), the user record is automatically fetched on first entry.
+        On exit via PF3/PF12, <code>CDEMO-PGM-CONTEXT</code> is reset to ZEROS before XCTL to the target program.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 8 — Error Handling and User Feedback
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">08</span>
+    <h2>Error Handling and User Feedback</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 8.1 -->
+    <div class="subsection" id="s8-1">
+      <h3><span class="dot"></span>8.1 Error Flow Diagram</h3>
+      <div class="diagram-box">
+<pre><code>
+                   ┌──────────────┐
+                   │  User Input   │
+                   └──────┬───────┘
+                          │
+                ┌─────────▼──────────┐
+                │  Field Validation   │
+                │  (empty checks)     │
+                └────┬──────────┬────┘
+              pass   │          │  fail
+                     ▼          ▼
+          ┌──────────────┐  ┌──────────────────┐
+          │  READ USRSEC  │  │  WS-ERR-FLG = 'Y' │
+          └────┬────┬────┘  │  Error message     │
+        NORMAL │    │NOTFND │  → SEND-USRUPD-SCR │
+               ▼    ▼       └──────────────────┘
+    ┌──────────┐ ┌──────────────┐
+    │ Display  │ │ "User ID NOT │
+    │ user data│ │  found..."   │
+    └────┬─────┘ └──────────────┘
+         │
+         ▼ (PF5 / PF3)
+    ┌────────────────┐
+    │ UPDATE-USER-INFO│
+    │ Validate all    │
+    │ fields          │
+    └──┬──────────┬──┘
+  pass │          │ fail
+       ▼          ▼
+  ┌──────────┐ ┌──────────────────┐
+  │ Compare  │ │ Field-specific    │
+  │ changes  │ │ error message     │
+  └──┬───┬───┘ └──────────────────┘
+ mod │   │ no change
+     ▼   ▼
+ ┌───────────┐ ┌──────────────────┐
+ │ REWRITE   │ │ "Please modify   │
+ │ USRSEC    │ │  to update ..."  │
+ └──┬──┬──┬──┘ └──────────────────┘
+  OK│  │NF│OTH
+    ▼  ▼  ▼
+ ┌──────┐ ┌──────────────────┐
+ │ Succ │ │ RESP error msg   │
+ │ msg  │ └──────────────────┘
+ └──────┘
+</code></pre>
+      </div>
+    </div>
+
+    <!-- 8.2 -->
+    <div class="subsection" id="s8-2">
+      <h3><span class="dot"></span>8.2 Error Handling Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Condition</th><th>RESP Code</th><th>Program Action</th><th>User Message</th><th>Logging</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>User ID empty (ENTER)</td><td>N/A (validation)</td><td>Set <code>WS-ERR-FLG = 'Y'</code>, cursor to USRIDIN</td><td>&ldquo;User ID can NOT be empty...&rdquo;</td><td>None</td></tr>
+            <tr><td>User not found (READ)</td><td><code>DFHRESP(NOTFND)</code></td><td>Set <code>WS-ERR-FLG = 'Y'</code>, cursor to USRIDIN</td><td>&ldquo;User ID NOT found...&rdquo;</td><td>None</td></tr>
+            <tr><td>Read unexpected error</td><td>OTHER</td><td>Set <code>WS-ERR-FLG = 'Y'</code>, cursor to FNAME</td><td>&ldquo;Unable to lookup User...&rdquo;</td><td><code>DISPLAY 'RESP:' WS-RESP-CD 'REAS:' WS-REAS-CD</code></td></tr>
+            <tr><td>First Name empty (PF5/PF3)</td><td>N/A (validation)</td><td>Set <code>WS-ERR-FLG = 'Y'</code>, cursor to FNAME</td><td>&ldquo;First Name can NOT be empty...&rdquo;</td><td>None</td></tr>
+            <tr><td>Last Name empty (PF5/PF3)</td><td>N/A (validation)</td><td>Set <code>WS-ERR-FLG = 'Y'</code>, cursor to LNAME</td><td>&ldquo;Last Name can NOT be empty...&rdquo;</td><td>None</td></tr>
+            <tr><td>Password empty (PF5/PF3)</td><td>N/A (validation)</td><td>Set <code>WS-ERR-FLG = 'Y'</code>, cursor to PASSWD</td><td>&ldquo;Password can NOT be empty...&rdquo;</td><td>None</td></tr>
+            <tr><td>User Type empty (PF5/PF3)</td><td>N/A (validation)</td><td>Set <code>WS-ERR-FLG = 'Y'</code>, cursor to USRTYPE</td><td>&ldquo;User Type can NOT be empty...&rdquo;</td><td>None</td></tr>
+            <tr><td>No changes made</td><td>N/A (logic)</td><td>Set message color to red</td><td>&ldquo;Please modify to update ...&rdquo;</td><td>None</td></tr>
+            <tr><td>REWRITE success</td><td><code>DFHRESP(NORMAL)</code></td><td>Set message color to green</td><td>&ldquo;User <em>X</em> has been updated ...&rdquo;</td><td>None</td></tr>
+            <tr><td>REWRITE not found</td><td><code>DFHRESP(NOTFND)</code></td><td>Set <code>WS-ERR-FLG = 'Y'</code>, cursor to USRIDIN</td><td>&ldquo;User ID NOT found...&rdquo;</td><td>None</td></tr>
+            <tr><td>REWRITE unexpected error</td><td>OTHER</td><td>Set <code>WS-ERR-FLG = 'Y'</code>, cursor to FNAME</td><td>&ldquo;Unable to Update User...&rdquo;</td><td><code>DISPLAY 'RESP:' WS-RESP-CD 'REAS:' WS-REAS-CD</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 8.3 -->
+    <div class="subsection" id="s8-3">
+      <h3><span class="dot"></span>8.3 HANDLE ABEND / HANDLE CONDITION</h3>
+      <p>N/A &mdash; This program does not use <code>EXEC CICS HANDLE ABEND</code> or <code>EXEC CICS HANDLE CONDITION</code>. Error handling is done via inline <code>RESP</code> / <code>RESP2</code> options on each CICS command.</p>
+    </div>
+
+    <!-- 8.4 -->
+    <div class="subsection" id="s8-4">
+      <h3><span class="dot"></span>8.4 User Error Messages</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Message Text</th><th>Color</th><th>Trigger Condition</th><th>Paragraph</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>&ldquo;User ID can NOT be empty...&rdquo;</td><td>Red (default)</td><td>USRIDINI is SPACES/LOW-VALUES</td><td><code>PROCESS-ENTER-KEY</code>, <code>UPDATE-USER-INFO</code></td></tr>
+            <tr><td>&ldquo;User ID NOT found...&rdquo;</td><td>Red (default)</td><td>DFHRESP(NOTFND) on READ or REWRITE</td><td><code>READ-USER-SEC-FILE</code>, <code>UPDATE-USER-SEC-FILE</code></td></tr>
+            <tr><td>&ldquo;Unable to lookup User...&rdquo;</td><td>Red (default)</td><td>Unexpected RESP on READ</td><td><code>READ-USER-SEC-FILE</code></td></tr>
+            <tr><td>&ldquo;Unable to Update User...&rdquo;</td><td>Red (default)</td><td>Unexpected RESP on REWRITE</td><td><code>UPDATE-USER-SEC-FILE</code></td></tr>
+            <tr><td>&ldquo;First Name can NOT be empty...&rdquo;</td><td>Red (default)</td><td>FNAMEI is SPACES/LOW-VALUES</td><td><code>UPDATE-USER-INFO</code></td></tr>
+            <tr><td>&ldquo;Last Name can NOT be empty...&rdquo;</td><td>Red (default)</td><td>LNAMEI is SPACES/LOW-VALUES</td><td><code>UPDATE-USER-INFO</code></td></tr>
+            <tr><td>&ldquo;Password can NOT be empty...&rdquo;</td><td>Red (default)</td><td>PASSWDI is SPACES/LOW-VALUES</td><td><code>UPDATE-USER-INFO</code></td></tr>
+            <tr><td>&ldquo;User Type can NOT be empty...&rdquo;</td><td>Red (default)</td><td>USRTYPEI is SPACES/LOW-VALUES</td><td><code>UPDATE-USER-INFO</code></td></tr>
+            <tr><td>&ldquo;Please modify to update ...&rdquo;</td><td>Red (<code>DFHRED</code>)</td><td>No fields modified from original</td><td><code>UPDATE-USER-INFO</code></td></tr>
+            <tr><td>&ldquo;Press PF5 key to save your updates ...&rdquo;</td><td>Neutral (<code>DFHNEUTR</code>)</td><td>Successful READ &mdash; record displayed for editing</td><td><code>READ-USER-SEC-FILE</code></td></tr>
+            <tr><td>&ldquo;User <em>X</em> has been updated ...&rdquo;</td><td>Green (<code>DFHGREEN</code>)</td><td>Successful REWRITE</td><td><code>UPDATE-USER-SEC-FILE</code></td></tr>
+            <tr><td>&ldquo;Invalid key pressed. Please see below...&rdquo;</td><td>Red (default)</td><td>Unrecognized AID key</td><td><code>MAIN-PARA</code> (via <code>CCDA-MSG-INVALID-KEY</code>)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 9 — Security and Authorization
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">09</span>
+    <h2>Security and Authorization</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 9.1 -->
+    <div class="subsection" id="s9-1">
+      <h3><span class="dot"></span>9.1 Transaction Security</h3>
+      <p>
+        The <code>CU02</code> transaction is <strong>admin-only</strong>. Access control is enforced at the menu level:
+      </p>
+      <ul>
+        <li>The Admin Menu (<code>COADM01C</code>) is only reachable by users with <code>CDEMO-USER-TYPE = 'A'</code> (set during sign-on by <code>COSGN00C</code>).</li>
+        <li>Option 3 in <code>COADM02Y.cpy</code> maps to &ldquo;User Update (Security)&rdquo; &rarr; <code>COUSR02C</code>.</li>
+        <li>If <code>EIBCALEN = 0</code> (no COMMAREA &mdash; direct invocation without authentication), the program redirects to <code>COSGN00C</code> via XCTL.</li>
+      </ul>
+      <div class="callout">
+        <strong>Note:</strong> There is no explicit RACF transaction-level security check within the program itself. Security relies on the menu-routing architecture and the COMMAREA being set by the sign-on program.
+      </div>
+    </div>
+
+    <!-- 9.2 -->
+    <div class="subsection" id="s9-2">
+      <h3><span class="dot"></span>9.2 Data Access Authorization</h3>
+      <p>
+        The program reads and rewrites any record in the <code>USRSEC</code> file without additional authorization checks beyond the menu-level admin gate. An admin user can modify any other user&rsquo;s record, including passwords and user types.
+      </p>
+      <div class="callout callout-red">
+        <strong>Security Observation:</strong> Passwords are stored in plaintext in the <code>SEC-USR-PWD</code> field (PIC X(08)) and displayed on the BMS map (though the <code>PASSWD</code> field uses the <code>DRK</code> attribute to hide display). No hashing or encryption is applied.
+      </div>
+    </div>
+
+    <!-- 9.3 -->
+    <div class="subsection" id="s9-3">
+      <h3><span class="dot"></span>9.3 Audit Trail</h3>
+      <p>
+        N/A &mdash; The program does not write audit records for user modifications. The only logging is <code>DISPLAY</code> statements to CEEMSG/SYSOUT for unexpected RESP codes during READ and REWRITE operations. No timestamp, operator ID, or change log is maintained.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 10 — Performance Characteristics
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">10</span>
+    <h2>Performance Characteristics</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 10.1 -->
+    <div class="subsection" id="s10-1">
+      <h3><span class="dot"></span>10.1 Performance Profile</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Metric</th><th>Value</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>File I/Os per fetch iteration</td><td>1 READ</td><td>Single keyed read on USRSEC with UPDATE lock</td></tr>
+            <tr><td>File I/Os per save iteration</td><td>1 READ + 1 REWRITE</td><td>Re-reads for comparison, then rewrites if changed</td></tr>
+            <tr><td>COMMAREA size</td><td>~300 bytes</td><td>Shared COMMAREA + CU02-specific extension</td></tr>
+            <tr><td>Map sends per iteration</td><td>1</td><td>Single SEND MAP per pseudo-conversational cycle</td></tr>
+            <tr><td>Map receives per iteration</td><td>1</td><td>Single RECEIVE MAP at start of re-entry</td></tr>
+            <tr><td>Program LOC</td><td>414</td><td>Lightweight single-file update</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 10.2 -->
+    <div class="subsection" id="s10-2">
+      <h3><span class="dot"></span>10.2 Performance Considerations</h3>
+      <ul>
+        <li><strong>Record locking:</strong> The READ with UPDATE option acquires an exclusive record lock. If the user fetches a record and walks away, the lock persists until the task times out or the user acts. This could block other admin users attempting to update the same user.</li>
+        <li><strong>Double READ on save:</strong> The <code>UPDATE-USER-INFO</code> paragraph performs a second <code>READ-USER-SEC-FILE</code> (with UPDATE) before comparing fields and issuing REWRITE. This ensures current data but doubles the I/O on save operations.</li>
+        <li><strong>Small record size:</strong> The USRSEC record is only 80 bytes, so I/O and COMMAREA overhead are minimal.</li>
+        <li><strong>No BROWSE operations:</strong> This is a single-record update program with no STARTBR/READNEXT, so performance impact is inherently low.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 11 — Testing Approach
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">11</span>
+    <h2>Testing Approach</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 11.1 -->
+    <div class="subsection" id="s11-1">
+      <h3><span class="dot"></span>11.1 Test Scenarios</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Scenario</th><th>Input</th><th>Expected Result</th><th>Coverage</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>TC-01</td><td>Happy path &mdash; fetch and update</td><td>Valid User ID → modify First Name → PF5</td><td>Record updated, green success message</td><td>PROCESS-ENTER-KEY, UPDATE-USER-INFO, READ, REWRITE</td></tr>
+            <tr><td>TC-02</td><td>Pre-populated User ID from User List</td><td>Navigate from CU00 with user selected</td><td>Screen shows user data immediately (no manual ENTER)</td><td>CDEMO-CU02-USR-SELECTED path</td></tr>
+            <tr><td>TC-03</td><td>Save &amp; exit (PF3)</td><td>Modify Last Name → PF3</td><td>Record updated, return to Admin Menu</td><td>PF3 → UPDATE-USER-INFO → RETURN-TO-PREV-SCREEN</td></tr>
+            <tr><td>TC-04</td><td>Cancel without saving (PF12)</td><td>Modify fields → PF12</td><td>Return to Admin Menu, no changes persisted</td><td>PF12 → RETURN-TO-PREV-SCREEN</td></tr>
+            <tr><td>TC-05</td><td>Clear screen (PF4)</td><td>Enter data → PF4</td><td>All fields cleared, cursor on User ID</td><td>CLEAR-CURRENT-SCREEN, INITIALIZE-ALL-FIELDS</td></tr>
+            <tr><td>TC-06</td><td>Empty User ID</td><td>Leave User ID blank → ENTER</td><td>Error: &ldquo;User ID can NOT be empty...&rdquo;</td><td>BR-1</td></tr>
+            <tr><td>TC-07</td><td>Non-existent User ID</td><td>Enter &ldquo;BADUSER&rdquo; → ENTER</td><td>Error: &ldquo;User ID NOT found...&rdquo;</td><td>DFHRESP(NOTFND)</td></tr>
+            <tr><td>TC-08</td><td>Empty First Name on save</td><td>Clear First Name → PF5</td><td>Error: &ldquo;First Name can NOT be empty...&rdquo;</td><td>BR-3</td></tr>
+            <tr><td>TC-09</td><td>Empty Last Name on save</td><td>Clear Last Name → PF5</td><td>Error: &ldquo;Last Name can NOT be empty...&rdquo;</td><td>BR-4</td></tr>
+            <tr><td>TC-10</td><td>Empty Password on save</td><td>Clear Password → PF5</td><td>Error: &ldquo;Password can NOT be empty...&rdquo;</td><td>BR-5</td></tr>
+            <tr><td>TC-11</td><td>Empty User Type on save</td><td>Clear User Type → PF5</td><td>Error: &ldquo;User Type can NOT be empty...&rdquo;</td><td>BR-6</td></tr>
+            <tr><td>TC-12</td><td>No modifications made</td><td>Fetch user → PF5 without changes</td><td>Warning: &ldquo;Please modify to update ...&rdquo;</td><td>BR-7</td></tr>
+            <tr><td>TC-13</td><td>Invalid AID key</td><td>Press PF7 (or any unhandled key)</td><td>Error: &ldquo;Invalid key pressed...&rdquo;</td><td>WHEN OTHER in EVALUATE EIBAID</td></tr>
+            <tr><td>TC-14</td><td>Direct invocation (EIBCALEN=0)</td><td>Start CU02 without COMMAREA</td><td>Redirect to COSGN00C sign-on</td><td>EIBCALEN = 0 guard</td></tr>
+            <tr><td>TC-15</td><td>Change User Type from U to A</td><td>Fetch regular user → change type to A → PF5</td><td>User promoted to admin, success message</td><td>USRTYPEI comparison and REWRITE</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 11.2 -->
+    <div class="subsection" id="s11-2">
+      <h3><span class="dot"></span>11.2 Test Data Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Data Item</th><th>Requirement</th><th>Source</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Admin user account</td><td>User with <code>SEC-USR-TYPE = 'A'</code> to access Admin Menu</td><td>USRSEC file</td></tr>
+            <tr><td>Target user records</td><td>At least 2 users in USRSEC (one admin, one regular) for update testing</td><td>USRSEC file</td></tr>
+            <tr><td>Non-existent User ID</td><td>A User ID not present in USRSEC for NOTFND testing</td><td>Verify against file</td></tr>
+            <tr><td>CICS region</td><td>Running CICS region with USRSEC file defined in FCT</td><td>System configuration</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 12 — Known Issues and Considerations
+     ══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+    <span class="section-num">12</span>
+    <h2>Known Issues and Considerations</h2>
+    <svg class="section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="section-body">
+
+    <!-- 12.1 -->
+    <div class="subsection" id="s12-1">
+      <h3><span class="dot"></span>12.1 Known Issues</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Issue</th><th>Severity</th><th>Details</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>KI-1</td><td>Plaintext password storage</td><td>High</td><td><code>SEC-USR-PWD</code> is stored as PIC X(08) with no hashing or encryption. Password is also transmitted in the BMS map (though displayed with DRK attribute).</td></tr>
+            <tr><td>KI-2</td><td>No audit trail for user changes</td><td>Medium</td><td>Modifications to user records (including password changes and privilege escalation) are not logged. No before/after image is captured.</td></tr>
+            <tr><td>KI-3</td><td>No User Type value validation</td><td>Medium</td><td>The program checks that <code>USRTYPEI</code> is non-empty but does not validate that it is &lsquo;A&rsquo; or &lsquo;U&rsquo;. Any single character is accepted.</td></tr>
+            <tr><td>KI-4</td><td>Record lock held during user think time</td><td>Low</td><td>The READ with UPDATE acquires a lock that persists across the pseudo-conversational boundary until the next REWRITE or task termination. This can cause contention if multiple admins edit the same user.</td></tr>
+            <tr><td>KI-5</td><td>No password complexity enforcement</td><td>Medium</td><td>Any non-empty 8-character (or fewer) password is accepted. No minimum length, complexity, or history checks.</td></tr>
+            <tr><td>KI-6</td><td>Hardcoded program names</td><td>Low</td><td><code>COSGN00C</code> and <code>COADM01C</code> are hardcoded as return targets rather than being table-driven.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 12.2 -->
+    <div class="subsection" id="s12-2">
+      <h3><span class="dot"></span>12.2 Modernization Considerations</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Area</th><th>Current State</th><th>Target State</th><th>Priority</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Screen I/O</td><td>BMS map <code>COUSR2A</code> via SEND/RECEIVE MAP</td><td>REST API endpoint (<code>PUT /api/users/{id}</code>) with JSON payload</td><td>High</td></tr>
+            <tr><td>Data Access</td><td>VSAM KSDS (<code>USRSEC</code>) via EXEC CICS READ/REWRITE</td><td>Relational DB (PostgreSQL/MySQL) with JPA/ORM</td><td>High</td></tr>
+            <tr><td>Authentication</td><td>Plaintext password in USRSEC record</td><td>Hashed passwords (bcrypt/scrypt), OAuth2/OIDC integration</td><td>Critical</td></tr>
+            <tr><td>Authorization</td><td>Menu-level routing based on <code>CDEMO-USER-TYPE</code></td><td>RBAC with middleware/annotations (<code>@PreAuthorize</code>)</td><td>High</td></tr>
+            <tr><td>State Management</td><td>COMMAREA-based pseudo-conversational state</td><td>Stateless REST with JWT tokens; server-side session if needed</td><td>Medium</td></tr>
+            <tr><td>Validation</td><td>Sequential EVALUATE with manual field checks</td><td>Bean Validation (<code>@NotBlank</code>, <code>@Size</code>, <code>@Pattern</code>) annotations</td><td>Medium</td></tr>
+            <tr><td>Audit Trail</td><td>None &mdash; only DISPLAY for errors</td><td>Structured audit logging (who, what, when, before/after)</td><td>High</td></tr>
+            <tr><td>Error Handling</td><td>RESP code evaluation with DISPLAY logging</td><td>Exception handling framework with structured error responses</td><td>Medium</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /page-wrap-single -->
+
+<!-- ════════════════════  FOOTER  ════════════════════ -->
+<footer class="footer">
+  <strong>UniCredit S.p.A.</strong> &mdash; CardDemo CICS Transaction Analysis &middot; Auto-generated
+</footer>
+
+</body>
+</html>
