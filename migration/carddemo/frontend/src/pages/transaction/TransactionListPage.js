@@ -8,11 +8,12 @@ import { listTransactions } from '../../api/transactions';
  *   - open -> first 10 transactions by Tran ID (FR-L1, COTRN00C.cbl:279-326)
  *   - type a start Tran ID + ENTER -> list begins at/after it (FR-L2, cbl:206-225)
  *   - PF8 -> next 10; already at the end -> "You are already at the bottom of the
- *     page..." (FR-L3, cbl:257-274); a browse that hits ENDFILE while filling a
- *     page -> "You have reached the bottom of the page..." (cbl:639-645)
+ *     page..." (FR-L3, cbl:257-274); a browse whose (lookahead) READNEXT hits
+ *     ENDFILE -> "You have reached the bottom of the page..." (cbl:639-645)
  *   - PF7 -> previous 10; already at the top -> "You are already at the top of the
- *     page..." (FR-L4, cbl:234-252); a backward browse that hits ENDFILE while
- *     filling a page -> "You have reached the top of the page..." (cbl:673-678)
+ *     page..." (FR-L4, cbl:234-252); a backward browse whose (lookahead)
+ *     READPREV hits ENDFILE -> "You have reached the top of the page..."
+ *     (cbl:673-678)
  *   - a browse that finds nothing at or after the key -> "You are at the top of
  *     the page..." (cbl:605-610)
  *   - type `S` beside a row + ENTER -> open it in CT01 View (FR-L5, cbl:183-195)
@@ -29,8 +30,6 @@ const ALREADY_TOP_MSG = 'You are already at the top of the page...';
 const REACHED_TOP_MSG = 'You have reached the top of the page...';
 const AT_TOP_MSG = 'You are at the top of the page...';
 const INVALID_SEL_MSG = 'Invalid selection. Valid value is S';
-
-const PAGE_SIZE = 10;
 
 const EMPTY_PAGE = {
   rows: [],
@@ -124,9 +123,12 @@ export default function TransactionListPage() {
       if (data.count === 0) {
         // STARTBR found nothing at or after the key (cbl:605-610).
         setMessage(AT_TOP_MSG);
-      } else if (data.count < PAGE_SIZE) {
-        // READNEXT/READPREV hitting ENDFILE while filling the page
-        // (cbl:639-645, :673-678) — a different event from the PF7/PF8 guards.
+      } else if (dir === 'prev' ? !data.hasPrevPage : !data.hasNextPage) {
+        // READNEXT/READPREV hitting ENDFILE (cbl:639-645, :673-678), either
+        // while filling the page or on the lookahead read that sets NEXT-PAGE
+        // (cbl:305-312) — so a full last page carries the message too, since
+        // SEND-TRNLST-SCREEN (:531) never clears WS-MESSAGE. A different event
+        // from the PF7/PF8 guards.
         setMessage(dir === 'prev' ? REACHED_TOP_MSG : REACHED_BOTTOM_MSG);
       } else {
         setMessage('');

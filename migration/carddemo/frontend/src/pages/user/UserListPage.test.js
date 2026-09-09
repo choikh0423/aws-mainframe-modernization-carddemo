@@ -146,6 +146,60 @@ describe('CU00 List Users — pagination (FR-UL-1…FR-UL-8, FR-UL-14)', () => {
 
     await waitFor(() => expect(message()).toEqual(REACHED_TOP));
   });
+
+  /**
+   * The lookahead READNEXT/READPREV (cbl:308-315, :362-372) runs once the page
+   * is full and sets WS-MESSAGE on ENDFILE; SEND-USRLST-SCREEN (:526) never
+   * clears it, so a boundary page of exactly ten rows is not silent.
+   */
+  test('FR-UL-8: a last page of exactly ten rows still shows the boundary literal', async () => {
+    const backend = stubBackend();
+    backend.get('/api/admin/users', [FIRST_PAGE, SECOND_PAGE]);
+
+    await renderList(backend);
+    fireEvent.keyDown(window, { key: 'F8' });
+
+    await screen.findByText('USER0011');
+    expect(message()).toEqual(REACHED_BOTTOM);
+  });
+
+  test('FR-UL-8: a first page of exactly ten rows with nothing after it shows it too', async () => {
+    const backend = stubBackend();
+    backend.get('/api/admin/users', pageOf(1, 10, { hasNextPage: false }));
+
+    await renderList(backend);
+
+    expect(message()).toEqual(REACHED_BOTTOM);
+  });
+
+  test('FR-UL-8: paging back onto a full page 1 shows the top-of-file literal', async () => {
+    const backend = stubBackend();
+    backend.get('/api/admin/users', [
+      pageOf(11, 10, { hasNextPage: true, hasPrevPage: true }),
+      FIRST_PAGE,
+    ]);
+
+    renderScreen(<UserListPage />);
+    await screen.findByText('USER0011');
+    fireEvent.keyDown(window, { key: 'F7' });
+
+    await screen.findByText('USER0001');
+    expect(message()).toEqual(REACHED_TOP);
+  });
+
+  test('FR-UL-8: a full page with records on both sides stays silent', async () => {
+    const backend = stubBackend();
+    backend.get('/api/admin/users', [
+      FIRST_PAGE,
+      pageOf(11, 10, { hasNextPage: true, hasPrevPage: true }),
+    ]);
+
+    await renderList(backend);
+    fireEvent.keyDown(window, { key: 'F8' });
+
+    await screen.findByText('USER0011');
+    expect(message()).toEqual('');
+  });
 });
 
 describe('CU00 List Users — selection flags (FR-UL-9…FR-UL-13)', () => {
