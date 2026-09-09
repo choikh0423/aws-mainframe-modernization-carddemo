@@ -143,7 +143,7 @@ Fixtures: the ranges below are the ones exercised by the tests; CR00 reads no da
 
 ## 5. Verification
 
-- `mvn -B test` — green, 289 tests after rebasing on `devin/carddemo-integration`, of which 86 are this
+- `mvn -B test` — green, 364 tests after rebasing on `devin/carddemo-integration`, of which 86 are this
   stream's in `com.carddemo.reporting` (`CobolNumvalTest`,
   `CsutldtcFeedbackTest`, `ReportPeriodTest`, `ReportRequestValidatorTest`, `TranReportJclDeckTest`,
   `NoOpTransactionReportJobLauncherTest`, `ReportSubmissionServiceTest`,
