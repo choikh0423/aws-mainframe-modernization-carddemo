@@ -10,6 +10,7 @@ import UserListPage from '../pages/user/UserListPage';
 import AddUserPage from '../pages/user/AddUserPage';
 import UpdateUserPage from '../pages/user/UpdateUserPage';
 import DeleteUserPage from '../pages/user/DeleteUserPage';
+import TransactionReportsPage from '../pages/reporting/TransactionReportsPage';
 
 /**
  * The route registry: one entry per legacy online screen, in menu order.
@@ -125,7 +126,7 @@ export const SCREENS = [
     path: '/reports',
     title: 'Transaction Reports',
     stream: 'S-07 Reporting',
-    element: null,
+    element: <TransactionReportsPage />,
   },
   {
     program: 'COBIL00C',
