@@ -61,22 +61,21 @@ Source: `docs/migration/CardDemo_independent_audit.md` (PR #57).
 
 | ID | Sev | Subject | Owner | Status |
 |---|---|---|---|---|
-| A-01 | BLOCKER | `auth_fraud.transaction_amt`/`approved_amt` narrowed to `NUMERIC(11,2)` vs `DECIMAL(12,2)` | S-09 session | remediation dispatched |
-| A-02 | BLOCKER | `auth_fraud.fraud_rpt_date` stored as `CHAR(8)` `MM/dd/yy`; DB2 column is a `DATE`, century lost | S-09 session | remediation dispatched |
-| A-03 | MAJOR | `pos_entry_mode` `CHAR(2)` vs `SMALLINT` | S-09 session | remediation dispatched |
+| A-01 | BLOCKER | `auth_fraud.transaction_amt`/`approved_amt` narrowed to `NUMERIC(11,2)` vs `DECIMAL(12,2)` | S-09 session | **CLOSED** — PR #59, `V900__auth_fraud_column_types.sql` |
+| A-02 | BLOCKER | `auth_fraud.fraud_rpt_date` stored as `CHAR(8)` `MM/dd/yy`; DB2 column is a `DATE`, century lost | S-09 session | **CLOSED** — PR #59, column is `DATE`, entity `LocalDate`, `MM/dd/yy` moved to presentation |
+| A-03 | MAJOR | `pos_entry_mode` `CHAR(2)` vs `SMALLINT` | S-09 session | **CLOSED** — PR #59 |
 | A-04 | MAJOR | `EXEC PGM=` count published without derivation | orchestrator | **CLOSED** — inventory §9 reconciliation, D-10 |
 | A-05 | MAJOR | S-04 has no stream/program FR documents | orchestrator | **CLOSED** — inventory §10 states where its requirements live |
 | A-06 | MAJOR | boundary register left every row at `REGISTERED` | orchestrator | **CLOSED** — decision table appended to `04_boundary_register.md` |
 | A-07 | MAJOR | one frontend test, and CI never runs `npm test` | dedicated session | remediation dispatched |
-| A-08 | MINOR | `merchant_name` `CHAR(22)` vs `VARCHAR(22)` | S-09 session | remediation dispatched |
-| A-09 | MINOR | CBEXPORT/CBIMPORT operator SYSOUT contract neither reproduced nor documented as dropped | S-16 session | remediation dispatched |
+| A-08 | MINOR | `merchant_name` `CHAR(22)` vs `VARCHAR(22)` | S-09 session | **CLOSED** — PR #59 |
+| A-09 | MINOR | CBEXPORT/CBIMPORT operator SYSOUT contract neither reproduced nor documented as dropped | S-16 session | **CLOSED** — PR #58, `ExportImportSysout` |
 | A-10 | MINOR | `PRTCATBL` `OUTREC`/`LRECL=40` contradiction resolved silently | orchestrator | **CLOSED** — D-9 |
 
 The audit independently reproduced the 916/0/0/0 backend run and the frontend build, and confirmed the
 44-program coverage arithmetic. The 916 figure is **backend-only**; there is no frontend test in CI (A-07).
 
 ## Next action
-Land the three dispatched remediation PRs (S-09 schema, frontend tests + CI, S-16 SYSOUT) into
-`devin/carddemo-integration`, re-run the audit over the fixes,
-then **STOP E**: sign-off, evidence and audit to Kyu, and merge authorization before
-`devin/carddemo-integration` goes to `main`.
+PRs #58 and #59 are merged into `devin/carddemo-integration` (both green). Remaining: the frontend
+test/CI PR for A-07, then re-run the audit over the fixes, then **STOP E**: sign-off, evidence and audit
+to Kyu, and merge authorization before `devin/carddemo-integration` goes to `main`.
