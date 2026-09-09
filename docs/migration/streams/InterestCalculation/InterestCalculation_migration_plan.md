@@ -91,6 +91,6 @@ and the per-rule arithmetic lives in `InterestCalculatorTest`.
 ## 7. Verification
 
 ```
-cd migration/carddemo/backend && mvn -B test     # 172 tests, green
+cd migration/carddemo/backend && mvn -B test     # 317 tests, green (post-rebase)
 cd migration/carddemo/frontend && npm ci && npm run build
 ```
