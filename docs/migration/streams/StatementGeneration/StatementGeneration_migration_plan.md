@@ -163,7 +163,7 @@ Total EXP:                                                        $        3.75-
 ## 7. Verification
 
 ```bash
-cd migration/carddemo/backend && mvn -B test      # 166+ tests, green
+cd migration/carddemo/backend && mvn -B test      # whole suite green
 cd migration/carddemo/frontend && npm ci && npm run build
 ```
 
