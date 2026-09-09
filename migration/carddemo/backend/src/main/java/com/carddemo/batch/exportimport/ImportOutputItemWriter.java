@@ -1,8 +1,6 @@
 package com.carddemo.batch.exportimport;
 
 import com.carddemo.common.batch.AbendService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
@@ -36,12 +34,8 @@ public class ImportOutputItemWriter implements ItemStreamWriter<ImportedRecord> 
 
     static final String POSITION_KEY_PREFIX = "carddemo.exportimport.import.position.";
 
-    /** The file status VSAM reported when a dataset could not be opened. */
-    static final String STATUS_OPEN_FAILED = "35";
-    /** The file status VSAM reported for a physical write error. */
-    static final String STATUS_WRITE_FAILED = "34";
-
-    private static final Logger log = LoggerFactory.getLogger(ImportOutputItemWriter.class);
+    static final String STATUS_OPEN_FAILED = ExportImportSysout.STATUS_OPEN_FAILED;
+    static final String STATUS_WRITE_FAILED = ExportImportSysout.STATUS_WRITE_FAILED;
 
     private final Path directory;
     private final AbendService abendService;
@@ -65,8 +59,8 @@ public class ImportOutputItemWriter implements ItemStreamWriter<ImportedRecord> 
                 channel.position(position);
                 channels.put(target, channel);
             } catch (IOException e) {
-                throw abendService.abend("0999", "CBIMPORT", e.toString(),
-                        "ERROR: Cannot open " + target.ddName() + ", Status: " + STATUS_OPEN_FAILED);
+                throw ExportImportSysout.abend(abendService, "CBIMPORT", e.toString(),
+                        ExportImportSysout.cannotOpen(target.fdName(), STATUS_OPEN_FAILED));
             }
         }
     }
@@ -80,10 +74,10 @@ public class ImportOutputItemWriter implements ItemStreamWriter<ImportedRecord> 
                         (record.line() + "\n").getBytes(StandardCharsets.ISO_8859_1)));
             } catch (IOException e) {
                 if (target != ImportTarget.ERROR) {
-                    throw abendService.abend("0999", "CBIMPORT", e.toString(),
+                    throw ExportImportSysout.abend(abendService, "CBIMPORT", e.toString(),
                             target.writeErrorMessage(STATUS_WRITE_FAILED));
                 }
-                log.error(target.writeErrorMessage(STATUS_WRITE_FAILED));
+                ExportImportSysout.error(target.writeErrorMessage(STATUS_WRITE_FAILED));
             }
             statistics.recordWritten(target);
         }
@@ -96,7 +90,7 @@ public class ImportOutputItemWriter implements ItemStreamWriter<ImportedRecord> 
                 channel.force(false);
                 executionContext.putLong(positionKey(target), channel.position());
             } catch (IOException e) {
-                throw abendService.abend("0999", "CBIMPORT", e.toString(),
+                throw ExportImportSysout.abend(abendService, "CBIMPORT", e.toString(),
                         target.writeErrorMessage(STATUS_WRITE_FAILED));
             }
         });

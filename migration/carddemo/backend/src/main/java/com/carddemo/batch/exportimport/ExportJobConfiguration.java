@@ -172,17 +172,17 @@ public class ExportJobConfiguration {
     @StepScope
     public ExportSourceItemReader exportSourceItemReader(ExportStatistics statistics) {
         return new ExportSourceItemReader(List.of(
-                new ExportSourceItemReader.Group(ExportRecordCodec.TYPE_CUSTOMER,
+                new ExportSourceItemReader.Group(ExportRecordCodec.TYPE_CUSTOMER, "CUSTOMER-INPUT",
                         keyOrderedReader("CUSTFILE", customerRepository, "custId")),
-                new ExportSourceItemReader.Group(ExportRecordCodec.TYPE_ACCOUNT,
+                new ExportSourceItemReader.Group(ExportRecordCodec.TYPE_ACCOUNT, "ACCOUNT-INPUT",
                         keyOrderedReader("ACCTFILE", accountRepository, "acctId")),
-                new ExportSourceItemReader.Group(ExportRecordCodec.TYPE_XREF,
+                new ExportSourceItemReader.Group(ExportRecordCodec.TYPE_XREF, "XREF-INPUT",
                         keyOrderedReader("XREFFILE", cardXrefRepository, "cardNum")),
-                new ExportSourceItemReader.Group(ExportRecordCodec.TYPE_TRANSACTION,
+                new ExportSourceItemReader.Group(ExportRecordCodec.TYPE_TRANSACTION, "TRANSACTION-INPUT",
                         keyOrderedReader("TRANSACT", transactionRepository, "id")),
-                new ExportSourceItemReader.Group(ExportRecordCodec.TYPE_CARD,
+                new ExportSourceItemReader.Group(ExportRecordCodec.TYPE_CARD, "CARD-INPUT",
                         keyOrderedReader("CARDFILE", cardRepository, "cardNum"))),
-                statistics);
+                statistics, abendService);
     }
 
     @Bean

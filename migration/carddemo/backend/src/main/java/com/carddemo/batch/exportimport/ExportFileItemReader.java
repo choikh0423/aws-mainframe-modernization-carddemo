@@ -27,10 +27,8 @@ import java.nio.file.StandardOpenOption;
  */
 public class ExportFileItemReader extends AbstractItemCountingItemStreamItemReader<byte[]> {
 
-    /** The file status VSAM reported when a dataset could not be opened. */
-    static final String STATUS_OPEN_FAILED = "35";
-    /** The file status VSAM reported for a physical read error. */
-    static final String STATUS_READ_FAILED = "30";
+    static final String STATUS_OPEN_FAILED = ExportImportSysout.STATUS_OPEN_FAILED;
+    static final String STATUS_READ_FAILED = ExportImportSysout.STATUS_READ_FAILED;
 
     private final Path file;
     private final AbendService abendService;
@@ -50,8 +48,8 @@ public class ExportFileItemReader extends AbstractItemCountingItemStreamItemRead
         try {
             channel = FileChannel.open(file, StandardOpenOption.READ);
         } catch (IOException e) {
-            throw abendService.abend("0999", "CBIMPORT", e.toString(),
-                    "ERROR: Cannot open EXPORT-INPUT, Status: " + STATUS_OPEN_FAILED);
+            throw ExportImportSysout.abend(abendService, "CBIMPORT", e.toString(),
+                    ExportImportSysout.cannotOpen("EXPORT-INPUT", STATUS_OPEN_FAILED));
         }
     }
 
@@ -64,14 +62,14 @@ public class ExportFileItemReader extends AbstractItemCountingItemStreamItemRead
                     if (buffer.position() == 0) {
                         return null;
                     }
-                    throw abendService.abend("0999", "CBIMPORT",
+                    throw ExportImportSysout.abend(abendService, "CBIMPORT",
                             "EXPFILE ends with a partial " + buffer.position() + " byte record",
-                            "ERROR: Reading EXPORT-INPUT, Status: " + STATUS_READ_FAILED);
+                            ExportImportSysout.reading("EXPORT-INPUT", STATUS_READ_FAILED));
                 }
             }
         } catch (IOException e) {
-            throw abendService.abend("0999", "CBIMPORT", e.toString(),
-                    "ERROR: Reading EXPORT-INPUT, Status: " + STATUS_READ_FAILED);
+            throw ExportImportSysout.abend(abendService, "CBIMPORT", e.toString(),
+                    ExportImportSysout.reading("EXPORT-INPUT", STATUS_READ_FAILED));
         }
         statistics.recordRead();
         return buffer.array();
@@ -82,8 +80,8 @@ public class ExportFileItemReader extends AbstractItemCountingItemStreamItemRead
         try {
             channel.position((long) itemIndex * ExportRecordCodec.RECORD_LENGTH);
         } catch (IOException e) {
-            throw abendService.abend("0999", "CBIMPORT", e.toString(),
-                    "ERROR: Reading EXPORT-INPUT, Status: " + STATUS_READ_FAILED);
+            throw ExportImportSysout.abend(abendService, "CBIMPORT", e.toString(),
+                    ExportImportSysout.reading("EXPORT-INPUT", STATUS_READ_FAILED));
         }
     }
 
@@ -94,8 +92,8 @@ public class ExportFileItemReader extends AbstractItemCountingItemStreamItemRead
                 channel.close();
             }
         } catch (IOException e) {
-            throw abendService.abend("0999", "CBIMPORT", e.toString(),
-                    "ERROR: Reading EXPORT-INPUT, Status: " + STATUS_READ_FAILED);
+            throw ExportImportSysout.abend(abendService, "CBIMPORT", e.toString(),
+                    ExportImportSysout.reading("EXPORT-INPUT", STATUS_READ_FAILED));
         }
     }
 }

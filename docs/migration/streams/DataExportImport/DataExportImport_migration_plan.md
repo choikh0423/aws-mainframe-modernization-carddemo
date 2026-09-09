@@ -69,6 +69,29 @@ source/inventory contradiction.
 (`carddemo.exportimport.export.display`, `carddemo.exportimport.import.display`) as well as logged, so
 operators and tests can assert on the exact legacy text.
 
+**SYSOUT contract (audit finding A-09).** No legacy `DISPLAY` line is dropped: the whole operator-facing
+SYSOUT of both programs is reproduced verbatim through the job logger, at the same points in the flow, and
+the record counts remain the operational control they were on z/OS — an operator reads the same lines out of
+the job log that they used to read out of SYSOUT.
+
+| Legacy line | Emitted by | At the same point as |
+| --- | --- | --- |
+| `CBEXPORT: Starting Customer Data Export`, `Export Date: `, `Export Time: ` | `ExportStatistics.starting` | `1000-INITIALIZE` (CBEXPORT.cbl:163-169) |
+| `CBEXPORT: Processing customer records` … `card records` | `ExportStatistics.startGroup`, from `ExportSourceItemReader` when a group opens | the head of each `2000-EXPORT-*` paragraph (CBEXPORT.cbl:245, 314, 378, 433, 498) |
+| `CBEXPORT: Customers exported: ` … `Cards exported: ` | `ExportStatistics.endGroup`, when a group is exhausted | the tail of each `2000-EXPORT-*` paragraph (CBEXPORT.cbl:254, 323, 387, 442, 507) |
+| `CBEXPORT: Export completed` and the six nine-digit totals | `ExportStatistics.completed`, from STEP02's `afterStep` | `9000-FINALIZE` (CBEXPORT.cbl:558-572) |
+| `CBIMPORT: Starting Customer Data Import`, `Import Date: `, `Import Time: ` | `ImportStatistics.starting` | `1000-INITIALIZE` (CBIMPORT.cbl:176-193) |
+| `CBIMPORT: Import validation completed`, `No validation errors detected`, `Import completed` and the eight totals | `ImportStatistics` | `3000-VALIDATE-IMPORT`, `9000-FINALIZE` (CBIMPORT.cbl:451-477) |
+| `ERROR: Cannot open <FD>, Status: `, `ERROR: Reading <FD>, Status: `, `ERROR: Writing <thing> record, Status: ` | `ExportImportSysout` from the readers and writers | the failing `OPEN`/`READ`/`WRITE` (CBEXPORT.cbl:200-238, 263, 304; CBIMPORT.cbl:198-244, 264, 315-442) |
+| `CBEXPORT: ABENDING PROGRAM` / `CBIMPORT: ABENDING PROGRAM` | `ExportImportSysout.abend`, immediately before `AbendService` | `9999-ABEND-PROGRAM`, before `CEE3ABD` (CBEXPORT.cbl:578, CBIMPORT.cbl:483) |
+
+The file names in the status lines are the COBOL FD names (`CUSTOMER-INPUT`, `CUSTOMER-OUTPUT`, …), not DD
+names or JVM paths, so existing SYSOUT greps and operations runbooks keep working. The `IOException` that
+caused the failure is carried as the `ABEND-REASON`, which is the one thing the mainframe log did not have.
+The two-digit file statuses are the VSAM statuses the equivalent failure produced (`35` open, `30` read,
+`34` write); the JVM does not report a VSAM status, so a class of failure maps to one status rather than the
+exact code. An error-file write failure still only displays its line and lets the run continue (FR-I-22).
+
 ## 3. Quirks preserved (not fixed)
 
 | Quirk | Where | Behaviour kept |
@@ -98,6 +121,7 @@ data the legacy jobs ran against.
 | Unknown type | Error record, run continues, success reported | Identical, message verbatim | `anUnknownRecordTypeProducesAnErrorRecordAndDoesNotStopTheRun` |
 | Job log | The COBOL `DISPLAY` lines | Verbatim, including nine-digit counters | `bothJobsLogTheCobolDisplayLines`, `ExportImportStatisticsTest` |
 | Open failure | Message then `CEE3ABD` | Message then `AbendService`, step fails, launcher exits 12 | `cbimportAbendsWhenTheExportFileIsMissing` |
+| Failure SYSOUT | `'ERROR: Cannot open CUSTOMER-INPUT, Status: '` then `'CBEXPORT: ABENDING PROGRAM'` | Identical lines, in that order, on the job log | `ExportImportSysoutTest` |
 | Field encoding | `COMP`, `COMP-3`, overpunch, padding | Byte-for-byte | `MainframeFieldCodecTest`, `ExportRecordCodecTest`, `ImportRecordCodecTest` |
 
 ## 5. Running the jobs
