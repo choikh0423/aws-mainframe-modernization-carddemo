@@ -141,6 +141,6 @@ numbered requirement (FR-BP-50 … FR-BP-55).
 ## 7. How to verify
 
 ```bash
-cd migration/carddemo/backend && mvn -B test          # 163 tests, 30 of them S-06
+cd migration/carddemo/backend && mvn -B test          # 187 tests green, 30 of them S-06
 cd migration/carddemo/frontend && npm ci && npm run build
 ```
