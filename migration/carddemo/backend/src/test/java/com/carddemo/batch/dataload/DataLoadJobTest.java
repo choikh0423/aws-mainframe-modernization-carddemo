@@ -35,6 +35,10 @@ class DataLoadJobTest {
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
+    // The context holds several jobs, so the one under test is named explicitly.
+    @Autowired
+    @Qualifier("dataLoadJob")
+    private Job dataLoadJob;
     @Autowired
     @Qualifier("dataLoadJob")
     private Job dataLoadJob;
@@ -65,6 +69,7 @@ class DataLoadJobTest {
 
     @Test
     void loadsEveryMasterFileFromTheAsciiUnloads() throws Exception {
+        jobLauncherTestUtils.setJob(dataLoadJob);
         JobExecution execution = jobLauncherTestUtils.launchJob(new JobParametersBuilder()
                 .addString("run", "dataload-test")
                 .toJobParameters());
