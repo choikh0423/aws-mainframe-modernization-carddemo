@@ -6,6 +6,10 @@ import TransactionListPage from '../pages/transaction/TransactionListPage';
 import TransactionViewPage from '../pages/transaction/TransactionViewPage';
 import AddTransactionPage from '../pages/transaction/AddTransactionPage';
 import BillPaymentPage from '../pages/billpayment/BillPaymentPage';
+import UserListPage from '../pages/user/UserListPage';
+import AddUserPage from '../pages/user/AddUserPage';
+import UpdateUserPage from '../pages/user/UpdateUserPage';
+import DeleteUserPage from '../pages/user/DeleteUserPage';
 
 /**
  * The route registry: one entry per legacy online screen, in menu order.
@@ -153,7 +157,7 @@ export const SCREENS = [
     path: '/admin/users',
     title: 'List Users',
     stream: 'S-05 UserManagement',
-    element: null,
+    element: <UserListPage />,
   },
   {
     program: 'COUSR01C',
@@ -161,7 +165,7 @@ export const SCREENS = [
     path: '/admin/users/add',
     title: 'Add User',
     stream: 'S-05 UserManagement',
-    element: null,
+    element: <AddUserPage />,
   },
   {
     program: 'COUSR02C',
@@ -169,7 +173,7 @@ export const SCREENS = [
     path: '/admin/users/update',
     title: 'Update User',
     stream: 'S-05 UserManagement',
-    element: null,
+    element: <UpdateUserPage />,
   },
   {
     program: 'COUSR03C',
@@ -177,7 +181,7 @@ export const SCREENS = [
     path: '/admin/users/delete',
     title: 'Delete User',
     stream: 'S-05 UserManagement',
-    element: null,
+    element: <DeleteUserPage />,
   },
   {
     program: 'COTRTLIC',
