@@ -43,6 +43,9 @@ carddemo:
       # Sequential datasets handed from INTCALC to COMBTRAN, standing in for the
       # SYSTRAN(+1) and TRANSACT.COMBINED(+1) generation data groups (S-12).
       work-dir: target/batch/intcalc
+    posttran:
+      # S-11: the DALYREJS generation data group POSTTRAN writes its rejects to.
+      reject-dir: ./run/dalyrejs
 
 logging:
   level:
