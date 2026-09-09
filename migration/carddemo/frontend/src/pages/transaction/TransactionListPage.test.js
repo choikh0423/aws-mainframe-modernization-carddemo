@@ -15,6 +15,8 @@ import { renderScreen, stubBackend, currentUrl } from '../../testing/screenHarne
 const ALREADY_TOP = 'You are already at the top of the page...';
 const ALREADY_BOTTOM = 'You are already at the bottom of the page...';
 const REACHED_BOTTOM = 'You have reached the bottom of the page...';
+const REACHED_TOP = 'You have reached the top of the page...';
+const AT_TOP = 'You are at the top of the page...';
 const INVALID_SELECTION = 'Invalid selection. Valid value is S';
 const TRAN_ID_NUMERIC = 'Tran ID must be Numeric ...';
 
@@ -142,6 +144,42 @@ describe('CT00 List Transactions — paging (FR-L1, FR-L3, FR-L4)', () => {
     expect(message()).toEqual('');
   });
 
+  /**
+   * PROCESS-PAGE-BACKWARD's own pair, the mirror of the forward one:
+   * READPREV ENDFILE while filling the page (`:673-678`) and STARTBR NOTFND
+   * (`:605-610`), neither of which is the PF7 guard at `:248-249`.
+   */
+  test('FR-L4: a backward browse that ends mid-page shows the READPREV ENDFILE literal', async () => {
+    const backend = stubBackend();
+    backend.get('/api/transactions', [
+      PAGE_1,
+      PAGE_2,
+      pageOf(1, 4, { hasNextPage: true, hasPrevPage: false }),
+    ]);
+
+    await renderList(backend);
+    fireEvent.keyDown(window, { key: 'F8' });
+    await screen.findByText('0000000000000011');
+    fireEvent.keyDown(window, { key: 'F7' });
+
+    await waitFor(() => expect(message()).toEqual(REACHED_TOP));
+    expect(backend.callsTo('GET', '/api/transactions')[2].url)
+      .toEqual('/api/transactions?startId=0000000000000011&dir=prev');
+  });
+
+  test('FR-L4: a full backward page carries no top-of-file message', async () => {
+    const backend = stubBackend();
+    backend.get('/api/transactions', [PAGE_1, PAGE_2, PAGE_1]);
+
+    await renderList(backend);
+    fireEvent.keyDown(window, { key: 'F8' });
+    await screen.findByText('0000000000000011');
+    fireEvent.keyDown(window, { key: 'F7' });
+
+    await screen.findByText('0000000000000001');
+    expect(message()).toEqual('');
+  });
+
   test('FR-L4: paging back never shows a bottom-of-file message', async () => {
     const backend = stubBackend();
     backend.get('/api/transactions', [
@@ -155,7 +193,28 @@ describe('CT00 List Transactions — paging (FR-L1, FR-L3, FR-L4)', () => {
     await waitFor(() => expect(message()).toEqual(REACHED_BOTTOM));
     fireEvent.keyDown(window, { key: 'F7' });
 
-    await waitFor(() => expect(message()).toEqual(''));
+    await waitFor(() => expect(message()).toEqual(REACHED_TOP));
+  });
+
+  test('FR-L7: a browse that finds nothing shows the STARTBR NOTFND literal', async () => {
+    const backend = stubBackend();
+    backend.get('/api/transactions', pageOf(1, 0, { hasNextPage: false }));
+
+    renderScreen(<TransactionListPage />);
+
+    await waitFor(() => expect(message()).toEqual(AT_TOP));
+    expect(screen.getByText('No transactions to display.')).toBeInTheDocument();
+  });
+
+  test('FR-L7: an ENTER filter past the last Tran ID shows the same NOTFND literal', async () => {
+    const backend = stubBackend();
+    backend.get('/api/transactions', [PAGE_1, pageOf(1, 0, { hasNextPage: false })]);
+
+    await renderList(backend);
+    fireEvent.change(screen.getByLabelText('Search Tran ID:'), { target: { value: '9999999999999999' } });
+    fireEvent.click(screen.getByRole('button', { name: 'ENTER — Filter / Select' }));
+
+    await waitFor(() => expect(message()).toEqual(AT_TOP));
   });
 });
 

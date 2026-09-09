@@ -10,8 +10,11 @@ import { listTransactions } from '../../api/transactions';
  *   - PF8 -> next 10; already at the end -> "You are already at the bottom of the
  *     page..." (FR-L3, cbl:257-274); a browse that hits ENDFILE while filling a
  *     page -> "You have reached the bottom of the page..." (cbl:639-645)
- *   - PF7 -> previous 10; at the top -> "You are already at the top of the page..."
- *     (FR-L4, cbl:234-252)
+ *   - PF7 -> previous 10; already at the top -> "You are already at the top of the
+ *     page..." (FR-L4, cbl:234-252); a backward browse that hits ENDFILE while
+ *     filling a page -> "You have reached the top of the page..." (cbl:673-678)
+ *   - a browse that finds nothing at or after the key -> "You are at the top of
+ *     the page..." (cbl:605-610)
  *   - type `S` beside a row + ENTER -> open it in CT01 View (FR-L5, cbl:183-195)
  *   - a non-`S` flag -> "Invalid selection. Valid value is S" (FR-L6, cbl:196-203)
  *   - a non-numeric filter -> "Tran ID must be Numeric ..." (FR-L7, cbl:209-218)
@@ -22,7 +25,9 @@ import { listTransactions } from '../../api/transactions';
 // FR acceptance oracle). Kept verbatim so the screen matches the 3270 display.
 const ALREADY_BOTTOM_MSG = 'You are already at the bottom of the page...';
 const REACHED_BOTTOM_MSG = 'You have reached the bottom of the page...';
-const TOP_MSG = 'You are already at the top of the page...';
+const ALREADY_TOP_MSG = 'You are already at the top of the page...';
+const REACHED_TOP_MSG = 'You have reached the top of the page...';
+const AT_TOP_MSG = 'You are at the top of the page...';
 const INVALID_SEL_MSG = 'Invalid selection. Valid value is S';
 
 const PAGE_SIZE = 10;
@@ -116,11 +121,16 @@ export default function TransactionListPage() {
       const data = await listTransactions({ startId, dir });
       setPage(data);
       setSelections({});
-      // READNEXT hitting ENDFILE while filling the page (cbl:639-645) is a
-      // different event from the PF8 guard below.
-      setMessage(dir !== 'prev' && data.count > 0 && data.count < PAGE_SIZE
-        ? REACHED_BOTTOM_MSG
-        : '');
+      if (data.count === 0) {
+        // STARTBR found nothing at or after the key (cbl:605-610).
+        setMessage(AT_TOP_MSG);
+      } else if (data.count < PAGE_SIZE) {
+        // READNEXT/READPREV hitting ENDFILE while filling the page
+        // (cbl:639-645, :673-678) — a different event from the PF7/PF8 guards.
+        setMessage(dir === 'prev' ? REACHED_TOP_MSG : REACHED_BOTTOM_MSG);
+      } else {
+        setMessage('');
+      }
       return data;
     } catch (e) {
       setMessage(e.message);
@@ -171,7 +181,7 @@ export default function TransactionListPage() {
   const pageBackward = useCallback(async () => {
     // FR-L4 / PF7. PAGE-NUM > 1 guard (cbl:245-252).
     if (!page.hasPrevPage) {
-      setMessage(TOP_MSG);
+      setMessage(ALREADY_TOP_MSG);
       return;
     }
     await load({ startId: page.firstId, dir: 'prev' });
