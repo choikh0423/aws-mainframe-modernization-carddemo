@@ -2,6 +2,8 @@ import React from 'react';
 import SignOnPage from '../pages/SignOnPage';
 import MainMenuPage from '../pages/MainMenuPage';
 import AdminMenuPage from '../pages/AdminMenuPage';
+import AccountViewPage from '../pages/account/AccountViewPage';
+import AccountUpdatePage from '../pages/account/AccountUpdatePage';
 import CardListPage from '../pages/card/CardListPage';
 import CardDetailPage from '../pages/card/CardDetailPage';
 import CardUpdatePage from '../pages/card/CardUpdatePage';
@@ -65,7 +67,7 @@ export const SCREENS = [
     path: '/accounts/view',
     title: 'View Account',
     stream: 'S-02 AccountManagement',
-    element: null,
+    element: <AccountViewPage />,
   },
   {
     program: 'COACTUPC',
@@ -73,7 +75,7 @@ export const SCREENS = [
     path: '/accounts/update',
     title: 'Update Account',
     stream: 'S-02 AccountManagement',
-    element: null,
+    element: <AccountUpdatePage />,
   },
   {
     program: 'COCRDLIC',
