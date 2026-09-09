@@ -16,6 +16,8 @@ import AddUserPage from '../pages/user/AddUserPage';
 import UpdateUserPage from '../pages/user/UpdateUserPage';
 import DeleteUserPage from '../pages/user/DeleteUserPage';
 import TransactionReportsPage from '../pages/reporting/TransactionReportsPage';
+import TranTypeListPage from '../pages/trantype/TranTypeListPage';
+import TranTypeUpdatePage from '../pages/trantype/TranTypeUpdatePage';
 
 /**
  * The route registry: one entry per legacy online screen, in menu order.
@@ -195,7 +197,7 @@ export const SCREENS = [
     path: '/admin/transaction-types',
     title: 'Maintain Transaction Type',
     stream: 'S-08 TransactionTypeManagement',
-    element: null,
+    element: <TranTypeListPage />,
   },
   {
     program: 'COTRTUPC',
@@ -203,7 +205,7 @@ export const SCREENS = [
     path: '/admin/transaction-types/update',
     title: 'Maintain Transaction Type',
     stream: 'S-08 TransactionTypeManagement',
-    element: null,
+    element: <TranTypeUpdatePage />,
   },
 ];
 
