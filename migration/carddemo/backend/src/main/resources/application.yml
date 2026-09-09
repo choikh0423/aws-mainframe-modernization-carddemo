@@ -32,6 +32,10 @@ spring:
       auto-startup: false
 
 carddemo:
+  mq:
+    # The Artemis seam (com.carddemo.common.jms) stays off until an MQ stream
+    # (S-09, S-10) turns it on, so no broker is needed to run or test the app.
+    enabled: false
   batch:
     # Directory holding the ASCII (never EBCDIC) unloads used by the DATALOAD job.
     data-dir: ../../../app/data/ASCII

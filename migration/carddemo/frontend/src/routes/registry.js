@@ -22,7 +22,7 @@ import AddTransactionPage from '../pages/transaction/AddTransactionPage';
  *            as the legacy programs do
  *   path     the React Router path; menus navigate by program, not by path
  *   title    the screen title exactly as its BMS map shows it
- *   stream   the migration stream that owns the screen
+ *   stream   the migration stream that owns the screen (see the README)
  *   element  the migrated screen, or null while it is still a placeholder
  */
 export const SCREENS = [
@@ -31,7 +31,7 @@ export const SCREENS = [
     tranId: 'CC00',
     path: '/',
     title: 'Sign On',
-    stream: 'authentication',
+    stream: 'S-01 AuthAndShell',
     element: <SignOnPage />,
   },
   {
@@ -39,7 +39,7 @@ export const SCREENS = [
     tranId: 'CM00',
     path: '/menu',
     title: 'Main Menu',
-    stream: 'menu-navigation',
+    stream: 'S-01 AuthAndShell',
     element: <MainMenuPage />,
   },
   {
@@ -47,7 +47,7 @@ export const SCREENS = [
     tranId: 'CA00',
     path: '/admin',
     title: 'Admin Menu',
-    stream: 'menu-navigation',
+    stream: 'S-01 AuthAndShell',
     element: <AdminMenuPage />,
   },
   {
@@ -55,7 +55,7 @@ export const SCREENS = [
     tranId: 'CM00',
     path: '/accounts/view',
     title: 'View Account',
-    stream: 'account-view',
+    stream: 'S-02 AccountManagement',
     element: null,
   },
   {
@@ -63,7 +63,7 @@ export const SCREENS = [
     tranId: 'CM00',
     path: '/accounts/update',
     title: 'Update Account',
-    stream: 'account-update',
+    stream: 'S-02 AccountManagement',
     element: null,
   },
   {
@@ -71,7 +71,7 @@ export const SCREENS = [
     tranId: 'CM00',
     path: '/cards',
     title: 'List Credit Cards',
-    stream: 'card-list',
+    stream: 'S-03 CardManagement',
     element: null,
   },
   {
@@ -79,7 +79,7 @@ export const SCREENS = [
     tranId: 'CM00',
     path: '/cards/view',
     title: 'View Credit Card Detail',
-    stream: 'card-view',
+    stream: 'S-03 CardManagement',
     element: null,
   },
   {
@@ -87,7 +87,7 @@ export const SCREENS = [
     tranId: 'CM00',
     path: '/cards/update',
     title: 'Update Credit Card Details',
-    stream: 'card-update',
+    stream: 'S-03 CardManagement',
     element: null,
   },
   {
@@ -95,7 +95,7 @@ export const SCREENS = [
     tranId: 'CT00',
     path: '/transactions',
     title: 'List Transactions',
-    stream: 'transaction',
+    stream: 'S-04 TransactionManagement',
     element: <TransactionListPage />,
   },
   {
@@ -103,7 +103,7 @@ export const SCREENS = [
     tranId: 'CT01',
     path: '/transactions/view',
     title: 'View Transaction',
-    stream: 'transaction',
+    stream: 'S-04 TransactionManagement',
     element: <TransactionViewPage />,
   },
   {
@@ -111,7 +111,7 @@ export const SCREENS = [
     tranId: 'CT02',
     path: '/transactions/add',
     title: 'Add Transaction',
-    stream: 'transaction',
+    stream: 'S-04 TransactionManagement',
     element: <AddTransactionPage />,
   },
   {
@@ -119,7 +119,7 @@ export const SCREENS = [
     tranId: 'CR00',
     path: '/reports',
     title: 'Transaction Reports',
-    stream: 'reporting',
+    stream: 'S-07 Reporting',
     element: null,
   },
   {
@@ -127,7 +127,7 @@ export const SCREENS = [
     tranId: 'CB00',
     path: '/bill-payment',
     title: 'Bill Payment',
-    stream: 'bill-payment',
+    stream: 'S-06 BillPayment',
     element: null,
   },
   {
@@ -135,7 +135,7 @@ export const SCREENS = [
     tranId: 'CPVS',
     path: '/pending-authorizations',
     title: 'View Authorizations',
-    stream: 'authorization-ims',
+    stream: 'S-09 PendingAuthorizations',
     element: null,
   },
   {
@@ -143,7 +143,7 @@ export const SCREENS = [
     tranId: 'CPVD',
     path: '/pending-authorizations/detail',
     title: 'View Authorization Details',
-    stream: 'authorization-ims',
+    stream: 'S-09 PendingAuthorizations',
     element: null,
   },
   {
@@ -151,7 +151,7 @@ export const SCREENS = [
     tranId: 'CU00',
     path: '/admin/users',
     title: 'List Users',
-    stream: 'user-security',
+    stream: 'S-05 UserManagement',
     element: null,
   },
   {
@@ -159,7 +159,7 @@ export const SCREENS = [
     tranId: 'CU01',
     path: '/admin/users/add',
     title: 'Add User',
-    stream: 'user-security',
+    stream: 'S-05 UserManagement',
     element: null,
   },
   {
@@ -167,7 +167,7 @@ export const SCREENS = [
     tranId: 'CU02',
     path: '/admin/users/update',
     title: 'Update User',
-    stream: 'user-security',
+    stream: 'S-05 UserManagement',
     element: null,
   },
   {
@@ -175,7 +175,7 @@ export const SCREENS = [
     tranId: 'CU03',
     path: '/admin/users/delete',
     title: 'Delete User',
-    stream: 'user-security',
+    stream: 'S-05 UserManagement',
     element: null,
   },
   {
@@ -183,7 +183,7 @@ export const SCREENS = [
     tranId: 'CA00',
     path: '/admin/transaction-types',
     title: 'Maintain Transaction Type',
-    stream: 'transaction-type-db2',
+    stream: 'S-08 TransactionTypeManagement',
     element: null,
   },
   {
@@ -191,7 +191,7 @@ export const SCREENS = [
     tranId: 'CA00',
     path: '/admin/transaction-types/update',
     title: 'Maintain Transaction Type',
-    stream: 'transaction-type-db2',
+    stream: 'S-08 TransactionTypeManagement',
     element: null,
   },
 ];
