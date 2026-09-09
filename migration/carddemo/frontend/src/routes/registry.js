@@ -2,6 +2,9 @@ import React from 'react';
 import SignOnPage from '../pages/SignOnPage';
 import MainMenuPage from '../pages/MainMenuPage';
 import AdminMenuPage from '../pages/AdminMenuPage';
+import CardListPage from '../pages/card/CardListPage';
+import CardDetailPage from '../pages/card/CardDetailPage';
+import CardUpdatePage from '../pages/card/CardUpdatePage';
 import TransactionListPage from '../pages/transaction/TransactionListPage';
 import TransactionViewPage from '../pages/transaction/TransactionViewPage';
 import AddTransactionPage from '../pages/transaction/AddTransactionPage';
@@ -78,7 +81,7 @@ export const SCREENS = [
     path: '/cards',
     title: 'List Credit Cards',
     stream: 'S-03 CardManagement',
-    element: null,
+    element: <CardListPage />,
   },
   {
     program: 'COCRDSLC',
@@ -86,7 +89,7 @@ export const SCREENS = [
     path: '/cards/view',
     title: 'View Credit Card Detail',
     stream: 'S-03 CardManagement',
-    element: null,
+    element: <CardDetailPage />,
   },
   {
     program: 'COCRDUPC',
@@ -94,7 +97,7 @@ export const SCREENS = [
     path: '/cards/update',
     title: 'Update Credit Card Details',
     stream: 'S-03 CardManagement',
-    element: null,
+    element: <CardUpdatePage />,
   },
   {
     program: 'COTRN00C',
