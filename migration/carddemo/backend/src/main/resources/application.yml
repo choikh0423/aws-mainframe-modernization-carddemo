@@ -46,6 +46,12 @@ carddemo:
     posttran:
       # S-11: the DALYREJS generation data group POSTTRAN writes its rejects to.
       reject-dir: ./run/dalyrejs
+    # Local hand-off directory for the S-16 CBEXPORT/CBIMPORT jobs: CBEXPORT
+    # writes export.data here, CBIMPORT reads it and writes the normalised
+    # files beside it. Boundary B-12 - whatever moves the file to and from the
+    # external system points at this directory (see
+    # docs/migration/streams/DataExportImport/DataExportImport_migration_plan.md).
+    export-import-dir: ./data/exportimport
     # Directory the print/extract jobs write their SYSOUT and sequential output
     # datasets to (S-15 FileReadUtilities).
     output-dir: target/batch-output
