@@ -115,6 +115,6 @@ Exit code 0 on success, 12 on abend — the JCL failure condition code.
 
 ## 6. Notes for the integration branch
 
-`DataLoadJobTest` was given one line naming the job under test: this stream adds the second and third `Job`
-beans to the context, so `JobLauncherTestUtils` can no longer pick one by type. Every further batch stream
-needs the same line in its own test; nothing else in `com.carddemo.batch.dataload` was touched.
+Once a second batch stream registers a `Job` bean, `JobLauncherTestUtils` can no longer pick one by type, so
+every batch test has to name its job with `setJob`. `DataLoadJobTest` already carries that line on the
+integration branch; this stream's tests do the same. Nothing in `com.carddemo.batch.dataload` was changed.
