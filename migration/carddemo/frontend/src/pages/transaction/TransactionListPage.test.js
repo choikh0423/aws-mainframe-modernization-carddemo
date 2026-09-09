@@ -14,6 +14,7 @@ import { renderScreen, stubBackend, currentUrl } from '../../testing/screenHarne
 // COTRN00C literals, verbatim.
 const ALREADY_TOP = 'You are already at the top of the page...';
 const ALREADY_BOTTOM = 'You are already at the bottom of the page...';
+const REACHED_BOTTOM = 'You have reached the bottom of the page...';
 const INVALID_SELECTION = 'Invalid selection. Valid value is S';
 const TRAN_ID_NUMERIC = 'Tran ID must be Numeric ...';
 
@@ -106,18 +107,12 @@ describe('CT00 List Transactions — paging (FR-L1, FR-L3, FR-L4)', () => {
   });
 
   /**
-   * DEFECT D-1 (not fixed here — see the PR description).
-   *
-   * COTRN00C's PROCESS-PF8-KEY guard (`app/cbl/COTRN00C.cbl:269-271`) shows
-   * `You are already at the bottom of the page...`, the mirror image of the PF7
-   * guard two paragraphs above. `You have reached the bottom of the page...`
-   * (`:642-643`) is a different event — the ENDFILE hit while *filling* a page.
-   * TransactionListPage paints the ENDFILE text on the PF8 guard instead
-   * (`TransactionListPage.js:22, :156-158`), so the screen reports the wrong one
-   * of the two literals. The assertion below is the COBOL oracle; it is skipped,
-   * not weakened, so it starts passing the moment the screen is corrected.
+   * The two bottom-of-file literals are distinct events in COTRN00C and must
+   * not be swapped: PROCESS-PF8-KEY's NEXT-PAGE guard (`:269-271`) is the
+   * mirror image of the PF7 guard two paragraphs above, while `:642-643` is
+   * READNEXT hitting ENDFILE while *filling* a page.
    */
-  test.skip('FR-L3 [DEFECT D-1]: PF8 with no next page shows the PF8 guard literal', async () => {
+  test('FR-L3: PF8 with no next page shows the PF8 guard literal', async () => {
     const backend = stubBackend();
     backend.get('/api/transactions', pageOf(1, PAGE_SIZE, { hasNextPage: false }));
 
@@ -125,6 +120,42 @@ describe('CT00 List Transactions — paging (FR-L1, FR-L3, FR-L4)', () => {
     fireEvent.keyDown(window, { key: 'F8' });
 
     await waitFor(() => expect(message()).toEqual(ALREADY_BOTTOM));
+    expect(backend.callsTo('GET', '/api/transactions')).toHaveLength(1);
+  });
+
+  test('FR-L3: a browse that ends mid-page shows the ENDFILE literal instead', async () => {
+    const backend = stubBackend();
+    backend.get('/api/transactions', [PAGE_1, pageOf(11, 4, { hasNextPage: false, hasPrevPage: true })]);
+
+    await renderList(backend);
+    fireEvent.keyDown(window, { key: 'F8' });
+
+    await waitFor(() => expect(message()).toEqual(REACHED_BOTTOM));
+  });
+
+  test('FR-L3: a full page carries no bottom-of-file message', async () => {
+    const backend = stubBackend();
+    backend.get('/api/transactions', PAGE_1);
+
+    await renderList(backend);
+
+    expect(message()).toEqual('');
+  });
+
+  test('FR-L4: paging back never shows a bottom-of-file message', async () => {
+    const backend = stubBackend();
+    backend.get('/api/transactions', [
+      PAGE_1,
+      pageOf(11, 4, { hasNextPage: false, hasPrevPage: true }),
+      pageOf(1, 4, { hasNextPage: true, hasPrevPage: false }),
+    ]);
+
+    await renderList(backend);
+    fireEvent.keyDown(window, { key: 'F8' });
+    await waitFor(() => expect(message()).toEqual(REACHED_BOTTOM));
+    fireEvent.keyDown(window, { key: 'F7' });
+
+    await waitFor(() => expect(message()).toEqual(''));
   });
 });
 
