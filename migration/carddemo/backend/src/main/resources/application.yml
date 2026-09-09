@@ -39,6 +39,10 @@ carddemo:
   batch:
     # Directory holding the ASCII (never EBCDIC) unloads used by the DATALOAD job.
     data-dir: ../../../app/data/ASCII
+    intcalc:
+      # Sequential datasets handed from INTCALC to COMBTRAN, standing in for the
+      # SYSTRAN(+1) and TRANSACT.COMBINED(+1) generation data groups (S-12).
+      work-dir: target/batch/intcalc
 
 logging:
   level:
