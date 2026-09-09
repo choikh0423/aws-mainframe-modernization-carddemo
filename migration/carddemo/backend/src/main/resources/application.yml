@@ -1,0 +1,75 @@
+spring:
+  application:
+    name: carddemo
+  # The H2 profile is the default so `mvn test` and a plain `java -jar` need no
+  # database container. Activate `postgres` for the real target (D-2).
+  profiles:
+    default: h2
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  batch:
+    # Spring Batch owns its own JobRepository tables on the same datasource (D-3).
+    jdbc:
+      initialize-schema: always
+      table-prefix: BATCH_
+    job:
+      # Never launch jobs implicitly at startup. com.carddemo.batch.BatchJobLauncher
+      # runs exactly the job named by `spring.batch.job.name`, and nothing otherwise.
+      enabled: false
+  artemis:
+    mode: native
+    broker-url: tcp://localhost:61616
+    user: carddemo
+    password: carddemo
+  jms:
+    listener:
+      auto-startup: false
+
+carddemo:
+  mq:
+    # The Artemis seam (com.carddemo.common.jms) stays off until an MQ stream
+    # (S-09, S-10) turns it on, so no broker is needed to run or test the app.
+    enabled: false
+  batch:
+    # Directory holding the ASCII (never EBCDIC) unloads used by the DATALOAD job.
+    data-dir: ../../../app/data/ASCII
+
+logging:
+  level:
+    org.flywaydb: INFO
+
+---
+spring:
+  config:
+    activate:
+      on-profile: h2
+  datasource:
+    url: jdbc:h2:mem:carddemo;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  flyway:
+    enabled: true
+    # db/seed carries the ASCII-derived reference data (replaces S-18 DataLoadAndSetup).
+    locations: classpath:db/migration,classpath:db/seed
+
+---
+spring:
+  config:
+    activate:
+      on-profile: postgres
+  datasource:
+    url: jdbc:postgresql://localhost:5432/carddemo
+    driver-class-name: org.postgresql.Driver
+    username: carddemo
+    password: carddemo
+  flyway:
+    enabled: true
+    # Add `,classpath:db/seed` (or run the DATALOAD batch job) to load demo data.
+    locations: classpath:db/migration

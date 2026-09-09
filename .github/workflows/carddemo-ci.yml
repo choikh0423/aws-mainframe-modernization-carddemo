@@ -1,0 +1,46 @@
+name: CardDemo CI
+
+on:
+  push:
+    branches:
+      - "devin/**"
+    paths:
+      - "migration/carddemo/**"
+      - ".github/workflows/carddemo-ci.yml"
+  pull_request:
+    paths:
+      - "migration/carddemo/**"
+      - ".github/workflows/carddemo-ci.yml"
+
+jobs:
+  backend:
+    name: Backend (Spring Boot + H2) — mvn test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: migration/carddemo/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - name: Run unit + integration tests
+        run: mvn -B test
+
+  frontend:
+    name: Frontend (React) — build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: migration/carddemo/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Build
+        run: CI=true npm run build
