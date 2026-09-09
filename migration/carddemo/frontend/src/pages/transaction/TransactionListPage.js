@@ -7,8 +7,9 @@ import { listTransactions } from '../../api/transactions';
  * CT00 — Transaction List (COTRN00C). Reproduces the legacy paged browse 1:1:
  *   - open -> first 10 transactions by Tran ID (FR-L1, COTRN00C.cbl:279-326)
  *   - type a start Tran ID + ENTER -> list begins at/after it (FR-L2, cbl:206-225)
- *   - PF8 -> next 10; at the end -> "You have reached the bottom of the page..."
- *     (FR-L3, cbl:257-274, 639-645)
+ *   - PF8 -> next 10; already at the end -> "You are already at the bottom of the
+ *     page..." (FR-L3, cbl:257-274); a browse that hits ENDFILE while filling a
+ *     page -> "You have reached the bottom of the page..." (cbl:639-645)
  *   - PF7 -> previous 10; at the top -> "You are already at the top of the page..."
  *     (FR-L4, cbl:234-252)
  *   - type `S` beside a row + ENTER -> open it in CT01 View (FR-L5, cbl:183-195)
@@ -19,9 +20,12 @@ import { listTransactions } from '../../api/transactions';
 
 // Legacy boundary / validation ERRMSG text (COTRN00C WS-MESSAGE literals + the
 // FR acceptance oracle). Kept verbatim so the screen matches the 3270 display.
-const BOTTOM_MSG = 'You have reached the bottom of the page...';
+const ALREADY_BOTTOM_MSG = 'You are already at the bottom of the page...';
+const REACHED_BOTTOM_MSG = 'You have reached the bottom of the page...';
 const TOP_MSG = 'You are already at the top of the page...';
 const INVALID_SEL_MSG = 'Invalid selection. Valid value is S';
+
+const PAGE_SIZE = 10;
 
 const EMPTY_PAGE = {
   rows: [],
@@ -112,7 +116,11 @@ export default function TransactionListPage() {
       const data = await listTransactions({ startId, dir });
       setPage(data);
       setSelections({});
-      setMessage('');
+      // READNEXT hitting ENDFILE while filling the page (cbl:639-645) is a
+      // different event from the PF8 guard below.
+      setMessage(dir !== 'prev' && data.count > 0 && data.count < PAGE_SIZE
+        ? REACHED_BOTTOM_MSG
+        : '');
       return data;
     } catch (e) {
       setMessage(e.message);
@@ -154,7 +162,7 @@ export default function TransactionListPage() {
   const pageForward = useCallback(async () => {
     // FR-L3 / PF8. NEXT-PAGE flag guards the advance (cbl:267-274).
     if (!page.hasNextPage) {
-      setMessage(BOTTOM_MSG);
+      setMessage(ALREADY_BOTTOM_MSG);
       return;
     }
     await load({ startId: page.lastId, dir: 'next' });
