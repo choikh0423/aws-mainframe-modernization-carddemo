@@ -74,6 +74,12 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Embedded Artemis broker for the MQ streams' integration tests (D-7). -->
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>artemis-jakarta-server</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
