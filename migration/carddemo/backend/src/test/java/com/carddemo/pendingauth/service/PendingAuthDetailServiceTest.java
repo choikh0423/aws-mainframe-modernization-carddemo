@@ -138,7 +138,7 @@ class PendingAuthDetailServiceTest {
         assertThat(row.getApprovedAmt()).isEqualByComparingTo(new BigDecimal("13.75"));
         assertThat(row.getMerchantCatagoryCode()).isEqualTo("5411");
         assertThat(row.getAcqrCountryCode()).isEqualTo("840");
-        assertThat(row.getPosEntryMode()).isEqualTo("05");
+        assertThat(row.getPosEntryMode()).isEqualTo(5);
         assertThat(row.getMerchantId()).isEqualTo("900000001");
         assertThat(row.getMerchantName()).isEqualTo("ACME SUPERMARKET");
         assertThat(row.getMerchantCity()).isEqualTo("NEW YORK");
@@ -147,7 +147,7 @@ class PendingAuthDetailServiceTest {
         assertThat(row.getTransactionId()).isEqualTo("PAUTH0000000001");
         assertThat(row.getMatchStatus()).isEqualTo("P");
         assertThat(row.getAuthFraud()).isEqualTo("F");
-        assertThat(row.getFraudRptDate()).isEqualTo(today);
+        assertThat(row.getFraudRptDate()).isEqualTo(LocalDate.now());
 
         assertThat(detailRepository
                 .findById(new PendingAuthDetailId(1L, 74984, 849999999L))

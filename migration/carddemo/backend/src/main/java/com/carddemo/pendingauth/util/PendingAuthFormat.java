@@ -2,6 +2,8 @@ package com.carddemo.pendingauth.util;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 /**
  * COBOL PICTURE-accurate output helpers for the PendingAuthorizations screens
@@ -16,6 +18,8 @@ import java.math.RoundingMode;
  * {@code WS-APPROVED-AMT-DIS PIC -zzzzzzzzz9.99} (COPAUA0C.cbl:66).
  */
 public final class PendingAuthFormat {
+
+    private static final DateTimeFormatter RPT_DATE = DateTimeFormatter.ofPattern("MM/dd/yy");
 
     private PendingAuthFormat() {
     }
@@ -101,6 +105,15 @@ public final class PendingAuthFormat {
         }
         String s = yymm.trim();
         return s.substring(0, 2) + "/" + s.substring(2, 4);
+    }
+
+    /**
+     * The fraud report date as the screen and the IMS segment field
+     * {@code PA-FRAUD-RPT-DATE PIC X(08)} carry it: {@code MMDDYY} with
+     * {@code DATESEP} (COPAUS2C.cbl:101).
+     */
+    public static String reportDate(LocalDate date) {
+        return date == null ? "" : date.format(RPT_DATE);
     }
 
     /** An 11-digit zero-padded account id, as the maps and messages carry it. */

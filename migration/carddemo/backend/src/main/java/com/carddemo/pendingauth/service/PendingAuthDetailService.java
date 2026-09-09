@@ -110,7 +110,7 @@ public class PendingAuthDetailService {
         }
 
         detail.setPaAuthFraud(action.code());
-        detail.setPaFraudRptDate(result.fraudRptDate());
+        detail.setPaFraudRptDate(PendingAuthFormat.reportDate(result.fraudRptDate()));
         PendingAuthDetailRecord saved = detailRepository.save(detail);
 
         String message = action == AuthFraudService.Action.REMOVE_FRAUD
