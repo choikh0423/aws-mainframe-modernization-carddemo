@@ -121,7 +121,8 @@ migrated list against them field by field, so the parity table above runs on leg
 
 ## 5. Verification
 
-- `mvn -B test` in `migration/carddemo/backend`: **208 tests, 0 failures** (75 of them S-05).
+- `mvn -B test` in `migration/carddemo/backend`, after rebasing onto
+  `origin/devin/carddemo-integration`: **278 tests, 0 failures** (75 of them S-05).
 - `npm run build` in `migration/carddemo/frontend`: compiled successfully.
 - `npx react-scripts test --watchAll=false`: the `pages/user/selection.test.js` suite passes.
 - Maven Central answers HTTP 429 in this environment; builds run with `~/.m2/settings.xml` mirroring
