@@ -167,7 +167,50 @@ describe('CT00 List Transactions — paging (FR-L1, FR-L3, FR-L4)', () => {
       .toEqual('/api/transactions?startId=0000000000000011&dir=prev');
   });
 
-  test('FR-L4: a full backward page carries no top-of-file message', async () => {
+  test('FR-L4: a full backward page with more behind it carries no message', async () => {
+    const backend = stubBackend();
+    backend.get('/api/transactions', [
+      PAGE_1,
+      PAGE_2,
+      pageOf(1, PAGE_SIZE, { hasNextPage: true, hasPrevPage: true }),
+    ]);
+
+    await renderList(backend);
+    fireEvent.keyDown(window, { key: 'F8' });
+    await screen.findByText('0000000000000011');
+    fireEvent.keyDown(window, { key: 'F7' });
+
+    await screen.findByText('0000000000000001');
+    expect(message()).toEqual('');
+  });
+
+  /**
+   * The lookahead READNEXT/READPREV at `:305-312` / `:359-369` runs after the
+   * page is full and sets WS-MESSAGE when it hits ENDFILE; SEND-TRNLST-SCREEN
+   * (`:531`) does not clear it. So a last page of exactly ten rows carries the
+   * boundary literal, not a blank ERRMSG.
+   */
+  test('FR-L3: a last page of exactly ten rows still shows the ENDFILE literal', async () => {
+    const backend = stubBackend();
+    backend.get('/api/transactions', [PAGE_1, PAGE_2]);
+
+    await renderList(backend);
+    fireEvent.keyDown(window, { key: 'F8' });
+
+    await screen.findByText('0000000000000011');
+    expect(message()).toEqual(REACHED_BOTTOM);
+  });
+
+  test('FR-L3: a first page of exactly ten rows with no more behind it shows it too', async () => {
+    const backend = stubBackend();
+    backend.get('/api/transactions', pageOf(1, PAGE_SIZE, { hasNextPage: false }));
+
+    await renderList(backend);
+
+    expect(message()).toEqual(REACHED_BOTTOM);
+  });
+
+  test('FR-L4: paging back onto a full page 1 shows the READPREV ENDFILE literal', async () => {
     const backend = stubBackend();
     backend.get('/api/transactions', [PAGE_1, PAGE_2, PAGE_1]);
 
@@ -177,7 +220,7 @@ describe('CT00 List Transactions — paging (FR-L1, FR-L3, FR-L4)', () => {
     fireEvent.keyDown(window, { key: 'F7' });
 
     await screen.findByText('0000000000000001');
-    expect(message()).toEqual('');
+    expect(message()).toEqual(REACHED_TOP);
   });
 
   test('FR-L4: paging back never shows a bottom-of-file message', async () => {

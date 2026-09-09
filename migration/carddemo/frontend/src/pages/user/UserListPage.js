@@ -13,7 +13,8 @@ import { resolveSelection, INVALID_SELECTION } from './selection';
  *   - PF7 -> previous 10; at the top -> "You are already at the top of the page..."
  *     (FR-UL-4, FR-UL-5, cbl:237-255)
  *   - an empty browse -> "You are at the top of the page..." (FR-UL-7, cbl:600-607)
- *   - a short page -> the file-boundary literals (FR-UL-8, cbl:634-641, :668-675)
+ *   - a page whose (lookahead) read hits ENDFILE -> the file-boundary literals
+ *     (FR-UL-8, cbl:634-641, :668-675)
  *   - `U`/`D` beside a row + ENTER -> CU02 Update / CU03 Delete (FR-UL-9, FR-UL-10)
  *   - any other flag -> "Invalid selection. Valid values are U and D" over a
  *     re-listed page 1 (FR-UL-11, FR-UL-13, quirk Q9 first-selection-wins FR-UL-12)
@@ -29,7 +30,6 @@ const AT_TOP_MSG = 'You are at the top of the page...';
 const REACHED_BOTTOM_MSG = 'You have reached the bottom of the page...';
 const REACHED_TOP_MSG = 'You have reached the top of the page...';
 const INVALID_KEY_MSG = 'Invalid key pressed. Please see below...';
-const PAGE_SIZE = 10;
 
 const PF_KEYS = 'ENTER=Continue  F3=Back  F7=Backward  F8=Forward';
 
@@ -114,8 +114,11 @@ export default function UserListPage() {
       if (data.count === 0) {
         // FR-UL-7: STARTBR found nothing at or after the key.
         setMessage(AT_TOP_MSG);
-      } else if (data.count < PAGE_SIZE) {
-        // FR-UL-8: the browse hit the end of the file while filling the page.
+      } else if (dir === 'prev' ? !data.hasPrevPage : !data.hasNextPage) {
+        // FR-UL-8: the browse hit the end of the file, either while filling the
+        // page or on the lookahead read that sets NEXT-PAGE (cbl:308-315), and
+        // SEND-USRLST-SCREEN (:526) never clears WS-MESSAGE — so a last page of
+        // exactly ten rows carries the literal too.
         setMessage(dir === 'prev' ? REACHED_TOP_MSG : REACHED_BOTTOM_MSG);
       } else {
         setMessage('');
