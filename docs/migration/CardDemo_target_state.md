@@ -1,6 +1,16 @@
 # CardDemo — Target State (what "migrated" means)
 
-Produced by `!mf_ingest_target_state`. Status: **DRAFT — awaiting STOP A confirmation.**
+Produced by `!mf_ingest_target_state`. Status: **CONFIRMED at STOP A (2026-09-09) except the IMS/MQ/DB2 mapping in §6, which is pending a follow-up confirmation.**
+
+### STOP A decisions (confirmed by Kyu, 2026-09-09)
+
+| # | Decision | Outcome |
+|---|---|---|
+| D-1 | App topology | **One consolidated backend** (`com.carddemo.<stream>` packages) + **one React app** with the sign-on/menu shell |
+| D-2 | Data target | **PostgreSQL** as the real target; **H2 profile for CI/tests** |
+| D-3 | Batch runtime | **Spring Batch 5** — one `Job` per JCL job, one `Step` per `EXEC PGM`, chunked, restartable via `JobRepository` |
+| D-4 | Scope | **Everything**: core CICS + batch **plus** the DB2, IMS and MQ add-on modules |
+| D-5 | STOP D autonomy | Notify only |
 
 Engagement: migrate the **entire CardDemo estate — CICS online + batch** from COBOL/CICS/VSAM/JCL to the
 target stack below.
@@ -16,16 +26,21 @@ selects CORE + the matching surface profile + DATA/BOUNDARY.
 | Role | Repo | Branch | Path | Evidence |
 |---|---|---|---|---|
 | SOURCE | `choikh0423/aws-mainframe-modernization-carddemo` | `main` | `app/cbl`, `app/cpy`, `app/bms`, `app/jcl`, `app/proc`, `app/scheduler`, `app/csd`, `app/ctl`, `app/data` | FACT — 31 COBOL programs, 17 BMS maps, 38 JCL, 30 copybooks |
-| BACKEND | same repo | `main` | `migration/<stream-slug>/backend` | FACT — `migration/transaction-management/backend/pom.xml` |
-| FRONTEND | same repo | `main` | `migration/<stream-slug>/frontend` | FACT — `migration/transaction-management/frontend/package.json` |
-| DOCS | same repo | `main` | `docs/migration/` (engagement-level), `migration/<stream-slug>/docs/` (per stream) | FACT for the per-stream path (`migration/transaction-management/docs/`); PROPOSED for `docs/migration/` |
+| BACKEND | same repo | `main` | `migration/carddemo/backend` (per D-1) | reference: `migration/transaction-management/backend/pom.xml` |
+| FRONTEND | same repo | `main` | `migration/carddemo/frontend` (per D-1) | reference: `migration/transaction-management/frontend/package.json` |
+| DOCS | same repo | `main` | `docs/migration/`, `docs/migration/streams/<Stream>/` | CONFIRMED at STOP A |
 
-**PROPOSED (decision D-1, must be confirmed):** the existing pattern is **one Spring Boot app + one React app
-per stream** (`migration/transaction-management/**`). For a whole-estate migration this yields ~7 online apps
-plus batch. The alternative is **one consolidated backend** (`migration/carddemo/backend`) with a package per
-stream, and **one React app** with a route per screen — closer to the real CardDemo runtime (a single CICS
-region behind a single sign-on/menu shell), and it makes cross-stream navigation (`COMEN01C` menu → any
-screen) and shared data (XREF/ACCT/CARD) natural instead of duplicated.
+**D-1 (confirmed): one consolidated backend + one React app.** Routes:
+
+| Role | Path |
+|---|---|
+| BACKEND | `migration/carddemo/backend` — `com.carddemo.<stream>` package per stream, `com.carddemo.common` for shared services, `com.carddemo.batch` for the batch jobs |
+| FRONTEND | `migration/carddemo/frontend` — one React app, sign-on + menu shell, one route per legacy screen |
+| DOCS | `docs/migration/` (engagement) and `docs/migration/streams/<Stream>/` (per stream) |
+
+The already-migrated Transaction Management module (`migration/transaction-management/**`) is the **reference
+implementation**; its code is folded into the consolidated app as the Transaction Management stream rather
+than re-migrated, and is not forked.
 
 ---
 
@@ -105,25 +120,28 @@ here (restart semantics, dataset mapping, job launch) have the longest consequen
 | Field | Proposal / value | Status |
 |---|---|---|
 | Data target | Reference module uses **H2 in-memory** (`jdbc:h2:mem:carddemo`) with `schema.sql` + `data.sql` seeds | FACT — `backend/src/main/resources/application.yml` |
-| Data target (decision D-2) | For the whole estate, PROPOSED: **PostgreSQL** as the real target with H2 retained as the CI/test profile — a single in-memory schema shared by online and batch across ~9 streams will not hold, and batch needs a persistent `JobRepository`. Alternative: stay on H2 for the demo. | PROPOSED |
+| Data target (D-2, confirmed) | **PostgreSQL** as the real target (docker-compose for local, `spring.profiles.active=postgres`); **H2 profile for CI and tests**. Spring Batch `JobRepository` lives in the same database. | CONFIRMED |
 | Persistence style | Spring Data JPA repositories; derived + `@Query` methods; no native SQL except where VSAM browse ordering demands it | FACT — `repository/**` |
 | Schema authoring | Hand-written DDL derived field-by-field from the copybook, each column commented with its COBOL picture | FACT — `resources/schema.sql` |
-| Migration tooling | none today (`schema.sql`); PROPOSED: **Flyway** once more than one stream shares the schema | PROPOSED |
+| Migration tooling | **Flyway** (`db/migration/V<n>__<desc>.sql`), applied to both the PostgreSQL and H2 profiles; the reference module's `schema.sql`/`data.sql` are folded into the first migrations | PROPOSED — follows from D-2 |
 | Transaction boundary | Service-level `@Transactional`; one unit of work per screen action / per batch chunk | FACT (online) / PROPOSED (batch) |
 | Stored procedures | None in the estate; the SP conventions section is **N/A** | FACT (absence) |
+| DB2 (add-on module, in scope per D-4) | The DB2 tables behind the Transaction Type module become ordinary PostgreSQL tables derived from the DCLGEN/copybooks; embedded SQL becomes JPA/`@Query` | PROPOSED |
+| IMS DB (add-on module, in scope per D-4) | The hierarchical PCB segments are flattened into relational parent/child tables; `GU`/`GN`/`GHU`/`ISRT`/`REPL` DL/I calls become repository operations, with the DL/I status code mapped to a typed result | PROPOSED |
+| MQ (add-on module, in scope per D-4) | `MQPUT`/`MQGET` become a messaging seam over **ActiveMQ Artemis** (embedded broker for local/CI) via `JmsTemplate` and `@JmsListener`; queue names carried in configuration, message payloads mapped from the request/response copybooks | PROPOSED |
 | Outbound integration seam | N/A for the in-scope surfaces (MQ / IMS / DB2-optional modules are excluded — see below) | PROPOSED |
 | Coexistence / strangler routing | None; the migrated app is standalone and seeded from the exported VSAM data (`app/data`, `CBEXPORT`/`CBIMPORT`) | PROPOSED |
 | Shared reference data | XREF (`CVACT03Y`), ACCTDAT (`CVACT01Y`), CUSTDAT, CARDDAT (`CVACT02Y`), DISCGRP, TCATBALF are read by several streams — owned by exactly one stream, read-only elsewhere | PROPOSED |
 
 ---
 
-## 6. Surfaces marked N/A
+## 6. Add-on modules (all IN SCOPE per D-4) and surfaces marked N/A
 
-| Surface / area | Status | Reason |
+| Surface / area | Status | Target shape |
 |---|---|---|
-| IMS DB | N/A | `app/app-authorization-ims-db2-mq` — infrastructure not provisioned; previously recorded as blocked in `migration/transaction-management/docs/CardDemo-Stream-Map.md` |
-| MQ | N/A | `app/app-vsam-mq`, MQ inquiry transactions — same reason |
-| DB2 optional module | Confirm at STOP A | `app/app-transaction-type-db2` (CTTU/CTLI) — optional add-on module |
+| DB2 module (`app/app-transaction-type-db2`, CTTU/CTLI) | IN SCOPE | ONLINE profile; DB2 tables → PostgreSQL tables, embedded SQL → JPA |
+| IMS DB module (`app/app-authorization-ims-db2-mq`, CPVS/CPVD/CP00) | IN SCOPE | ONLINE profile; IMS segments → relational parent/child tables, DL/I calls → repositories |
+| MQ (`app/app-vsam-mq`, CDRD/CDRA + the MQ legs of the authorization module) | IN SCOPE | SUBTRANSACTION profile; MQ queues → Artemis via `JmsTemplate`/`@JmsListener`. **Note:** the legacy MQ/IMS infrastructure itself is not provisioned, so these streams are migrated against the copybook contracts and seeded fixtures rather than a live mainframe comparison |
 | Assembler (`MVSWAIT`, `COBDATFT`) | N/A as-is | System-level utilities with no business behaviour to preserve; replaced by JDK equivalents |
 | RACF security | N/A | Sign-on is migrated against the USRSEC data, not RACF |
 

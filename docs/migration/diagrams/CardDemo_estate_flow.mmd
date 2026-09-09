@@ -1,0 +1,94 @@
+flowchart TD
+  subgraph ONLINE["CICS online"]
+    CC00["CC00 COSGN00C<br/>Sign-on"]
+    CM00["CM00 COMEN01C<br/>Main menu"]
+    CA00["CA00 COADM01C<br/>Admin menu"]
+    CC00 --> CM00
+    CC00 --> CA00
+
+    subgraph S02["S-02 AccountManagement"]
+      CAVW["CAVW COACTVWC"]
+      CAUP["CAUP COACTUPC"]
+    end
+    subgraph S03["S-03 CardManagement"]
+      CCLI["CCLI COCRDLIC"]
+      CCDL["CCDL COCRDSLC"]
+      CCUP["CCUP COCRDUPC"]
+      CDV1["CDV1 COCRDSEC<br/>SOURCE MISSING"]
+    end
+    subgraph S04["S-04 TransactionManagement (migrated)"]
+      CT00["CT00 COTRN00C"]
+      CT01["CT01 COTRN01C"]
+      CT02["CT02 COTRN02C"]
+    end
+    subgraph S05["S-05 UserManagement"]
+      CU00["CU00 COUSR00C"]
+      CU01["CU01 COUSR01C"]
+      CU02["CU02 COUSR02C"]
+      CU03["CU03 COUSR03C"]
+    end
+    subgraph S08["S-08 TransactionTypeMgmt (DB2)"]
+      CTLI["CTLI COTRTLIC"]
+      CTTU["CTTU COTRTUPC"]
+    end
+    subgraph S09["S-09 PendingAuthorizations (IMS+DB2+MQ)"]
+      CPVS["CPVS COPAUS0C"]
+      CPVD["CPVD COPAUS1C"]
+      CP00["CP00 COPAUA0C"]
+      CPS2["COPAUS2C<br/>fraud (LINK)"]
+      CPVD --> CPS2
+    end
+    subgraph S10["S-10 MQInquiry"]
+      CDRA["CDRA COACCT01"]
+      CDRD["CDRD CODATE01"]
+    end
+    CB00["CB00 COBIL00C<br/>S-06 BillPayment"]
+    CR00["CR00 CORPT00C<br/>S-07 Reporting"]
+
+    CM00 --> CAVW & CAUP & CCLI & CCDL & CCUP & CT00 & CT01 & CT02 & CR00 & CB00 & CPVS
+    CA00 --> CU00 & CU01 & CU02 & CU03 & CTLI & CTTU
+  end
+
+  subgraph BATCH["Batch"]
+    POSTTRAN["POSTTRAN<br/>CBTRN02C — S-11"]
+    INTCALC["INTCALC<br/>CBACT04C — S-12"]
+    CREASTMT["CREASTMT<br/>CBSTM03A/B — S-13"]
+    TRANREPT["TRANREPT<br/>CBTRN03C — S-14"]
+    READS["READACCT/READCARD/READXREF/READCUST<br/>CBACT01C-03C, CBCUS01C — S-15"]
+    EXPIMP["CBEXPORT/CBIMPORT — S-16"]
+    OPS["CLOSEFIL / WAITSTEP / OPENFIL<br/>COBSWAIT — S-17"]
+    LOAD["Data load jobs (IDCAMS) — S-18"]
+    MNTTRDB2["MNTTRDB2/TRANEXTR<br/>COBTUPDT — S-19"]
+    CBPAUP0J["CBPAUP0J + IMS load/unload<br/>CBPAUP0C, PAUDBLOD/UNL — S-20"]
+  end
+
+  subgraph DATA["Data"]
+    VSAM[("VSAM: ACCTDAT CARDDAT CUSTDAT CCXREF<br/>TRANSACT DALYTRAN TCATBALF DISCGRP USRSEC")]
+    DB2[("DB2: TRNTYPE TRNTYCAT AUTHFRDS")]
+    IMS[("IMS: DBPAUTP0 / DBPAUTX0")]
+    MQ>"MQ queues"]
+  end
+
+  ONLINE --> VSAM
+  S08 --> DB2
+  S09 --> IMS
+  S09 --> DB2
+  S09 --> MQ
+  S10 --> MQ
+  S10 --> VSAM
+  POSTTRAN --> VSAM
+  INTCALC --> VSAM
+  CREASTMT --> VSAM
+  TRANREPT --> VSAM
+  READS --> VSAM
+  EXPIMP --> VSAM
+  LOAD --> VSAM
+  MNTTRDB2 --> DB2
+  CBPAUP0J --> IMS
+  CR00 -. "internal reader" .-> TRANREPT
+  OPS -. "quiesce/open VSAM" .-> VSAM
+
+  CBTRN01C["CBTRN01C — UNREACHABLE"]
+  CSUTLDTC["CSUTLDTC — shared date validation"]
+  CT02 --> CSUTLDTC
+  CR00 --> CSUTLDTC
