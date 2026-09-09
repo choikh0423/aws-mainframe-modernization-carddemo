@@ -5,6 +5,7 @@ import AdminMenuPage from '../pages/AdminMenuPage';
 import TransactionListPage from '../pages/transaction/TransactionListPage';
 import TransactionViewPage from '../pages/transaction/TransactionViewPage';
 import AddTransactionPage from '../pages/transaction/AddTransactionPage';
+import BillPaymentPage from '../pages/billpayment/BillPaymentPage';
 
 /**
  * The route registry: one entry per legacy online screen, in menu order.
@@ -128,7 +129,7 @@ export const SCREENS = [
     path: '/bill-payment',
     title: 'Bill Payment',
     stream: 'S-06 BillPayment',
-    element: null,
+    element: <BillPaymentPage />,
   },
   {
     program: 'COPAUS0C',
