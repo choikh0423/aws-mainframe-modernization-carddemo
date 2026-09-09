@@ -52,6 +52,9 @@ carddemo:
     # external system points at this directory (see
     # docs/migration/streams/DataExportImport/DataExportImport_migration_plan.md).
     export-import-dir: ./data/exportimport
+    # Directory the print/extract jobs write their SYSOUT and sequential output
+    # datasets to (S-15 FileReadUtilities).
+    output-dir: target/batch-output
 
 logging:
   level:
