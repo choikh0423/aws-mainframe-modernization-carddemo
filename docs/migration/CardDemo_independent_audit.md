@@ -541,3 +541,142 @@ The failures are concentrated, not systemic. One DB2 table was transcribed by ey
 being derived from its DDL, and the governance artefacts — the boundary register, the step count,
 the S-04 stream folder — were not kept current with the code. Fix the two blockers and the branch
 should merge.
+
+---
+---
+
+# Re-audit — 2026-09-09
+
+**Scope:** verification that the ten findings above are genuinely closed, and that the
+remediation introduced no new defect.
+
+**Under re-audit:** `devin/carddemo-integration` at commit `986e8eb` (remediation PRs #58, #59,
+#60 plus the orchestrator's documentation commits), re-checked against the same oracles: the
+COBOL, DDL, DCLGEN and copybooks in `app/**`. PR descriptions were not taken as evidence; every
+claim below was re-derived from the branch and the legacy source.
+
+## R.1 Verdict
+
+**`devin/carddemo-integration` is now fit to merge into `main`.**
+
+Both blockers are genuinely closed, and closed correctly rather than cosmetically: the amount
+domain, the century and the DB2/IMS field separation were each verified against the DDL, the
+DCLGEN and the CICS `FORMATTIME` call that produces the IMS value. All ten findings are closed.
+
+Four new findings are raised — 0 BLOCKER, 1 MAJOR, 3 MINOR. None of them corrupts data or money,
+and none is a regression: the MAJOR is a pre-existing CT00 parity gap that the A-07 remediation
+had the opportunity to catch and did not. They are follow-up work, not merge conditions.
+
+| | Round 1 | Round 2 |
+|---|---:|---:|
+| BLOCKER | 2 | 0 |
+| MAJOR | 5 | 1 |
+| MINOR | 3 | 3 |
+
+## R.2 Status of the ten original findings
+
+| ID | Severity | Closed? | Evidence re-derived by the auditor |
+|---|---|---|---|
+| A-01 | BLOCKER | **CLOSED** | `V900__auth_fraud_column_types.sql:20-21` sets `transaction_amt`/`approved_amt` to `NUMERIC(12,2)`, matching `AUTHFRDS.ddl` `DECIMAL(12,2)` and `AUTHFRDS.dcl` `PIC S9(10)V9(2) COMP-3`. `AuthFraudColumnFidelityTest.anAmountAtTheTopOfTheDecimal12Domain` round-trips `9999999999.99` — the exact top of the domain — so the test is not tautological. |
+| A-02 | BLOCKER | **CLOSED** | `V900:27-28` rebuilds `fraud_rpt_date` as `DATE`; `AuthFraudRecord:87` is `LocalDate`; `AuthFraudService:71` stamps `LocalDate.now(clock)`, matching `COPAUS2C.cbl:194,225` `,CURRENT DATE`. The century survives: `theCenturyOfTheReportDateSurvivesTheRoundTrip` and `reportDatesOrderChronologicallyAcrossTheCentury` assert `1999-12-31 < 2001-01-01`, which the old `CHAR(8)` `MM/dd/yy` could not express. |
+| A-03 | MAJOR | **CLOSED** | `V900:24-25` makes `pos_entry_mode` `SMALLINT`; `AuthFraudRecord:60` is `Integer`, matching `PIC S9(4) COMP`. `thePosEntryModeIsComparedNumerically` proves ordering is numeric, not lexical. |
+| A-08 | MINOR | **CLOSED** | `V900:22` makes `merchant_name` `VARCHAR(22)`; `theMerchantNameReadsBackWithoutPadding` asserts no trailing pad. |
+| A-04 | MAJOR | **CLOSED** | Inventory §9 publishes the arithmetic. Re-derived independently: the documented grep returns exactly 98 + 3 + 11 + 7 = **119**, and the per-program histogram (`IDCAMS` 62, `IEFBR14` 9, `SDSF` 8, `IEBGENER` 8, `IKJEFT01` 7, `SORT` 5, `DFSRRC00` 5, `CBTRN03C` 2, thirteen singletons) reproduces byte for byte. 96 + 23 = 119 closes. See A-13 for the one figure in §9.5 that does not reproduce. |
+| A-05 | MAJOR | **CLOSED** | Inventory §10 states that S-04's requirements live in the frozen `migration/transaction-management/**` module under D-6, and enumerates every program with no FR document. The absence is now declared rather than implicit. |
+| A-06 | MAJOR | **CLOSED** | `.migration/04_boundary_register.md` now carries a dated decision table for B-01…B-15: eleven IMPLEMENTED, four DEFERRED, each with a rationale and a named artefact. B-13's deferral rationale (the TXT2PDF load library is not in the repository) is explicit, as required. |
+| A-10 | MINOR | **CLOSED** | D-9 records that the migration follows `PRTCATBL`'s `OUTREC` field layout and not the declared `LRECL=40`, and says why. |
+| A-09 | MINOR | **CLOSED** | `ExportImportSysout` reproduces the `ERROR:` and `<program>: ABENDING PROGRAM` lines; `ExportStatistics`/`ImportStatistics` reproduce every counter line. Checked literal by literal against all 29 `DISPLAY` statements in `CBEXPORT.cbl` and all 28 in `CBIMPORT.cbl`, including the `9(09)` zero padding and the casing change between the per-group `exported:` (cbl:254) and the finalize `Exported:` (cbl:564). The error-file write path is right too: `CBIMPORT.cbl:2750-WRITE-ERROR` displays but does **not** abend and still increments the counter, and `ImportOutputItemWriter:76-80` special-cases `ImportTarget.ERROR` to do exactly that. |
+| A-07 | MAJOR | **CLOSED** | 14 suites / 212 tests, run by CI (`carddemo-ci.yml:46`, `npm test -- --watchAll=false`). Verified locally: `Test Suites: 14 passed, Tests: 212 passed`. Every registered screen now has a suite. The parity defect the suite found (D-1) is genuinely fixed — see R.3. |
+
+## R.3 The one production behaviour change (D-1), verified
+
+`TransactionListPage.js` previously used one literal for two distinct COTRN00C events. The fix
+separates them, and the separation is correct:
+
+| Event | COBOL | Literal | Java |
+|---|---|---|---|
+| PF8 pressed while `NEXT-PAGE-NO` | `COTRN00C.cbl:267-274` | `You are already at the bottom of the page...` | `TransactionListPage.js:23,163-166` |
+| `READNEXT` hits `ENDFILE` filling a page | `COTRN00C.cbl:639-645` | `You have reached the bottom of the page...` | `TransactionListPage.js:24,121-123` |
+| PF7 pressed while `PAGE-NUM = 1` | `COTRN00C.cbl:245-252` | `You are already at the top of the page...` | `TransactionListPage.js:25,172-175` |
+
+The guard semantics also match: COBOL's `NEXT-PAGE` flag is set by a lookahead `READNEXT` during
+the previous render (`cbl:308-315`), which is what `hasNextPage` is computed from
+(`TransactionListService:89-92`). Both leave the page in place and only change the message.
+
+**The `PROCESS-PAGE-BACKWARD` path, which the request asked to be checked specifically, is not
+fully migrated** — see A-11.
+
+## R.4 New findings
+
+| ID | Severity | Stream | COBOL | Java | What is wrong | What correct looks like |
+|---|---|---|---|---|---|---|
+| A-11 | MAJOR | S-04 | `app/cbl/COTRN00C.cbl:605-610`, `:673-678` | `migration/carddemo/frontend/src/pages/transaction/TransactionListPage.js:23-25,110-127` | CT00 implements three of COTRN00C's five `WS-MESSAGE` boundary literals. Missing: `You are at the top of the page...` (`STARTBR` returns `NOTFND` — an empty `TRANSACT` file, or a filter Tran ID higher than every key) and `You have reached the top of the page...` (`READPREV` hits `ENDFILE` while `PROCESS-PAGE-BACKWARD` fills a page — reachable by filtering into the middle of the file and then pressing PF7, which returns fewer than ten rows). In both cases the screen renders silently. `load()` hard-codes `''` for every `dir === 'prev'` response, so the second literal can never appear. The same program pair got this right for CU00: `UserListPage.js:114-121` handles all five. | Mirror `UserListPage.js:114-121`: `count === 0` → `You are at the top of the page...`; a short page → `You have reached the top of the page...` when `dir === 'prev'`, `You have reached the bottom of the page...` otherwise. Add the two cases to `TransactionListPage.test.js`, which currently declares only three of the five literals (`:15-17`). |
+| A-12 | MINOR | S-04, S-05 | `app/cbl/COTRN00C.cbl:308-315` with `:639-645`; `app/cbl/COUSR00C.cbl:308-316` | `TransactionListPage.js:121-123`; `UserListPage.js:117-119` | A last page that happens to be exactly ten rows renders no message. In COBOL the fill loop exits on `WS-IDX >= 11` without EOF, and the **lookahead** `READNEXT` then hits `ENDFILE`, which sets `WS-MESSAGE` to `You have reached the bottom of the page...`; `SEND-TRNLST-SCREEN:531` never clears `WS-MESSAGE`, so the operator does see it. Both screens instead test `count < PAGE_SIZE`, which is false for a full last page. | Test `!data.hasNextPage` rather than `data.count < PAGE_SIZE`. `count < PAGE_SIZE` implies `!hasNextPage`, so the new condition is a strict superset and no other case changes. |
+| A-13 | MINOR | governance | — | `docs/migration/CardDemo_inventory.md:317-319` | §9.5 — the section added to close A-04, whose whole purpose is reproducible arithmetic — states "**34** `StepBuilder` step definitions". `grep -rho "new StepBuilder(" src/main/java \| wc -l` returns **40** (and understates the runtime total, because `filereads/PrintSteps.java` is a shared factory called by four jobs). The 21 `Job` beans in the same sentence do reproduce. | Correct the figure to 40, or state the counting rule that yields 34. The argument §9.5 makes — that D-3 is a floor, not an equality — is unaffected either way. |
+| A-14 | MINOR | S-09 | `app/app-authorization-ims-db2-mq/ddl/AUTHFRDS.ddl:12,15` | `V900__auth_fraud_column_types.sql:24-28` | `pos_entry_mode` and `fraud_rpt_date` are migrated by `DROP COLUMN` + `ADD COLUMN`, which discards any existing values and moves both columns to the end of the table. For `fraud_rpt_date` the file explains this (the `CHAR(8)` `MM/dd/yy` century is unrecoverable, so a cast would invent data) and the choice is right. For `pos_entry_mode` it is not: `CHAR(2)` → `SMALLINT` is a lossless cast. Immaterial in this repository — no seed inserts into `auth_fraud`, and `R__seed_carddemo_data.sql:12` empties it — but applied to a populated environment it is a silent data-loss migration. | `ALTER TABLE auth_fraud ALTER COLUMN pos_entry_mode TYPE SMALLINT USING pos_entry_mode::smallint;`. Note in the migration header that `fraud_rpt_date` is deliberately rebuilt and why, so an operator does not read the two `DROP`s as the same decision. |
+
+## R.5 Verified build and test numbers
+
+Re-run by the auditor on commit `986e8eb`.
+
+Backend — `mvn -B test` in `migration/carddemo/backend`:
+
+```
+Tests run: 926, Failures: 0, Errors: 0, Skipped: 0
+BUILD SUCCESS   (347 main sources, 160 test sources, 01:12 min)
+```
+
+926, up from the 916 verified in round 1: +5 `AuthFraudColumnFidelityTest`, plus the new
+`ExportImportSysoutTest` and `PendingAuthDetailServiceTest` cases.
+
+Frontend — Node v20.20.2, npm 10.8.2, in `migration/carddemo/frontend`:
+
+```
+npm ci                                    exit 0
+npm test -- --watchAll=false              Test Suites: 14 passed, 14 total
+                                          Tests:       212 passed, 212 total
+CI=true npm run build                     Compiled successfully.   exit 0
+```
+
+The 212/14 claim is accurate. Zero skipped tests in either suite.
+
+## R.6 Lane discipline and blast radius
+
+`git diff --name-only d8b64a7..986e8eb` returns 40 files. None is under `app/**` or
+`migration/transaction-management/**`, and `V1__baseline_carddemo_estate.sql` is untouched — the
+S-09 correction is an additive migration in the stream's own `V900-V999` band, as claimed.
+Exactly one production frontend file changed (`TransactionListPage.js`); the other 16 frontend
+files are tests, the test harness, `setupTests.js` and the lockfile. Backend changes are confined
+to `com.carddemo.batch.exportimport`, `com.carddemo.pendingauth` and `AuthFraudRecord`.
+
+The Flyway H2 profile does execute `V900` during `mvn test` (`application.yml:73-76`,
+`ddl-auto: none`), so the migration is exercised rather than bypassed by schema generation.
+
+## R.7 Stream verdicts, revised
+
+| Stream | Round 1 | Round 2 |
+|---|---|---|
+| S-09 PendingAuthorizations | **FAIL** | **PASS** |
+| S-16 DataExportImport | PASS WITH FINDINGS | **PASS** |
+| S-14 TransactionReporting | PASS WITH FINDINGS | **PASS** |
+| S-17 OperationsChain | PASS WITH FINDINGS | **PASS** |
+| S-13 StatementGeneration | PASS WITH FINDINGS | **PASS** |
+| S-04 TransactionManagement | PASS WITH FINDINGS | **PASS WITH FINDINGS** (A-11, A-12) |
+| S-05 UserManagement | PASS | **PASS WITH FINDINGS** (A-12) |
+| all others | PASS | **PASS** |
+
+## R.8 Auditor's note
+
+The remediation is honest. The S-09 fix did not merely change column types: it recognised that
+the old `CHAR(8)` value could not be cast back into a `DATE` without inventing a century, rebuilt
+the column instead, and moved the `MM/dd/yy` rendering to `PendingAuthFormat.reportDate` for the
+IMS field that genuinely is eight characters wide. That field is `PA-FRAUD-RPT-DATE PIC X(08)`
+(`CIPAUDTY.cpy:53`), and `COPAUS2C.cbl:95-101` fills it with `EXEC CICS FORMATTIME MMDDYY(...)
+DATESEP` — which, with `DATESEP` defaulting to `/`, is exactly `MM/DD/YY`, eight characters. The
+two fields are now correctly separate and both are correctly represented. The conflation the
+first audit found has not reappeared.
+
+The A-07 work is the round's most valuable outcome, because it was tests finding a defect rather
+than tests recording behaviour: the D-1 literal split came out of writing the suite. That it
+stopped three literals short of the five COTRN00C actually uses — and that CU00's screen, written
+by the same effort, has all five — is the finding worth acting on.
