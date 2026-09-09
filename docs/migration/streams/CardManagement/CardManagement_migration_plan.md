@@ -117,7 +117,7 @@ against exactly the legacy data.
 ## 6. Verification
 
 ```bash
-cd migration/carddemo/backend && mvn -B test          # whole suite green, incl. 61 stream tests
+cd migration/carddemo/backend && mvn -B test   # 326 tests green after rebase, 48 of them this stream's
 source ~/.nvm/nvm.sh && nvm use 20
 cd migration/carddemo/frontend && npm ci && CI=true npm run build
 ```
