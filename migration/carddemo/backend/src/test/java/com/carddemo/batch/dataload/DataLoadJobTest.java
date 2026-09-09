@@ -9,13 +9,16 @@ import com.carddemo.common.repository.DisclosureGroupRepository;
 import com.carddemo.common.repository.TransactionCategoryBalanceRepository;
 import com.carddemo.common.repository.TransactionCategoryRepository;
 import com.carddemo.common.repository.TransactionTypeRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.BatchStatus;
+import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,6 +35,9 @@ class DataLoadJobTest {
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
+    @Autowired
+    @Qualifier("dataLoadJob")
+    private Job dataLoadJob;
     @Autowired
     private AccountRepository accounts;
     @Autowired
@@ -50,6 +56,12 @@ class DataLoadJobTest {
     private TransactionTypeRepository transactionTypes;
     @Autowired
     private TransactionCategoryRepository transactionCategories;
+
+    /** JobLauncherTestUtils cannot pick a job by type once a second stream registers one. */
+    @BeforeEach
+    void useTheDataLoadJob() {
+        jobLauncherTestUtils.setJob(dataLoadJob);
+    }
 
     @Test
     void loadsEveryMasterFileFromTheAsciiUnloads() throws Exception {

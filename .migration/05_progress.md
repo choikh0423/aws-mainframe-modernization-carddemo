@@ -32,7 +32,7 @@ Coverage: 44 COBOL programs = 42 in streams + 1 shared (CSUTLDTC) + 1 unreachabl
 | S-14 | TransactionReporting | BATCH | 1 | NOT STARTED |
 | S-15 | FileReadUtilities | BATCH | 4 | NOT STARTED |
 | S-16 | DataExportImport | BATCH | 2 | NOT STARTED |
-| S-17 | OperationsChain | BATCH | 1 | NOT STARTED |
+| S-17 | OperationsChain | BATCH | 1 | MIGRATED — `docs/migration/streams/OperationsChain/` (B-15 removed, B-04 minimal WAITSTEP job, B-14 orchestration contract) |
 | S-18 | DataLoadAndSetup | BATCH | 0 | REPLACED by Phase-1 schema + seeds |
 | S-19 | TransactionTypeDB2Refresh | BATCH | 0 (COBTUPDT in S-08) | executes with S-08 |
 | S-20 | PendingAuthPurgeAndIMSLoad | BATCH | 0 (in S-09) | executes with S-09 |
