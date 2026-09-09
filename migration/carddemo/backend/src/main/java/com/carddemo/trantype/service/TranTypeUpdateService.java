@@ -9,6 +9,7 @@ import com.carddemo.trantype.exception.TranTypeAbendException;
 import com.carddemo.trantype.message.TranTypeMessages;
 import com.carddemo.trantype.repository.TranTypeCategoryLookupRepository;
 import com.carddemo.trantype.validator.TranTypeValidator;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -353,15 +354,17 @@ public class TranTypeUpdateService {
         String description = state.getNewDescription().trim();
 
         Optional<Db2TransactionTypeRecord> existing = transactionTypeRepository.findById(typeCode);
-        if (existing.isPresent()) {
-            Db2TransactionTypeRecord record = existing.get();
-            record.setTrDescription(description);
+        Db2TransactionTypeRecord record = existing.orElseGet(Db2TransactionTypeRecord::new);
+        record.setTrType(typeCode);
+        record.setTrDescription(description);
+        try {
             transactionTypeRepository.save(record);
-        } else {
-            Db2TransactionTypeRecord record = new Db2TransactionTypeRecord();
-            record.setTrType(typeCode);
-            record.setTrDescription(description);
-            transactionTypeRepository.save(record);
+        } catch (PessimisticLockingFailureException lockFailure) {
+            // SQLCODE -911 on the UPDATE.
+            turn.inputError = true;
+            turn.setMessage(TranTypeMessages.UPD_COULD_NOT_LOCK);
+            state.setChangeAction(TranTypeUpdateState.CHANGES_LOCK_ERROR);
+            return;
         }
         state.setChangeAction(TranTypeUpdateState.CHANGES_DONE);
     }

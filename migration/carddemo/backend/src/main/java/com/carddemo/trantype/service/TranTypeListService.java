@@ -12,6 +12,7 @@ import com.carddemo.trantype.message.TranTypeMessages;
 import com.carddemo.trantype.repository.TranTypeBrowseRepository;
 import com.carddemo.trantype.repository.TranTypeCategoryLookupRepository;
 import com.carddemo.trantype.validator.TranTypeValidator;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -391,7 +392,15 @@ public class TranTypeListService {
         }
         Db2TransactionTypeRecord record = existing.get();
         record.setTrDescription(description);
-        transactionTypeRepository.save(record);
+        try {
+            transactionTypeRepository.save(record);
+        } catch (PessimisticLockingFailureException lockFailure) {
+            turn.state.setUpdateRequested(true);
+            turn.inputError = true;
+            turn.returnMessage =
+                    TranTypeMessages.withSqlCode(TranTypeMessages.LIST_UPDATE_DEADLOCK, -911);
+            return;
+        }
 
         turn.updated = true;
         turn.state.setUpdateRequested(false);

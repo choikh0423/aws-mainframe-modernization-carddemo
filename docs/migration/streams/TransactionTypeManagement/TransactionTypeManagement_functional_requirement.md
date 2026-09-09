@@ -20,7 +20,7 @@ Message strings below are verbatim from the COBOL literals, including spacing, m
 | FR-L06 | Enter filters that match nothing | `No Records found for these filter conditions` and the select column is protected | COTRTLIC:1239-1268 |
 | FR-L07 | Browse with no data at all matching the search | `No records found for this search condition.` | COTRTLIC:1603-1724 |
 | FR-L08 | Press F8 with a further page available | The next 7 rows are shown and the page number increments | COTRTLIC:766-776 |
-| FR-L09 | Press F8 on the last page | The page is redisplayed; the first time the info line stays `Type U to update, D to delete any record`, on a repeat F8 the error line shows `No more pages to display` | COTRTLIC:1536-1549, 657-661 |
+| FR-L09 | Press F8 on the last page | The F8 that reaches the last page shows `No more pages for these search conditions` (set by the fetch that hits `SQLCODE +100`) and flags the page as shown; a repeat F8 redisplays it with `No more pages to display` | COTRTLIC:1674-1680, 1694-1701, 1536-1549 |
 | FR-L10 | Press F7 on a page after the first | The previous 7 rows are shown ascending and the page number decrements | COTRTLIC:780-790, 1727-1794 |
 | FR-L11 | Press F7 on the first page | The page is redisplayed with `No previous pages to display` | COTRTLIC:721-734, 1532-1535 |
 | FR-L12 | Type `U` next to one row and press ENTER | The row is highlighted, its description becomes editable, and the info line shows `Update HIGHLIGHTED row. Press F10 to save` | COTRTLIC:838-850, 1523-1531 |
@@ -35,7 +35,7 @@ Message strings below are verbatim from the COBOL literals, including spacing, m
 | FR-L21 | Type any flag other than `U`/`D`/blank | `Action code selected is invalid` and no action is taken | COTRTLIC:1034-1038 |
 | FR-L22 | Change a filter in the same keystroke as a row selection | The selection is discarded and only the filter is applied | COTRTLIC:991-994 |
 | FR-L23 | Press F10 after changing a filter or the selected row | It is treated as ENTER (re-confirmation is required) | COTRTLIC:666-678 |
-| FR-L24 | Update a row that another user already deleted | `Record not found. Deleted by others ? ` with SQL diagnostics | COTRTLIC:1861-1868 |
+| FR-L24 | Update a row that another user already deleted, or that another user holds locked | `Record not found. Deleted by others ? ` / `Deadlock. Someone else updating ?`, each with SQL diagnostics; the selection stays pending | COTRTLIC:1861-1883 |
 | FR-L25 | Press F2 | The CTTU maintenance screen (`COTRTUPC`) is opened | COTRTLIC:630-652 |
 | FR-L26 | Press F3 | Return to the admin menu (`COADM01C`, tran `CA00`) | COTRTLIC:591-625 |
 | FR-L27 | Press any other key | It is silently treated as ENTER — the list screen has no "invalid key" message | COTRTLIC:574-587 |
@@ -47,7 +47,7 @@ Message strings below are verbatim from the COBOL literals, including spacing, m
 | FR-U01 | Open the maintenance screen | Empty `Transaction Type  :` / `Description       :` fields and the info line `Enter transaction type to be maintained` | COTRTUPC:465-478, 1213-1216 |
 | FR-U02 | Enter an existing type and press ENTER | The stored description is displayed and the record is in "details shown" state | COTRTUPC:1447-1512, 984-997 |
 | FR-U03 | Enter a type that does not exist | `No record found for this key in database` with the info line `Press F05 to add. F12 to cancel` | COTRTUPC:1495-1497, 1219-1220 |
-| FR-U04 | Press ENTER with an empty type | `No input received` | COTRTUPC:720-726 |
+| FR-U04 | Press ENTER with an empty type | `Tran Type code must be supplied.` — `1210-EDIT-TRANTYPE` runs first and turns the return message on, so the `No input received` literal of `1200-EDIT-MAP-INPUTS` is only reachable while the message is still off | COTRTUPC:716-726, 820-843, 907-974 |
 | FR-U05 | Enter a non-numeric type | `Tran Type code must be numeric.` | COTRTUPC:907-974 |
 | FR-U06 | Enter `00` as the type | `Tran Type code must not be zero.` | COTRTUPC:907-974 |
 | FR-U07 | Enter a single-digit type such as `7` | It is normalised to `07` and looked up as `07` | COTRTUPC:834-842 |
@@ -105,13 +105,32 @@ Message strings below are verbatim from the COBOL literals, including spacing, m
 
 ## 6. Traceability matrix
 
-| FRs | Test |
-|---|---|
-| FR-L01, L02, L04, L05, L07, L08, L09, L10, L11 | `TransactionTypeListServiceTest`, `TransactionTypeListControllerIT` |
-| FR-L03, L06, L15, L16, L20, L21, L22, L27 | `TransactionTypeListValidationTest`, `TransactionTypeListControllerIT` |
-| FR-L12, L13, L14, L17, L18, L19, L23, L24 | `TransactionTypeListActionServiceTest`, `TransactionTypeListControllerIT` |
-| FR-L25, L26 | `TransactionTypeListControllerIT` (navigation targets in the response), frontend route registry |
-| FR-U01…U24 | `TransactionTypeMaintenanceServiceTest`, `TransactionTypeMaintenanceControllerIT` |
-| FR-B01…B10 | `TranTypeMaintenanceBatchJobIT`, `TranTypeMaintenanceRecordMapperTest` |
-| FR-X01…X04 | `TranTypeExtractJobIT` |
-| FR-C01…C05 | `TranTypeLoadJobIT` |
+All tests live under `migration/carddemo/backend/src/test/java/com/carddemo/trantype/` and run on the
+default H2 profile (`mvn -B test`).
+
+| FRs | Test | Test method(s) |
+|---|---|---|
+| FR-L01, L07 | `TranTypeListServiceTest` | `firstEntryShowsTheFirstSevenTypesAndTheActionPrompt`, `anEmptyTableReportsThatNoRecordsWereFound` |
+| FR-L02, L04, L05, L06 | `TranTypeListServiceTest` | `aTypeFilterNarrowsTheBrowseToOneRow`, `aDescriptionFilterMatchesOnAContainedString`, `aTypeFilterThatMatchesNothingIsRejected` |
+| FR-L03, L15, L16 | `TranTypeValidatorTest`, `TranTypeListServiceTest` | `requiresTheDescription`, `allowsOnlyLettersDigitsAndSpacesInTheDescription`, `appliesTheCobolNumericTestCharacterByCharacter`, `aNonNumericTypeFilterIsRejected`, `selectingUWithAnInvalidDescriptionIsRefused` |
+| FR-L08, L09, L10, L11 | `TranTypeListServiceTest` | `pageDownShowsTheRemainingTypesAndPageUpComesBack`, `pageDownPastTheEndSaysSoAndThenRefusesToMove`, `pageUpOnTheFirstPageSaysThereAreNoPreviousPages` |
+| FR-L12, L13, L14 | `TranTypeListServiceTest` | `selectingUWithAChangePromptsForF10AndTheSaveUpdatesTheRow`, `selectingUWithoutChangingTheDescriptionReportsNoChange` |
+| FR-L17, L18, L19 | `TranTypeListServiceTest` | `selectingDPromptsForF10AndTheConfirmationDeletesTheRow`, `deletingATypeThatStillHasCategoriesIsRefused` |
+| FR-L20, L21 | `TranTypeListServiceTest` | `twoSelectionsAreRefused`, `anActionCodeOtherThanUpperCaseUOrDIsRefused` |
+| FR-L25, L26, L27 | `TranTypeListServiceTest` | `f3ReturnsToTheAdminMenuAndF2GoesToTheUpdateScreen`, `anUnmappedKeyIsTreatedAsEnter` |
+| FR-L24 | `TranTypeListServiceTest`, `TranTypeLockFailureTest` | `updatingARowSomeoneElseDeletedReportsIt`, `aLockedRowLeavesTheListUpdateRequestedWithTheDeadlockMessage` |
+| FR-U23 | `TranTypeLockFailureTest` | `aLockedRowLeavesTheMaintenanceScreenInTheLockErrorState` |
+| FR-L01 over HTTP, admin gate | `TranTypeControllerTest` | `listReturnsTheFirstPageOfTheMap`, `aNonAdministratorCannotReachTheMaintenanceScreens`, `anAnonymousCallerCannotReachTheMaintenanceScreens` |
+| FR-U01, U02, U03 | `TranTypeUpdateServiceTest`, `TranTypeControllerTest` | `firstEntryAsksForTheKeyOnAnEmptyScreen`, `lookingUpAnExistingTypeShowsItsDetails`, `aKeyThatIsNotInTheTableOffersTheAddPath`, `updateAsksForTheKeyOnFirstEntry` |
+| FR-U04, U05, U06, U07, U24 | `TranTypeValidatorTest`, `TranTypeUpdateServiceTest` | `requiresTheTransactionTypeCode`, `rejectsANonNumericTransactionTypeCode`, `rejectsAZeroTransactionTypeCode`, `acceptsAValidTransactionTypeCode`, `normalisesTheTypeCodeThroughATwoDigitNumericField`, `treatsStarAndSpacesAsNotSupplied`, `aMissingKeyIsRefusedAndComesBackAsAStar`, `aNonNumericKeyIsRefused`, `aZeroKeyIsRefused`, `aSingleDigitKeyIsPaddedToTwoDigits` |
+| FR-U08, U09, U10, U11, U12 | `TranTypeUpdateServiceTest` | `aChangedDescriptionIsValidatedAndThenCommittedByF5`, `resendingTheSameDetailsReportsNoChange`, `anInvalidDescriptionIsRefused` |
+| FR-U13, U14, U22 | `TranTypeUpdateServiceTest` | `f5OnAMissingKeyOpensTheAddScreenAndSavesTheNewRecord` (the save path is the legacy UPDATE-then-INSERT) |
+| FR-U15, U16, U17 | `TranTypeUpdateServiceTest` | `f4TwiceDeletesARecordWithNoCategories`, `deletingATypeThatStillHasCategoriesIsRefused` |
+| FR-U18, U19 | `TranTypeUpdateServiceTest` | `f12CancelsAPendingDelete`, `f12BacksOutAValidatedChange` |
+| FR-L22, L23 | `TranTypeListServiceTest` | `twoSelectionsAreRefused`, `selectingUWithAChangePromptsForF10AndTheSaveUpdatesTheRow` (the F10 leg only acts on the re-confirmed selection) |
+| FR-U20, U21 | `TranTypeUpdateServiceTest` | `aKeyTheCurrentStateDoesNotAllowIsRefused`, `f3LeavesForTheAdminMenu` |
+| FR-B01, B02, B03, B04, B05, B10 | `TranTypeMaintenanceJobTest` | `appliesAddUpdateAndDeleteAndIgnoresCommentedLines`, `aShortRecordIsPaddedToTheFullFixedLength` |
+| FR-B06, B07, B08, B09 | `TranTypeMaintenanceJobTest` | `anUnknownOperationEndsTheStepWithReturnCode4ButKeepsProcessing`, `aDuplicateInsertAMissingUpdateAndAConstrainedDeleteAllRaiseReturnCode4` |
+| FR-X01, X02, X03, X04 | `TranTypeExtractJobTest` | `unloadsBothTablesAsSixtyByteRecordsAfterBackingUpTheLastRun`, `eachRunAddsTheNextGdgGeneration`, `aRunWithNoPreviousExtractEndsOnAJclError` |
+| FR-C01, C02, C03, C05 | `CreateDb2TablesJobTest` | `loadsTheControlMembersThroughOneStepPerExecPgm` |
+| FR-C04 | `CreateDb2TablesJobTest` | `aSecondRunAgainstPopulatedTablesFailsOnTheUniqueIndex` |

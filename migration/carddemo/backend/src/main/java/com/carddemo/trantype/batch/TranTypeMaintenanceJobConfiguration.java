@@ -20,6 +20,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -60,6 +62,7 @@ public class TranTypeMaintenanceJobConfiguration {
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
     private final JdbcTemplate jdbcTemplate;
+    private final TransactionTemplate recordTransaction;
 
     public TranTypeMaintenanceJobConfiguration(JobRepository jobRepository,
                                                PlatformTransactionManager transactionManager,
@@ -67,6 +70,8 @@ public class TranTypeMaintenanceJobConfiguration {
         this.jobRepository = jobRepository;
         this.transactionManager = transactionManager;
         this.jdbcTemplate = jdbcTemplate;
+        this.recordTransaction = new TransactionTemplate(transactionManager);
+        this.recordTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     @Bean
@@ -85,7 +90,8 @@ public class TranTypeMaintenanceJobConfiguration {
             boolean abended = false;
             for (String line : readLines(input)) {
                 log.info("PROCESSING   {}", pad(line));
-                abended |= treatRecord(pad(line));
+                abended |= Boolean.TRUE.equals(
+                        recordTransaction.execute(status -> treatRecord(pad(line))));
             }
             if (abended) {
                 contribution.setExitStatus(RC_4);
@@ -101,7 +107,11 @@ public class TranTypeMaintenanceJobConfiguration {
                 .build();
     }
 
-    /** {@code 1003-TREAT-RECORD} (COBTUPDT.cbl:109-130). */
+    /**
+     * {@code 1003-TREAT-RECORD} (COBTUPDT.cbl:109-130). Each record runs in its
+     * own transaction, so a failing statement leaves the records already applied
+     * in place and the run carries on, as the COBOL read loop does.
+     */
     private boolean treatRecord(String record) {
         String operation = record.substring(0, 1);
         String typeCode = record.substring(1, 3);

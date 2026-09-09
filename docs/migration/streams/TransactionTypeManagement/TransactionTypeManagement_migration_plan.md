@@ -13,13 +13,13 @@ plus the DB2 jobs `TRANEXTR.jcl` and `CREADB21.jcl`, and the BMS maps `COTRTLI` 
 | # | Decision | Rationale |
 |---|---|---|
 | B-08 (D-7) | Embedded `EXEC SQL` against `CARDDEMO.TRANSACTION_TYPE` / `…_CATEGORY` becomes **JPA/Spring Data** against `db2_transaction_type` / `db2_transaction_type_category` in the same PostgreSQL target | The tables already exist in the foundation baseline (`V1__baseline_carddemo_estate.sql`) with the DDL column definitions; the entities in `com.carddemo.common.domain` are reused unchanged. **No Flyway migration is added** — the S-08 band `V800`–`V899` stays empty. |
-| B-08a | DB2 `SQLCODE` handling is translated to **stream-private exceptions**, one per legacy `SQLCODE` branch, each carrying the verbatim COBOL literal | The screens' error text is part of the contract (FR-L23/L24, FR-U18/U19). `SQLCODE +100` → not-found exception, `-532` (RI child rows) → the child-record refusal, `-911` → the deadlock message. `-532` is detected as a `DataIntegrityViolationException` on the FK from the category table. |
+| B-08a | DB2 `SQLCODE` handling is translated in the services themselves, each branch producing the verbatim COBOL literal through `TranTypeMessages` | The screens' error text is part of the contract (FR-L19/L24, FR-U17/U23). An empty repository result is the `+100` branch, a `DataIntegrityViolationException` on the category FK is the `-532` child-record refusal, a `PessimisticLockingFailureException`/`CannotAcquireLockException` is the `-911` deadlock message. Only the batch abend has its own type (`TranTypeAbendException`). |
 | B-08b | The CICS **pseudo-conversation** is modelled as one request per 3270 interaction: the request carries the AID key, the map fields and the COMMAREA state; the response carries the new map fields, the new state and the message line | CTLI and CTTU are state machines (`TTUP-*` flags, `WS-*-FLAG` paging state), not CRUD screens. Modelling the turn keeps every legacy transition, quirk and message directly testable, and keeps the browser free of business rules. The stateless `startKey`/`dir` style of the S-04 reference is kept underneath for the read paths. |
 | B-08c | `EXEC CICS XCTL` targets are returned as `nextProgram` in the response and resolved by the React registry (`pathForProgram`) | Matches the foundation's navigation seam (README §4); no path is hard-coded. |
-| B-01 | `CALL 'CEE3ABD'` / `MOVE 4 TO RETURN-CODE` becomes `AbendService` + a failed step | Foundation seam; `BatchJobLauncher` turns the failed job into exit code 12. |
+| B-01 | `CALL 'CEE3ABD'` / `MOVE 4 TO RETURN-CODE` becomes the step exit status `RC=4` on an otherwise completed step | `9999-ABEND` in `COBTUPDT` displays the reason and moves 4 to RETURN-CODE but does **not** stop the run (FR-B09), so a failed step would be wrong: the JCL saw condition code 4 and the later records were still applied. The exit status carries the 4; `TranTypeAbendException` carries the reason text. |
 | D-3 | One Spring Batch `Job` per JCL job, one `Step` per `EXEC PGM=` | `MNTTRDB2` → job `MNTTRDB2`, `TRANEXTR` → job `TRANEXTR` (5 steps), `CREADB21` → job `CREADB21` (5 steps). |
 | Package | Online **and** batch code lives under `com.carddemo.trantype` (`…​.controller/.service/.dto/.exception/.batch`) | The stream brief says "backend code goes in `com.carddemo.trantype` only". This diverges from `migration/carddemo/README.md`, which lists S-08 as `com.carddemo.transactiontype` and would put the jobs in `com.carddemo.batch.db2refresh`. The brief is the more specific instruction and keeping every file in one tree removes any chance of colliding with a parallel stream. Recorded as a contradiction in §6. |
-| Data dir | `TRANEXTR` reads/writes files under `carddemo.batch.data-dir`, and `MNTTRDB2` reads its SYSIN-equivalent from the `inputFile` job parameter | Same convention as the `DATALOAD` reference job. |
+| Data dir | `TRANEXTR` reads/writes its datasets under the `hlq` job parameter (the directory standing in for `AWS.M2.CARDDEMO`), and `MNTTRDB2` reads INPFILE from the `inpfile` job parameter | Job parameters keep both jobs runnable through the shared `BatchJobLauncher` without new configuration properties. |
 
 ---
 
@@ -28,28 +28,32 @@ plus the DB2 jobs `TRANEXTR.jcl` and `CREADB21.jcl`, and the BMS maps `COTRTLI` 
 ```
 com.carddemo.trantype
 ├── controller
-│   ├── TransactionTypeListController        CTLI  /api/admin/transaction-types
-│   └── TransactionTypeUpdateController      CTTU  /api/admin/transaction-types/maintenance
-├── dto        request/response records — one pair per screen turn
-├── exception  one exception per legacy SQLCODE / validation branch + @RestControllerAdvice
+│   ├── TranTypeListController          CTLI  POST /api/admin/transaction-types/list
+│   └── TranTypeUpdateController        CTTU  POST /api/admin/transaction-types/update
+├── dto        request/response/state records — one set per screen turn
+├── exception  TranTypeAbendException     the COBTUPDT 9999-ABEND seam
+├── message    TranTypeMessages           every COBOL literal, in one place
+├── repository TranTypeBrowseRepository, TranTypeCategoryLookupRepository (read-only, over the shared entities)
 ├── service
-│   ├── TransactionTypeListService           the CTLI state machine (paging, filters, actions)
-│   └── TransactionTypeUpdateService         the CTTU state machine (TTUP-* transitions)
-├── validator  TransactionTypeValidator      the field edits shared by both screens
+│   ├── TranTypeListService             the CTLI state machine (paging, filters, actions)
+│   └── TranTypeUpdateService           the CTTU state machine (TTUP-* transitions)
+├── validator  TranTypeValidator          the field edits shared by both screens
 └── batch      TranTypeMaintenanceJobConfiguration (MNTTRDB2)
               TranTypeExtractJobConfiguration     (TRANEXTR)
-              TranTypeLoadJobConfiguration        (CREADB21)
+              CreateDb2TablesJobConfiguration     (CREADB21)
 ```
 
 Both screens sit under `/api/admin/**`, so the foundation `SecurityConfig` requires the `ADMIN` role —
 the same gate `COADM01C` applied by only ever offering CTLI/CTTU from the admin menu.
 
-### CTLI — `POST /api/admin/transaction-types` (one screen turn)
+### CTLI — `POST /api/admin/transaction-types/list` (one screen turn)
 
 Request: `aid` (`ENTER`/`PF2`/`PF3`/`PF7`/`PF8`/`PF10`), `typeFilter`, `descFilter`, the seven rows
-(`selection`, `type`, `description`), and the carried state (`pageNumber`, `firstKey`, `lastKey`,
-`lastPageShown`, `pendingAction`, `pendingKey`).
-Response: the seven rows to display, the carried state, `infoMessage`, `errorMessage`, `nextProgram`.
+(`selection`, `description`), and the carried `state` (the COMMAREA: `typeFilter`, `descFilter`,
+`screenNum`, `firstTypeCode`, `lastTypeCode`, `nextPageExists`, `lastPageShown`, `rowSelected`,
+`updateRequested`, `deleteRequested`, the fetched rows).
+Response: the seven display rows (`typeCode`, `description`, `highlighted`, `inError`), the carried
+state, `pageNumber`, `infoMessage`, `errorMessage`, `protectSelectRows`, `nextProgram`, `nextTranId`.
 
 Mapping of the legacy paragraphs:
 
@@ -57,33 +61,41 @@ Mapping of the legacy paragraphs:
 |---|---|
 | `0000-MAIN` first entry (`EIBCALEN=0`) | request with no state → page 1, `Type U to update, D to delete any record` |
 | `2000-PROCESS-INPUTS` / `2100-RECEIVE-MAP` filter edits | `TransactionTypeValidator.validateFilters` |
-| `9000-READ-FORWARD` (7 rows + 1 look-ahead) | `findPageForward` — `Pageable` of 8, the 8th row only sets `hasNextPage` |
-| `9100-READ-BACKWARD` | `findPageBackward` — descending fetch, reversed for display |
-| `9500-UPDATE-DB` / `9600-DELETE-DB` | `applyRowAction`, two-turn confirm (`PF10`) |
+| `8000-READ-FORWARD` (7 rows + 1 look-ahead) | `readForward` — `TranTypeBrowseRepository.readForward` fetches 8, the 8th only sets `nextPageExists` |
+| `8100-READ-BACKWARD` | `readBackward` — descending fetch, reversed for display |
+| `9500-UPDATE-TRAN-TYPE` / `9600-DELETE-TRAN-TYPE` | `updateRecord` / `deleteRecord`, two-turn confirm (`PF10`) |
 
-The forward/backward cursors become derived Spring Data queries plus a `@Query` for the
-`TR_DESCRIPTION LIKE :pattern` filter; the legacy `%…%` wrapping of the description filter is kept.
+The forward/backward cursors are two JPQL `@Query` methods over the shared entity, each carrying the
+optional type equality and the `TR_DESCRIPTION LIKE :pattern` filter; the legacy `%…%` wrapping of the
+description filter is kept.
 
-### CTTU — `POST /api/admin/transaction-types/maintenance` (one screen turn)
+### CTTU — `POST /api/admin/transaction-types/update` (one screen turn)
 
-Request: `aid` (`ENTER`/`PF3`/`PF4`/`PF5`/`PF12`), `type`, `description`, and the carried
-`state` + `originalType`/`originalDescription`.
-Response: `state`, `type`, `description`, `infoMessage`, `errorMessage`, `nextProgram`.
+Request: `aid` (`ENTER`/`PF3`/`PF4`/`PF5`/`PF12`), `typeCode`, `description`, and the carried `state`
+(`changeAction`, the old/new type and description, `programReenter`).
+Response: `typeCode`, `description`, `infoMessage`, `errorMessage`, the field/key enablement flags
+(`typeCodeEditable`, `descriptionEditable`, `enterEnabled`, `f4Enabled`, `f5Enabled`, `f12Enabled`),
+`nextProgram`, `nextTranId` and the new `state`.
 
-`state` is the `TTUP-*` flag set verbatim (`DETAILS_NOT_FETCHED`, `INVALID_SEARCH_KEYS`,
-`DETAILS_NOT_FOUND`, `SHOW_DETAILS`, `CREATE_NEW_RECORD`, `CHANGES_NOT_OK`, `CHANGES_OK_NOT_CONFIRMED`,
-`CHANGES_OKAYED_AND_DONE`, `CHANGES_BACKED_OUT`, `DELETE_*`). The save path reproduces the legacy
+`state.changeAction` carries the `TTUP-CHANGE-ACTION` values verbatim (`' '` not fetched, `K` invalid
+search keys, `X` details not found, `S` show details, `R` create new record, `E`/`N`/`L`/`F`/`C`/`B`
+for the change path and `9`/`8`/`7`/`6` for the delete path). The save path reproduces the legacy
 **UPDATE-first, INSERT on `SQLCODE +100`** sequence (FR-U22) rather than the "natural" upsert.
 
 ### Preserved quirks (implemented deliberately, tested explicitly)
 
-1. CTLI's type-filter edit only tests *numeric*, never length, although the message says "2 DIGIT NUMBER" (FR-L06).
+1. CTLI's type-filter edit only tests *numeric*, never length, although the message says "2 DIGIT NUMBER" (FR-L03).
 2. CTTU normalises the type by numeric conversion, so `7` becomes `07` and `1 ` becomes `01` (FR-U07).
-3. CTTU treats `*` and spaces in the input fields as low-values (FR-U05).
+3. CTTU treats `*` and spaces in the input fields as low-values (FR-U24).
+8. The F8 that *reaches* the last page reports `No more pages for these search conditions`; only a
+   further F8 gives `No more pages to display` (FR-L09).
+9. A blank CTTU key answers `Tran Type code must be supplied.`, so the program's `No input received`
+   literal is effectively unreachable from the key field (FR-U04).
 4. CTTU's save does UPDATE then INSERT on `+100` (FR-U22).
 5. `COBTUPDT`'s abend routine sets RC 4 and keeps reading the next record (FR-B09).
-6. `COTRTUP.bms` advertises `F6=Add` although `COTRTUPC` never enables it — the key is rendered and
-   answered with the legacy `Invalid key pressed` (FR-U21).
+6. `COTRTUP.bms` advertises `F6=Add` although `COTRTUPC` never tests `CCARD-AID-PFK06` — the caption is
+   documented in the page but no F6 button is offered, and an F6 send is answered with the legacy
+   `Invalid key pressed` (FR-U20).
 7. `CREADB21` loads with plain `INSERT`, so a second run fails on duplicate keys (FR-C04).
 
 ---
@@ -92,16 +104,16 @@ Response: `state`, `type`, `description`, `infoMessage`, `errorMessage`, `nextPr
 
 | Job | Steps | Notes |
 |---|---|---|
-| `MNTTRDB2` | `STEP01` (`IKJEFT01` → `RUN PROGRAM(COBTUPDT)`) | Chunk-oriented: `FlatFileItemReader` over the 53-byte input (`inputFile` job parameter), a processor that decodes `A/U/D/*` and applies the row, and the legacy `DISPLAY` lines logged verbatim. An invalid operation code raises the abend through `AbendService`; per FR-B09 the reader keeps going and the step still ends failed. |
-| `TRANEXTR` | `STEP10`, `STEP20`, `STEP30`, `STEP40`, `STEP50` | Backup / backup / delete / unload types / unload categories. Steps 40 and 50 write fixed 60-byte records with the trailing `0` filler, ordered by primary key. |
-| `CREADB21` | `FREEPLN`, `CRCRDDB`, `LDTTYPE`, `RUNTEP2`, `LDTCCAT` | `FREEPLN` and `LDTTYPE` have no target equivalent and are documented no-ops; `CRCRDDB` asserts the Flyway-created tables exist instead of issuing DDL; `RUNTEP2`/`LDTCCAT` insert the control members' literal rows. |
+| `MNTTRDB2` | `STEP1` (`IKJEFT01` → `RUN PROGRAM(COBTUPDT)`) | A tasklet, not a chunk, because `COBTUPDT` is a read loop that survives its own abend: it reads the 53-byte INPFILE (`inpfile` job parameter), decodes `A/U/D/*` and logs the legacy `DISPLAY` lines verbatim. Each record runs in its own transaction, so a failure leaves the earlier records applied and the loop carries on (FR-B09); if any record abended the step ends `COMPLETED` with exit status `RC=4`. |
+| `TRANEXTR` | `STEP10`, `STEP20`, `STEP30`, `STEP40`, `STEP50` | Backup / backup / delete / unload types / unload categories, under the `hlq` directory. The backups are GDG generations (`…BKUP.G0001V00`, `G0002V00`, …); as on z/OS, STEP10 fails when the previous run's PS dataset is missing, so a first run on a fresh installation ends on a JCL error. Steps 40 and 50 write fixed 60-byte records with the trailing `0` filler, ordered by primary key. |
+| `CREADB21` | `FREEPLN`, `CRCRDDB`, `LDTTYPE`, `RUNTEP2`, `LDTCCAT` | `FREEPLN` (BIND/FREE of the DB2 plan) has no target equivalent and is a logged no-op; `CRCRDDB` asserts the Flyway-created tables exist instead of issuing DDL; `LDTTYPE`, `RUNTEP2` and `LDTCCAT` insert the control members' literal rows, keeping `CODER=AWS`, `LBNM=AWS.M2.CARDDEMO` and `DB2S=DAZ1` as constants. |
 
 All three run through the existing launcher:
 
 ```bash
 java -jar target/carddemo.jar --spring.main.web-application-type=none \
      --spring.profiles.active=postgres --spring.batch.job.name=MNTTRDB2 \
-     --inputFile=/path/to/trantype-updates.txt
+     --inpfile=/path/to/INPFILE
 ```
 
 ---
@@ -110,14 +122,16 @@ java -jar target/carddemo.jar --spring.main.web-application-type=none \
 
 | Screen | File | Route registry line |
 |---|---|---|
-| CTLI `COTRTLI` / `CTRTLIA` | `frontend/src/pages/trantype/TransactionTypeListPage.js` | `COTRTLIC` entry — `element` only |
-| CTTU `COTRTUP` / `CTRTUPA` | `frontend/src/pages/trantype/TransactionTypeUpdatePage.js` | `COTRTUPC` entry — `element` only |
+| CTLI `COTRTLI` / `CTRTLIA` | `frontend/src/pages/trantype/TranTypeListPage.js` | `COTRTLIC` entry — `element` only |
+| CTTU `COTRTUP` / `CTRTUPA` | `frontend/src/pages/trantype/TranTypeUpdatePage.js` | `COTRTUPC` entry — `element` only |
+
+Both pages post their screen turn through `frontend/src/api/tranTypes.js`.
 
 Both pages use the shared `Layout` (header `TRNNAME`/`PGMNAME`/`TITLE01`/`TITLE02`/`CURDATE`/`CURTIME`
 and the row-24 PF line). Field labels, the seven-row grid, the PF-key lines
-(`F2=Add  F3=Exit  F7=Page Up  F8=Page Dn  F10=Save` and
-`ENTER=Process  F3=Exit  F4=Delete  F5=Save  F6=Add  F12=Cancel`) and every message string come
-verbatim from the maps and the COBOL literals. Physical F-keys are bound to the same actions as the
+(`ENTER=Process  F2=Add  F3=Exit  F7=Page Up  F8=Page Dn  F10=Save` and
+`ENTER=Process  F3=Exit` plus the state-dependent `F4=Delete`, `F5=Save`, `F12=Cancel`) and every
+message string come verbatim from the maps and the COBOL literals. Physical F-keys are bound to the same actions as the
 buttons. No business rule is duplicated in the browser: each keystroke posts the screen turn and renders
 whatever the backend returns.
 
@@ -132,22 +146,22 @@ shared seeded context, exactly as `DataLoadJobTest` does.
 
 | Layer | Tests |
 |---|---|
-| Validation / business rules | `TransactionTypeValidatorTest`, `TransactionTypeListServiceTest`, `TransactionTypeUpdateServiceTest` |
-| Endpoints | `TransactionTypeListControllerTest`, `TransactionTypeUpdateControllerTest` (MockMvc, `@WithMockUser(roles="ADMIN")`) |
-| Batch | `TranTypeMaintenanceJobTest`, `TranTypeExtractJobTest`, `TranTypeLoadJobTest` |
+| Validation / business rules | `TranTypeValidatorTest`, `TranTypeListServiceTest`, `TranTypeUpdateServiceTest` |
+| Endpoints | `TranTypeControllerTest` (MockMvc, `@WithMockUser(roles="ADMIN")`, plus the non-admin and anonymous refusals) |
+| Batch | `TranTypeMaintenanceJobTest`, `TranTypeExtractJobTest`, `CreateDb2TablesJobTest` |
 
 ### Parity — main paths
 
 | Path | Legacy behaviour | Migrated behaviour |
 |---|---|---|
 | CTLI open | 7 rows from the top of `TRANSACTION_TYPE`, info line `Type U to update, D to delete any record` | identical: 7 seeded rows `01`…`07`, same info line |
-| CTLI PF8 at the end | rows stay, `No more pages to display` | identical |
+| CTLI PF8 at the end | the F8 reaching the last page shows `No more pages for these search conditions`, a further F8 `No more pages to display` | identical |
 | CTLI `U` + new description + PF10 | row updated, `HIGHLIGHTED row was updated` | identical |
 | CTLI `D` + PF10 on a type with categories | `Please delete associated child records first:` | identical (FK violation mapped to the same text) |
 | CTTU lookup `01` | details shown, `Selected transaction type shown above` | identical |
 | CTTU lookup `99` | `No record found for this key in database` | identical |
 | CTTU add (`F5` on not-found, then ENTER, then `F5`) | `Changes validated.Press F5 to save` → `Changes committed to database` | identical |
-| `MNTTRDB2` with `A`/`U`/`D`/`*`/bad records | inserts, updates, deletes, ignores; bad op → `ERROR: TYPE NOT VALID`, RC 4, processing continues | identical, step ends failed, launcher exits 12 |
+| `MNTTRDB2` with `A`/`U`/`D`/`*`/bad records | inserts, updates, deletes, ignores; bad op → `ERROR: TYPE NOT VALID`, RC 4, processing continues | identical; the step completes with exit status `RC=4` |
 | `TRANEXTR` | 7 × 60-byte type records + 18 × 60-byte category records | identical byte layout |
 
 Fixtures: the seeded reference data derives from `app/data/ASCII/trantype.txt` and `trancatg.txt`

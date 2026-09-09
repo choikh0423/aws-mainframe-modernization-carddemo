@@ -104,8 +104,12 @@ public final class TranTypeMessages {
     public static final String UPD_CHANGED_BY_OTHERS = "Record changed by some one else. Please review";
     /** COTRTUPC.cbl:1600-1602 - the UPDATE/INSERT failed. */
     public static final String UPD_UPDATE_FAILED = "Update of record failed";
-    /** COTRTUPC.cbl:1655-1657 - the DELETE failed. */
-    public static final String UPD_DELETE_FAILED = "Delete of record failed";
+    /**
+     * COTRTUPC.cbl:1651-1661 - the DELETE failed. {@code RECORD-DELETE-FAILED}
+     * moves {@code 'Delete of record failed'} into WS-RETURN-MSG, but the
+     * following STRING overwrites it, so this literal is what the screen shows.
+     */
+    public static final String UPD_DELETE_FAILED = "Delete failed with message:";
     /** COTRTUPC.cbl:1643-1646 - DELETE refused by the category foreign key (-532). */
     public static final String UPD_DELETE_HAS_CHILDREN = "Please delete associated child records first:";
 
