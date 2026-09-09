@@ -19,11 +19,11 @@ async function readBody(res) {
  * ("Wrong Password. Try again ...", etc.) rather than throwing, because the
  * legacy screen redisplays itself with that message.
  */
-export async function signOn(userId, password) {
+export async function signOn(userId, password, aid = 'ENTER') {
   const res = await fetch('/api/auth/signon', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId, password }),
+    body: JSON.stringify({ userId, password, aid }),
   });
   const body = await readBody(res);
   if (!body) {
@@ -55,29 +55,41 @@ export async function getSession() {
   return body;
 }
 
+/**
+ * COSGN00A as BMS painted it: the banner, the nine banknote lines, the field
+ * labels and the row-24 PF-key line, all served from the map transcription so
+ * the screen never retypes a legacy literal.
+ */
+export async function getSignOnScreen() {
+  const res = await fetch('/api/auth/screen');
+  return (await readBody(res)) || null;
+}
+
 /** COMEN01C — the 11 main-menu options from COMEN02Y, in copybook order. */
 export async function getMainMenu() {
   const res = await fetch('/api/menu/main');
-  return (await readBody(res)) || [];
+  return (await readBody(res)) || null;
 }
 
 /** COADM01C — the 6 admin-menu options from COADM02Y, in copybook order. */
 export async function getAdminMenu() {
-  const res = await fetch('/api/menu/admin');
-  return (await readBody(res)) || [];
+  const res = await fetch('/api/admin/menu');
+  return (await readBody(res)) || null;
 }
 
 /**
  * COMEN01C/COADM01C option entry. {@code menu} is {@code 'main'} or
  * {@code 'admin'}. Resolves to {accepted, optionNumber, optionName,
- * programName, message}; a rejected option carries the exact legacy text
- * ("Please enter a valid option number...", "No access - Admin Only option... ").
+ * programName, message, messageColour, optionEcho}; a rejected option carries
+ * the exact legacy text ("Please enter a valid option number...", "No access -
+ * Admin Only option... ") and the colour the map set on ERRMSG.
  */
-export async function selectMenuOption(menu, option) {
-  const res = await fetch(`/api/menu/${menu}/select`, {
+export async function selectMenuOption(menu, option, aid = 'ENTER') {
+  const path = menu === 'admin' ? '/api/admin/menu/select' : '/api/menu/main/select';
+  const res = await fetch(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ option }),
+    body: JSON.stringify({ option, aid }),
   });
   const body = await readBody(res);
   if (!body) {

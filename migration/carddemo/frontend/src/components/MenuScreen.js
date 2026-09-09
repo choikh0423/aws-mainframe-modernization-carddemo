@@ -7,26 +7,33 @@ import { selectMenuOption } from '../api/auth';
 
 /**
  * The menu screen shared by COMEN01C and COADM01C: both maps are the same
- * layout — a title, the numbered option list built by BUILD-MENU-OPTIONS
- * ("NN. Name", COMEN01C.cbl:262-301), a "Please select an option :" input,
- * the ERRMSG line and 'ENTER=Continue  F3=Exit'.
+ * layout — a title, the numbered option list BUILD-MENU-OPTIONS writes into the
+ * twelve 40-character OPTN fields ("NN. Name", COMEN01C.cbl:262-301), the
+ * 2-byte OPTION field behind "Please select an option :", the ERRMSG line and
+ * 'ENTER=Continue  F3=Exit'.
  *
- * ENTER posts the typed option to the backend, which applies the legacy
- * validation and the 'U'/'A' user-type rule, and answers with either the
- * CDEMO-TO-PROGRAM to transfer to or the exact message to display.
- * PF3 signs off and returns to COSGN00C.
+ * Every literal here comes from the backend's BMS transcription. ENTER posts
+ * the typed option, which the backend validates exactly as PROCESS-ENTER-KEY
+ * does, answering with either the program to transfer to or the message and the
+ * ERRMSG colour the map used — red for a refusal, green for the "coming soon" /
+ * "not installed" answers. PF3 signs off and returns to COSGN00C.
  */
-const PROMPT = 'Please select an option :';
-const PF_KEYS = 'ENTER=Continue  F3=Exit';
-
 const styles = {
-  options: { listStyle: 'none', margin: '0 0 24px', padding: 0, lineHeight: 1.6 },
+  options: {
+    listStyle: 'none',
+    margin: '0 0 24px',
+    padding: 0,
+    lineHeight: 1.6,
+    fontFamily: "'Courier New', Courier, monospace",
+    whiteSpace: 'pre',
+  },
   row: { display: 'flex', alignItems: 'center', gap: '8px' },
   input: {
     font: 'inherit',
     width: '4ch',
     padding: '2px 4px',
     border: '1px solid #2c5d34',
+    textAlign: 'right',
   },
   keys: { display: 'flex', gap: '12px', marginTop: '16px' },
   button: {
@@ -36,48 +43,53 @@ const styles = {
     background: '#e8f5e8',
     cursor: 'pointer',
   },
-  message: { color: '#b00020', marginTop: '16px', minHeight: '1.5em' },
+  message: { marginTop: '16px', minHeight: '1.5em' },
 };
 
-function pad2(n) {
-  return String(n).padStart(2, '0');
-}
+const MESSAGE_COLOURS = { RED: '#b00020', GREEN: '#1b7a2f' };
 
-export default function MenuScreen({ tranId, progName, title, menu, loadOptions }) {
+export default function MenuScreen({ tranId, progName, title, menu, loadScreen }) {
   const { signOff } = useAuth();
   const navigate = useNavigate();
-  const [options, setOptions] = useState([]);
+  const [screen, setScreen] = useState(null);
   const [typedOption, setTypedOption] = useState('');
   const [message, setMessage] = useState('');
+  const [messageColour, setMessageColour] = useState('RED');
 
   useEffect(() => {
     let cancelled = false;
-    loadOptions().then((loaded) => {
+    loadScreen().then((loaded) => {
       if (!cancelled) {
-        setOptions(loaded);
+        setScreen(loaded);
       }
     });
     return () => {
       cancelled = true;
     };
-  }, [loadOptions]);
+  }, [loadScreen]);
+
+  const show = useCallback((selection) => {
+    setMessage(selection.message || '');
+    setMessageColour(selection.messageColour || 'RED');
+    if (selection.optionEcho) {
+      setTypedOption(selection.optionEcho);
+    }
+  }, []);
 
   const handleSubmit = useCallback(
     async (event) => {
       event.preventDefault();
       const selection = await selectMenuOption(menu, typedOption);
+      show(selection);
       if (!selection.accepted) {
-        setMessage(selection.message);
         return;
       }
-      setMessage('');
-      setTypedOption('');
       const path = pathForProgram(selection.programName);
       if (path) {
         navigate(path);
       }
     },
-    [menu, typedOption, navigate]
+    [menu, typedOption, navigate, show]
   );
 
   const exit = useCallback(async () => {
@@ -85,20 +97,27 @@ export default function MenuScreen({ tranId, progName, title, menu, loadOptions 
     navigate('/');
   }, [signOff, navigate]);
 
+  const options = screen ? screen.options : [];
+
   return (
-    <Layout tranId={tranId} progName={progName} title={title} pfKeys={PF_KEYS}>
+    <Layout
+      tranId={tranId}
+      progName={progName}
+      title={title}
+      pfKeys={screen ? screen.pfKeys : ''}
+    >
       <ul style={styles.options}>
         {options.map((option) => (
-          <li key={option.number}>{`${pad2(option.number)}. ${option.name}`}</li>
+          <li key={option.number}>{option.displayText}</li>
         ))}
       </ul>
       <form onSubmit={handleSubmit}>
         <div style={styles.row}>
-          <label htmlFor="option">{PROMPT}</label>
+          <label htmlFor="option">{screen ? screen.prompt : ''}</label>
           <input
             id="option"
             style={styles.input}
-            maxLength={2}
+            maxLength={screen ? screen.optionLength : 2}
             value={typedOption}
             onChange={(e) => setTypedOption(e.target.value)}
             autoFocus
@@ -109,7 +128,9 @@ export default function MenuScreen({ tranId, progName, title, menu, loadOptions 
           <button type="button" style={styles.button} onClick={exit}>PF3 — Exit</button>
         </div>
       </form>
-      <div style={styles.message} role="alert">{message}</div>
+      <div style={{ ...styles.message, color: MESSAGE_COLOURS[messageColour] }} role="alert">
+        {message}
+      </div>
     </Layout>
   );
 }

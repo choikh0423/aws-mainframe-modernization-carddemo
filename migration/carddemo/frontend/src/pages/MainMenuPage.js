@@ -14,7 +14,7 @@ export default function MainMenuPage() {
       progName="COMEN01C"
       title="Main Menu"
       menu="main"
-      loadOptions={getMainMenu}
+      loadScreen={getMainMenu}
     />
   );
 }

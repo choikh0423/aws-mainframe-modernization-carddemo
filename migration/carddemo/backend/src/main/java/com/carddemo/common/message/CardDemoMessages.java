@@ -37,6 +37,13 @@ public final class CardDemoMessages {
     public static final String MENU_ADMIN_ONLY = "No access - Admin Only option... ";
 
     /**
+     * COADM01C.cbl:152-156 and :273-277 - the admin option maps to a DUMMY program
+     * or its XCTL raised PGMIDERR. The option name is commented out of the COBOL
+     * STRING, so the admin message never names the option.
+     */
+    public static final String ADMIN_OPTION_NOT_INSTALLED = "This option is not installed ...";
+
+    /**
      * COMEN01C.cbl:163-167 - the selected option maps to a program that is not in
      * the estate. The COBOL STRING delimits the option name by two spaces.
      */

@@ -13,7 +13,7 @@ export default function AdminMenuPage() {
       progName="COADM01C"
       title="Admin Menu"
       menu="admin"
-      loadOptions={getAdminMenu}
+      loadScreen={getAdminMenu}
     />
   );
 }
