@@ -316,7 +316,9 @@ and one each of `IKJEFT1B`, `FTP`, `DFHCSDUP`, `COBSWAIT`, `CBTRN02C`, `CBSTM03A
 
 **21 Spring Batch `Job` beans** (`CBEXPORT`, `CBIMPORT`, `CBPAUP0J`, `COMBTRAN`, `CREADB21`, `CREASTMT`,
 `DATALOAD`, `INTCALC`, `LOADPADB`, `MNTTRDB2`, `POSTTRAN`, `TRANEXTR`, `UNLDGSAM`, `UNLDPADB`, `WAITSTEP`,
-plus the four `filereads` read jobs and the two `tranreport` jobs) and **34 `StepBuilder` step definitions**.
+plus the four `filereads` read jobs and the two `tranreport` jobs) and **40 `StepBuilder` step definitions**
+(`grep -rn "new StepBuilder(" migration/carddemo/backend/src/main/java --include=*.java | wc -l`; the job
+count is the same grep against `new JobBuilder(`).
 
 The step count exceeds the 23 business-bearing `EXEC PGM=` occurrences because several COBOL programs that
 ran as a single JCL step are decomposed into more than one chunk-oriented step in the target (for example
