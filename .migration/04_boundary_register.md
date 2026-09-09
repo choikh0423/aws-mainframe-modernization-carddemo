@@ -25,3 +25,28 @@ Status values: `REGISTERED` (found, undecided) → `DECIDED` → `IMPLEMENTED` |
 | B-13 | TXT2PDF / IKJEFT1B statement rendering step | External utility | outbound | `app/jcl/TXT2PDF1.JCL` | Statement Generation | Replace with a target-side PDF/HTML renderer or drop if the HTML statement suffices | REGISTERED | | |
 | B-14 | Scheduler (Control-M / CA-7) job dependency graph and completion signalling | Scheduler | inbound | `app/scheduler/CardDemo.controlm`, `app/scheduler/CardDemo.ca7` | all BATCH streams | Document the dependency graph; the migrated jobs expose exit codes only (no scheduler integration built) | REGISTERED | | |
 | B-15 | CICS file open/close jobs (`OPENFIL`/`CLOSEFIL` via SDSF) that quiesce VSAM for batch | Runtime coupling | both | `app/jcl/OPENFIL.jcl`, `app/jcl/CLOSEFIL.jcl` | all BATCH streams | Disappears in the target (shared database, no file quiescing); document as removed, not migrated | REGISTERED | | |
+
+## Update — 2026-09-09, post-implementation decisions
+
+Appended after all 16 stream PRs merged into `devin/carddemo-integration`, in response to
+independent-audit finding **A-06** (every row above still read `REGISTERED` while `05_progress.md`
+asserted the boundaries were closed). Rows above are left untouched; this table is the decision of
+record for each.
+
+| ID | Status | Decided on | Decision |
+|---|---|---|---|
+| B-01 | IMPLEMENTED | 2026-09-09 | `com.carddemo.common.batch.AbendService` / `AbendException` / `AbendData` raise a logged, coded abend that fails the step and the job with a non-zero exit; stream-local wrappers `batch.filereads.FileReadAbend`, `batch.statement.StatementAbend` and `trantype.exception.TranTypeAbendException` carry the legacy abend codes and text. |
+| B-02 | IMPLEMENTED | 2026-09-09 | Ported once, for the whole module, as `com.carddemo.common.service.DateValidationService`; the Reporting stream FR/analysis/plan document its contract. No stream re-ported it. |
+| B-03 | IMPLEMENTED | 2026-09-09 | `com.carddemo.batch.filereads.LegacyDateFormatter` reproduces the Assembler date formatting with an explicit written contract; no business logic was carried over. |
+| B-04 | DEFERRED | 2026-09-09 | No wait step exists in the target. `com.carddemo.batch.operations.WaitStepJobConfiguration` / `WaitControlCard` preserve the control-card contract so the scheduler chain stays readable, but the timer itself is a scheduler concern (see B-14) and is not migrated. |
+| B-05 | IMPLEMENTED | 2026-09-09 | `com.carddemo.mqinquiry.jms` (`AccountInquiryListener`, `DateInquiryListener`, `MqInquiryReplySender`, `MqInquiryQueues`) over the Artemis/JMS seam in `com.carddemo.common.jms`. Account and date requests use separate queues — with one queue, two listeners would steal each other's requests. |
+| B-06 | IMPLEMENTED | 2026-09-09 | `com.carddemo.pendingauth.jms` (`AuthorizationRequestListener`, `PendingAuthQueues`) on the same seam; `CCPAURQY`/`CCPAURLY` are the wire contract. |
+| B-07 | IMPLEMENTED | 2026-09-09 | `PAUTSUM0`/`PAUTDTL1` flattened to `pending_auth_summary` / `pending_auth_detail` with an explicit foreign key; DL/I calls became Spring Data repositories and DL/I status codes typed results. |
+| B-08 | IMPLEMENTED | 2026-09-09 | DCLGEN mapped to JPA entities on the shared PostgreSQL target (`db2_transaction_type`, `db2_transaction_type_category`). |
+| B-09 | IMPLEMENTED | 2026-09-09 | `auth_fraud` table plus `com.carddemo.pendingauth` repositories. **Audit findings A-01/A-02/A-03/A-08 corrected the column types against `AUTHFRDS.ddl`/DCLGEN**; this row is closed only once those fixes are merged. |
+| B-10 | IMPLEMENTED | 2026-09-09 | The literal MOVEd into `WS-PGM-AUTH-FRAUD` resolves to `COPAUS2C`, which is present in the repo and migrated; the dynamic link became a direct service call. Not a scope risk. |
+| B-11 | DEFERRED | 2026-09-09 | `COCRDSEC` has no source anywhere in the repository, so CDV1's security view cannot be migrated from source. Documented as inventory risk R-1 and raised with the customer; unresolved at sign-off. |
+| B-12 | IMPLEMENTED | 2026-09-09 | Export/import files land in a configured directory (`carddemo.batch.export-import-dir`), read/written by `com.carddemo.batch.exportimport`. FTP transport itself is out of scope: the target exposes the directory, the transfer mechanism is an operations choice. |
+| B-13 | DEFERRED | 2026-09-09 | `TXT2PDF` is a licensed TSO/REXX load library (`AWS.M2.LBD.TXT2PDF.LOAD`) that is not in the repository, so there is nothing to migrate from. The statement is produced as text and HTML; PDF rendering is left to a target-side renderer. Rationale in `docs/migration/streams/StatementGeneration/StatementGeneration_analysis.md`. |
+| B-14 | DEFERRED | 2026-09-09 | The Control-M/CA-7 dependency graph is documented in the inventory; migrated jobs expose exit codes only. No scheduler integration was built — the target scheduler is a customer decision. |
+| B-15 | IMPLEMENTED (as removed) | 2026-09-09 | Disappears against a shared relational target: with no VSAM to quiesce, `OPENFIL`/`CLOSEFIL` have no counterpart. Recorded as removed, not migrated. |

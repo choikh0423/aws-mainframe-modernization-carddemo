@@ -1,6 +1,6 @@
 # 05 — Progress ledger
 
-Last updated: 2026-09-09, after all 16 stream PRs merged into `devin/carddemo-integration`.
+Last updated: 2026-09-09, after the independent audit (PR #57) reported on `devin/carddemo-integration`.
 
 ## Engagement-level
 
@@ -11,7 +11,9 @@ Last updated: 2026-09-09, after all 16 stream PRs merged into `devin/carddemo-in
 | Module inventory | `!mf_module_inventory_analysis` | **DONE** — STOP B answered: migrate the entire estate, streams in parallel | `docs/migration/CardDemo_inventory.md` |
 | Phase 0/1 foundation | consolidated backend + frontend + full schema | **DONE** — PR #40 | `migration/carddemo/**` |
 | Phase 2 streams | 16 parallel stream sessions | **DONE** — PRs #41…#56 merged into `devin/carddemo-integration` | `docs/migration/streams/**` |
-| Phase 4 sign-off | `!mf_stream_signoff` + independent audit | IN PROGRESS | — |
+| Phase 4 audit | independent audit by a session that did no migration work | **DONE** — PR #57, verdict NOT fit to merge: 2 BLOCKER, 5 MAJOR, 3 MINOR | `docs/migration/CardDemo_independent_audit.md` |
+| Phase 4 remediation | close the audit findings | IN PROGRESS | see the findings table below |
+| Phase 4 sign-off | `!mf_stream_signoff` + STOP E | BLOCKED on remediation | — |
 
 ## Integration state
 
@@ -49,9 +51,32 @@ Artifacts per stream: `<Stream>_analysis.md`, `<Stream>_functional_requirement.m
 | S-20 | PendingAuthPurgeAndIMSLoad | BATCH | 0 (in S-09) | executed with S-09 | #55 |
 
 ## Boundaries
-15 registered (B-01…B-15), all decided by the owning stream's migration plan — implemented or documented
-as deferred in that stream's plan and in `04_boundary_register.md`.
+15 registered (B-01…B-15). Each now carries an explicit `IMPLEMENTED` / `DEFERRED` decision with a date and
+the implementing class or deferral rationale, in the 2026-09-09 update table appended to
+`04_boundary_register.md` (audit finding A-06 — the rows were previously left at `REGISTERED`).
+
+## Audit findings and remediation
+
+Source: `docs/migration/CardDemo_independent_audit.md` (PR #57).
+
+| ID | Sev | Subject | Owner | Status |
+|---|---|---|---|---|
+| A-01 | BLOCKER | `auth_fraud.transaction_amt`/`approved_amt` narrowed to `NUMERIC(11,2)` vs `DECIMAL(12,2)` | S-09 session | remediation dispatched |
+| A-02 | BLOCKER | `auth_fraud.fraud_rpt_date` stored as `CHAR(8)` `MM/dd/yy`; DB2 column is a `DATE`, century lost | S-09 session | remediation dispatched |
+| A-03 | MAJOR | `pos_entry_mode` `CHAR(2)` vs `SMALLINT` | S-09 session | remediation dispatched |
+| A-04 | MAJOR | `EXEC PGM=` count published without derivation | orchestrator | **CLOSED** — inventory §9 reconciliation, D-10 |
+| A-05 | MAJOR | S-04 has no stream/program FR documents | orchestrator | **CLOSED** — inventory §10 states where its requirements live |
+| A-06 | MAJOR | boundary register left every row at `REGISTERED` | orchestrator | **CLOSED** — decision table appended to `04_boundary_register.md` |
+| A-07 | MAJOR | one frontend test, and CI never runs `npm test` | dedicated session | remediation dispatched |
+| A-08 | MINOR | `merchant_name` `CHAR(22)` vs `VARCHAR(22)` | S-09 session | remediation dispatched |
+| A-09 | MINOR | CBEXPORT/CBIMPORT operator SYSOUT contract neither reproduced nor documented as dropped | S-16 session | remediation dispatched |
+| A-10 | MINOR | `PRTCATBL` `OUTREC`/`LRECL=40` contradiction resolved silently | orchestrator | **CLOSED** — D-9 |
+
+The audit independently reproduced the 916/0/0/0 backend run and the frontend build, and confirmed the
+44-program coverage arithmetic. The 916 figure is **backend-only**; there is no frontend test in CI (A-07).
 
 ## Next action
-Independent audit by a session that did no migration work, then **STOP E**: sign-off, evidence and audit
-to Kyu, and merge authorization before `devin/carddemo-integration` goes to `main`.
+Land the three dispatched remediation PRs (S-09 schema, frontend tests + CI, S-16 SYSOUT) into
+`devin/carddemo-integration`, re-run the audit over the fixes,
+then **STOP E**: sign-off, evidence and audit to Kyu, and merge authorization before
+`devin/carddemo-integration` goes to `main`.
