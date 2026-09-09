@@ -21,7 +21,8 @@ rules. Two Spring Batch 5 jobs (D-3), one step per legacy `EXEC PGM=`:
 
 Supporting classes: `TranReportPictures` (COBOL amount editing), `PostedTransaction` (the parsed
 extract record), `TranReportFiles` (dataset names), `TransactionReportLauncher` /
-`TransactionReportSubmission` (the S-07 launch port).
+`TransactionReportSubmission` (the launch port) and `TransactionReportJobLauncherAdapter` (the
+binding to S-07's seam).
 
 The jobs are named `TRANREPT` and `PRTCATBL` and are started the way the README prescribes, by
 `com.carddemo.batch.BatchJobLauncher` with `spring.batch.job.name`:
@@ -50,7 +51,11 @@ column positions the SORT symbols address (263-278, 305-314) can be reproduced h
   reader (`WRITEQ TD QUEUE('JOBS')`, CORPT00C.cbl:517-521). Migrated, S-14 exposes
   `TransactionReportLauncher.submit(reportType, startDate, endDate)`, which launches the `TRANREPT`
   job and returns `TransactionReportSubmission(jobExecutionId, status, reportFile)`. S-07 calls it
-  from its CR00 replacement; **no S-07 code is touched by this stream**. The contract is the three
+  from its CR00 replacement. S-07 landed its side first as
+  `com.carddemo.reporting.port.TransactionReportJobLauncher`, with a recording no-op bound
+  `@ConditionalOnMissingBean` until this stream arrived, so
+  `TransactionReportJobLauncherAdapter` implements that interface and delegates to the launcher;
+  registering it drops the no-op out. **No S-07 code is touched by this stream.** The contract is the three
   values CR00 already derived (`Monthly` / `Yearly` / `Custom` plus two `YYYY-MM-DD` dates,
   inclusive). A unique `submittedAt` parameter is added on every call so a repeated request starts a
   new run, as the internal reader did (FR-1405).
@@ -134,13 +139,13 @@ balance (Q-5) and the 41-character record (C-1).
 | `TransactionRecordImageTest` | FR-1411 — the 350-byte image and its column positions |
 | `TransactionExtractSortTaskletTest` | FR-1412, FR-1413 — inclusive window, card order, stability |
 | `TransactionReportWriterTest` | FR-1421…FR-1433, FR-1441…FR-1443 — layout, paging, totals, quirks, abends |
-| `TranReportJobTest` | FR-1401…FR-1405, FR-1444, FR-1461 — the job end to end, parity, the launch port |
+| `TranReportJobTest` | FR-1401…FR-1405, FR-1444, FR-1461 — the job end to end, parity, the launch port and the S-07 seam |
 | `CategoryBalanceSortTaskletTest` | FR-1452…FR-1455 |
 | `PrintCategoryBalanceJobTest` | FR-1451, FR-1453, FR-1454, FR-1456 |
 
-One test outside the lane was touched: `batch/dataload/DataLoadJobTest` autowired `Job` by type, and
-a second and third job in the context made that ambiguous. It now selects `dataLoadJob` by
-qualifier — setup only, no assertion changed.
+No test outside the lane needed changing: `batch/dataload/DataLoadJobTest` had to stop autowiring
+`Job` by type once this stream registered two more jobs, but another parallel stream had already
+made that change on the integration branch.
 
 ## 5. Deliberately deferred / not done
 

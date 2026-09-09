@@ -3,6 +3,8 @@ package com.carddemo.batch.tranreport;
 import com.carddemo.common.batch.AbendException;
 import com.carddemo.common.domain.TransactionRecord;
 import com.carddemo.common.repository.TransactionRepository;
+import com.carddemo.reporting.port.TransactionReportJobLauncher;
+import com.carddemo.reporting.port.TransactionReportJobRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.BatchStatus;
@@ -22,7 +24,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -55,6 +60,8 @@ class TranReportJobTest {
     private TransactionRepository transactions;
     @Autowired
     private TransactionReportLauncher launcher;
+    @Autowired
+    private TransactionReportJobLauncher reportingSeam;
 
     @BeforeEach
     void loadTransactFixture() {
@@ -145,6 +152,39 @@ class TranReportJobTest {
         assertThat(second.jobExecutionId()).isNotEqualTo(first.jobExecutionId());
         assertThat(second.status()).isEqualTo(BatchStatus.COMPLETED.name());
         assertThat(second.reportFile()).isNotEqualTo(first.reportFile());
+    }
+
+    /**
+     * S-07's CR00 replacement submits through its own port; this stream supplies
+     * the implementation that runs TRANREPT, displacing the recording no-op.
+     */
+    @Test
+    void bindsTheReportingSeamToTheJob() throws Exception {
+        assertThat(reportingSeam).isInstanceOf(TransactionReportJobLauncherAdapter.class);
+
+        reportingSeam.launch(new TransactionReportJobRequest(
+                "Monthly", LocalDate.parse(START), LocalDate.parse(END)));
+
+        assertThat(Files.readAllLines(latestReport(), StandardCharsets.UTF_8))
+                .containsExactlyElementsOf(TransactFixture.goldenReport());
+    }
+
+    /** The report of the most recent run, the seam having no return value of its own. */
+    private static Path latestReport() throws IOException {
+        Path dir = Path.of(System.getProperty("java.io.tmpdir"), "carddemo-tranreport-test");
+        try (Stream<Path> files = Files.list(dir)) {
+            return files.filter(file -> file.getFileName().toString().startsWith("TRANREPT."))
+                    .max(Comparator.comparing(TranReportJobTest::lastModified))
+                    .orElseThrow();
+        }
+    }
+
+    private static long lastModified(Path file) {
+        try {
+            return Files.getLastModifiedTime(file).toMillis();
+        } catch (IOException e) {
+            throw new java.io.UncheckedIOException(e);
+        }
     }
 
     private static JobParameters parameters(String reportType, String startDate, String endDate) {

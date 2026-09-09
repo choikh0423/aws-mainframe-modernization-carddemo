@@ -40,9 +40,6 @@ class DataLoadJobTest {
     @Qualifier("dataLoadJob")
     private Job dataLoadJob;
     @Autowired
-    @Qualifier("dataLoadJob")
-    private Job dataLoadJob;
-    @Autowired
     private AccountRepository accounts;
     @Autowired
     private CustomerRepository customers;
