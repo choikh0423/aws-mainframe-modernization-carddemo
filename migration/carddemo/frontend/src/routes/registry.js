@@ -16,6 +16,8 @@ import AddUserPage from '../pages/user/AddUserPage';
 import UpdateUserPage from '../pages/user/UpdateUserPage';
 import DeleteUserPage from '../pages/user/DeleteUserPage';
 import TransactionReportsPage from '../pages/reporting/TransactionReportsPage';
+import PendingAuthListPage from '../pages/pendingauth/PendingAuthListPage';
+import PendingAuthDetailPage from '../pages/pendingauth/PendingAuthDetailPage';
 
 /**
  * The route registry: one entry per legacy online screen, in menu order.
@@ -147,7 +149,7 @@ export const SCREENS = [
     path: '/pending-authorizations',
     title: 'View Authorizations',
     stream: 'S-09 PendingAuthorizations',
-    element: null,
+    element: <PendingAuthListPage />,
   },
   {
     program: 'COPAUS1C',
@@ -155,7 +157,7 @@ export const SCREENS = [
     path: '/pending-authorizations/detail',
     title: 'View Authorization Details',
     stream: 'S-09 PendingAuthorizations',
-    element: null,
+    element: <PendingAuthDetailPage />,
   },
   {
     program: 'COUSR00C',
