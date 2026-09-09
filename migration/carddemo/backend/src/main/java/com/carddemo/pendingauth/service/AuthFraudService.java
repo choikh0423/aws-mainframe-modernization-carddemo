@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 /**
@@ -28,9 +27,6 @@ import java.util.Optional;
  */
 @Service
 public class AuthFraudService {
-
-    /** {@code MMDDYY} with {@code DATESEP}: the CICS FORMATTIME report date. */
-    private static final DateTimeFormatter RPT_DATE = DateTimeFormatter.ofPattern("MM/dd/yy");
 
     private final AuthFraudRepository authFraudRepository;
     private final Clock clock;
@@ -61,9 +57,10 @@ public class AuthFraudService {
      *
      * @param success      WS-FRD-UPDATE-STATUS = 'S'
      * @param message      WS-FRD-ACT-MSG
-     * @param fraudRptDate the report date COPAUS2C stamps onto the record
+     * @param fraudRptDate {@code CURRENT DATE}, the report date COPAUS2C stamps
+     *                     onto {@code AUTHFRDS.FRAUD_RPT_DATE}
      */
-    public record FraudResult(boolean success, String message, String fraudRptDate) {
+    public record FraudResult(boolean success, String message, LocalDate fraudRptDate) {
     }
 
     /**
@@ -73,7 +70,7 @@ public class AuthFraudService {
     @Transactional(propagation = Propagation.REQUIRED)
     public FraudResult report(Long acctId, Long custId, PendingAuthDetailRecord detail,
                               Action action) {
-        String fraudRptDate = LocalDate.now(clock).format(RPT_DATE);
+        LocalDate fraudRptDate = LocalDate.now(clock);
         AuthFraudId id = new AuthFraudId(detail.getPaCardNum(), authTimestamp(detail));
 
         Optional<AuthFraudRecord> existing = authFraudRepository.findById(id);
@@ -99,7 +96,7 @@ public class AuthFraudService {
         row.setApprovedAmt(detail.getPaApprovedAmt());
         row.setMerchantCatagoryCode(detail.getPaMerchantCatagoryCode());
         row.setAcqrCountryCode(detail.getPaAcqrCountryCode());
-        row.setPosEntryMode(posEntryMode(detail));
+        row.setPosEntryMode(detail.getPaPosEntryMode());
         row.setMerchantId(detail.getPaMerchantId());
         row.setMerchantName(detail.getPaMerchantName());
         row.setMerchantCity(detail.getPaMerchantCity());
@@ -138,10 +135,5 @@ public class AuthFraudService {
     private String processingCode(PendingAuthDetailRecord detail) {
         return detail.getPaProcessingCode() == null
                 ? null : String.format("%06d", detail.getPaProcessingCode());
-    }
-
-    private String posEntryMode(PendingAuthDetailRecord detail) {
-        return detail.getPaPosEntryMode() == null
-                ? null : String.format("%02d", detail.getPaPosEntryMode());
     }
 }

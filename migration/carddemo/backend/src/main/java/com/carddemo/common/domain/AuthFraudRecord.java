@@ -7,6 +7,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 /**
  * DB2 table CARDDEMO.AUTHFRDS (app/app-authorization-ims-db2-mq/ddl/AUTHFRDS.ddl).
@@ -43,10 +44,10 @@ public class AuthFraudRecord {
     @Column(name = "processing_code", length = 6)
     private String processingCode;
 
-    @Column(name = "transaction_amt", precision = 11, scale = 2)
+    @Column(name = "transaction_amt", precision = 12, scale = 2)
     private BigDecimal transactionAmt;
 
-    @Column(name = "approved_amt", precision = 11, scale = 2)
+    @Column(name = "approved_amt", precision = 12, scale = 2)
     private BigDecimal approvedAmt;
 
     @Column(name = "merchant_catagory_code", length = 4)
@@ -55,8 +56,8 @@ public class AuthFraudRecord {
     @Column(name = "acqr_country_code", length = 3)
     private String acqrCountryCode;
 
-    @Column(name = "pos_entry_mode", length = 2)
-    private String posEntryMode;
+    @Column(name = "pos_entry_mode")
+    private Integer posEntryMode;
 
     @Column(name = "merchant_id", length = 15)
     private String merchantId;
@@ -82,8 +83,8 @@ public class AuthFraudRecord {
     @Column(name = "auth_fraud", length = 1)
     private String authFraud;
 
-    @Column(name = "fraud_rpt_date", length = 8)
-    private String fraudRptDate;
+    @Column(name = "fraud_rpt_date")
+    private LocalDate fraudRptDate;
 
     @Column(name = "acct_id")
     private Long acctId;
@@ -133,8 +134,8 @@ public class AuthFraudRecord {
     public String getAcqrCountryCode() { return acqrCountryCode; }
     public void setAcqrCountryCode(String acqrCountryCode) { this.acqrCountryCode = acqrCountryCode; }
 
-    public String getPosEntryMode() { return posEntryMode; }
-    public void setPosEntryMode(String posEntryMode) { this.posEntryMode = posEntryMode; }
+    public Integer getPosEntryMode() { return posEntryMode; }
+    public void setPosEntryMode(Integer posEntryMode) { this.posEntryMode = posEntryMode; }
 
     public String getMerchantId() { return merchantId; }
     public void setMerchantId(String merchantId) { this.merchantId = merchantId; }
@@ -160,8 +161,8 @@ public class AuthFraudRecord {
     public String getAuthFraud() { return authFraud; }
     public void setAuthFraud(String authFraud) { this.authFraud = authFraud; }
 
-    public String getFraudRptDate() { return fraudRptDate; }
-    public void setFraudRptDate(String fraudRptDate) { this.fraudRptDate = fraudRptDate; }
+    public LocalDate getFraudRptDate() { return fraudRptDate; }
+    public void setFraudRptDate(LocalDate fraudRptDate) { this.fraudRptDate = fraudRptDate; }
 
     public Long getAcctId() { return acctId; }
     public void setAcctId(Long acctId) { this.acctId = acctId; }
