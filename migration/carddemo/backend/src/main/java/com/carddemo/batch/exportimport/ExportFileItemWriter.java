@@ -31,10 +31,11 @@ public class ExportFileItemWriter implements ItemStreamWriter<byte[]> {
 
     static final String POSITION_KEY = "carddemo.exportimport.export.position";
 
-    /** The file status VSAM reported when a dataset could not be opened. */
-    static final String STATUS_OPEN_FAILED = "35";
-    /** The file status VSAM reported for a physical write error. */
-    static final String STATUS_WRITE_FAILED = "34";
+    static final String STATUS_OPEN_FAILED = ExportImportSysout.STATUS_OPEN_FAILED;
+    static final String STATUS_WRITE_FAILED = ExportImportSysout.STATUS_WRITE_FAILED;
+
+    static final String WRITE_ERROR_MESSAGE =
+            "ERROR: Writing export record, Status: " + STATUS_WRITE_FAILED;
 
     private final Path file;
     private final AbendService abendService;
@@ -55,8 +56,8 @@ public class ExportFileItemWriter implements ItemStreamWriter<byte[]> {
             channel.truncate(position);
             channel.position(position);
         } catch (IOException e) {
-            throw abendService.abend("0999", "CBEXPORT", e.toString(),
-                    "ERROR: Cannot open EXPORT-OUTPUT, Status: " + STATUS_OPEN_FAILED);
+            throw ExportImportSysout.abend(abendService, "CBEXPORT", e.toString(),
+                    ExportImportSysout.cannotOpen("EXPORT-OUTPUT", STATUS_OPEN_FAILED));
         }
         sequenceNumber = position / ExportRecordCodec.RECORD_LENGTH;
     }
@@ -68,8 +69,8 @@ public class ExportFileItemWriter implements ItemStreamWriter<byte[]> {
             try {
                 channel.write(ByteBuffer.wrap(record));
             } catch (IOException e) {
-                throw abendService.abend("0999", "CBEXPORT", e.toString(),
-                        "ERROR: Writing export record, Status: " + STATUS_WRITE_FAILED);
+                throw ExportImportSysout.abend(abendService, "CBEXPORT", e.toString(),
+                        WRITE_ERROR_MESSAGE);
             }
         }
     }
@@ -80,8 +81,8 @@ public class ExportFileItemWriter implements ItemStreamWriter<byte[]> {
             channel.force(false);
             executionContext.putLong(POSITION_KEY, channel.position());
         } catch (IOException e) {
-            throw abendService.abend("0999", "CBEXPORT", e.toString(),
-                    "ERROR: Writing export record, Status: " + STATUS_WRITE_FAILED);
+            throw ExportImportSysout.abend(abendService, "CBEXPORT", e.toString(),
+                    WRITE_ERROR_MESSAGE);
         }
     }
 
