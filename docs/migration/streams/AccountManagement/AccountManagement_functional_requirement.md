@@ -20,7 +20,7 @@ Message text below is **verbatim** from the COBOL literals, including double spa
 | FR-AV-06 | Enter an account id with no cross-reference row | `Account:<11-digit id> not found in Cross ref file.  Resp:000000013  Reas:0000` | COACTVWC:735-757 |
 | FR-AV-07 | Enter an account id in the xref but not in ACCTDAT | `Account:<11-digit id> not found in Acct Master file.Resp:000000013  Reas:0000` | COACTVWC:786-806 |
 | FR-AV-08 | Have an account whose customer is missing from CUSTDAT | `CustId:<9-digit id> not found in customer master.Resp: 000000013  REAS:0000000` | COACTVWC:837-858 |
-| FR-AV-09 | See amounts | Balance, credit limit, cash credit limit, cycle credit and cycle debit render as `+ZZZ,ZZZ,ZZZ.99` (e.g. `+     -197.13`, `+    5,000.00`) | COACTVW.bms:120,141,162,174,195 |
+| FR-AV-09 | See amounts | Balance, credit limit, cash credit limit, cycle credit and cycle debit render through `PICOUT='+ZZZ,ZZZ,ZZZ.99'` — a fixed leading sign, zero-suppressed digits, always two decimals, 15 characters (e.g. `-        197.13`, `+      5,000.00`) | COACTVW.bms:120,141,162,174,195 |
 | FR-AV-10 | See the SSN | Rendered `999-99-9999` | COACTVWC:1010-1017 |
 | FR-AV-11 | See the account id echoed | Zero-padded to 11 digits | COACTVWC:880-890 |
 | FR-AV-12 | Press F3 | Return to the caller screen, or the main menu (`CM00`/`COMEN01C`) when there is no caller | COACTVWC:472-520 |
@@ -57,11 +57,11 @@ Message text below is **verbatim** from the COBOL literals, including double spa
 | FR-AU-16 | Date of Birth in the future | `Date of Birth:cannot be in the future` | CSUTLDPY:329-367 |
 | FR-AU-17 | Credit Limit / Cash Credit Limit / Current Balance / Current Cycle Credit Limit / Current Cycle Debit Limit | blank → `<field> must be supplied.`; not a valid signed decimal → `<field> is not valid` | COACTUPC:1484-1527, 2180-2219 |
 | FR-AU-18 | SSN | per part: `SSN: First 3 chars must be supplied.` / `must be all numeric.` / `must not be zero.`, then `SSN: First 3 chars: should not be 000, 666, or between 900 and 999`; `SSN 4th & 5th chars …`; `SSN Last 4 chars …` | COACTUPC:1529-1531, 2431-2492 |
-| FR-AU-19 | FICO Score | non-numeric → `FICO Score must be all numeric.`; outside 300-850 → `FICO Score : should be between 300 and 850` | COACTUPC:1545-1556, 2514-2533 |
+| FR-AU-19 | FICO Score | non-numeric → `FICO Score must be all numeric.`; outside 300-850 → `FICO Score: should be between 300 and 850` (the field name is `TRIM`-ed before the literal, so there is no space before the colon) | COACTUPC:1545-1556, 2514-2533 |
 | FR-AU-20 | First Name / Last Name / City / Country / State | blank → `<field> must be supplied.`; contains anything other than letters and spaces → `<field> can have alphabets only.` | COACTUPC:1560-1630, 1898-1950 |
 | FR-AU-21 | Middle Name | Optional: blank passes; non-alphabetic → `Middle Name can have alphabets only.` | COACTUPC:1568-1574, 2012-2060 |
 | FR-AU-22 | Address Line 1 | blank → `Address Line 1 must be supplied.` (no character-set edit) | COACTUPC:1584-1590, 1824-1851 |
-| FR-AU-23 | State | Must be a real US state/territory code from `CSLKPCDY`, else `State : is not a valid state code` | COACTUPC:1592-1602, 2493-2509 |
+| FR-AU-23 | State | Must be a real US state/territory code from `CSLKPCDY`, else `State: is not a valid state code` | COACTUPC:1592-1602, 2493-2509 |
 | FR-AU-24 | Zip | blank → `Zip must be supplied.`; non-numeric → `Zip must be all numeric.`; zero → `Zip must not be zero.` | COACTUPC:1605-1611, 2109-2174 |
 | FR-AU-25 | State + Zip cross-edit | When both are individually valid, `state‖zip(1:2)` must be a known combination, else `Invalid zip code for state` | COACTUPC:1664-1669, 2536-2556 |
 | FR-AU-26 | Phone Number 1 / 2 | All three parts blank → accepted (phone is optional). Otherwise: `<field>: Area code must be supplied.` / `: Area code must be A 3 digit number.` / `: Area code cannot be zero` / `: Not valid North America general purpose area code`; the same three edits for `Prefix code` and for `Line number code` | COACTUPC:1632-1646, 2225-2426 |
@@ -90,25 +90,32 @@ Message text below is **verbatim** from the COBOL literals, including double spa
 | FR-AQ-05 | The stale-record check slices the stored DOB at `(1:4)(6:2)(9:2)` but the snapshot at `(1:4)(5:2)(7:2)` because the snapshot is `CCYYMMDD` while the record is `CCYY-MM-DD` | COACTUPC:4174-4179 |
 | FR-AQ-06 | `'*'` typed into any update field means "not supplied" — it is converted to `LOW-VALUES` on receive | COACTUPC:1051-1428 |
 | FR-AQ-07 | Zip is edited as a *number* (`must not be zero`), so `00000` is rejected with `Zip must not be zero.` rather than a zip-format message | COACTUPC:1605-1611 |
+| FR-AQ-09 | The "no phone supplied" test checks the area code twice instead of checking the line number, so a blank area code and prefix make the whole number optional even when a line number was typed | COACTUPC:2225-2240, 2325-2340 |
 | FR-AQ-08 | The account's own `ACCT-ADDR-ZIP` column exists on ACCTDAT but appears on neither map and is never updated | CVACT01Y; COACTUPC:3955-4000 |
 
 ## D. Traceability (FR ↔ test)
+All tests live under `migration/carddemo/backend/src/test/java/com/carddemo/account/`.
+
 | FR | Automated test |
 |----|----------------|
-| FR-AV-01, FR-AV-13 | `AccountViewControllerTest` (screen contract asserted through the response DTO), `AccountViewPage` route entry |
-| FR-AV-02, FR-AV-09…11 | `AccountViewServiceTest#returnsEditedFields`, `AccountViewControllerTest#viewReturnsDetails`, `AccountManagementE2EIntegrationTest` |
-| FR-AV-03…05 | `AccountFilterValidatorTest`, `AccountViewServiceTest#blank/nonNumeric/zero` |
-| FR-AV-06…08 | `AccountViewServiceTest#xrefMissing/acctMissing/custMissing`, `AccountViewControllerTest` |
-| FR-AV-12 | Route registry + `AccountViewPage` PF-key handler (frontend) |
-| FR-AU-01…05 | `AccountUpdateServiceTest#fetch*`, `AccountUpdateControllerTest#fetch*` |
-| FR-AU-06, FR-AU-07 | `AccountChangeDetectorTest`, `AccountUpdateServiceTest#noChangeDetected` |
-| FR-AU-08…12 | `AccountUpdateServiceTest#validateReturnsConfirmationState`, `#saveRequiresConfirmedState`, `AccountUpdateControllerTest` |
-| FR-AU-13 | `AccountUpdateValidatorTest#firstErrorWins`, `#validationOrder` |
-| FR-AU-14…28 | `AccountUpdateValidatorTest` (one case per rule), `AccountDateValidatorTest`, `UsLookupTablesTest` |
-| FR-AU-29 | `AccountUpdateControllerTest#validationFailureKeepsValues` |
-| FR-AU-30 | `AccountUpdateServiceTest#savePersistsBothRows`, `AccountManagementE2EIntegrationTest` |
-| FR-AU-31 | `AccountUpdateServiceTest#staleAccountRecord`, `#staleCustomerRecord` |
-| FR-AU-32, FR-AU-33 | `AccountUpdateServiceTest#lockFailure*` |
-| FR-AU-34 | `AccountUpdateServiceTest#rewriteFailureRollsBack` |
-| FR-AU-35, FR-AU-36 | `AccountUpdateStateTest` |
-| FR-AQ-01…08 | `AccountQuirkTest` (one assertion per quirk) |
+| FR-AV-01, FR-AV-13 | `AccountManagementIntegrationTest#viewShowsTheEditedAccountAndCustomerDetails` (the screen contract through the response DTO; the prompt and the single ENTER action are the `AccountViewPage` component) |
+| FR-AV-02 | `AccountViewServiceTest#readsXrefThenAccountThenCustomerAndFormatsTheScreen`, `AccountManagementIntegrationTest#viewShowsTheEditedAccountAndCustomerDetails` |
+| FR-AV-09…11 | `AccountFormatTest`, `AccountViewServiceTest#readsXrefThenAccountThenCustomerAndFormatsTheScreen` |
+| FR-AV-03…05 | `AccountFilterValidatorTest`, `AccountViewServiceTest#theFilterIsEditedBeforeAnyRead`, `AccountManagementIntegrationTest#viewRejectsABlankOrNonNumericFilterWithTheLegacyText` |
+| FR-AV-06…08 | `AccountViewServiceTest#aMissingXrefRowStopsBeforeTheAccountRead`, `#aMissingAccountRowStopsBeforeTheCustomerRead`, `#aMissingCustomerRowReportsTheCustomerId`, `AccountMessagesTest`, `AccountManagementIntegrationTest#viewReportsAnUnknownAccountAgainstTheCrossReferenceFile` |
+| FR-AV-12 | Route registry entry + `AccountViewPage` F3 handler (frontend) |
+| FR-AU-01, FR-AU-02 | `AccountUpdateServiceTest#fetchReturnsTheDetailsState`, `AccountManagementIntegrationTest#updateFetchReturnsTheSplitScreenFields` |
+| FR-AU-03…05 | `AccountFilterValidatorTest`, `AccountUpdateServiceTest#theFilterIsEditedOnEveryTurn`, `AccountViewServiceTest` (the same three reads) |
+| FR-AU-06, FR-AU-07 | `AccountChangeDetectorTest`, `AccountUpdateServiceTest#validateReportsNoChangeBeforeRunningTheEdits`, `AccountManagementIntegrationTest#validateReportsNoChangeWhenTheScreenIsUntouched` |
+| FR-AU-08 | `AccountUpdateServiceTest#validateReturnsTheConfirmationStateForACleanChange`, `AccountManagementIntegrationTest#validateReturnsTheFirstFailingEditThenAcceptsACleanScreen` (field protection is `AccountUpdatePage`) |
+| FR-AU-09 | `AccountUpdateServiceTest#saveRewritesBothRecordsInOrder`, `AccountManagementIntegrationTest#saveRewritesBothRecords` |
+| FR-AU-10…12 | `AccountUpdatePage` F12/F5/F3 handlers (frontend); the F12 re-read is `AccountUpdateServiceTest#fetchReturnsTheDetailsState` |
+| FR-AU-13 | `AccountUpdateValidatorTest#onlyTheFirstFailingEditIsReported`, `#editsRunInTheSourceOrder` |
+| FR-AU-14…28 | `AccountUpdateValidatorTest` (one case per rule), `AccountFieldEditsTest`, `AccountDateValidatorTest`, `UsLookupTablesTest` |
+| FR-AU-29 | `AccountUpdateServiceTest#validateKeepsTheEnteredValuesWhenAnEditFails` |
+| FR-AU-30 | `AccountUpdateServiceTest#saveRewritesBothRecordsInOrder`, `AccountManagementIntegrationTest#saveRewritesBothRecords` (stored date, phone and SSN formats asserted on the rows) |
+| FR-AU-31 | `AccountUpdateServiceTest#aRecordChangedSinceTheFetchIsNotOverwritten`, `AccountManagementIntegrationTest#saveRefusesAStaleSnapshot` |
+| FR-AU-32, FR-AU-33 | `AccountUpdateServiceTest#anUnlockableAccountRecordStopsTheSave`, `#anUnlockableCustomerRecordStopsTheSave` |
+| FR-AU-34 | `AccountUpdateServiceTest#aFailedRewriteReportsTheUpdateFailure` (the rollback is the `@Transactional` boundary on `AccountUpdateService.save`) |
+| FR-AU-35, FR-AU-36 | `AccountUpdateServiceTest#saveRefusesAnUnchangedScreen`, `#saveRunsTheEditsAgainBeforeTouchingTheFiles`, plus the state handling in `AccountUpdatePage` |
+| FR-AQ-01…09 | `AccountQuirkTest` (one test per quirk), `AccountUpdateValidatorTest#quirkBlankAreaAndPrefixSkipTheLineNumberEdit`, `AccountManagementIntegrationTest#saveRewritesBothRecords` (FR-AQ-08) |
