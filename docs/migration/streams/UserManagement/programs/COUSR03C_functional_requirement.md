@@ -87,8 +87,8 @@ the last remaining administrator. *(`COUSR03C.cbl:174-192`)*
 | FR-UD-8 | `UserDeleteControllerTest.frUD8_existingUser_returns200AndTheDeletedConfirmation`, `UserMessagesTest.frUS3_confirmationsQuoteTheIdVerbatim` |
 | FR-UD-9 | `UserDeleteServiceTest.frUD9_unknownId_reportsUserIdNotFound`, `UserDeleteControllerTest.frUD9_unknownId_returns404` |
 | FR-UD-10 | `UserDeleteServiceMockTest.frUD10_deleteFailure_reportsTheUpdateWording`, `UserMessagesTest.frUD10_quirkQ3_deleteFailureKeepsTheUpdateWording` |
-| FR-UD-11 | `DeleteUserPage` PF3 handler (no delete) |
-| FR-UD-12 | `DeleteUserPage` PF4 / PF12 handlers |
+| FR-UD-11 | `DeleteUserPage` PF3 handler (no delete), `DeleteUserPage.test.js` "PF3 returns to the admin menu", "PF3 resumes CU00 when the screen was opened from the list" |
+| FR-UD-12 | `DeleteUserPage` PF4 / PF12 handlers, `DeleteUserPage.test.js` "PF12 is the admin menu even when the list opened the screen" |
 | FR-UD-13 | `DeleteUserPage` unsupported-AID branch |
 | FR-UD-14 | `UserDeleteServiceTest.frUD14_quirkQ7_anAdministratorCanBeDeletedWithoutAGuard` |
 | FR-UD-15 | `UserAdminSecurityTest.frUS1_nonAdminIsRefusedOnEveryEndpoint` |

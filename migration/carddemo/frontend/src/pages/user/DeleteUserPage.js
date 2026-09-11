@@ -11,8 +11,9 @@ import { getUser, deleteUser } from '../../api/users';
  *   - PF5 -> delete immediately, with no confirmation and no protection for the
  *     signed-on or last administrator (FR-UD-7, FR-UD-14, quirk Q7), then
  *     "User <id> has been deleted ..." (cbl:313-322)
- *   - PF3 -> COADM01C (FR-UD-11); PF4 -> clear (FR-UD-12); PF12 -> COADM01C
- *     (FR-UD-13, cbl:132-135)
+ *   - PF3 -> CDEMO-FROM-PROGRAM, i.e. back to CU00 when a row selection opened
+ *     this screen and COADM01C otherwise (FR-UD-11, cbl:112-117); PF4 -> clear
+ *     (FR-UD-12); PF12 -> COADM01C unconditionally (FR-UD-13, cbl:124-126)
  * The map has no password field, and First/Last/Type are ASKIP output fields.
  */
 
@@ -62,6 +63,8 @@ export default function DeleteUserPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const selectedId = params.get('id') || '';
+  // CDEMO-FROM-PROGRAM: 'CU00' when COUSR00C XCTL'd here with a selected row.
+  const cameFromList = params.get('from') === 'CU00';
 
   const [userId, setUserId] = useState(selectedId);
   const [data, setData] = useState(EMPTY_DATA);
@@ -125,11 +128,20 @@ export default function DeleteUserPage() {
     setSuccess('');
   }, []);
 
+  // FR-UD-11: PF3 resumes CDEMO-FROM-PROGRAM, defaulting to the admin menu.
+  const back = useCallback(
+    () => navigate(cameFromList ? '/admin/users' : '/admin'),
+    [navigate, cameFromList],
+  );
+  // FR-UD-13: PF12 always MOVEs 'COADM01C' to CDEMO-TO-PROGRAM.
   const backToAdminMenu = useCallback(() => navigate('/admin'), [navigate]);
 
   useEffect(() => {
     const onKeyDown = (e) => {
-      if (e.key === 'F3' || e.key === 'F12') {
+      if (e.key === 'F3') {
+        e.preventDefault();
+        back();
+      } else if (e.key === 'F12') {
         e.preventDefault();
         backToAdminMenu();
       } else if (e.key === 'F4') {
@@ -142,7 +154,7 @@ export default function DeleteUserPage() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [backToAdminMenu, clear, remove]);
+  }, [back, backToAdminMenu, clear, remove]);
 
   return (
     <Layout tranId="CU03" progName="COUSR03C" title="Delete User" pfKeys={PF_KEYS}>
@@ -169,7 +181,7 @@ export default function DeleteUserPage() {
 
         <div style={styles.keys}>
           <button type="submit" style={styles.button}>ENTER — Fetch</button>
-          <button type="button" style={styles.button} onClick={backToAdminMenu}>F3 — Back</button>
+          <button type="button" style={styles.button} onClick={back}>F3 — Back</button>
           <button type="button" style={styles.button} onClick={clear}>F4 — Clear</button>
           <button type="button" style={styles.button} onClick={remove} disabled={!loaded}>F5 — Delete</button>
         </div>

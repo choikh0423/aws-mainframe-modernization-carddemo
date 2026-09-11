@@ -98,9 +98,9 @@ user type. *(`COUSR02C.cbl:204-208`)*
 | FR-UU-8 | `UserUpdateServiceTest.frUU8_noChange_reportsPleaseModifyToUpdate`, `UserUpdateControllerTest.frUU8_unchangedRecord_returns400PleaseModifyToUpdate` |
 | FR-UU-9 | `UserUpdateControllerTest.frUU9_changedRecord_returns200AndTheUpdatedConfirmation`, `UserMessagesTest.frUS3_confirmationsQuoteTheIdVerbatim` |
 | FR-UU-10 | `UserUpdateServiceMockTest.frUU10_rewriteFailure_reportsUnableToUpdateUser` |
-| FR-UU-11 | `UpdateUserPage` PF3 handler (saves, then navigates and drops the outcome — quirk Q4) |
+| FR-UU-11 | `UpdateUserPage` PF3 handler (saves, then navigates and drops the outcome — quirk Q4), `UpdateUserPage.test.js` "PF3 saves first, then leaves for the admin menu", "PF3 resumes CU00 when the screen was opened from the list" |
 | FR-UU-12 | `UpdateUserPage` PF4 handler |
-| FR-UU-13 | `UpdateUserPage` PF12 handler (`navigate('/admin')`, no write) |
+| FR-UU-13 | `UpdateUserPage` PF12 handler (`navigate('/admin')`, no write), `UpdateUserPage.test.js` "PF12 is the admin menu even when the list opened the screen" |
 | FR-UU-14 | `UpdateUserPage` unsupported-AID branch |
 | FR-UU-15 | `UserUpdateServiceTest.frUU15_theUserIdIsNotAnEditableField` |
 | FR-UU-16 | `UserUpdateServiceTest.frUU16_updateOfAnUnknownId_reportsUserIdNotFound_andCreatesNothing`, `UserUpdateControllerTest.frUU16_updateOfAnUnknownId_returns404` |

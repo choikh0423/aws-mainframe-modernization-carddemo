@@ -39,8 +39,8 @@ function statusLine() {
   return screen.getByRole('status').textContent;
 }
 
-async function renderFetched(backend) {
-  const view = renderScreen(<UpdateUserPage />, { route: '/admin/users/update?id=USER0003' });
+async function renderFetched(backend, route = '/admin/users/update?id=USER0003') {
+  const view = renderScreen(<UpdateUserPage />, { route });
   await waitFor(() => expect(statusLine()).toEqual(FETCH_PROMPT));
   return view;
 }
@@ -157,6 +157,34 @@ describe('CU02 Update User — keys (FR-UU-12, FR-UU-13, FR-UU-14)', () => {
 
     await waitFor(() => expect(view.location.pathname).toEqual('/admin'));
     expect(backend.callsTo('PUT', USER_URL)).toHaveLength(1);
+  });
+
+  /**
+   * RETURN-TO-PREV-SCREEN MOVEs CDEMO-FROM-PROGRAM to CDEMO-TO-PROGRAM and only
+   * falls back to COADM01C when it is blank (cbl:112-119), so PF3 resumes CU00
+   * when a row selection opened the screen — while PF12 is always the menu.
+   */
+  test('FR-UU-12: PF3 resumes CU00 when the screen was opened from the list', async () => {
+    const backend = stubBackend();
+    backend.get(USER_URL, RECORD);
+    backend.put(USER_URL, { userId: 'USER0003', message: UPDATED });
+
+    const view = await renderFetched(backend, '/admin/users/update?id=USER0003&from=CU00');
+    fireEvent.change(screen.getByLabelText('Last Name:'), { target: { value: 'ROE' } });
+    fireEvent.keyDown(window, { key: 'F3' });
+
+    await waitFor(() => expect(view.location.pathname).toEqual('/admin/users'));
+  });
+
+  test('FR-UU-14: PF12 is the admin menu even when the list opened the screen', async () => {
+    const backend = stubBackend();
+    backend.get(USER_URL, RECORD);
+
+    const view = await renderFetched(backend, '/admin/users/update?id=USER0003&from=CU00');
+    fireEvent.keyDown(window, { key: 'F12' });
+
+    await waitFor(() => expect(view.location.pathname).toEqual('/admin'));
+    expect(backend.callsTo('PUT', USER_URL)).toHaveLength(0);
   });
 
   test('FR-UU-13: PF4 clears the id, the data fields and the messages', async () => {

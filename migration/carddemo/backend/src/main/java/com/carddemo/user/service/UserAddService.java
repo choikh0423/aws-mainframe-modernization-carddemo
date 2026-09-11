@@ -10,6 +10,7 @@ import com.carddemo.user.exception.DuplicateUserIdException;
 import com.carddemo.user.exception.UserStoreException;
 import com.carddemo.user.validator.UserValidator;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,11 @@ import org.springframework.transaction.annotation.Transactional;
  * (cbl:115-160, 238-274). The three outcomes are reproduced here: NORMAL ->
  * the green "User <id> has been added ...", DUPKEY/DUPREC ->
  * "User ID already exist...", WHEN OTHER -> "Unable to Add User...".
+ *
+ * <p>{@code EXEC CICS WRITE} reports its outcome to the program that issued it,
+ * so the write is flushed inside this block rather than at commit: otherwise a
+ * constraint violation raised after the method returns would escape the
+ * translation and lose the literal the screen has to show.
  */
 @Service
 public class UserAddService {
@@ -49,7 +55,11 @@ public class UserAddService {
             record.setSecUsrLname(UserFields.fit(request.getLastName(), UserFields.LAST_NAME_LEN));
             record.setSecUsrPwd(UserFields.fit(request.getPassword(), UserFields.PASSWORD_LEN));
             record.setSecUsrType(UserFields.fit(request.getUserType(), UserFields.USER_TYPE_LEN));
-            repository.save(record);
+            repository.saveAndFlush(record);
+        } catch (DataIntegrityViolationException ex) {
+            // The DUPREC the WRITE reports when the key was taken between the
+            // existsById probe and the write itself.
+            throw new DuplicateUserIdException();
         } catch (DataAccessException ex) {
             throw new UserStoreException(UserMessages.UNABLE_TO_ADD_USER, ex);
         }

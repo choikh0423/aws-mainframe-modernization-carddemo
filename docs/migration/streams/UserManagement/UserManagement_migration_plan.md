@@ -65,7 +65,10 @@ com.carddemo.user
   `?startId=&dir=next|prev`: no cursor is held between requests, the initial/search key is
   **inclusive** (GTEQ) and the `next`/`prev` keys are **exclusive**, which is what the discarded
   `READNEXT` at `COUSR00C.cbl:286-288` achieves. `hasNextPage`/`hasPrevPage` carry the boundary
-  conditions the COBOL kept in `CDEMO-CU00-NEXT-PAGE-FLG` and the page counter.
+  conditions the COBOL kept in `CDEMO-CU00-NEXT-PAGE-FLG` and the page counter. The PF7 *guard*,
+  though, is the screen's page counter and not `hasPrevPage`: ENTER resets `CDEMO-CU00-PAGE-NUM`
+  (`COUSR00C.cbl:227`), so a search result is page 1 and PF7 refuses to move even where the file
+  holds lower ids (FR-UL-5).
 - **B-3 — Screen-only behaviour stays on the screen.** Page numbering (FR-UL-14), PF-key routing,
   clear, "invalid key pressed", and the CU00 selection scan are 3270/BMS concerns with no server
   state behind them, so they live in the React components (and, for the selection scan, in the
@@ -82,13 +85,20 @@ com.carddemo.user
   deliberately; it should be addressed estate-wide, not stream by stream.**
 - **B-6 — Truncation over rejection.** The 3270 map physically cannot deliver more than the picture
   width, so the API truncates to the `CSUSR01Y` widths (`UserFields.fit`) instead of rejecting long
-  input, which keeps stored values identical to the legacy ones (FR-US-2).
+  input, which keeps stored values identical to the legacy ones (FR-US-2). The cut is positional:
+  leading blanks occupy characters of the field and survive, only trailing padding is dropped.
 - **B-7 — Quirks preserved, not fixed.** Q1 (no user-type domain check), Q2 (no id/password rules),
   Q3 (`Unable to Update User...` on a failed *delete*), Q4 (PF3 on CU02 saves then leaves, discarding
   the outcome), Q5 (PF5 against a missing id reports `User ID NOT found...` and creates nothing),
   Q7 (no delete confirmation and no last-admin guard), Q8 (only the first non-blank `Sel` acts),
   Q10 (CU01 advertises `F12=Exit` but treats PF12 as an invalid key) and Q12 (`DELIMITED BY SPACE`
   confirmations) are all implemented as-is and each is pinned by a test.
+- **B-8 — Writes are flushed where their outcome is read.** `EXEC CICS WRITE`/`REWRITE`/`DELETE`
+  hand their RESP straight back to the program, which then chooses the literal to display. The
+  services therefore flush inside the `try` that translates the failure (`saveAndFlush`, and an
+  explicit `flush()` after the delete) rather than leaving it to the commit, where a constraint
+  violation would escape as a 500 instead of `Unable to Add User...` and friends. A constraint
+  violation on the CU01 write is the DUPREC arm, so it yields `User ID already exist...`.
 
 ## 4. Parity — legacy vs migrated, main paths
 

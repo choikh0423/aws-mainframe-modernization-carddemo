@@ -11,7 +11,8 @@ import { getUser, updateUser } from '../../api/users';
  *   - PF5 -> rewrite the four data fields; unchanged ->
  *     "Please modify to update ..." (FR-UU-8, cbl:238-243); changed ->
  *     "User <id> has been updated ..." (FR-UU-7, cbl:368-376)
- *   - PF3 -> save, then COADM01C (FR-UU-12, quirk Q4, cbl:129-132)
+ *   - PF3 -> save, then CDEMO-FROM-PROGRAM: back to CU00 when a row selection
+ *     opened this screen, COADM01C otherwise (FR-UU-12, quirk Q4, cbl:112-119)
  *   - PF4 -> clear (FR-UU-13); PF12 -> cancel to COADM01C without saving
  *     (FR-UU-14, cbl:137-140)
  * Reached from CU00 with the selected id in the query string, exactly as the
@@ -62,6 +63,8 @@ export default function UpdateUserPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const selectedId = params.get('id') || '';
+  // CDEMO-FROM-PROGRAM: 'CU00' when COUSR00C XCTL'd here with a selected row.
+  const cameFromList = params.get('from') === 'CU00';
 
   const [userId, setUserId] = useState(selectedId);
   const [data, setData] = useState(EMPTY_DATA);
@@ -121,8 +124,8 @@ export default function UpdateUserPage() {
   // FR-UU-12 / quirk Q4: PF3 saves and leaves regardless of the save outcome.
   const saveAndExit = useCallback(async () => {
     await save();
-    navigate('/admin');
-  }, [save, navigate]);
+    navigate(cameFromList ? '/admin/users' : '/admin');
+  }, [save, navigate, cameFromList]);
 
   const clear = useCallback(() => {
     setUserId('');
@@ -132,6 +135,7 @@ export default function UpdateUserPage() {
     setSuccess('');
   }, []);
 
+  // FR-UU-14: PF12 always MOVEs 'COADM01C' to CDEMO-TO-PROGRAM (cbl:124-126).
   const cancel = useCallback(() => navigate('/admin'), [navigate]);
 
   useEffect(() => {
