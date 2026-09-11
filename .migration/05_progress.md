@@ -19,7 +19,7 @@ Last updated: 2026-09-09, after the independent audit (PR #57) reported on `devi
 ## Integration state
 
 Branch `devin/carddemo-integration` (base for every stream PR; `main` untouched).
-Backend `mvn test`: **926 tests, 0 failures, 0 errors, 0 skipped**. Frontend: **14 suites / 223 tests passed**,
+Backend `mvn test`: **927 tests, 0 failures, 0 errors, 0 skipped**. Frontend: **14 suites / 223 tests passed**,
 `npm ci` and `CI=true npm run build` clean. CI (`carddemo-ci.yml`) now runs the frontend tests as well as the
 backend H2 tests and the build, and is green on every merged PR.
 
@@ -81,7 +81,7 @@ Raised by the re-audit (PR #61) over the remediation round itself:
 | A-11 | MAJOR | CT00 implemented 3 of `COTRN00C`'s 5 boundary literals; the `PROCESS-PAGE-BACKWARD` pair (`cbl:605-610`, `cbl:673-678`) was absent | frontend session | **CLOSED** — PR #62 |
 | A-12 | MINOR | a final page of exactly `PAGE_SIZE` rows shows no bottom message; COBOL's lookahead `READNEXT` sets it and `SEND-TRNLST-SCREEN:531` never clears it | frontend session | **CLOSED** — PR #63, CT00 and CU00 key the ENDFILE literal off `!hasNextPage` |
 | A-13 | MINOR | inventory §9.5 said 34 `StepBuilder` definitions; the grep returns 40 | orchestrator | **CLOSED** — §9.5 corrected to 40 and now cites the grep |
-| A-14 | MINOR | `V900` drops and re-adds `pos_entry_mode` instead of casting | orchestrator | **CLOSED as documented** — D-11 records the `USING` variant required against a populated table |
+| A-14 | MINOR | `V900` drops and re-adds `pos_entry_mode` instead of casting | orchestrator | **CLOSED in code** — the conversion moved to a dialect-specific `V901` under `db/vendor/{vendor}` that preserves existing values on both PostgreSQL and H2, with an upgrade test (D-11). Documenting the variant alone was not enough: Flyway still ran the drop |
 
 The re-audit independently reproduced the 926/0/0/0 backend run, the 212-test frontend run and the build,
 confirmed the 44-program coverage arithmetic and the §9 step reconciliation, and verified that the

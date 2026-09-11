@@ -41,7 +41,7 @@ All fourteen findings are now closed. A-14 is closed **as documented** rather th
 
 | Check | Result |
 |---|---|
-| Backend `mvn -B test` (H2 profile) | 926 tests, 0 failures, 0 errors, 0 skipped |
+| Backend `mvn -B test` (H2 profile) | 927 tests, 0 failures, 0 errors, 0 skipped |
 | Frontend `npm test -- --watchAll=false` | 14 suites, 223 tests passed (212 at the re-audit, plus the A-11/A-12 boundary-literal tests) |
 | Frontend `npm ci` + `CI=true npm run build` | clean |
 | CI `carddemo-ci.yml` | green on every merged PR; now runs the frontend tests as well as the backend tests and the build |
@@ -77,7 +77,7 @@ PR trail: foundation #40; streams #41–#56; audit #57; remediation #58, #59, #6
 | Ref | Deviation |
 |---|---|
 | D-9 | `PRTCATBL`'s `SORT OUTREC` is wider than the job's declared `LRECL=40`. The migration follows the `OUTREC` layout and does not truncate; the contradiction is a latent defect in the legacy JCL |
-| D-11 (A-14) | `V900` drops and re-adds `pos_entry_mode` because no single statement casts `CHAR`→`SMALLINT` on both PostgreSQL and H2. Lossless here — the table has no seed rows — but a deployment against a populated `auth_fraud` must use the `USING pos_entry_mode::smallint` form recorded in D-11 |
+| D-11 (A-14) | `pos_entry_mode` moves to `SMALLINT` in a dialect-specific `V901` under `db/vendor/{vendor}` — PostgreSQL casts with `USING NULLIF(TRIM(pos_entry_mode), '')::smallint`, H2 converts in place. Neither form drops the column, so a populated `auth_fraud` keeps its entry modes |
 | COUSR03C | A generic delete failure reports `Unable to Update User...`. Legacy quirk, preserved deliberately |
 | COTRTUPC | Does not light the `F6=Add` caption. Legacy quirk, preserved deliberately |
 
