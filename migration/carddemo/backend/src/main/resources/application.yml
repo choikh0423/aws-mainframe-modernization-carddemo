@@ -72,8 +72,10 @@ spring:
     password: ""
   flyway:
     enabled: true
-    # db/seed carries the ASCII-derived reference data (replaces S-18 DataLoadAndSetup).
-    locations: classpath:db/migration,classpath:db/seed
+    # db/vendor/{vendor} carries the migrations whose DDL cannot be written
+    # once for both dialects; db/seed carries the ASCII-derived reference data
+    # (replaces S-18 DataLoadAndSetup).
+    locations: classpath:db/migration,classpath:db/vendor/{vendor},classpath:db/seed
 
 ---
 spring:
@@ -88,4 +90,4 @@ spring:
   flyway:
     enabled: true
     # Add `,classpath:db/seed` (or run the DATALOAD batch job) to load demo data.
-    locations: classpath:db/migration
+    locations: classpath:db/migration,classpath:db/vendor/{vendor}

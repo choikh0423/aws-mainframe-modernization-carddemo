@@ -12,14 +12,16 @@ Last updated: 2026-09-09, after the independent audit (PR #57) reported on `devi
 | Phase 0/1 foundation | consolidated backend + frontend + full schema | **DONE** — PR #40 | `migration/carddemo/**` |
 | Phase 2 streams | 16 parallel stream sessions | **DONE** — PRs #41…#56 merged into `devin/carddemo-integration` | `docs/migration/streams/**` |
 | Phase 4 audit | independent audit by a session that did no migration work | **DONE** — PR #57, verdict NOT fit to merge: 2 BLOCKER, 5 MAJOR, 3 MINOR | `docs/migration/CardDemo_independent_audit.md` |
-| Phase 4 remediation | close the audit findings | IN PROGRESS | see the findings table below |
-| Phase 4 sign-off | `!mf_stream_signoff` + STOP E | BLOCKED on remediation | — |
+| Phase 4 remediation | close the audit findings | **DONE** — PRs #58, #59, #60, #62, #63 | see the findings table below |
+| Phase 4 re-audit | same independent session re-checks the fixes | **DONE** — PR #61, verdict **fit to merge** | `docs/migration/CardDemo_independent_audit.md` |
+| Phase 4 sign-off | `!mf_stream_signoff` + STOP E | **AWAITING KYU'S MERGE AUTHORIZATION** | `docs/migration/CardDemo_signoff.md` |
 
 ## Integration state
 
 Branch `devin/carddemo-integration` (base for every stream PR; `main` untouched).
-Backend `mvn test`: **916 tests, 0 failures, 0 errors**. Frontend `npm ci && npm run build`: compiled successfully.
-CI (`carddemo-ci.yml`, backend H2 tests + frontend build) green on every merged PR.
+Backend `mvn test`: **927 tests, 0 failures, 0 errors, 0 skipped**. Frontend: **14 suites / 223 tests passed**,
+`npm ci` and `CI=true npm run build` clean. CI (`carddemo-ci.yml`) now runs the frontend tests as well as the
+backend H2 tests and the build, and is green on every merged PR.
 
 ## Stream ledger
 
@@ -67,15 +69,25 @@ Source: `docs/migration/CardDemo_independent_audit.md` (PR #57).
 | A-04 | MAJOR | `EXEC PGM=` count published without derivation | orchestrator | **CLOSED** — inventory §9 reconciliation, D-10 |
 | A-05 | MAJOR | S-04 has no stream/program FR documents | orchestrator | **CLOSED** — inventory §10 states where its requirements live |
 | A-06 | MAJOR | boundary register left every row at `REGISTERED` | orchestrator | **CLOSED** — decision table appended to `04_boundary_register.md` |
-| A-07 | MAJOR | one frontend test, and CI never runs `npm test` | dedicated session | remediation dispatched |
+| A-07 | MAJOR | one frontend test, and CI never runs `npm test` | frontend session | **CLOSED** — PR #60, 212 tests over 14 suites, `npm test` in CI |
 | A-08 | MINOR | `merchant_name` `CHAR(22)` vs `VARCHAR(22)` | S-09 session | **CLOSED** — PR #59 |
 | A-09 | MINOR | CBEXPORT/CBIMPORT operator SYSOUT contract neither reproduced nor documented as dropped | S-16 session | **CLOSED** — PR #58, `ExportImportSysout` |
 | A-10 | MINOR | `PRTCATBL` `OUTREC`/`LRECL=40` contradiction resolved silently | orchestrator | **CLOSED** — D-9 |
 
-The audit independently reproduced the 916/0/0/0 backend run and the frontend build, and confirmed the
-44-program coverage arithmetic. The 916 figure is **backend-only**; there is no frontend test in CI (A-07).
+Raised by the re-audit (PR #61) over the remediation round itself:
+
+| ID | Sev | Subject | Owner | Status |
+|---|---|---|---|---|
+| A-11 | MAJOR | CT00 implemented 3 of `COTRN00C`'s 5 boundary literals; the `PROCESS-PAGE-BACKWARD` pair (`cbl:605-610`, `cbl:673-678`) was absent | frontend session | **CLOSED** — PR #62 |
+| A-12 | MINOR | a final page of exactly `PAGE_SIZE` rows shows no bottom message; COBOL's lookahead `READNEXT` sets it and `SEND-TRNLST-SCREEN:531` never clears it | frontend session | **CLOSED** — PR #63, CT00 and CU00 key the ENDFILE literal off `!hasNextPage` |
+| A-13 | MINOR | inventory §9.5 said 34 `StepBuilder` definitions; the grep returns 40 | orchestrator | **CLOSED** — §9.5 corrected to 40 and now cites the grep |
+| A-14 | MINOR | `V900` drops and re-adds `pos_entry_mode` instead of casting | orchestrator | **CLOSED in code** — the conversion moved to a dialect-specific `V901` under `db/vendor/{vendor}` that preserves existing values on both PostgreSQL and H2, with an upgrade test (D-11). Documenting the variant alone was not enough: Flyway still ran the drop |
+
+The re-audit independently reproduced the 926/0/0/0 backend run, the 212-test frontend run and the build,
+confirmed the 44-program coverage arithmetic and the §9 step reconciliation, and verified that the
+remediation touched no file under `app/**` or `migration/transaction-management/**` and left the `V1`
+baseline unchanged.
 
 ## Next action
-PRs #58 and #59 are merged into `devin/carddemo-integration` (both green). Remaining: the frontend
-test/CI PR for A-07, then re-run the audit over the fixes, then **STOP E**: sign-off, evidence and audit
-to Kyu, and merge authorization before `devin/carddemo-integration` goes to `main`.
+**STOP E** — sign-off, evidence and the re-audit are with Kyu; `devin/carddemo-integration` does not go to
+`main` without his explicit authorization.
