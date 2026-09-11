@@ -38,8 +38,8 @@ function statusLine() {
   return screen.getByRole('status').textContent;
 }
 
-async function renderFetched(backend) {
-  const view = renderScreen(<DeleteUserPage />, { route: '/admin/users/delete?id=USER0005' });
+async function renderFetched(backend, route = '/admin/users/delete?id=USER0005') {
+  const view = renderScreen(<DeleteUserPage />, { route });
   await waitFor(() => expect(statusLine()).toEqual(DELETE_PROMPT));
   return view;
 }
@@ -147,6 +147,31 @@ describe('CU03 Delete User — keys (FR-UD-11, FR-UD-12, FR-UD-13)', () => {
 
     await waitFor(() => expect(view.location.pathname).toEqual('/admin'));
     expect(backend.callsTo('DELETE', USER_URL)).toHaveLength(0);
+  });
+
+  /**
+   * RETURN-TO-PREV-SCREEN MOVEs CDEMO-FROM-PROGRAM to CDEMO-TO-PROGRAM and only
+   * falls back to COADM01C when it is blank (cbl:112-117).
+   */
+  test('FR-UD-11: PF3 resumes CU00 when the screen was opened from the list', async () => {
+    const backend = stubBackend();
+    backend.get(USER_URL, RECORD);
+
+    const view = await renderFetched(backend, '/admin/users/delete?id=USER0005&from=CU00');
+    fireEvent.keyDown(window, { key: 'F3' });
+
+    await waitFor(() => expect(view.location.pathname).toEqual('/admin/users'));
+    expect(backend.callsTo('DELETE', USER_URL)).toHaveLength(0);
+  });
+
+  test('FR-UD-13: PF12 is the admin menu even when the list opened the screen', async () => {
+    const backend = stubBackend();
+    backend.get(USER_URL, RECORD);
+
+    const view = await renderFetched(backend, '/admin/users/delete?id=USER0005&from=CU00');
+    fireEvent.keyDown(window, { key: 'F12' });
+
+    await waitFor(() => expect(view.location.pathname).toEqual('/admin'));
   });
 
   test('FR-UD-13: PF12 returns to the admin menu without deleting', async () => {

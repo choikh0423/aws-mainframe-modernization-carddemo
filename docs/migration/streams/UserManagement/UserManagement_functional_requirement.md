@@ -24,8 +24,10 @@ Migrated: every endpoint sits under `/api/admin/users`, which
 
 **FR-US-2 — Record shape.** A user consists of exactly the five USRSEC fields — user id `X(8)` (the
 key), first name `X(20)`, last name `X(20)`, password `X(8)`, user type `X(1)` — and nothing else. A
-value longer than its picture is truncated to it (COBOL `MOVE` semantics); trailing blanks are not
-significant. *(`app/cpy/CSUSR01Y.cpy:17-23`)*
+value longer than its picture is truncated to it (COBOL `MOVE` semantics), by position: a blank the
+operator typed ahead of the value occupies a character of the field and is kept, and the cut is made
+at the picture width, not after the leading blanks are removed. Only trailing blanks are
+insignificant. *(`app/cpy/CSUSR01Y.cpy:17-23`)*
 
 **FR-US-3 — Messages are verbatim.** Every message the stream can show is one of the following
 literals, reproduced character for character. No other user-facing text is produced.
@@ -91,7 +93,7 @@ CU00 honouring only the first selection flag (Q8).
 | Requirement | Test |
 |---|---|
 | FR-US-1 | `UserAdminSecurityTest.frUS1_anonymousCallerIsRefused`, `.frUS1_nonAdminIsRefusedOnEveryEndpoint`, `.frUS1_adminIsAdmitted` |
-| FR-US-2 | `UserFieldsTest.frUS2_valueLongerThanThePictureIsTruncated`, `.frUS2_paddingIsNotSignificant`, `.frUS2_spacesOrLowValuesAreBlank`, `UserAddServiceTest.frUA12_overlongFieldsAreTruncatedToThePicture` |
+| FR-US-2 | `UserFieldsTest.frUS2_valueLongerThanThePictureIsTruncated`, `.frUS2_trailingPaddingIsNotSignificant`, `.frUS2_leadingBlanksOccupyPositionsAndAreKept`, `.frUS2_spacesOrLowValuesAreBlank`, `UserAddServiceTest.frUA12_overlongFieldsAreTruncatedToThePicture` |
 | FR-US-3 | `UserMessagesTest.frUS3_confirmationsQuoteTheIdVerbatim`, `.frUS3_quirkQ12_idIsDelimitedByTheFirstSpace`, `.frUS3_boundaryAndSelectionLiteralsAreVerbatim`, `.frUD10_quirkQ3_deleteFailureKeepsTheUpdateWording`, plus the per-literal assertions in the service and controller tests |
 | FR-US-4 | The four `pages/user/*Page.js` components (labels, field order, annotations, PF line, password input, read-only CU03 fields) |
 | FR-US-5 | `pages/user/selection.js` + `selection.test.js` (CU00 `U`/`D` routing) and the PF3/PF12 handlers in the four pages |

@@ -10,8 +10,8 @@ import { resolveSelection, INVALID_SELECTION } from './selection';
  *   - type a Search User ID + ENTER -> list begins at/after it (FR-UL-2, cbl:217-232)
  *   - PF8 -> next 10; at the end -> "You have reached the bottom of the page..."
  *     (FR-UL-3, FR-UL-6, cbl:257-277)
- *   - PF7 -> previous 10; at the top -> "You are already at the top of the page..."
- *     (FR-UL-4, FR-UL-5, cbl:237-255)
+ *   - PF7 -> previous 10, but only past page 1; on page 1 ->
+ *     "You are already at the top of the page..." (FR-UL-4, FR-UL-5, cbl:237-255)
  *   - an empty browse -> "You are at the top of the page..." (FR-UL-7, cbl:600-607)
  *   - a page whose (lookahead) read hits ENDFILE -> the file-boundary literals
  *     (FR-UL-8, cbl:634-641, :668-675)
@@ -141,12 +141,14 @@ export default function UserListPage() {
     }
     // PROCESS-ENTER-KEY scans the USRSEL flags before honouring the search key.
     const selection = resolveSelection(page.rows, selections);
+    // `from` carries CDEMO-FROM-PROGRAM (cbl:184-208): it is what sends the
+    // detail screen's PF3 back here instead of to the admin menu.
     if (selection.action === 'update') {
-      navigate(`/admin/users/update?id=${encodeURIComponent(selection.userId)}`);
+      navigate(`/admin/users/update?id=${encodeURIComponent(selection.userId)}&from=CU00`);
       return;
     }
     if (selection.action === 'delete') {
-      navigate(`/admin/users/delete?id=${encodeURIComponent(selection.userId)}`);
+      navigate(`/admin/users/delete?id=${encodeURIComponent(selection.userId)}&from=CU00`);
       return;
     }
     if (selection.action === 'invalid') {
@@ -175,14 +177,17 @@ export default function UserListPage() {
   }, [page.hasNextPage, page.lastId, load]);
 
   const pageBackward = useCallback(async () => {
-    if (!page.hasPrevPage) {
+    // PROCESS-PF7-KEY guards on CDEMO-CU00-PAGE-NUM > 1 (cbl:248-254), not on
+    // whether lower ids exist, and ENTER resets that counter (cbl:227) — so a
+    // search result is page 1 and PF7 holds it there.
+    if (pageNum <= 1) {
       setMessage(ALREADY_TOP_MSG);
       return;
     }
     if (await load({ startId: page.firstId, dir: 'prev' })) {
       setPageNum((n) => Math.max(1, n - 1));
     }
-  }, [page.hasPrevPage, page.firstId, load]);
+  }, [pageNum, page.firstId, load]);
 
   // FR-UL-15: PF3 -> COADM01C.
   const backToAdminMenu = useCallback(() => navigate('/admin'), [navigate]);
@@ -232,42 +237,44 @@ export default function UserListPage() {
           <button type="button" style={styles.button} onClick={pageBackward}>F7 — Backward</button>
           <button type="button" style={styles.button} onClick={pageForward}>F8 — Forward</button>
         </div>
-      </form>
 
-      <div style={styles.error} role="alert">{message}</div>
+        <div style={styles.error} role="alert">{message}</div>
 
-      <div style={styles.form}>Type &apos;U&apos; to Update or &apos;D&apos; to Delete a User from the list</div>
+        <div style={styles.form}>Type &apos;U&apos; to Update or &apos;D&apos; to Delete a User from the list</div>
 
-      <table style={table}>
-        <thead>
-          <tr>
-            <th style={th} scope="col">Sel</th>
-            <th style={th} scope="col">User ID</th>
-            <th style={th} scope="col">First Name</th>
-            <th style={th} scope="col">Last Name</th>
-            <th style={th} scope="col">Type</th>
-          </tr>
-        </thead>
-        <tbody>
-          {page.rows.map((row) => (
-            <tr key={row.userId}>
-              <td style={td}>
-                <input
-                  aria-label={`select ${row.userId}`}
-                  style={selInput}
-                  maxLength={1}
-                  value={selections[row.userId] || ''}
-                  onChange={(e) => setSel(row.userId, e.target.value)}
-                />
-              </td>
-              <td style={td}>{row.userId}</td>
-              <td style={td}>{row.firstName}</td>
-              <td style={td}>{row.lastName}</td>
-              <td style={td}>{row.userType}</td>
+        {/* The Sel flags sit inside the form so ENTER from any of them submits
+            the screen, as the 3270 AID does (cbl:161-231). */}
+        <table style={table}>
+          <thead>
+            <tr>
+              <th style={th} scope="col">Sel</th>
+              <th style={th} scope="col">User ID</th>
+              <th style={th} scope="col">First Name</th>
+              <th style={th} scope="col">Last Name</th>
+              <th style={th} scope="col">Type</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {page.rows.map((row) => (
+              <tr key={row.userId}>
+                <td style={td}>
+                  <input
+                    aria-label={`select ${row.userId}`}
+                    style={selInput}
+                    maxLength={1}
+                    value={selections[row.userId] || ''}
+                    onChange={(e) => setSel(row.userId, e.target.value)}
+                  />
+                </td>
+                <td style={td}>{row.userId}</td>
+                <td style={td}>{row.firstName}</td>
+                <td style={td}>{row.lastName}</td>
+                <td style={td}>{row.userType}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </form>
     </Layout>
   );
 }

@@ -136,15 +136,42 @@ describe('CU00 List Users — pagination (FR-UL-1…FR-UL-8, FR-UL-14)', () => {
   test('FR-UL-8: a short backward page ends at the file boundary', async () => {
     const backend = stubBackend();
     backend.get('/api/admin/users', [
+      FIRST_PAGE,
       pageOf(11, 10, { hasNextPage: true, hasPrevPage: true }),
       pageOf(1, 4, { hasNextPage: true, hasPrevPage: false }),
     ]);
 
-    renderScreen(<UserListPage />);
-    await screen.findByText('USER0011');
+    await renderList(backend);
+    fireEvent.keyDown(window, { key: 'F8' });
+    await screen.findByText('Page: 2');
     fireEvent.keyDown(window, { key: 'F7' });
 
     await waitFor(() => expect(message()).toEqual(REACHED_TOP));
+  });
+
+  /**
+   * PROCESS-ENTER-KEY MOVEs 0 to CDEMO-CU00-PAGE-NUM before browsing from the
+   * search key (cbl:227), and PROCESS-PF7-KEY guards on that counter rather
+   * than on the file (cbl:248-254): a search result is page 1 even though the
+   * file holds lower ids, so PF7 holds it there.
+   */
+  test('FR-UL-5: PF7 after a search stays on the result page', async () => {
+    const backend = stubBackend();
+    backend.get('/api/admin/users', [
+      FIRST_PAGE,
+      pageOf(3, 10, { hasNextPage: true, hasPrevPage: true }),
+    ]);
+
+    await renderList(backend);
+    fireEvent.change(screen.getByLabelText('Search User ID:'), { target: { value: 'USER0003' } });
+    fireEvent.click(screen.getByRole('button', { name: 'ENTER — Continue' }));
+    await screen.findByText('USER0012');
+
+    fireEvent.keyDown(window, { key: 'F7' });
+
+    await waitFor(() => expect(message()).toEqual(ALREADY_TOP));
+    expect(backend.callsTo('GET', '/api/admin/users')).toHaveLength(2);
+    expect(screen.getByText('Page: 1')).toBeInTheDocument();
   });
 
   /**
@@ -175,11 +202,13 @@ describe('CU00 List Users — pagination (FR-UL-1…FR-UL-8, FR-UL-14)', () => {
   test('FR-UL-8: paging back onto a full page 1 shows the top-of-file literal', async () => {
     const backend = stubBackend();
     backend.get('/api/admin/users', [
+      FIRST_PAGE,
       pageOf(11, 10, { hasNextPage: true, hasPrevPage: true }),
       FIRST_PAGE,
     ]);
 
-    renderScreen(<UserListPage />);
+    await renderList(backend);
+    fireEvent.keyDown(window, { key: 'F8' });
     await screen.findByText('USER0011');
     fireEvent.keyDown(window, { key: 'F7' });
 
@@ -211,7 +240,8 @@ describe('CU00 List Users — selection flags (FR-UL-9…FR-UL-13)', () => {
     fireEvent.change(screen.getByLabelText('select USER0003'), { target: { value: 'U' } });
     fireEvent.click(screen.getByRole('button', { name: 'ENTER — Continue' }));
 
-    await waitFor(() => expect(currentUrl(view.location)).toEqual('/admin/users/update?id=USER0003'));
+    await waitFor(() => expect(currentUrl(view.location))
+      .toEqual('/admin/users/update?id=USER0003&from=CU00'));
   });
 
   test('FR-UL-10: `D` hands the row to CU03 Delete, and the flag is case-insensitive', async () => {
@@ -222,7 +252,8 @@ describe('CU00 List Users — selection flags (FR-UL-9…FR-UL-13)', () => {
     fireEvent.change(screen.getByLabelText('select USER0005'), { target: { value: 'd' } });
     fireEvent.click(screen.getByRole('button', { name: 'ENTER — Continue' }));
 
-    await waitFor(() => expect(currentUrl(view.location)).toEqual('/admin/users/delete?id=USER0005'));
+    await waitFor(() => expect(currentUrl(view.location))
+      .toEqual('/admin/users/delete?id=USER0005&from=CU00'));
   });
 
   test('FR-UL-11/FR-UL-13: any other flag is refused verbatim over a re-listed page 1', async () => {
@@ -248,7 +279,25 @@ describe('CU00 List Users — selection flags (FR-UL-9…FR-UL-13)', () => {
     fireEvent.change(screen.getByLabelText('select USER0006'), { target: { value: 'U' } });
     fireEvent.click(screen.getByRole('button', { name: 'ENTER — Continue' }));
 
-    await waitFor(() => expect(currentUrl(view.location)).toEqual('/admin/users/delete?id=USER0004'));
+    await waitFor(() => expect(currentUrl(view.location))
+      .toEqual('/admin/users/delete?id=USER0004&from=CU00'));
+  });
+
+  /**
+   * The Sel flags are input fields on the same 3270 map, so the ENTER AID is
+   * sent from whichever of them holds the cursor (cbl:161-231).
+   */
+  test('FR-UL-9: ENTER pressed in a Sel field submits the screen', async () => {
+    const backend = stubBackend();
+    backend.get('/api/admin/users', FIRST_PAGE);
+
+    const view = await renderList(backend);
+    const sel = screen.getByLabelText('select USER0003');
+    fireEvent.change(sel, { target: { value: 'U' } });
+    fireEvent.submit(sel);
+
+    await waitFor(() => expect(currentUrl(view.location))
+      .toEqual('/admin/users/update?id=USER0003&from=CU00'));
   });
 
   test('FR-UL-2: with no flag ENTER restarts the browse at the search key', async () => {

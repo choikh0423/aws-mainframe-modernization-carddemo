@@ -35,7 +35,10 @@ shown, exclusive of it, redisplayed in ascending id order.
 *(`COUSR00C.cbl:237-255`, `:336-360`)*
 
 **FR-UL-5 — Top boundary.** PF7 while the page number is not greater than 1 leaves the page unchanged
-and displays `You are already at the top of the page...`. *(`COUSR00C.cbl:249-254`)*
+and displays `You are already at the top of the page...`. The guard is the page counter, not the file:
+ENTER resets `CDEMO-CU00-PAGE-NUM` to 0 before browsing from the search key (`:227`), so a search
+result is page 1 and PF7 holds it there even when the file holds lower ids.
+*(`COUSR00C.cbl:249-254`, `:214-231`)*
 
 **FR-UL-6 — Bottom boundary.** PF8 when the previous page found no further record
 (`CDEMO-CU00-NEXT-PAGE-FLG = 'N'`) leaves the page unchanged and displays
@@ -95,11 +98,11 @@ by `UserListPage`, exactly as the reference stream surfaces the CT00 boundary te
 | FR-UL-2 | `UserListServiceTest.frUL2_searchKeyIsInclusive`, `.frUL2_searchKeyWithNoExactMatch_startsAtTheNextId`, `.frUL2_searchKeyLongerThanEightCharsIsTruncated`, `UserListControllerTest.frUL2_searchUserId_startsAtOrAfterTheKey` |
 | FR-UL-3 | `UserListServiceTest.frUL3_next_pagesForwardExclusiveOfTheLastIdShown`, `UserListControllerTest.frUL3_next_pagesForward` |
 | FR-UL-4 | `UserListServiceTest.frUL4_prev_pagesBackwardExclusiveOfTheFirstIdShown_inAscendingOrder`, `UserListControllerTest.frUL4_prev_pagesBackward` |
-| FR-UL-5 | `UserListServiceTest.frUL5_atTheTop_thePreviousPageFlagIsOff`, `UserMessagesTest.frUS3_boundaryAndSelectionLiteralsAreVerbatim`, `UserListPage` `ALREADY_TOP_MSG` |
+| FR-UL-5 | `UserListServiceTest.frUL5_atTheTop_thePreviousPageFlagIsOff`, `UserMessagesTest.frUS3_boundaryAndSelectionLiteralsAreVerbatim`, `UserListPage.test.js` "PF7 on page 1 leaves the page alone and says so verbatim", "PF7 after a search stays on the result page" |
 | FR-UL-6 | `UserListServiceTest.frUL6_atTheBottom_theNextPageFlagIsOff`, `UserMessagesTest.frUS3_boundaryAndSelectionLiteralsAreVerbatim`, `UserListPage` `ALREADY_BOTTOM_MSG` |
 | FR-UL-7 | `UserListServiceTest.frUL7_searchKeyPastTheEnd_returnsAnEmptyPage`, `UserListPage` empty-page `AT_TOP_MSG` |
 | FR-UL-8 | `UserListServiceMockTest.frUL8_browseFailure_reportsUnableToLookupUser`, `UserMessagesTest.frUS3_boundaryAndSelectionLiteralsAreVerbatim`, `UserListPage` short-page `REACHED_BOTTOM_MSG`/`REACHED_TOP_MSG` |
-| FR-UL-9 | `selection.test.js` "`U` selects the row for the Update screen" and the case-insensitive case |
+| FR-UL-9 | `selection.test.js` "`U` selects the row for the Update screen" and the case-insensitive case, `UserListPage.test.js` "ENTER pressed in a Sel field submits the screen" |
 | FR-UL-10 | `selection.test.js` "`D` selects the row for the Delete screen" and the case-insensitive case |
 | FR-UL-11 | `selection.test.js` "any other non-blank flag is an invalid selection", `UserMessagesTest.frUS3_boundaryAndSelectionLiteralsAreVerbatim` |
 | FR-UL-12 | `selection.test.js` "(quirk Q8): only the first non-blank flag is honoured" |

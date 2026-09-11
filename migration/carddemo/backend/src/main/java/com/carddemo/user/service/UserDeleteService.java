@@ -48,7 +48,10 @@ public class UserDeleteService {
         SecUserRecord found = record.orElseThrow(UserNotFoundException::new);
 
         try {
+            // Flushed here so a failing DELETE reaches the operator as the
+            // legacy literal, the way CICS reports RESP to the program.
             repository.delete(found);
+            repository.flush();
         } catch (DataAccessException ex) {
             throw new UserStoreException(UserMessages.UNABLE_TO_UPDATE_USER, ex);
         }

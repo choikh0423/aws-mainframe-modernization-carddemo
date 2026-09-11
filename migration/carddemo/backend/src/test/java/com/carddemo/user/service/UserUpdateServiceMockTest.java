@@ -64,7 +64,7 @@ class UserUpdateServiceMockTest {
     @Test
     void frUU10_rewriteFailure_reportsUnableToUpdateUser() {
         when(repository.findById("USER0001")).thenReturn(Optional.of(stored()));
-        when(repository.save(any(SecUserRecord.class)))
+        when(repository.saveAndFlush(any(SecUserRecord.class)))
                 .thenThrow(new DataAccessResourceFailureException("USRSEC unavailable"));
 
         assertThatThrownBy(() -> service.update("USER0001", request()))

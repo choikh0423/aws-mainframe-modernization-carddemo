@@ -80,7 +80,9 @@ public class UserUpdateService {
         }
 
         try {
-            repository.save(record);
+            // Flushed here so a failing REWRITE reaches the operator as the
+            // legacy literal, the way CICS reports RESP to the program.
+            repository.saveAndFlush(record);
         } catch (DataAccessException ex) {
             throw new UserStoreException(UserMessages.UNABLE_TO_UPDATE_USER, ex);
         }
