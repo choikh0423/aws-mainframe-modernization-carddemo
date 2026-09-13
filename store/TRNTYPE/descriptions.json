@@ -1,0 +1,154 @@
+{
+  "meta": {
+    "module": "TRNTYPE",
+    "generated_at": "2026-09-13T16:20:31Z",
+    "tool": "mftb 0.1.0",
+    "inputs": [
+      "programs.json",
+      "jobs.json",
+      "schedule.json"
+    ]
+  },
+  "author": "agent",
+  "summary": {
+    "subjects": 6,
+    "written": 0,
+    "unknown": 6,
+    "by_kind": {
+      "program": 3,
+      "jcl": 3,
+      "proc": 0
+    },
+    "with_key_points": 0,
+    "overviews": 7,
+    "overviews_written": 3
+  },
+  "overviews": [
+    {
+      "kind": "module",
+      "name": "TRNTYPE",
+      "key_points": [
+        "The transaction-type extension: it keeps transaction type and category reference data in DB2 with embedded static SQL, instead of the VSAM reference files the core application uses.",
+        "Administrators maintain the types from CICS (CTLI, CTTU) and in batch, and an extract job feeds the data back to the VSAM side.",
+        "It is an optional extension of CardDemo, reached from the core admin menu - COADM02Y names COTRTLIC and COTRTUPC."
+      ],
+      "basis": [
+        "app/app-transaction-type-db2/README.md:8",
+        "app/app-transaction-type-db2/README.md:24",
+        "app/cpy/COADM02Y.cpy:49"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "chain",
+      "name": "CARDDEMO",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "chain",
+      "name": "DAILY-TransactionBackup",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "chain",
+      "name": "WEEKLY-TransactionTypesDBRefresh",
+      "key_points": [
+        "The weekly DB2 refresh folder: MNTTRDB2 maintains the DB2 transaction-type tables, and its OUT condition releases the two SMART tables inside the same folder.",
+        "Ordered weekly; MNTTRDB2 is the only job defined directly in the folder, the rest of the work is in the SMART tables it gates."
+      ],
+      "basis": [
+        "app/scheduler/CardDemo.controlm:26",
+        "app/scheduler/CardDemo.controlm:27",
+        "app/scheduler/CardDemo.controlm:28"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "chain",
+      "name": "DisclosureGroupsRefresh",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "chain",
+      "name": "TransactionTypesDBRefresh",
+      "key_points": [
+        "The SMART table that extracts the DB2 transaction types back out to the VSAM side (TRANEXTR), so the core application sees the refreshed reference data.",
+        "Ordered on Saturdays (DAYS=SA) as a SMART table under the weekly folder, after MNTTRDB2 has maintained the DB2 tables."
+      ],
+      "basis": [
+        "app/scheduler/CardDemo.controlm:57",
+        "app/scheduler/CardDemo.controlm:58"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "chain",
+      "name": "MONTHLY-InterestCalculation",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    }
+  ],
+  "descriptions": [
+    {
+      "kind": "program",
+      "name": "COBTUPDT",
+      "path": "app/app-transaction-type-db2/cbl/COBTUPDT.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COTRTLIC",
+      "path": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COTRTUPC",
+      "path": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "CREADB2",
+      "path": "app/app-transaction-type-db2/jcl/CREADB21.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "MNTTRDB2",
+      "path": "app/app-transaction-type-db2/jcl/MNTTRDB2.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "TRANEXTR",
+      "path": "app/app-transaction-type-db2/jcl/TRANEXTR.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    }
+  ]
+}

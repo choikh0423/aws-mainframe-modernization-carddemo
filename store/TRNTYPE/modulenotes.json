@@ -1,0 +1,28 @@
+{
+  "meta": {
+    "module": "TRNTYPE",
+    "skill": "module-classification",
+    "updated_at": "2026-09-13T16:18:09Z"
+  },
+  "members": [
+    {
+      "name": "COADM01C",
+      "artifact": "unresolved-target",
+      "module": "CARDDEMO",
+      "binding": {
+        "kind": "application-module",
+        "product": null,
+        "component": null,
+        "confidence": "derived",
+        "evidence": [
+          "app/cbl/COADM01C.cbl:1",
+          "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:47",
+          "store/modules.json#CARDDEMO"
+        ],
+        "reasoning": "LIT-ADMINPGM names the core admin menu, a scanned CARDDEMO source member; membership only, the XCTL target is dynamic-call-resolution's question",
+        "confirmed": null
+      },
+      "request": null
+    }
+  ]
+}

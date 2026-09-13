@@ -1,0 +1,47 @@
+{
+  "meta": {
+    "module": "PAUTH",
+    "skill": "module-classification",
+    "updated_at": "2026-09-13T16:18:09Z"
+  },
+  "members": [
+    {
+      "name": "COMEN01C",
+      "artifact": "unresolved-target",
+      "module": "CARDDEMO",
+      "binding": {
+        "kind": "application-module",
+        "product": null,
+        "component": null,
+        "confidence": "derived",
+        "evidence": [
+          "app/cbl/COMEN01C.cbl:1",
+          "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:35",
+          "store/modules.json#CARDDEMO"
+        ],
+        "reasoning": "the name COPAUS0C moves into CDEMO-TO-PROGRAM is a scanned CARDDEMO source member (the core main menu); this says whose code the name is, not that the XCTL reaches it",
+        "confirmed": null
+      },
+      "request": null
+    },
+    {
+      "name": "COSGN00C",
+      "artifact": "unresolved-target",
+      "module": "CARDDEMO",
+      "binding": {
+        "kind": "application-module",
+        "product": null,
+        "component": null,
+        "confidence": "derived",
+        "evidence": [
+          "app/cbl/COSGN00C.cbl:1",
+          "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:669",
+          "store/modules.json#CARDDEMO"
+        ],
+        "reasoning": "the sign-on program named by COPAUS0C is a scanned CARDDEMO source member",
+        "confirmed": null
+      },
+      "request": null
+    }
+  ]
+}

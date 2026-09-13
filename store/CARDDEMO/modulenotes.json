@@ -1,0 +1,47 @@
+{
+  "meta": {
+    "module": "CARDDEMO",
+    "skill": "module-classification",
+    "updated_at": "2026-09-13T16:18:09Z"
+  },
+  "members": [
+    {
+      "name": "COBDATFT",
+      "artifact": "unresolved-target",
+      "module": "CARDDEMO",
+      "binding": {
+        "kind": "application-module",
+        "product": null,
+        "component": null,
+        "confidence": "derived",
+        "evidence": [
+          "app/asm/COBDATFT.asm:17",
+          "app/cbl/CBACT01C.cbl:231",
+          "store/modules.json#CARDDEMO"
+        ],
+        "reasoning": "the estate ships the assembler source COBDATFT CSECT in its own app/asm library, which is a CARDDEMO member; the CALL in CBACT01C reaches that name. No build step in the scan compiles app/asm, so where the load module in AWS.M2.CARDDEMO.LOADLIB is built stays open.",
+        "confirmed": null
+      },
+      "request": "Confirm app/asm/COBDATFT.asm is what CBACT01C's CALL 'COBDATFT' loads from AWS.M2.CARDDEMO.LOADLIB, and supply the assemble/link JCL (or a load-module listing of that library) \u2014 the repository has no build step for app/asm."
+    },
+    {
+      "name": "MVSWAIT",
+      "artifact": "unresolved-target",
+      "module": "CARDDEMO",
+      "binding": {
+        "kind": "application-module",
+        "product": null,
+        "component": null,
+        "confidence": "derived",
+        "evidence": [
+          "app/asm/MVSWAIT.asm:17",
+          "app/cbl/COBSWAIT.cbl:38",
+          "store/modules.json#CARDDEMO"
+        ],
+        "reasoning": "the estate ships assembler source MVSWAIT START 0 in app/asm, a CARDDEMO member, and COBSWAIT CALLs that name. It wraps an MVS wait service but the scan has no build step proving which load module is bound.",
+        "confirmed": null
+      },
+      "request": "Confirm app/asm/MVSWAIT.asm is the module COBSWAIT CALLs, and supply the assemble/link JCL or a load-module listing for AWS.M2.CARDDEMO.LOADLIB."
+    }
+  ]
+}

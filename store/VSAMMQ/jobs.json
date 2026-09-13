@@ -1,0 +1,21 @@
+{
+  "meta": {
+    "module": "VSAMMQ",
+    "generated_at": "2026-09-13T16:16:25Z",
+    "tool": "mftb 0.1.0",
+    "inputs": {
+      "jcl": [
+        "../../empty-jcl"
+      ],
+      "procs": [],
+      "cntl": []
+    }
+  },
+  "sources": [],
+  "procs": [],
+  "proc_defs": [],
+  "proc_facts": [],
+  "jobs": [],
+  "missing_includes": [],
+  "unrecognized": []
+}

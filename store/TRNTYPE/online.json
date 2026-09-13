@@ -1,0 +1,612 @@
+{
+  "meta": {
+    "module": "TRNTYPE",
+    "generated_at": "2026-09-13T16:17:14Z",
+    "tool": "mftb 0.1.0",
+    "inputs": {
+      "from": [
+        "connections.json",
+        "programs.json",
+        "chains.json",
+        "onlinenotes.json"
+      ]
+    }
+  },
+  "region": {
+    "csd_scanned": true,
+    "groups": [
+      "CARDDEMO"
+    ],
+    "definitions": {
+      "DB2ENTRY": 1,
+      "DB2TRAN": 2,
+      "MAPSET": 2,
+      "PROGRAM": 2,
+      "TRANSACTION": 2
+    }
+  },
+  "transactions": [
+    {
+      "transid": "CTLI",
+      "basis": "csd",
+      "definition": {
+        "program": "COTRTLIC",
+        "group": "CARDDEMO",
+        "source": "app/app-transaction-type-db2/csd/CRDDEMOD.csd:25",
+        "remote_system": null,
+        "twasize": "0",
+        "dynamic": "NO",
+        "description": null
+      },
+      "initial_program": "COTRTLIC",
+      "programs": [
+        {
+          "id": "COTRTLIC",
+          "how": "initial",
+          "via": null,
+          "certainty": "proven",
+          "in_inventory": true,
+          "source": null,
+          "level": 0
+        },
+        {
+          "id": "?XCTL CDEMO-TO-PROGRAM",
+          "how": "cics-xctl",
+          "via": "COTRTLIC",
+          "certainty": "open",
+          "in_inventory": false,
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:620",
+          "commarea_item": "CARDDEMO-COMMAREA",
+          "commarea_length": null,
+          "level": 1
+        },
+        {
+          "id": "COADM01C",
+          "how": "cics-xctl",
+          "via": "?XCTL CDEMO-TO-PROGRAM",
+          "certainty": "candidate",
+          "in_inventory": false,
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:620",
+          "commarea_item": "CARDDEMO-COMMAREA",
+          "commarea_length": null,
+          "level": 2
+        },
+        {
+          "id": "COTRTUPC",
+          "how": "cics-xctl",
+          "via": "?XCTL CDEMO-TO-PROGRAM",
+          "certainty": "candidate",
+          "in_inventory": true,
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:620",
+          "commarea_item": "CARDDEMO-COMMAREA",
+          "commarea_length": null,
+          "level": 2
+        }
+      ],
+      "edges": [
+        {
+          "from": "COTRTLIC",
+          "to": "?XCTL CDEMO-TO-PROGRAM",
+          "kind": "cics-xctl",
+          "text": "XCTL COMMAREA(CARDDEMO-COMMAREA)",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:620",
+          "certainty": "open"
+        },
+        {
+          "from": "?XCTL CDEMO-TO-PROGRAM",
+          "to": "COADM01C",
+          "kind": "cics-xctl",
+          "text": "candidate (dyncalls)",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:620",
+          "certainty": "candidate"
+        },
+        {
+          "from": "?XCTL CDEMO-TO-PROGRAM",
+          "to": "COTRTLIC",
+          "kind": "cics-xctl",
+          "text": "candidate (dyncalls)",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:620",
+          "certainty": "candidate"
+        },
+        {
+          "from": "?XCTL CDEMO-TO-PROGRAM",
+          "to": "COTRTUPC",
+          "kind": "cics-xctl",
+          "text": "candidate (dyncalls)",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:620",
+          "certainty": "candidate"
+        },
+        {
+          "from": "COTRTLIC",
+          "to": "COTRTUPC",
+          "kind": "cics-xctl",
+          "text": "XCTL COMMAREA(CARDDEMO-COMMAREA)",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:648",
+          "certainty": "proven"
+        },
+        {
+          "from": "COTRTUPC",
+          "to": "?XCTL CDEMO-TO-PROGRAM",
+          "kind": "cics-xctl",
+          "text": "XCTL COMMAREA(CARDDEMO-COMMAREA)",
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:457",
+          "certainty": "open"
+        },
+        {
+          "from": "?XCTL CDEMO-TO-PROGRAM",
+          "to": "COADM01C",
+          "kind": "cics-xctl",
+          "text": "candidate (dyncalls)",
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:457",
+          "certainty": "candidate"
+        },
+        {
+          "from": "?XCTL CDEMO-TO-PROGRAM",
+          "to": "COTRTUPC",
+          "kind": "cics-xctl",
+          "text": "candidate (dyncalls)",
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:457",
+          "certainty": "candidate"
+        }
+      ],
+      "back_edges": [
+        {
+          "from": "?XCTL CDEMO-TO-PROGRAM",
+          "to": "COTRTLIC",
+          "text": "candidate (dyncalls)",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:620"
+        },
+        {
+          "from": "COTRTUPC",
+          "to": "?XCTL CDEMO-TO-PROGRAM",
+          "text": "XCTL COMMAREA(CARDDEMO-COMMAREA)",
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:457"
+        }
+      ],
+      "maps": [
+        {
+          "mapset": null,
+          "csd": null,
+          "bms_source": null,
+          "uses": [
+            {
+              "program": "COTRTUPC",
+              "command": "SEND MAP",
+              "map": "CCARD-NEXT-MAP",
+              "direction": "send",
+              "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:1433"
+            }
+          ],
+          "maps": [
+            "CCARD-NEXT-MAP"
+          ]
+        },
+        {
+          "mapset": "COTRTLI",
+          "csd": {
+            "group": "CARDDEMO",
+            "source": "app/app-transaction-type-db2/csd/CRDDEMOD.csd:1",
+            "attrs": {
+              "DESCRIPTION": "CREDIT CARD TRAN TYPE INQ MAP",
+              "RESIDENT": "NO"
+            }
+          },
+          "bms_source": null,
+          "uses": [
+            {
+              "program": "COTRTLIC",
+              "command": "SEND MAP",
+              "map": "CTRTLIA",
+              "direction": "send",
+              "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:1588"
+            },
+            {
+              "program": "COTRTLIC",
+              "command": "RECEIVE MAP",
+              "map": "CTRTLIA",
+              "direction": "receive",
+              "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:931"
+            }
+          ],
+          "maps": [
+            "CTRTLIA"
+          ]
+        },
+        {
+          "mapset": "COTRTUP",
+          "csd": {
+            "group": "CARDDEMO",
+            "source": "app/app-transaction-type-db2/csd/CRDDEMOD.csd:6",
+            "attrs": {
+              "DESCRIPTION": "CREDIT CARD TRAN TYPE MAINT MAP",
+              "RESIDENT": "NO"
+            }
+          },
+          "bms_source": null,
+          "uses": [
+            {
+              "program": "COTRTUPC",
+              "command": "RECEIVE MAP",
+              "map": "CTRTUPA",
+              "direction": "receive",
+              "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:642"
+            }
+          ],
+          "maps": [
+            "CTRTUPA"
+          ]
+        }
+      ],
+      "conversation": {
+        "pseudo_conversational": true,
+        "returns": [
+          {
+            "program": "COTRTLIC",
+            "transid": "CTLI",
+            "command": "RETURN",
+            "variable": null,
+            "commarea_item": "WS-COMMAREA",
+            "commarea_length": "LENGTH OF WS-COMMAREA",
+            "options": {
+              "LENGTH": "LENGTH OF WS-COMMAREA"
+            },
+            "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:910"
+          },
+          {
+            "program": "COTRTUPC",
+            "transid": "CTTU",
+            "command": "RETURN",
+            "variable": null,
+            "commarea_item": "WS-COMMAREA",
+            "commarea_length": "LENGTH OF WS-COMMAREA",
+            "options": {
+              "LENGTH": "LENGTH OF WS-COMMAREA"
+            },
+            "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:567"
+          }
+        ],
+        "commarea": {
+          "item": "WS-COMMAREA",
+          "length": "LENGTH OF WS-COMMAREA",
+          "program": "COTRTLIC",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:910"
+        }
+      },
+      "resources": {
+        "files": [],
+        "ts_queues": [],
+        "td_queues": [],
+        "db2": {
+          "entries": [
+            {
+              "entry": "CARDDEMO",
+              "plan": "CARDDEMO",
+              "threadlimit": null,
+              "source": "app/app-transaction-type-db2/csd/CRDDEMOD.csd:51"
+            }
+          ],
+          "plan": "CARDDEMO",
+          "tables": []
+        }
+      },
+      "starts": [],
+      "remote": [],
+      "notes": [],
+      "asks": [
+        {
+          "kind": "online-transid-variable",
+          "severity": "medium",
+          "transid": "CTLI",
+          "message": "TRANID CTLI reaches COTRTLIC: XCTL names its target through a data item, so which of the 3 candidate(s) dyncalls.json names runs at a given point is unknown",
+          "evidence": [
+            "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:620"
+          ],
+          "request": "Resolve the target with the dynamic-call-resolution skill (dyncalls.json traces the item's writers); record the value(s) it holds at run time",
+          "status": "open"
+        },
+        {
+          "kind": "online-map-no-source",
+          "severity": "info",
+          "transid": "CTLI",
+          "message": "TRANID CTLI uses mapset None but no BMS source (DFHMSD/DFHMDI/DFHMDF) was scanned, so the fields on the screen and their COBOL names are unknown",
+          "evidence": [
+            "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:1433"
+          ],
+          "request": "Provide the BMS macro source for mapset None (or its symbolic map copybook)",
+          "status": "open"
+        },
+        {
+          "kind": "online-map-no-source",
+          "severity": "info",
+          "transid": "CTLI",
+          "message": "TRANID CTLI uses mapset COTRTLI but no BMS source (DFHMSD/DFHMDI/DFHMDF) was scanned, so the fields on the screen and their COBOL names are unknown",
+          "evidence": [
+            "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:1588",
+            "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:931"
+          ],
+          "request": "Provide the BMS macro source for mapset COTRTLI (or its symbolic map copybook)",
+          "status": "open"
+        },
+        {
+          "kind": "online-map-no-source",
+          "severity": "info",
+          "transid": "CTLI",
+          "message": "TRANID CTLI uses mapset COTRTUP but no BMS source (DFHMSD/DFHMDI/DFHMDF) was scanned, so the fields on the screen and their COBOL names are unknown",
+          "evidence": [
+            "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:642"
+          ],
+          "request": "Provide the BMS macro source for mapset COTRTUP (or its symbolic map copybook)",
+          "status": "open"
+        },
+        {
+          "kind": "online-screen-flow-unproven",
+          "severity": "info",
+          "transid": "CTLI",
+          "message": "TRANID CTLI sends/receives 3 mapset(s); which screen follows which is chosen at run time by the data and the AID key, and the store cannot order them",
+          "evidence": [
+            "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:1588",
+            "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:931",
+            "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:1433",
+            "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:642"
+          ],
+          "request": "Confirm the screen sequence for CTLI (a flow diagram, a test script or the user guide)",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "transid": "CTTU",
+      "basis": "csd",
+      "definition": {
+        "program": "COTRTUPC",
+        "group": "CARDDEMO",
+        "source": "app/app-transaction-type-db2/csd/CRDDEMOD.csd:35",
+        "remote_system": null,
+        "twasize": "0",
+        "dynamic": "NO",
+        "description": null
+      },
+      "initial_program": "COTRTUPC",
+      "programs": [
+        {
+          "id": "COTRTUPC",
+          "how": "initial",
+          "via": null,
+          "certainty": "proven",
+          "in_inventory": true,
+          "source": null,
+          "level": 0
+        },
+        {
+          "id": "?XCTL CDEMO-TO-PROGRAM",
+          "how": "cics-xctl",
+          "via": "COTRTUPC",
+          "certainty": "open",
+          "in_inventory": false,
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:457",
+          "commarea_item": "CARDDEMO-COMMAREA",
+          "commarea_length": null,
+          "level": 1
+        },
+        {
+          "id": "COADM01C",
+          "how": "cics-xctl",
+          "via": "?XCTL CDEMO-TO-PROGRAM",
+          "certainty": "candidate",
+          "in_inventory": false,
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:457",
+          "commarea_item": "CARDDEMO-COMMAREA",
+          "commarea_length": null,
+          "level": 2
+        }
+      ],
+      "edges": [
+        {
+          "from": "COTRTUPC",
+          "to": "?XCTL CDEMO-TO-PROGRAM",
+          "kind": "cics-xctl",
+          "text": "XCTL COMMAREA(CARDDEMO-COMMAREA)",
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:457",
+          "certainty": "open"
+        },
+        {
+          "from": "?XCTL CDEMO-TO-PROGRAM",
+          "to": "COADM01C",
+          "kind": "cics-xctl",
+          "text": "candidate (dyncalls)",
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:457",
+          "certainty": "candidate"
+        },
+        {
+          "from": "?XCTL CDEMO-TO-PROGRAM",
+          "to": "COTRTUPC",
+          "kind": "cics-xctl",
+          "text": "candidate (dyncalls)",
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:457",
+          "certainty": "candidate"
+        }
+      ],
+      "back_edges": [
+        {
+          "from": "?XCTL CDEMO-TO-PROGRAM",
+          "to": "COTRTUPC",
+          "text": "candidate (dyncalls)",
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:457"
+        }
+      ],
+      "maps": [
+        {
+          "mapset": null,
+          "csd": null,
+          "bms_source": null,
+          "uses": [
+            {
+              "program": "COTRTUPC",
+              "command": "SEND MAP",
+              "map": "CCARD-NEXT-MAP",
+              "direction": "send",
+              "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:1433"
+            }
+          ],
+          "maps": [
+            "CCARD-NEXT-MAP"
+          ]
+        },
+        {
+          "mapset": "COTRTUP",
+          "csd": {
+            "group": "CARDDEMO",
+            "source": "app/app-transaction-type-db2/csd/CRDDEMOD.csd:6",
+            "attrs": {
+              "DESCRIPTION": "CREDIT CARD TRAN TYPE MAINT MAP",
+              "RESIDENT": "NO"
+            }
+          },
+          "bms_source": null,
+          "uses": [
+            {
+              "program": "COTRTUPC",
+              "command": "RECEIVE MAP",
+              "map": "CTRTUPA",
+              "direction": "receive",
+              "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:642"
+            }
+          ],
+          "maps": [
+            "CTRTUPA"
+          ]
+        }
+      ],
+      "conversation": {
+        "pseudo_conversational": true,
+        "returns": [
+          {
+            "program": "COTRTUPC",
+            "transid": "CTTU",
+            "command": "RETURN",
+            "variable": null,
+            "commarea_item": "WS-COMMAREA",
+            "commarea_length": "LENGTH OF WS-COMMAREA",
+            "options": {
+              "LENGTH": "LENGTH OF WS-COMMAREA"
+            },
+            "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:567"
+          }
+        ],
+        "commarea": {
+          "item": "WS-COMMAREA",
+          "length": "LENGTH OF WS-COMMAREA",
+          "program": "COTRTUPC",
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:567"
+        }
+      },
+      "resources": {
+        "files": [],
+        "ts_queues": [],
+        "td_queues": [],
+        "db2": {
+          "entries": [
+            {
+              "entry": "CARDDEMO",
+              "plan": "CARDDEMO",
+              "threadlimit": null,
+              "source": "app/app-transaction-type-db2/csd/CRDDEMOD.csd:56"
+            }
+          ],
+          "plan": "CARDDEMO",
+          "tables": []
+        }
+      },
+      "starts": [],
+      "remote": [],
+      "notes": [],
+      "asks": [
+        {
+          "kind": "online-transid-variable",
+          "severity": "medium",
+          "transid": "CTTU",
+          "message": "TRANID CTTU reaches COTRTUPC: XCTL names its target through a data item, so which of the 2 candidate(s) dyncalls.json names runs at a given point is unknown",
+          "evidence": [
+            "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:457"
+          ],
+          "request": "Resolve the target with the dynamic-call-resolution skill (dyncalls.json traces the item's writers); record the value(s) it holds at run time",
+          "status": "open"
+        },
+        {
+          "kind": "online-map-no-source",
+          "severity": "info",
+          "transid": "CTTU",
+          "message": "TRANID CTTU uses mapset None but no BMS source (DFHMSD/DFHMDI/DFHMDF) was scanned, so the fields on the screen and their COBOL names are unknown",
+          "evidence": [
+            "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:1433"
+          ],
+          "request": "Provide the BMS macro source for mapset None (or its symbolic map copybook)",
+          "status": "open"
+        },
+        {
+          "kind": "online-map-no-source",
+          "severity": "info",
+          "transid": "CTTU",
+          "message": "TRANID CTTU uses mapset COTRTUP but no BMS source (DFHMSD/DFHMDI/DFHMDF) was scanned, so the fields on the screen and their COBOL names are unknown",
+          "evidence": [
+            "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:642"
+          ],
+          "request": "Provide the BMS macro source for mapset COTRTUP (or its symbolic map copybook)",
+          "status": "open"
+        },
+        {
+          "kind": "online-screen-flow-unproven",
+          "severity": "info",
+          "transid": "CTTU",
+          "message": "TRANID CTTU sends/receives 2 mapset(s); which screen follows which is chosen at run time by the data and the AID key, and the store cannot order them",
+          "evidence": [
+            "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:1433",
+            "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:642"
+          ],
+          "request": "Confirm the screen sequence for CTTU (a flow diagram, a test script or the user guide)",
+          "status": "open"
+        }
+      ]
+    }
+  ],
+  "entry_points": [
+    {
+      "transid": "CTLI",
+      "basis": "csd",
+      "program": "COTRTLIC",
+      "in_inventory": true,
+      "source": "app/app-transaction-type-db2/csd/CRDDEMOD.csd:25",
+      "programs": 4,
+      "maps": 3,
+      "pseudo_conversational": true
+    },
+    {
+      "transid": "CTTU",
+      "basis": "csd",
+      "program": "COTRTUPC",
+      "in_inventory": true,
+      "source": "app/app-transaction-type-db2/csd/CRDDEMOD.csd:35",
+      "programs": 3,
+      "maps": 2,
+      "pseudo_conversational": true
+    }
+  ],
+  "boundary": {
+    "triggers": [],
+    "datasets": []
+  },
+  "unreached": [],
+  "notes": [],
+  "asks": [],
+  "summary": {
+    "transactions": 2,
+    "transactions_defined": 2,
+    "pseudo_conversational": 2,
+    "programs_reached": 2,
+    "programs_unreached": 0,
+    "maps": 3,
+    "boundary_datasets": 0,
+    "boundary_triggers": 0,
+    "asks": 9
+  }
+}

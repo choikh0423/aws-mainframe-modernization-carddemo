@@ -1,0 +1,758 @@
+{
+  "meta": {
+    "module": "CARDDEMO",
+    "generated_at": "2026-09-13T16:20:31Z",
+    "tool": "mftb 0.1.0",
+    "inputs": [
+      "programs.json",
+      "jobs.json",
+      "schedule.json"
+    ]
+  },
+  "author": "agent",
+  "summary": {
+    "subjects": 71,
+    "written": 0,
+    "unknown": 71,
+    "by_kind": {
+      "program": 31,
+      "jcl": 38,
+      "proc": 2
+    },
+    "with_key_points": 0,
+    "overviews": 7,
+    "overviews_written": 5
+  },
+  "overviews": [
+    {
+      "kind": "module",
+      "name": "CARDDEMO",
+      "key_points": [
+        "The core credit-card management application: CICS screens for sign-on, accounts, cards, transactions, bill pay and reporting, plus the user-administration functions, over VSAM files.",
+        "Its CARDDEMO CSD group installs 18 transactions; the batch behind them is exported as Control-M folders and a CA 7 listing in app/scheduler.",
+        "The estate is AWS's mainframe modernization showcase - the repository states it exists to test discovery, migration and service-enablement approaches, not to run a real card portfolio."
+      ],
+      "basis": [
+        "README.md:7",
+        "app/csd/CARDDEMO.CSD:1",
+        "app/scheduler/CardDemo.controlm:3",
+        "app/scheduler/CardDemo.ca7:19"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "chain",
+      "name": "CARDDEMO",
+      "key_points": [
+        "The CA 7 job listing for the estate: the jobs the CA 7 export orders under the CARDDEMO application, including PAUTH's CBPAUP0J.",
+        "It is the CA 7 view of the same estate the Control-M folders schedule - the two exports are alternative scheduler definitions shipped side by side."
+      ],
+      "basis": [
+        "app/scheduler/CardDemo.ca7:19",
+        "store/CARDDEMO/schedule.json"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "chain",
+      "name": "DAILY-TransactionBackup",
+      "key_points": [
+        "The daily transaction backup: it closes the VSAM files to batch, backs the transaction file up, waits, then reopens the files to the online region.",
+        "Ordered every day (DAYS=ALL), and strictly serial - each job's OUT condition is the next one's IN condition, so CLOSEFIL, TRANBKP, WAITSTEP and OPENFIL cannot overlap.",
+        "The close/open pair around the backup is what makes the file quiesce: nothing in the chain runs while the region holds the file."
+      ],
+      "basis": [
+        "app/scheduler/CardDemo.controlm:3",
+        "app/scheduler/CardDemo.controlm:4",
+        "app/scheduler/CardDemo.controlm:9",
+        "app/scheduler/CardDemo.controlm:20"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "chain",
+      "name": "WEEKLY-TransactionTypesDBRefresh",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "chain",
+      "name": "DisclosureGroupsRefresh",
+      "key_points": [
+        "The weekly disclosure-group refresh: it closes the files, reloads the disclosure-group reference data and reopens the region.",
+        "A Control-M SMART table ordered on Saturdays (DAYS=SA) inside the WEEKLY-TransactionTypesDBRefresh folder, not a standalone daily job.",
+        "It is the chain the DB2 transaction-type refresh gates: MNTTRDB2's OUT condition is what releases this table's work."
+      ],
+      "basis": [
+        "app/scheduler/CardDemo.controlm:32",
+        "app/scheduler/CardDemo.controlm:38",
+        "app/scheduler/CardDemo.controlm:27"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "chain",
+      "name": "TransactionTypesDBRefresh",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "chain",
+      "name": "MONTHLY-InterestCalculation",
+      "key_points": [
+        "The monthly interest run: it closes the files, calculates interest, combines the transaction files and reopens the region.",
+        "Ordered as its own Control-M folder with the same close - work - wait - open shape as the daily backup.",
+        "INTCALC is the accounting step of the month; COMBTRAN consolidates the transaction files it leaves behind."
+      ],
+      "basis": [
+        "app/scheduler/CardDemo.controlm:65",
+        "app/scheduler/CardDemo.controlm:69",
+        "app/scheduler/CardDemo.controlm:75"
+      ],
+      "written_by": "agent"
+    }
+  ],
+  "descriptions": [
+    {
+      "kind": "program",
+      "name": "CBACT01C",
+      "path": "app/cbl/CBACT01C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CBACT02C",
+      "path": "app/cbl/CBACT02C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CBACT03C",
+      "path": "app/cbl/CBACT03C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CBACT04C",
+      "path": "app/cbl/CBACT04C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CBCUS01C",
+      "path": "app/cbl/CBCUS01C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CBEXPORT",
+      "path": "app/cbl/CBEXPORT.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CBIMPORT",
+      "path": "app/cbl/CBIMPORT.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CBSTM03A",
+      "path": "app/cbl/CBSTM03A.CBL",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CBSTM03B",
+      "path": "app/cbl/CBSTM03B.CBL",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CBTRN01C",
+      "path": "app/cbl/CBTRN01C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CBTRN02C",
+      "path": "app/cbl/CBTRN02C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CBTRN03C",
+      "path": "app/cbl/CBTRN03C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COACTUPC",
+      "path": "app/cbl/COACTUPC.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COACTVWC",
+      "path": "app/cbl/COACTVWC.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COADM01C",
+      "path": "app/cbl/COADM01C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COBIL00C",
+      "path": "app/cbl/COBIL00C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COBSWAIT",
+      "path": "app/cbl/COBSWAIT.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COCRDLIC",
+      "path": "app/cbl/COCRDLIC.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COCRDSLC",
+      "path": "app/cbl/COCRDSLC.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COCRDUPC",
+      "path": "app/cbl/COCRDUPC.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COMEN01C",
+      "path": "app/cbl/COMEN01C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CORPT00C",
+      "path": "app/cbl/CORPT00C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COSGN00C",
+      "path": "app/cbl/COSGN00C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COTRN00C",
+      "path": "app/cbl/COTRN00C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COTRN01C",
+      "path": "app/cbl/COTRN01C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COTRN02C",
+      "path": "app/cbl/COTRN02C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COUSR00C",
+      "path": "app/cbl/COUSR00C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COUSR01C",
+      "path": "app/cbl/COUSR01C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COUSR02C",
+      "path": "app/cbl/COUSR02C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COUSR03C",
+      "path": "app/cbl/COUSR03C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CSUTLDTC",
+      "path": "app/cbl/CSUTLDTC.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "ACCTFILE",
+      "path": "app/jcl/ACCTFILE.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "CARDFILE",
+      "path": "app/jcl/CARDFILE.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "CBADMCDJ",
+      "path": "app/jcl/CBADMCDJ.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "CBEXPORT",
+      "path": "app/jcl/CBEXPORT.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "CBIMPORT",
+      "path": "app/jcl/CBIMPORT.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "CLOSEFIL",
+      "path": "app/jcl/CLOSEFIL.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "COMBTRAN",
+      "path": "app/jcl/COMBTRAN.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "CREASTMT",
+      "path": "app/jcl/CREASTMT.JCL",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "CUSTFILE",
+      "path": "app/jcl/CUSTFILE.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "DALYREJS",
+      "path": "app/jcl/DALYREJS.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "DEFCUST",
+      "path": "app/jcl/DEFCUST.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "DEFGDGB",
+      "path": "app/jcl/DEFGDGB.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "DEFGDGD",
+      "path": "app/jcl/DEFGDGD.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "DISCGRP",
+      "path": "app/jcl/DISCGRP.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "DUSRSECJ",
+      "path": "app/jcl/DUSRSECJ.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "ESDSRRDS",
+      "path": "app/jcl/ESDSRRDS.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "FTPJCLS",
+      "path": "app/jcl/FTPJCL.JCL",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "INTCALC",
+      "path": "app/jcl/INTCALC.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "INTRDRJ1",
+      "path": "app/jcl/INTRDRJ1.JCL",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "INTRDRJ2",
+      "path": "app/jcl/INTRDRJ2.JCL",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "OPENFIL",
+      "path": "app/jcl/OPENFIL.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "POSTTRAN",
+      "path": "app/jcl/POSTTRAN.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "PRTCATBL",
+      "path": "app/jcl/PRTCATBL.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "READACCT",
+      "path": "app/jcl/READACCT.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "READCARD",
+      "path": "app/jcl/READCARD.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "READCUST",
+      "path": "app/jcl/READCUST.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "READXREF",
+      "path": "app/jcl/READXREF.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "REPTFILE",
+      "path": "app/jcl/REPTFILE.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "TCATBALF",
+      "path": "app/jcl/TCATBALF.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "TRANBKP",
+      "path": "app/jcl/TRANBKP.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "TRANCATG",
+      "path": "app/jcl/TRANCATG.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "TRANFILE",
+      "path": "app/jcl/TRANFILE.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "TRANIDX",
+      "path": "app/jcl/TRANIDX.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "TRANREPT",
+      "path": "app/jcl/TRANREPT.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "TRANTYPE",
+      "path": "app/jcl/TRANTYPE.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "TXT2PDF1",
+      "path": "app/jcl/TXT2PDF1.JCL",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "WAITSTEP",
+      "path": "app/jcl/WAITSTEP.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "XREFFILE",
+      "path": "app/jcl/XREFFILE.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "proc",
+      "name": "REPROC",
+      "path": "app/proc/REPROC.prc",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "proc",
+      "name": "TRANREPT",
+      "path": "app/proc/TRANREPT.prc",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    }
+  ]
+}

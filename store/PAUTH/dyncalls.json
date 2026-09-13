@@ -1,0 +1,525 @@
+{
+  "meta": {
+    "module": "PAUTH",
+    "generated_at": "2026-09-13T16:16:15Z",
+    "tool": "mftb 0.1.0",
+    "inputs": {}
+  },
+  "summary": {
+    "sites": 4,
+    "partial": 3,
+    "resolved": 1
+  },
+  "sites": [
+    {
+      "program": "COPAUS0C",
+      "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+      "line": 322,
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-TO-PROGRAM",
+      "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:322",
+      "status": "partial",
+      "candidates": [
+        {
+          "name": "COMEN01C",
+          "in_inventory": false,
+          "evidence": [
+            {
+              "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:35",
+              "how": "VALUE clause of WS-PGM-MENU"
+            }
+          ]
+        },
+        {
+          "name": "COPAUS0C",
+          "in_inventory": true,
+          "evidence": [
+            {
+              "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:33",
+              "how": "VALUE clause of WS-PGM-AUTH-SMRY"
+            }
+          ]
+        },
+        {
+          "name": "COPAUS1C",
+          "in_inventory": true,
+          "evidence": [
+            {
+              "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:34",
+              "how": "VALUE clause of WS-PGM-AUTH-DTL"
+            }
+          ]
+        },
+        {
+          "name": "COSGN00C",
+          "in_inventory": false,
+          "evidence": [
+            {
+              "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:669",
+              "how": "MOVE literal to CDEMO-TO-PROGRAM"
+            }
+          ]
+        }
+      ],
+      "open_ends": [
+        {
+          "program": "COPAUS0C",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "detail": "CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+          "request": "Map bytes 16..24 of DFHCOMMAREA to the field(s) that produce CDEMO-TO-PROGRAM",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:172"
+        }
+      ],
+      "trace": [
+        {
+          "depth": 0,
+          "program": "COPAUS0C",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "definition",
+          "class": "DET",
+          "detail": "10 CDEMO-TO-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of CARDDEMO-COMMAREA",
+          "source": "app/cpy/COCOM01Y.cpy:24"
+        },
+        {
+          "depth": 1,
+          "program": "COPAUS0C",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE WS-PGM-AUTH-SMRY TO CDEMO-TO-PROGRAM",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:192"
+        },
+        {
+          "depth": 2,
+          "program": "COPAUS0C",
+          "item": "WS-PGM-AUTH-SMRY",
+          "kind": "definition",
+          "class": "DET",
+          "detail": "05 WS-PGM-AUTH-SMRY PIC X(08) \u2014 WORKING-STORAGE, bytes 0..8 of WS-VARIABLES",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:33"
+        },
+        {
+          "depth": 3,
+          "program": "COPAUS0C",
+          "item": "WS-PGM-AUTH-SMRY",
+          "kind": "value-clause",
+          "class": "DET",
+          "detail": "VALUE 'COPAUS0C'",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:33"
+        },
+        {
+          "depth": 1,
+          "program": "COPAUS0C",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-TO-PROGRAM)",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:200"
+        },
+        {
+          "depth": 2,
+          "program": "COPAUS0C",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "detail": "CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:172"
+        },
+        {
+          "depth": 1,
+          "program": "COPAUS0C",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE WS-PGM-MENU TO CDEMO-TO-PROGRAM",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:236"
+        },
+        {
+          "depth": 2,
+          "program": "COPAUS0C",
+          "item": "WS-PGM-MENU",
+          "kind": "definition",
+          "class": "DET",
+          "detail": "05 WS-PGM-MENU PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of WS-VARIABLES",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:35"
+        },
+        {
+          "depth": 3,
+          "program": "COPAUS0C",
+          "item": "WS-PGM-MENU",
+          "kind": "value-clause",
+          "class": "DET",
+          "detail": "VALUE 'COMEN01C'",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:35"
+        },
+        {
+          "depth": 1,
+          "program": "COPAUS0C",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE WS-PGM-AUTH-DTL TO CDEMO-TO-PROGRAM",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:316"
+        },
+        {
+          "depth": 2,
+          "program": "COPAUS0C",
+          "item": "WS-PGM-AUTH-DTL",
+          "kind": "definition",
+          "class": "DET",
+          "detail": "05 WS-PGM-AUTH-DTL PIC X(08) \u2014 WORKING-STORAGE, bytes 8..16 of WS-VARIABLES",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:34"
+        },
+        {
+          "depth": 3,
+          "program": "COPAUS0C",
+          "item": "WS-PGM-AUTH-DTL",
+          "kind": "value-clause",
+          "class": "DET",
+          "detail": "VALUE 'COPAUS1C'",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:34"
+        },
+        {
+          "depth": 1,
+          "program": "COPAUS0C",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "move-literal",
+          "class": "DET",
+          "detail": "MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:669"
+        }
+      ]
+    },
+    {
+      "program": "COPAUS0C",
+      "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+      "line": 674,
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-TO-PROGRAM",
+      "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:674",
+      "status": "partial",
+      "candidates": [
+        {
+          "name": "COMEN01C",
+          "in_inventory": false,
+          "evidence": [
+            {
+              "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:35",
+              "how": "VALUE clause of WS-PGM-MENU"
+            }
+          ]
+        },
+        {
+          "name": "COPAUS0C",
+          "in_inventory": true,
+          "evidence": [
+            {
+              "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:33",
+              "how": "VALUE clause of WS-PGM-AUTH-SMRY"
+            }
+          ]
+        },
+        {
+          "name": "COPAUS1C",
+          "in_inventory": true,
+          "evidence": [
+            {
+              "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:34",
+              "how": "VALUE clause of WS-PGM-AUTH-DTL"
+            }
+          ]
+        },
+        {
+          "name": "COSGN00C",
+          "in_inventory": false,
+          "evidence": [
+            {
+              "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:669",
+              "how": "MOVE literal to CDEMO-TO-PROGRAM"
+            }
+          ]
+        }
+      ],
+      "open_ends": [
+        {
+          "program": "COPAUS0C",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "detail": "CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+          "request": "Map bytes 16..24 of DFHCOMMAREA to the field(s) that produce CDEMO-TO-PROGRAM",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:172"
+        }
+      ],
+      "trace": [
+        {
+          "depth": 0,
+          "program": "COPAUS0C",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "definition",
+          "class": "DET",
+          "detail": "10 CDEMO-TO-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of CARDDEMO-COMMAREA",
+          "source": "app/cpy/COCOM01Y.cpy:24"
+        },
+        {
+          "depth": 1,
+          "program": "COPAUS0C",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE WS-PGM-AUTH-SMRY TO CDEMO-TO-PROGRAM",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:192"
+        },
+        {
+          "depth": 2,
+          "program": "COPAUS0C",
+          "item": "WS-PGM-AUTH-SMRY",
+          "kind": "definition",
+          "class": "DET",
+          "detail": "05 WS-PGM-AUTH-SMRY PIC X(08) \u2014 WORKING-STORAGE, bytes 0..8 of WS-VARIABLES",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:33"
+        },
+        {
+          "depth": 3,
+          "program": "COPAUS0C",
+          "item": "WS-PGM-AUTH-SMRY",
+          "kind": "value-clause",
+          "class": "DET",
+          "detail": "VALUE 'COPAUS0C'",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:33"
+        },
+        {
+          "depth": 1,
+          "program": "COPAUS0C",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-TO-PROGRAM)",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:200"
+        },
+        {
+          "depth": 2,
+          "program": "COPAUS0C",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "detail": "CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:172"
+        },
+        {
+          "depth": 1,
+          "program": "COPAUS0C",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE WS-PGM-MENU TO CDEMO-TO-PROGRAM",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:236"
+        },
+        {
+          "depth": 2,
+          "program": "COPAUS0C",
+          "item": "WS-PGM-MENU",
+          "kind": "definition",
+          "class": "DET",
+          "detail": "05 WS-PGM-MENU PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of WS-VARIABLES",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:35"
+        },
+        {
+          "depth": 3,
+          "program": "COPAUS0C",
+          "item": "WS-PGM-MENU",
+          "kind": "value-clause",
+          "class": "DET",
+          "detail": "VALUE 'COMEN01C'",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:35"
+        },
+        {
+          "depth": 1,
+          "program": "COPAUS0C",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE WS-PGM-AUTH-DTL TO CDEMO-TO-PROGRAM",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:316"
+        },
+        {
+          "depth": 2,
+          "program": "COPAUS0C",
+          "item": "WS-PGM-AUTH-DTL",
+          "kind": "definition",
+          "class": "DET",
+          "detail": "05 WS-PGM-AUTH-DTL PIC X(08) \u2014 WORKING-STORAGE, bytes 8..16 of WS-VARIABLES",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:34"
+        },
+        {
+          "depth": 3,
+          "program": "COPAUS0C",
+          "item": "WS-PGM-AUTH-DTL",
+          "kind": "value-clause",
+          "class": "DET",
+          "detail": "VALUE 'COPAUS1C'",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:34"
+        },
+        {
+          "depth": 1,
+          "program": "COPAUS0C",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "move-literal",
+          "class": "DET",
+          "detail": "MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:669"
+        }
+      ]
+    },
+    {
+      "program": "COPAUS1C",
+      "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+      "line": 248,
+      "construct": "CICS-LINK",
+      "variable": "WS-PGM-AUTH-FRAUD",
+      "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl:248",
+      "status": "resolved",
+      "candidates": [
+        {
+          "name": "COPAUS2C",
+          "in_inventory": true,
+          "evidence": [
+            {
+              "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl:35",
+              "how": "VALUE clause of WS-PGM-AUTH-FRAUD"
+            }
+          ]
+        }
+      ],
+      "open_ends": [],
+      "trace": [
+        {
+          "depth": 0,
+          "program": "COPAUS1C",
+          "item": "WS-PGM-AUTH-FRAUD",
+          "kind": "definition",
+          "class": "DET",
+          "detail": "05 WS-PGM-AUTH-FRAUD PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of WS-VARIABLES",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl:35"
+        },
+        {
+          "depth": 1,
+          "program": "COPAUS1C",
+          "item": "WS-PGM-AUTH-FRAUD",
+          "kind": "value-clause",
+          "class": "DET",
+          "detail": "VALUE 'COPAUS2C'",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl:35"
+        }
+      ]
+    },
+    {
+      "program": "COPAUS1C",
+      "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+      "line": 367,
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-TO-PROGRAM",
+      "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl:367",
+      "status": "partial",
+      "candidates": [
+        {
+          "name": "COPAUS0C",
+          "in_inventory": true,
+          "evidence": [
+            {
+              "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl:34",
+              "how": "VALUE clause of WS-PGM-AUTH-SMRY"
+            }
+          ]
+        }
+      ],
+      "open_ends": [
+        {
+          "program": "COPAUS1C",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "detail": "CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+          "request": "Map bytes 16..24 of DFHCOMMAREA to the field(s) that produce CDEMO-TO-PROGRAM",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl:152"
+        }
+      ],
+      "trace": [
+        {
+          "depth": 0,
+          "program": "COPAUS1C",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "definition",
+          "class": "DET",
+          "detail": "10 CDEMO-TO-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of CARDDEMO-COMMAREA",
+          "source": "app/cpy/COCOM01Y.cpy:24"
+        },
+        {
+          "depth": 1,
+          "program": "COPAUS1C",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE WS-PGM-AUTH-SMRY TO CDEMO-TO-PROGRAM",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl:168"
+        },
+        {
+          "depth": 2,
+          "program": "COPAUS1C",
+          "item": "WS-PGM-AUTH-SMRY",
+          "kind": "definition",
+          "class": "DET",
+          "detail": "05 WS-PGM-AUTH-SMRY PIC X(08) \u2014 WORKING-STORAGE, bytes 8..16 of WS-VARIABLES",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl:34"
+        },
+        {
+          "depth": 3,
+          "program": "COPAUS1C",
+          "item": "WS-PGM-AUTH-SMRY",
+          "kind": "value-clause",
+          "class": "DET",
+          "detail": "VALUE 'COPAUS0C'",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl:34"
+        },
+        {
+          "depth": 1,
+          "program": "COPAUS1C",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-TO-PROGRAM)",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl:171"
+        },
+        {
+          "depth": 2,
+          "program": "COPAUS1C",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "detail": "CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl:152"
+        },
+        {
+          "depth": 1,
+          "program": "COPAUS1C",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE WS-PGM-AUTH-SMRY TO CDEMO-TO-PROGRAM",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl:185"
+        },
+        {
+          "depth": 2,
+          "program": "COPAUS1C",
+          "item": "WS-PGM-AUTH-SMRY",
+          "kind": "cycle",
+          "class": "DET",
+          "detail": "WS-PGM-AUTH-SMRY already traced above",
+          "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl:34"
+        }
+      ]
+    }
+  ]
+}

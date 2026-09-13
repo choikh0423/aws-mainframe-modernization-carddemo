@@ -1,0 +1,61 @@
+{
+  "meta": {
+    "module": "VSAMMQ",
+    "generated_at": "2026-09-13T16:20:31Z",
+    "tool": "mftb 0.1.0",
+    "inputs": [
+      "programs.json",
+      "jobs.json"
+    ]
+  },
+  "author": "agent",
+  "summary": {
+    "subjects": 2,
+    "written": 0,
+    "unknown": 2,
+    "by_kind": {
+      "program": 2,
+      "jcl": 0,
+      "proc": 0
+    },
+    "with_key_points": 0,
+    "overviews": 1,
+    "overviews_written": 1
+  },
+  "overviews": [
+    {
+      "kind": "module",
+      "name": "VSAMMQ",
+      "key_points": [
+        "The account-extraction extension: it answers account and system-date enquiries over IBM MQ against the VSAM account data, as a request/response pair of CICS transactions.",
+        "CDRA returns account details and CDRD the system date; both are defined in its own CSD group and the module ships no JCL of its own."
+      ],
+      "basis": [
+        "app/app-vsam-mq/README.md:8",
+        "app/app-vsam-mq/README.md:23",
+        "app/app-vsam-mq/csd/CRDDEMOM.csd:1"
+      ],
+      "written_by": "agent"
+    }
+  ],
+  "descriptions": [
+    {
+      "kind": "program",
+      "name": "COACCT01",
+      "path": "app/app-vsam-mq/cbl/COACCT01.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CODATE01",
+      "path": "app/app-vsam-mq/cbl/CODATE01.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    }
+  ]
+}

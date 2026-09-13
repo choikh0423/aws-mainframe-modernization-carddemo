@@ -1,0 +1,2833 @@
+{
+  "meta": {
+    "estate": "choikh0423/aws-mainframe-modernization-carddemo",
+    "skill": "module-classification",
+    "updated_at": "2026-09-13T16:17:46Z",
+    "note": "Written before the scans; every module below is a --module unit and has a store/<MODULE>/ of its own."
+  },
+  "modules": [
+    {
+      "id": "CARDDEMO",
+      "name": "Card demo core",
+      "naming": "proposed",
+      "what_it_does": "Runs the credit-card back office: the CICS screens for sign-on, accounts, cards, transactions, bill pay, reporting and user administration, and the VSAM batch cycle that posts transactions, calculates interest and prints statements.",
+      "confidence": "derived",
+      "confirmed": null,
+      "evidence": [
+        "app/cbl",
+        "app/jcl",
+        "app/csd/CARDDEMO.CSD:1",
+        "app/scheduler/CardDemo.ca7:19",
+        "app/scheduler/CardDemo.controlm:3"
+      ],
+      "reasoning": "the repository's own top-level libraries (app/cbl, app/cpy, app/jcl, app/proc, app/bms), one CSD group CARDDEMO, and the scheduler exports that order its jobs",
+      "roots": {
+        "src": [
+          "app/cbl"
+        ],
+        "copybooks": [
+          "app/cpy",
+          "app/cpy-bms"
+        ],
+        "jcl": [
+          "app/jcl"
+        ],
+        "procs": [
+          "app/proc"
+        ],
+        "cntl": [
+          "app/ctl"
+        ],
+        "sched": [
+          "app/scheduler"
+        ],
+        "csd": [
+          "app/csd"
+        ],
+        "sql": []
+      },
+      "scan": "python3 -m mftb scan --module CARDDEMO --src app/cbl --copy app/cpy --copy app/cpy-bms --jcl app/jcl --proc app/proc --cntl app/ctl --sched app/scheduler --csd app/csd",
+      "members": [
+        {
+          "name": "CBACT01C",
+          "artifact": "program",
+          "path": "app/cbl/CBACT01C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBACT01C.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBACT02C",
+          "artifact": "program",
+          "path": "app/cbl/CBACT02C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBACT02C.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBACT03C",
+          "artifact": "program",
+          "path": "app/cbl/CBACT03C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBACT03C.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBACT04C",
+          "artifact": "program",
+          "path": "app/cbl/CBACT04C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBACT04C.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBCUS01C",
+          "artifact": "program",
+          "path": "app/cbl/CBCUS01C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBCUS01C.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBEXPORT",
+          "artifact": "program",
+          "path": "app/cbl/CBEXPORT.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBEXPORT.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBIMPORT",
+          "artifact": "program",
+          "path": "app/cbl/CBIMPORT.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBIMPORT.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBSTM03A",
+          "artifact": "program",
+          "path": "app/cbl/CBSTM03A.CBL",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBSTM03A.CBL"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBSTM03B",
+          "artifact": "program",
+          "path": "app/cbl/CBSTM03B.CBL",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBSTM03B.CBL"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBTRN01C",
+          "artifact": "program",
+          "path": "app/cbl/CBTRN01C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBTRN01C.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBTRN02C",
+          "artifact": "program",
+          "path": "app/cbl/CBTRN02C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBTRN02C.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBTRN03C",
+          "artifact": "program",
+          "path": "app/cbl/CBTRN03C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBTRN03C.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COACTUPC",
+          "artifact": "program",
+          "path": "app/cbl/COACTUPC.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COACTUPC.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COACTVWC",
+          "artifact": "program",
+          "path": "app/cbl/COACTVWC.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COACTVWC.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COADM01C",
+          "artifact": "program",
+          "path": "app/cbl/COADM01C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COADM01C.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COBIL00C",
+          "artifact": "program",
+          "path": "app/cbl/COBIL00C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COBIL00C.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COBSWAIT",
+          "artifact": "program",
+          "path": "app/cbl/COBSWAIT.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COBSWAIT.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COCRDLIC",
+          "artifact": "program",
+          "path": "app/cbl/COCRDLIC.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COCRDLIC.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COCRDSLC",
+          "artifact": "program",
+          "path": "app/cbl/COCRDSLC.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COCRDSLC.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COCRDUPC",
+          "artifact": "program",
+          "path": "app/cbl/COCRDUPC.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COCRDUPC.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COMEN01C",
+          "artifact": "program",
+          "path": "app/cbl/COMEN01C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COMEN01C.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CORPT00C",
+          "artifact": "program",
+          "path": "app/cbl/CORPT00C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CORPT00C.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COSGN00C",
+          "artifact": "program",
+          "path": "app/cbl/COSGN00C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COSGN00C.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRN00C",
+          "artifact": "program",
+          "path": "app/cbl/COTRN00C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COTRN00C.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRN01C",
+          "artifact": "program",
+          "path": "app/cbl/COTRN01C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COTRN01C.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRN02C",
+          "artifact": "program",
+          "path": "app/cbl/COTRN02C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COTRN02C.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR00C",
+          "artifact": "program",
+          "path": "app/cbl/COUSR00C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COUSR00C.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR01C",
+          "artifact": "program",
+          "path": "app/cbl/COUSR01C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COUSR01C.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR02C",
+          "artifact": "program",
+          "path": "app/cbl/COUSR02C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COUSR02C.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR03C",
+          "artifact": "program",
+          "path": "app/cbl/COUSR03C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COUSR03C.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CSUTLDTC",
+          "artifact": "program",
+          "path": "app/cbl/CSUTLDTC.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CSUTLDTC.cbl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COADM02Y",
+          "artifact": "copybook",
+          "path": "app/cpy/COADM02Y.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/COADM02Y.cpy"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CODATECN",
+          "artifact": "copybook",
+          "path": "app/cpy/CODATECN.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CODATECN.cpy"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COMEN02Y",
+          "artifact": "copybook",
+          "path": "app/cpy/COMEN02Y.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/COMEN02Y.cpy"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COSTM01",
+          "artifact": "copybook",
+          "path": "app/cpy/COSTM01.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/COSTM01.CPY"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CSLKPCDY",
+          "artifact": "copybook",
+          "path": "app/cpy/CSLKPCDY.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CSLKPCDY.cpy"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CSSETATY",
+          "artifact": "copybook",
+          "path": "app/cpy/CSSETATY.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CSSETATY.cpy"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CSSTRPFY",
+          "artifact": "copybook",
+          "path": "app/cpy/CSSTRPFY.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CSSTRPFY.cpy"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CSUSR01Y",
+          "artifact": "copybook",
+          "path": "app/cpy/CSUSR01Y.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CSUSR01Y.cpy"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CSUTLDPY",
+          "artifact": "copybook",
+          "path": "app/cpy/CSUTLDPY.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CSUTLDPY.cpy"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CSUTLDWY",
+          "artifact": "copybook",
+          "path": "app/cpy/CSUTLDWY.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CSUTLDWY.cpy"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CUSTREC",
+          "artifact": "copybook",
+          "path": "app/cpy/CUSTREC.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CUSTREC.cpy"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CVCRD01Y",
+          "artifact": "copybook",
+          "path": "app/cpy/CVCRD01Y.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CVCRD01Y.cpy"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CVEXPORT",
+          "artifact": "copybook",
+          "path": "app/cpy/CVEXPORT.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CVEXPORT.cpy"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CVTRA01Y",
+          "artifact": "copybook",
+          "path": "app/cpy/CVTRA01Y.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CVTRA01Y.cpy"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CVTRA02Y",
+          "artifact": "copybook",
+          "path": "app/cpy/CVTRA02Y.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CVTRA02Y.cpy"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CVTRA03Y",
+          "artifact": "copybook",
+          "path": "app/cpy/CVTRA03Y.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CVTRA03Y.cpy"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CVTRA04Y",
+          "artifact": "copybook",
+          "path": "app/cpy/CVTRA04Y.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CVTRA04Y.cpy"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CVTRA05Y",
+          "artifact": "copybook",
+          "path": "app/cpy/CVTRA05Y.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CVTRA05Y.cpy"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CVTRA06Y",
+          "artifact": "copybook",
+          "path": "app/cpy/CVTRA06Y.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CVTRA06Y.cpy"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CVTRA07Y",
+          "artifact": "copybook",
+          "path": "app/cpy/CVTRA07Y.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CVTRA07Y.cpy"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "UNUSED1Y",
+          "artifact": "copybook",
+          "path": "app/cpy/UNUSED1Y.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/UNUSED1Y.cpy"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": ".GITKEEP",
+          "artifact": "other",
+          "path": "app/cpy-bms/.gitkeep",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/.gitkeep"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COACTUP",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COACTUP.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COACTUP.CPY"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COACTVW",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COACTVW.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COACTVW.CPY"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COADM01",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COADM01.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COADM01.CPY"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COBIL00",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COBIL00.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COBIL00.CPY"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COCRDLI",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COCRDLI.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COCRDLI.CPY"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COCRDSL",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COCRDSL.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COCRDSL.CPY"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COCRDUP",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COCRDUP.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COCRDUP.CPY"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COMEN01",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COMEN01.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COMEN01.CPY"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CORPT00",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/CORPT00.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/CORPT00.CPY"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COSGN00",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COSGN00.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COSGN00.CPY"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRN00",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COTRN00.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COTRN00.CPY"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRN01",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COTRN01.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COTRN01.CPY"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRN02",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COTRN02.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COTRN02.CPY"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR00",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COUSR00.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COUSR00.CPY"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR01",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COUSR01.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COUSR01.CPY"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR02",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COUSR02.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COUSR02.CPY"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR03",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COUSR03.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COUSR03.CPY"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COACTUP",
+          "artifact": "bms",
+          "path": "app/bms/COACTUP.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COACTUP.bms"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COACTVW",
+          "artifact": "bms",
+          "path": "app/bms/COACTVW.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COACTVW.bms"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COADM01",
+          "artifact": "bms",
+          "path": "app/bms/COADM01.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COADM01.bms"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COBIL00",
+          "artifact": "bms",
+          "path": "app/bms/COBIL00.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COBIL00.bms"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COCRDLI",
+          "artifact": "bms",
+          "path": "app/bms/COCRDLI.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COCRDLI.bms"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COCRDSL",
+          "artifact": "bms",
+          "path": "app/bms/COCRDSL.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COCRDSL.bms"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COCRDUP",
+          "artifact": "bms",
+          "path": "app/bms/COCRDUP.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COCRDUP.bms"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COMEN01",
+          "artifact": "bms",
+          "path": "app/bms/COMEN01.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COMEN01.bms"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CORPT00",
+          "artifact": "bms",
+          "path": "app/bms/CORPT00.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/CORPT00.bms"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COSGN00",
+          "artifact": "bms",
+          "path": "app/bms/COSGN00.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COSGN00.bms"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRN00",
+          "artifact": "bms",
+          "path": "app/bms/COTRN00.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COTRN00.bms"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRN01",
+          "artifact": "bms",
+          "path": "app/bms/COTRN01.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COTRN01.bms"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRN02",
+          "artifact": "bms",
+          "path": "app/bms/COTRN02.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COTRN02.bms"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR00",
+          "artifact": "bms",
+          "path": "app/bms/COUSR00.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COUSR00.bms"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR01",
+          "artifact": "bms",
+          "path": "app/bms/COUSR01.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COUSR01.bms"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR02",
+          "artifact": "bms",
+          "path": "app/bms/COUSR02.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COUSR02.bms"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR03",
+          "artifact": "bms",
+          "path": "app/bms/COUSR03.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COUSR03.bms"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "ACCTFILE",
+          "artifact": "jcl",
+          "path": "app/jcl/ACCTFILE.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/ACCTFILE.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CARDFILE",
+          "artifact": "jcl",
+          "path": "app/jcl/CARDFILE.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/CARDFILE.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBADMCDJ",
+          "artifact": "jcl",
+          "path": "app/jcl/CBADMCDJ.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/CBADMCDJ.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBEXPORT",
+          "artifact": "jcl",
+          "path": "app/jcl/CBEXPORT.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/CBEXPORT.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBIMPORT",
+          "artifact": "jcl",
+          "path": "app/jcl/CBIMPORT.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/CBIMPORT.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CLOSEFIL",
+          "artifact": "jcl",
+          "path": "app/jcl/CLOSEFIL.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/CLOSEFIL.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COMBTRAN",
+          "artifact": "jcl",
+          "path": "app/jcl/COMBTRAN.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/COMBTRAN.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CREASTMT",
+          "artifact": "jcl",
+          "path": "app/jcl/CREASTMT.JCL",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/CREASTMT.JCL"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CUSTFILE",
+          "artifact": "jcl",
+          "path": "app/jcl/CUSTFILE.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/CUSTFILE.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DALYREJS",
+          "artifact": "jcl",
+          "path": "app/jcl/DALYREJS.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/DALYREJS.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DEFCUST",
+          "artifact": "jcl",
+          "path": "app/jcl/DEFCUST.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/DEFCUST.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DEFGDGB",
+          "artifact": "jcl",
+          "path": "app/jcl/DEFGDGB.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/DEFGDGB.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DEFGDGD",
+          "artifact": "jcl",
+          "path": "app/jcl/DEFGDGD.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/DEFGDGD.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DISCGRP",
+          "artifact": "jcl",
+          "path": "app/jcl/DISCGRP.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/DISCGRP.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DUSRSECJ",
+          "artifact": "jcl",
+          "path": "app/jcl/DUSRSECJ.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/DUSRSECJ.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "ESDSRRDS",
+          "artifact": "jcl",
+          "path": "app/jcl/ESDSRRDS.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/ESDSRRDS.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "FTPJCL",
+          "artifact": "jcl",
+          "path": "app/jcl/FTPJCL.JCL",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/FTPJCL.JCL"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "INTCALC",
+          "artifact": "jcl",
+          "path": "app/jcl/INTCALC.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/INTCALC.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "INTRDRJ1",
+          "artifact": "jcl",
+          "path": "app/jcl/INTRDRJ1.JCL",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/INTRDRJ1.JCL"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "INTRDRJ2",
+          "artifact": "jcl",
+          "path": "app/jcl/INTRDRJ2.JCL",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/INTRDRJ2.JCL"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "OPENFIL",
+          "artifact": "jcl",
+          "path": "app/jcl/OPENFIL.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/OPENFIL.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "POSTTRAN",
+          "artifact": "jcl",
+          "path": "app/jcl/POSTTRAN.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/POSTTRAN.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "PRTCATBL",
+          "artifact": "jcl",
+          "path": "app/jcl/PRTCATBL.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/PRTCATBL.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "READACCT",
+          "artifact": "jcl",
+          "path": "app/jcl/READACCT.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/READACCT.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "READCARD",
+          "artifact": "jcl",
+          "path": "app/jcl/READCARD.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/READCARD.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "READCUST",
+          "artifact": "jcl",
+          "path": "app/jcl/READCUST.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/READCUST.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "READXREF",
+          "artifact": "jcl",
+          "path": "app/jcl/READXREF.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/READXREF.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "REPTFILE",
+          "artifact": "jcl",
+          "path": "app/jcl/REPTFILE.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/REPTFILE.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TCATBALF",
+          "artifact": "jcl",
+          "path": "app/jcl/TCATBALF.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/TCATBALF.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TRANBKP",
+          "artifact": "jcl",
+          "path": "app/jcl/TRANBKP.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/TRANBKP.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TRANCATG",
+          "artifact": "jcl",
+          "path": "app/jcl/TRANCATG.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/TRANCATG.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TRANFILE",
+          "artifact": "jcl",
+          "path": "app/jcl/TRANFILE.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/TRANFILE.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TRANIDX",
+          "artifact": "jcl",
+          "path": "app/jcl/TRANIDX.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/TRANIDX.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TRANREPT",
+          "artifact": "jcl",
+          "path": "app/jcl/TRANREPT.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/TRANREPT.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TRANTYPE",
+          "artifact": "jcl",
+          "path": "app/jcl/TRANTYPE.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/TRANTYPE.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TXT2PDF1",
+          "artifact": "jcl",
+          "path": "app/jcl/TXT2PDF1.JCL",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/TXT2PDF1.JCL"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "WAITSTEP",
+          "artifact": "jcl",
+          "path": "app/jcl/WAITSTEP.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/WAITSTEP.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "XREFFILE",
+          "artifact": "jcl",
+          "path": "app/jcl/XREFFILE.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/XREFFILE.jcl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "REPROC",
+          "artifact": "proc",
+          "path": "app/proc/REPROC.prc",
+          "confidence": "derived",
+          "evidence": [
+            "app/proc/REPROC.prc"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TRANREPT",
+          "artifact": "proc",
+          "path": "app/proc/TRANREPT.prc",
+          "confidence": "derived",
+          "evidence": [
+            "app/proc/TRANREPT.prc"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "REPROCT",
+          "artifact": "control-cards",
+          "path": "app/ctl/REPROCT.ctl",
+          "confidence": "derived",
+          "evidence": [
+            "app/ctl/REPROCT.ctl"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": ".GITKEEP",
+          "artifact": "other",
+          "path": "app/csd/.gitkeep",
+          "confidence": "derived",
+          "evidence": [
+            "app/csd/.gitkeep"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CARDDEMO",
+          "artifact": "csd",
+          "path": "app/csd/CARDDEMO.CSD",
+          "confidence": "derived",
+          "evidence": [
+            "app/csd/CARDDEMO.CSD"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COBDATFT",
+          "artifact": "other",
+          "path": "app/asm/COBDATFT.asm",
+          "confidence": "derived",
+          "evidence": [
+            "app/asm/COBDATFT.asm"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "MVSWAIT",
+          "artifact": "other",
+          "path": "app/asm/MVSWAIT.asm",
+          "confidence": "derived",
+          "evidence": [
+            "app/asm/MVSWAIT.asm"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "ASMWAIT",
+          "artifact": "other",
+          "path": "app/maclib/ASMWAIT.mac",
+          "confidence": "derived",
+          "evidence": [
+            "app/maclib/ASMWAIT.mac"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COCDATFT",
+          "artifact": "other",
+          "path": "app/maclib/COCDATFT.mac",
+          "confidence": "derived",
+          "evidence": [
+            "app/maclib/COCDATFT.mac"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CARDDEMO",
+          "artifact": "schedule",
+          "path": "app/scheduler/CardDemo.ca7",
+          "confidence": "derived",
+          "evidence": [
+            "app/scheduler/CardDemo.ca7"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CARDDEMO",
+          "artifact": "schedule",
+          "path": "app/scheduler/CardDemo.controlm",
+          "confidence": "derived",
+          "evidence": [
+            "app/scheduler/CardDemo.controlm"
+          ],
+          "reasoning": "in the core CardDemo libraries the repository keeps at app/<kind>, outside every app-* sub-application directory",
+          "confirmed": null,
+          "alternatives": []
+        }
+      ]
+    },
+    {
+      "id": "PAUTH",
+      "name": "Pending authorizations",
+      "naming": "proposed",
+      "what_it_does": "Holds and views pending card authorisations: the IMS authorisation database, the DB2 fraud table behind it, and the CICS screens and batch purge that work them.",
+      "confidence": "derived",
+      "confirmed": null,
+      "evidence": [
+        "app/app-authorization-ims-db2-mq/README.md:1",
+        "app/app-authorization-ims-db2-mq/csd/CRDDEMO2.csd:1",
+        "app/app-authorization-ims-db2-mq/ims/DBPAUTP0.dbd:1"
+      ],
+      "reasoning": "its own sub-application directory with its own CSD group, IMS DBD/PSB source, DDL and JCL",
+      "roots": {
+        "src": [
+          "app/app-authorization-ims-db2-mq/cbl"
+        ],
+        "copybooks": [
+          "app/app-authorization-ims-db2-mq/cpy",
+          "app/app-authorization-ims-db2-mq/cpy-bms",
+          "app/cpy"
+        ],
+        "jcl": [
+          "app/app-authorization-ims-db2-mq/jcl"
+        ],
+        "procs": [],
+        "sched": [
+          "app/scheduler"
+        ],
+        "csd": [
+          "app/app-authorization-ims-db2-mq/csd"
+        ],
+        "sql": [
+          "app/app-authorization-ims-db2-mq/ddl"
+        ],
+        "ims": [
+          "app/app-authorization-ims-db2-mq/ims"
+        ]
+      },
+      "scan": "python3 -m mftb scan --module PAUTH --src app/app-authorization-ims-db2-mq/cbl --copy app/app-authorization-ims-db2-mq/cpy --copy app/app-authorization-ims-db2-mq/cpy-bms --copy app/cpy --jcl app/app-authorization-ims-db2-mq/jcl --sched app/scheduler --sql app/app-authorization-ims-db2-mq/ddl --csd app/app-authorization-ims-db2-mq/csd --ims app/app-authorization-ims-db2-mq/ims",
+      "members": [
+        {
+          "name": "CBPAUP0C",
+          "artifact": "program",
+          "path": "app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COPAUA0C",
+          "artifact": "program",
+          "path": "app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COPAUS0C",
+          "artifact": "program",
+          "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COPAUS1C",
+          "artifact": "program",
+          "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COPAUS2C",
+          "artifact": "program",
+          "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DBUNLDGS",
+          "artifact": "program",
+          "path": "app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "PAUDBLOD",
+          "artifact": "program",
+          "path": "app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "PAUDBUNL",
+          "artifact": "program",
+          "path": "app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CCPAUERY",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/cpy/CCPAUERY.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cpy/CCPAUERY.cpy"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CCPAURLY",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/cpy/CCPAURLY.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cpy/CCPAURLY.cpy"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CCPAURQY",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/cpy/CCPAURQY.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cpy/CCPAURQY.cpy"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CIPAUDTY",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/cpy/CIPAUDTY.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cpy/CIPAUDTY.cpy"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CIPAUSMY",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/cpy/CIPAUSMY.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cpy/CIPAUSMY.cpy"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "IMSFUNCS",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/cpy/IMSFUNCS.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cpy/IMSFUNCS.cpy"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "PADFLPCB",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/cpy/PADFLPCB.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cpy/PADFLPCB.CPY"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "PASFLPCB",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/cpy/PASFLPCB.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cpy/PASFLPCB.CPY"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "PAUTBPCB",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/cpy/PAUTBPCB.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cpy/PAUTBPCB.CPY"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COPAU00",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/cpy-bms/COPAU00.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cpy-bms/COPAU00.cpy"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COPAU01",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/cpy-bms/COPAU01.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cpy-bms/COPAU01.cpy"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COPAU00",
+          "artifact": "bms",
+          "path": "app/app-authorization-ims-db2-mq/bms/COPAU00.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/bms/COPAU00.bms"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COPAU01",
+          "artifact": "bms",
+          "path": "app/app-authorization-ims-db2-mq/bms/COPAU01.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/bms/COPAU01.bms"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBPAUP0J",
+          "artifact": "jcl",
+          "path": "app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DBPAUTP0",
+          "artifact": "jcl",
+          "path": "app/app-authorization-ims-db2-mq/jcl/DBPAUTP0.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/jcl/DBPAUTP0.jcl"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "LOADPADB",
+          "artifact": "jcl",
+          "path": "app/app-authorization-ims-db2-mq/jcl/LOADPADB.JCL",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/jcl/LOADPADB.JCL"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "UNLDGSAM",
+          "artifact": "jcl",
+          "path": "app/app-authorization-ims-db2-mq/jcl/UNLDGSAM.JCL",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/jcl/UNLDGSAM.JCL"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "UNLDPADB",
+          "artifact": "jcl",
+          "path": "app/app-authorization-ims-db2-mq/jcl/UNLDPADB.JCL",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/jcl/UNLDPADB.JCL"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CRDDEMO2",
+          "artifact": "csd",
+          "path": "app/app-authorization-ims-db2-mq/csd/CRDDEMO2.csd",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/csd/CRDDEMO2.csd"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "AUTHFRDS",
+          "artifact": "sql",
+          "path": "app/app-authorization-ims-db2-mq/ddl/AUTHFRDS.ddl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/ddl/AUTHFRDS.ddl"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "XAUTHFRD",
+          "artifact": "sql",
+          "path": "app/app-authorization-ims-db2-mq/ddl/XAUTHFRD.ddl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/ddl/XAUTHFRD.ddl"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "AUTHFRDS",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/dcl/AUTHFRDS.dcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/dcl/AUTHFRDS.dcl"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DBPAUTP0",
+          "artifact": "ims",
+          "path": "app/app-authorization-ims-db2-mq/ims/DBPAUTP0.dbd",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/ims/DBPAUTP0.dbd"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DBPAUTX0",
+          "artifact": "ims",
+          "path": "app/app-authorization-ims-db2-mq/ims/DBPAUTX0.dbd",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/ims/DBPAUTX0.dbd"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DLIGSAMP",
+          "artifact": "ims",
+          "path": "app/app-authorization-ims-db2-mq/ims/DLIGSAMP.PSB",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/ims/DLIGSAMP.PSB"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "PADFLDBD",
+          "artifact": "ims",
+          "path": "app/app-authorization-ims-db2-mq/ims/PADFLDBD.DBD",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/ims/PADFLDBD.DBD"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "PASFLDBD",
+          "artifact": "ims",
+          "path": "app/app-authorization-ims-db2-mq/ims/PASFLDBD.DBD",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/ims/PASFLDBD.DBD"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "PAUTBUNL",
+          "artifact": "ims",
+          "path": "app/app-authorization-ims-db2-mq/ims/PAUTBUNL.PSB",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/ims/PAUTBUNL.PSB"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "PSBPAUTB",
+          "artifact": "ims",
+          "path": "app/app-authorization-ims-db2-mq/ims/PSBPAUTB.psb",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/ims/PSBPAUTB.psb"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "PSBPAUTL",
+          "artifact": "ims",
+          "path": "app/app-authorization-ims-db2-mq/ims/PSBPAUTL.psb",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/ims/PSBPAUTL.psb"
+          ],
+          "reasoning": "in the pending-authorization sub-application's own directory tree (app/app-authorization-ims-db2-mq)",
+          "confirmed": null,
+          "alternatives": []
+        }
+      ]
+    },
+    {
+      "id": "TRNTYPE",
+      "name": "Transaction types & categories (DB2)",
+      "naming": "proposed",
+      "what_it_does": "Keeps the transaction type and category reference data in DB2: the CICS list and update screens over it, and the batch job that refreshes the tables from the VSAM extract.",
+      "confidence": "derived",
+      "confirmed": null,
+      "evidence": [
+        "app/app-transaction-type-db2/README.md:1",
+        "app/app-transaction-type-db2/csd/CRDDEMOD.csd:1",
+        "app/app-transaction-type-db2/ddl/TRNTYPE.ddl:1",
+        "app/scheduler/CardDemo.controlm:27"
+      ],
+      "reasoning": "its own sub-application directory with its own CSD group, DB2 DDL and DCLGENs, and the two scheduler folders that order MNTTRDB2 and TRANEXTR",
+      "roots": {
+        "src": [
+          "app/app-transaction-type-db2/cbl"
+        ],
+        "copybooks": [
+          "app/app-transaction-type-db2/cpy",
+          "app/app-transaction-type-db2/cpy-bms",
+          "app/app-transaction-type-db2/dcl",
+          "app/cpy"
+        ],
+        "jcl": [
+          "app/app-transaction-type-db2/jcl"
+        ],
+        "procs": [],
+        "cntl": [
+          "app/app-transaction-type-db2/ctl"
+        ],
+        "sched": [
+          "app/scheduler"
+        ],
+        "csd": [
+          "app/app-transaction-type-db2/csd"
+        ],
+        "sql": [
+          "app/app-transaction-type-db2/ddl"
+        ]
+      },
+      "scan": "python3 -m mftb scan --module TRNTYPE --src app/app-transaction-type-db2/cbl --copy app/app-transaction-type-db2/cpy --copy app/app-transaction-type-db2/cpy-bms --copy app/app-transaction-type-db2/dcl --copy app/cpy --jcl app/app-transaction-type-db2/jcl --cntl app/app-transaction-type-db2/ctl --sched app/scheduler --sql app/app-transaction-type-db2/ddl --csd app/app-transaction-type-db2/csd",
+      "members": [
+        {
+          "name": "COBTUPDT",
+          "artifact": "program",
+          "path": "app/app-transaction-type-db2/cbl/COBTUPDT.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/cbl/COBTUPDT.cbl"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRTLIC",
+          "artifact": "program",
+          "path": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/cbl/COTRTLIC.cbl"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRTUPC",
+          "artifact": "program",
+          "path": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/cbl/COTRTUPC.cbl"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CSDB2RPY",
+          "artifact": "copybook",
+          "path": "app/app-transaction-type-db2/cpy/CSDB2RPY.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/cpy/CSDB2RPY.cpy"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CSDB2RWY",
+          "artifact": "copybook",
+          "path": "app/app-transaction-type-db2/cpy/CSDB2RWY.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/cpy/CSDB2RWY.cpy"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRTLI",
+          "artifact": "copybook",
+          "path": "app/app-transaction-type-db2/cpy-bms/COTRTLI.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/cpy-bms/COTRTLI.cpy"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRTUP",
+          "artifact": "copybook",
+          "path": "app/app-transaction-type-db2/cpy-bms/COTRTUP.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/cpy-bms/COTRTUP.cpy"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRTLI",
+          "artifact": "bms",
+          "path": "app/app-transaction-type-db2/bms/COTRTLI.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/bms/COTRTLI.bms"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRTUP",
+          "artifact": "bms",
+          "path": "app/app-transaction-type-db2/bms/COTRTUP.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/bms/COTRTUP.bms"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CREADB21",
+          "artifact": "jcl",
+          "path": "app/app-transaction-type-db2/jcl/CREADB21.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/jcl/CREADB21.jcl"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "MNTTRDB2",
+          "artifact": "jcl",
+          "path": "app/app-transaction-type-db2/jcl/MNTTRDB2.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/jcl/MNTTRDB2.jcl"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TRANEXTR",
+          "artifact": "jcl",
+          "path": "app/app-transaction-type-db2/jcl/TRANEXTR.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/jcl/TRANEXTR.jcl"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CRDDEMOD",
+          "artifact": "csd",
+          "path": "app/app-transaction-type-db2/csd/CRDDEMOD.csd",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/csd/CRDDEMOD.csd"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TRNTYCAT",
+          "artifact": "sql",
+          "path": "app/app-transaction-type-db2/ddl/TRNTYCAT.ddl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/ddl/TRNTYCAT.ddl"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TRNTYPE",
+          "artifact": "sql",
+          "path": "app/app-transaction-type-db2/ddl/TRNTYPE.ddl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/ddl/TRNTYPE.ddl"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "XTRNTYCAT",
+          "artifact": "sql",
+          "path": "app/app-transaction-type-db2/ddl/XTRNTYCAT.ddl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/ddl/XTRNTYCAT.ddl"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "XTRNTYPE",
+          "artifact": "sql",
+          "path": "app/app-transaction-type-db2/ddl/XTRNTYPE.ddl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/ddl/XTRNTYPE.ddl"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DCLTRCAT",
+          "artifact": "copybook",
+          "path": "app/app-transaction-type-db2/dcl/DCLTRCAT.dcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/dcl/DCLTRCAT.dcl"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DCLTRTYP",
+          "artifact": "copybook",
+          "path": "app/app-transaction-type-db2/dcl/DCLTRTYP.dcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/dcl/DCLTRTYP.dcl"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DB2CREAT",
+          "artifact": "control-cards",
+          "path": "app/app-transaction-type-db2/ctl/DB2CREAT.ctl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/ctl/DB2CREAT.ctl"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DB2FREE",
+          "artifact": "control-cards",
+          "path": "app/app-transaction-type-db2/ctl/DB2FREE.ctl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/ctl/DB2FREE.ctl"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DB2LTCAT",
+          "artifact": "control-cards",
+          "path": "app/app-transaction-type-db2/ctl/DB2LTCAT.ctl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/ctl/DB2LTCAT.ctl"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DB2LTTYP",
+          "artifact": "control-cards",
+          "path": "app/app-transaction-type-db2/ctl/DB2LTTYP.ctl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/ctl/DB2LTTYP.ctl"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DB2TEP41",
+          "artifact": "control-cards",
+          "path": "app/app-transaction-type-db2/ctl/DB2TEP41.ctl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/ctl/DB2TEP41.ctl"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DB2TIAD1",
+          "artifact": "control-cards",
+          "path": "app/app-transaction-type-db2/ctl/DB2TIAD1.ctl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/ctl/DB2TIAD1.ctl"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "REPROCT",
+          "artifact": "control-cards",
+          "path": "app/app-transaction-type-db2/ctl/REPROCT.ctl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/ctl/REPROCT.ctl"
+          ],
+          "reasoning": "in the transaction-type sub-application's own directory tree (app/app-transaction-type-db2)",
+          "confirmed": null,
+          "alternatives": []
+        }
+      ]
+    },
+    {
+      "id": "VSAMMQ",
+      "name": "VSAM/MQ sample transactions",
+      "naming": "proposed",
+      "what_it_does": "Two CICS-only sample programs (an account enquiry and a date routine) defined in their own CSD group; no JCL of their own.",
+      "confidence": "derived",
+      "confirmed": null,
+      "evidence": [
+        "app/app-vsam-mq/README.md:1",
+        "app/app-vsam-mq/csd/CRDDEMOM.csd:1"
+      ],
+      "reasoning": "its own sub-application directory and CSD group CRDDEMOM defining CDRA and CDRD",
+      "roots": {
+        "src": [
+          "app/app-vsam-mq/cbl"
+        ],
+        "copybooks": [
+          "app/cpy"
+        ],
+        "jcl": [],
+        "procs": [],
+        "sched": [],
+        "csd": [
+          "app/app-vsam-mq/csd"
+        ],
+        "sql": []
+      },
+      "scan": "python3 -m mftb scan --module VSAMMQ --src app/app-vsam-mq/cbl --copy app/cpy --jcl <empty dir: the module has no JCL> --csd app/app-vsam-mq/csd",
+      "members": [
+        {
+          "name": "COACCT01",
+          "artifact": "program",
+          "path": "app/app-vsam-mq/cbl/COACCT01.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-vsam-mq/cbl/COACCT01.cbl"
+          ],
+          "reasoning": "in the VSAM/MQ sub-application's own directory tree (app/app-vsam-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CODATE01",
+          "artifact": "program",
+          "path": "app/app-vsam-mq/cbl/CODATE01.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-vsam-mq/cbl/CODATE01.cbl"
+          ],
+          "reasoning": "in the VSAM/MQ sub-application's own directory tree (app/app-vsam-mq)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CRDDEMOM",
+          "artifact": "csd",
+          "path": "app/app-vsam-mq/csd/CRDDEMOM.csd",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-vsam-mq/csd/CRDDEMOM.csd"
+          ],
+          "reasoning": "in the VSAM/MQ sub-application's own directory tree (app/app-vsam-mq)",
+          "confirmed": null,
+          "alternatives": []
+        }
+      ]
+    }
+  ],
+  "shared": [
+    {
+      "name": "COCOM01Y",
+      "artifact": "copybook",
+      "path": "app/cpy/COCOM01Y.cpy",
+      "used_by": [
+        "CARDDEMO",
+        "PAUTH",
+        "TRNTYPE"
+      ],
+      "evidence": [
+        "app/cpy/COCOM01Y.cpy",
+        "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:1"
+      ],
+      "why": "a core record/attribute layout the sub-applications COPY as well as the core programs; passed to every module scan as --copy app/cpy"
+    },
+    {
+      "name": "COTTL01Y",
+      "artifact": "copybook",
+      "path": "app/cpy/COTTL01Y.cpy",
+      "used_by": [
+        "CARDDEMO",
+        "PAUTH",
+        "TRNTYPE"
+      ],
+      "evidence": [
+        "app/cpy/COTTL01Y.cpy",
+        "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:1"
+      ],
+      "why": "a core record/attribute layout the sub-applications COPY as well as the core programs; passed to every module scan as --copy app/cpy"
+    },
+    {
+      "name": "CSDAT01Y",
+      "artifact": "copybook",
+      "path": "app/cpy/CSDAT01Y.cpy",
+      "used_by": [
+        "CARDDEMO",
+        "PAUTH",
+        "TRNTYPE"
+      ],
+      "evidence": [
+        "app/cpy/CSDAT01Y.cpy",
+        "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:1"
+      ],
+      "why": "a core record/attribute layout the sub-applications COPY as well as the core programs; passed to every module scan as --copy app/cpy"
+    },
+    {
+      "name": "CSMSG01Y",
+      "artifact": "copybook",
+      "path": "app/cpy/CSMSG01Y.cpy",
+      "used_by": [
+        "CARDDEMO",
+        "PAUTH",
+        "TRNTYPE"
+      ],
+      "evidence": [
+        "app/cpy/CSMSG01Y.cpy",
+        "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:1"
+      ],
+      "why": "a core record/attribute layout the sub-applications COPY as well as the core programs; passed to every module scan as --copy app/cpy"
+    },
+    {
+      "name": "CSMSG02Y",
+      "artifact": "copybook",
+      "path": "app/cpy/CSMSG02Y.cpy",
+      "used_by": [
+        "CARDDEMO",
+        "PAUTH",
+        "TRNTYPE"
+      ],
+      "evidence": [
+        "app/cpy/CSMSG02Y.cpy",
+        "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:1"
+      ],
+      "why": "a core record/attribute layout the sub-applications COPY as well as the core programs; passed to every module scan as --copy app/cpy"
+    },
+    {
+      "name": "CVACT01Y",
+      "artifact": "copybook",
+      "path": "app/cpy/CVACT01Y.cpy",
+      "used_by": [
+        "CARDDEMO",
+        "PAUTH",
+        "TRNTYPE"
+      ],
+      "evidence": [
+        "app/cpy/CVACT01Y.cpy",
+        "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:1"
+      ],
+      "why": "a core record/attribute layout the sub-applications COPY as well as the core programs; passed to every module scan as --copy app/cpy"
+    },
+    {
+      "name": "CVACT02Y",
+      "artifact": "copybook",
+      "path": "app/cpy/CVACT02Y.cpy",
+      "used_by": [
+        "CARDDEMO",
+        "PAUTH",
+        "TRNTYPE"
+      ],
+      "evidence": [
+        "app/cpy/CVACT02Y.cpy",
+        "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:1"
+      ],
+      "why": "a core record/attribute layout the sub-applications COPY as well as the core programs; passed to every module scan as --copy app/cpy"
+    },
+    {
+      "name": "CVACT03Y",
+      "artifact": "copybook",
+      "path": "app/cpy/CVACT03Y.cpy",
+      "used_by": [
+        "CARDDEMO",
+        "PAUTH",
+        "TRNTYPE"
+      ],
+      "evidence": [
+        "app/cpy/CVACT03Y.cpy",
+        "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:1"
+      ],
+      "why": "a core record/attribute layout the sub-applications COPY as well as the core programs; passed to every module scan as --copy app/cpy"
+    },
+    {
+      "name": "CVCUS01Y",
+      "artifact": "copybook",
+      "path": "app/cpy/CVCUS01Y.cpy",
+      "used_by": [
+        "CARDDEMO",
+        "PAUTH",
+        "TRNTYPE"
+      ],
+      "evidence": [
+        "app/cpy/CVCUS01Y.cpy",
+        "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:1"
+      ],
+      "why": "a core record/attribute layout the sub-applications COPY as well as the core programs; passed to every module scan as --copy app/cpy"
+    },
+    {
+      "name": "CARDDEMO.CONTROLM / CARDDEMO.CA7",
+      "artifact": "schedule",
+      "path": "app/scheduler",
+      "used_by": [
+        "CARDDEMO",
+        "PAUTH",
+        "TRNTYPE"
+      ],
+      "evidence": [
+        "app/scheduler/CardDemo.ca7:19",
+        "app/scheduler/CardDemo.controlm:27"
+      ],
+      "why": "one estate-wide scheduler export: the CA 7 listing orders CARDDEMO jobs and PAUTH's CBPAUP0J, the Control-M folders order CARDDEMO and TRNTYPE jobs; every module scan is given --sched app/scheduler so its own jobs are entry-point proven"
+    }
+  ],
+  "unplaced": [
+    {
+      "name": "LISTCAT",
+      "artifact": "other",
+      "path": "app/catlg/LISTCAT.txt",
+      "why": "an IDCAMS LISTCAT print of the estate's clusters; it belongs to no application and mftb has no input for it",
+      "request": "Confirm LISTCAT.txt is a captured catalog listing rather than an input any job reads."
+    },
+    {
+      "name": "DATA",
+      "artifact": "data",
+      "path": "app/data",
+      "why": "ASCII/EBCDIC sample data files for the VSAM clusters \u2014 estate-wide test data, not a member of one application",
+      "request": "Confirm the sample data under app/data is test data only, and say which module owns the EBCDIC IMS extract app/app-authorization-ims-db2-mq/data if it is loaded in production."
+    },
+    {
+      "name": "SAMPLES",
+      "artifact": "other",
+      "path": "samples",
+      "why": "AWS Mainframe Modernization / UniKix runtime packaging of the same application, not additional mainframe source",
+      "request": "Confirm samples/ is packaging only, so nothing there needs to be scanned as a module."
+    },
+    {
+      "name": "MIGRATION",
+      "artifact": "other",
+      "path": "migration",
+      "why": "the Java/React migration of the transaction-management slice \u2014 target-side code, not part of the mainframe estate",
+      "request": "Confirm the migration/ tree stays out of the mainframe inventory."
+    }
+  ],
+  "cross_module": [
+    {
+      "from": "CARDDEMO",
+      "to": "PAUTH",
+      "how": "the main menu dispatches XCTL to COPAUS0C",
+      "evidence": [
+        "app/cpy/COMEN02Y.cpy:89",
+        "app/cbl/COMEN01C.cbl:147"
+      ],
+      "why": "the core menu is the only way an operator reaches the pending-authorization screens; the two cannot move in different waves without a cross-region hand-off"
+    },
+    {
+      "from": "CARDDEMO",
+      "to": "TRNTYPE",
+      "how": "the admin menu dispatches XCTL to COTRTLIC / COTRTUPC",
+      "evidence": [
+        "app/cpy/COADM02Y.cpy:49",
+        "app/cpy/COADM02Y.cpy:53"
+      ],
+      "why": "the DB2 transaction-type screens are reached from the core admin menu, so the menu and the DB2 module share a run-time boundary"
+    },
+    {
+      "from": "TRNTYPE",
+      "to": "CARDDEMO",
+      "how": "Control-M condition WEEKLY-TransactionTypesDBRefresh-MNTTRDB2 releases CARDDEMO's DisclosureGroupsRefresh chain",
+      "evidence": [
+        "app/scheduler/CardDemo.controlm:27",
+        "store/CARDDEMO/schedule.json#cross_table"
+      ],
+      "why": "the weekly DB2 refresh gates a core batch chain: the batch window couples the two modules"
+    },
+    {
+      "from": "CARDDEMO",
+      "to": "PAUTH",
+      "how": "CBPAUP0J is ordered inside the CA 7 CARDDEMO table",
+      "evidence": [
+        "app/scheduler/CardDemo.ca7:19",
+        "store/CARDDEMO/chains.json#CARDDEMO"
+      ],
+      "why": "the authorization purge runs inside the core nightly table, so its JCL lives in PAUTH but its schedule belongs to CARDDEMO's chain"
+    }
+  ]
+}

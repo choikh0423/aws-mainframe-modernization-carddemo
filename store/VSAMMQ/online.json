@@ -1,0 +1,179 @@
+{
+  "meta": {
+    "module": "VSAMMQ",
+    "generated_at": "2026-09-13T16:17:14Z",
+    "tool": "mftb 0.1.0",
+    "inputs": {
+      "from": [
+        "connections.json",
+        "programs.json",
+        "chains.json",
+        "onlinenotes.json"
+      ]
+    }
+  },
+  "region": {
+    "csd_scanned": true,
+    "groups": [
+      "CARDDEMO"
+    ],
+    "definitions": {
+      "LIBRARY": 1,
+      "PROGRAM": 2,
+      "TRANSACTION": 2
+    }
+  },
+  "transactions": [
+    {
+      "transid": "CDRA",
+      "basis": "csd",
+      "definition": {
+        "program": "COACCT01",
+        "group": "CARDDEMO",
+        "source": "app/app-vsam-mq/csd/CRDDEMOM.csd:17",
+        "remote_system": null,
+        "twasize": "0",
+        "dynamic": "NO",
+        "description": null
+      },
+      "initial_program": "COACCT01",
+      "programs": [
+        {
+          "id": "COACCT01",
+          "how": "initial",
+          "via": null,
+          "certainty": "proven",
+          "in_inventory": true,
+          "source": null,
+          "level": 0
+        }
+      ],
+      "edges": [],
+      "back_edges": [],
+      "maps": [],
+      "conversation": {
+        "pseudo_conversational": false,
+        "returns": [],
+        "commarea": null
+      },
+      "resources": {
+        "files": [
+          {
+            "name": "ACCTDAT",
+            "csd": null,
+            "dsn": null,
+            "uses": [
+              {
+                "program": "COACCT01",
+                "command": "READ",
+                "direction": "read",
+                "source": "app/app-vsam-mq/cbl/COACCT01.cbl:396"
+              }
+            ],
+            "directions": [
+              "read"
+            ]
+          }
+        ],
+        "ts_queues": [],
+        "td_queues": [],
+        "db2": {
+          "entries": [],
+          "plan": null,
+          "tables": []
+        }
+      },
+      "starts": [],
+      "remote": [],
+      "notes": [],
+      "asks": []
+    },
+    {
+      "transid": "CDRD",
+      "basis": "csd",
+      "definition": {
+        "program": "CODATE01",
+        "group": "CARDDEMO",
+        "source": "app/app-vsam-mq/csd/CRDDEMOM.csd:27",
+        "remote_system": null,
+        "twasize": "0",
+        "dynamic": "NO",
+        "description": null
+      },
+      "initial_program": "CODATE01",
+      "programs": [
+        {
+          "id": "CODATE01",
+          "how": "initial",
+          "via": null,
+          "certainty": "proven",
+          "in_inventory": true,
+          "source": null,
+          "level": 0
+        }
+      ],
+      "edges": [],
+      "back_edges": [],
+      "maps": [],
+      "conversation": {
+        "pseudo_conversational": false,
+        "returns": [],
+        "commarea": null
+      },
+      "resources": {
+        "files": [],
+        "ts_queues": [],
+        "td_queues": [],
+        "db2": {
+          "entries": [],
+          "plan": null,
+          "tables": []
+        }
+      },
+      "starts": [],
+      "remote": [],
+      "notes": [],
+      "asks": []
+    }
+  ],
+  "entry_points": [
+    {
+      "transid": "CDRA",
+      "basis": "csd",
+      "program": "COACCT01",
+      "in_inventory": true,
+      "source": "app/app-vsam-mq/csd/CRDDEMOM.csd:17",
+      "programs": 1,
+      "maps": 0,
+      "pseudo_conversational": false
+    },
+    {
+      "transid": "CDRD",
+      "basis": "csd",
+      "program": "CODATE01",
+      "in_inventory": true,
+      "source": "app/app-vsam-mq/csd/CRDDEMOM.csd:27",
+      "programs": 1,
+      "maps": 0,
+      "pseudo_conversational": false
+    }
+  ],
+  "boundary": {
+    "triggers": [],
+    "datasets": []
+  },
+  "unreached": [],
+  "notes": [],
+  "asks": [],
+  "summary": {
+    "transactions": 2,
+    "transactions_defined": 2,
+    "pseudo_conversational": 0,
+    "programs_reached": 2,
+    "programs_unreached": 0,
+    "maps": 0,
+    "boundary_datasets": 0,
+    "boundary_triggers": 0,
+    "asks": 0
+  }
+}
