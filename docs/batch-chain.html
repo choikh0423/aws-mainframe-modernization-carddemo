@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CardDemo nightly batch chain (CA-7) — reference</title>
+<style>
+  :root {
+    --bg: #fbfaf7; --fg: #1d1f21; --muted: #5c6370; --line: #d8d4cc;
+    --panel: #ffffff; --code-bg: #f1eee8; --accent: #1f5f8b; --accent-soft: #e4eef6;
+    --warn: #8a5a00; --warn-soft: #fff4dc; --ok: #2d6a3e; --ok-soft: #e5f3e8;
+    --bad: #9b2c2c; --bad-soft: #fbe7e7; --s030: #1f5f8b; --s031: #6b4fa0; --s032: #a3591d;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.55 var(--sans); }
+  .layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); max-width: 1320px; margin: 0 auto; }
+  nav.toc { position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto;
+            padding: 28px 18px; border-right: 1px solid var(--line); font-size: 13.5px; }
+  nav.toc h2 { font: 600 12px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 10px; }
+  nav.toc ol { margin: 0; padding-left: 18px; }
+  nav.toc li { margin: 4px 0; }
+  nav.toc ol ol { padding-left: 14px; font-size: 13px; }
+  nav.toc a { color: var(--fg); text-decoration: none; }
+  nav.toc a:hover { color: var(--accent); text-decoration: underline; }
+  main { padding: 32px 44px 80px; min-width: 0; }
+  header.doc { border-bottom: 2px solid var(--fg); padding-bottom: 14px; margin-bottom: 26px; }
+  header.doc .kicker { font: 600 12px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  h1 { font: 700 28px/1.2 var(--mono); margin: 6px 0 8px; }
+  h2 { font: 700 20px/1.3 var(--mono); margin: 44px 0 12px; padding-top: 6px; border-top: 1px solid var(--line); }
+  h3 { font: 700 16px/1.3 var(--mono); margin: 28px 0 8px; }
+  h2 .num, h3 .num { color: var(--muted); margin-right: 8px; }
+  p { margin: 8px 0 12px; max-width: 920px; }
+  code, .mono { font-family: var(--mono); font-size: 13px; }
+  :not(pre) > code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; }
+  a { color: var(--accent); }
+  a.src { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+  pre { background: #1e2227; color: #e6e6e6; padding: 14px 16px; border-radius: 6px; overflow-x: auto;
+        font: 12.5px/1.5 var(--mono); }
+  pre .c { color: #8b949e; } pre .k { color: #79c0ff; } pre .s { color: #a5d6ff; } pre .n { color: #ffa657; }
+  .meta { color: var(--muted); font-size: 13px; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0 18px; background: var(--panel); font-size: 13.5px; }
+  th, td { border: 1px solid var(--line); padding: 6px 9px; text-align: left; vertical-align: top; }
+  th { background: #efebe3; font: 600 12px var(--mono); text-transform: uppercase; letter-spacing: .04em; }
+  td.job, td.mono { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+  .table-wrap { overflow-x: auto; }
+  td a.src { white-space: normal; overflow-wrap: anywhere; }
+
+  table.inv td:nth-child(3) { min-width: 210px; }
+  table.inv td:nth-child(4) { white-space: normal; }
+  table.inv td:nth-child(2) { min-width: 180px; }
+  .callout { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 10px 14px; margin: 14px 0; max-width: 960px; }
+  .callout.warn { border-color: var(--warn); background: var(--warn-soft); }
+  .callout.ok { border-color: var(--ok); background: var(--ok-soft); }
+  .callout strong:first-child { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+  .tag { display: inline-block; font: 600 11px var(--mono); padding: 1px 6px; border-radius: 3px; border: 1px solid currentColor; margin: 1px 2px 1px 0; white-space: nowrap; }
+  .tag.s030 { color: var(--s030); } .tag.s031 { color: var(--s031); } .tag.s032 { color: var(--s032); }
+  .tag.ok { color: var(--ok); } .tag.no { color: var(--muted); } .tag.bad { color: var(--bad); } .tag.warn { color: var(--warn); }
+
+  /* ---------- flow diagram ---------- */
+  .leg { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px 12px; margin: 14px 0 20px; }
+  .leg-title { font: 700 13px var(--mono); margin-bottom: 12px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  .leg-title .meta { font-weight: 400; font-family: var(--sans); }
+  .flow { display: flex; align-items: center; flex-wrap: wrap; row-gap: 14px; }
+  .node { font: 700 12.5px var(--mono); border: 2px solid var(--s030); color: var(--fg); background: #fff; border-radius: 5px;
+          padding: 6px 10px; min-width: 92px; text-align: center; line-height: 1.25; }
+  .node small { display: block; font-weight: 400; font-size: 10.5px; color: var(--muted); }
+  .node.s031 { border-color: var(--s031); } .node.s032 { border-color: var(--s032); }
+  .node.cics { background: #f3f7fa; border-style: dashed; }
+  .node.core { background: var(--accent); color: #fff; } .node.core small { color: #d7e6f2; }
+  .node.end { border-radius: 16px; }
+  .arrow { display: flex; flex-direction: column; align-items: center; margin: 0 4px; min-width: 64px; }
+  .arrow .lbl { font: 10.5px var(--mono); color: var(--muted); white-space: nowrap; }
+  .arrow .ln { position: relative; width: 100%; height: 2px; background: var(--s030); margin-top: 3px; }
+  .arrow .ln::after { content: ""; position: absolute; right: -1px; top: -5px; border: 6px solid transparent; border-left: 9px solid var(--s030); border-right: 0; }
+  .arrow.s031 .ln { background: var(--s031); } .arrow.s031 .ln::after { border-left-color: var(--s031); }
+  .arrow.s032 .ln { background: var(--s032); } .arrow.s032 .ln::after { border-left-color: var(--s032); }
+  .fork { display: flex; flex-direction: column; gap: 10px; border-left: 2px solid var(--muted); border-right: 2px solid var(--muted);
+          padding: 6px 4px; margin: 0 4px; border-radius: 6px; }
+  .fork .flow { flex-wrap: nowrap; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); margin: 6px 0 4px; }
+  .legend span::before { content: ""; display: inline-block; width: 14px; height: 3px; margin-right: 6px; vertical-align: middle; background: var(--c); }
+
+  .steps { counter-reset: s; list-style: none; padding: 0; max-width: 960px; }
+  .steps > li { counter-increment: s; position: relative; padding: 10px 12px 10px 46px; border: 1px solid var(--line); background: var(--panel); border-radius: 6px; margin: 8px 0; }
+  .steps > li::before { content: counter(s); position: absolute; left: 12px; top: 10px; width: 24px; height: 24px; border-radius: 50%;
+                        background: var(--fg); color: #fff; font: 700 12px/24px var(--mono); text-align: center; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; }
+  .card h4 { margin: 0 0 6px; font: 700 14px var(--mono); }
+  footer { margin-top: 56px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12.5px; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } nav.toc { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); } main { padding: 24px 18px; } }
+  @media print { nav.toc { display: none; } .layout { display: block; } .leg, table, .steps > li { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="toc" aria-label="Table of contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#sources">Source files</a></li>
+    <li><a href="#chain">CA-7 trigger chain</a>
+      <ol>
+        <li><a href="#leg1">Leg 1 — posting</a></li>
+        <li><a href="#leg2">Leg 2 — reference refresh</a></li>
+        <li><a href="#leg3">Leg 3 — statements</a></li>
+        <li><a href="#edges">Trigger edge list</a></li>
+        <li><a href="#reading">Reading the listing</a></li>
+      </ol>
+    </li>
+    <li><a href="#other-schedules">Control-M &amp; script runs</a></li>
+    <li><a href="#inventory">Job inventory</a></li>
+    <li><a href="#posttran">POSTTRAN deep dive</a>
+      <ol>
+        <li><a href="#pt-dd">DD / datasets</a></li>
+        <li><a href="#pt-flow">Program flow</a></li>
+        <li><a href="#pt-validate">Validation rules</a></li>
+        <li><a href="#pt-post">Posting steps</a></li>
+        <li><a href="#pt-rc">Return codes</a></li>
+      </ol>
+    </li>
+    <li><a href="#downstream">Downstream jobs</a></li>
+    <li><a href="#notes">Discrepancies &amp; notes</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="doc">
+  <div class="kicker">CardDemo · batch reference</div>
+  <h1>Nightly batch chain (CA-7)</h1>
+  <div class="meta">Built from <code>app/scheduler/CardDemo.ca7</code>, <code>app/jcl/*</code>, <code>app/cbl/CBTRN02C.cbl</code>, <code>README.md</code> and <code>scripts/run_full_batch.sh</code>. Line numbers refer to those files as committed.</div>
+</header>
+
+<!-- ===================================================================== -->
+<h2 id="overview"><span class="num">1</span>Overview</h2>
+<p>The CardDemo nightly chain (called <code>CARDNITE</code> in this doc) is the set of CA-7 scheduled jobs defined in
+<a class="src" href="../app/scheduler/CardDemo.ca7">app/scheduler/CardDemo.ca7</a>. Every leg follows the same pattern:</p>
+<ol>
+  <li><strong>Quiesce CICS.</strong> <code>CLOSEFIL</code> sends <code>CEMT SET FIL(...) CLO</code> to region <code>CICSAWSA</code> via SDSF, so batch can update the VSAM files that the online application normally holds open (<code>TRANSACT</code>, <code>CCXREF</code>, <code>ACCTDAT</code>, <code>CXACAIX</code>, <code>USRSEC</code>).</li>
+  <li><strong>Do the batch work.</strong> Purge expired authorizations and post the day's transactions (leg 1). Refresh reference VSAM files and run the read/print utilities (leg 2). Produce statements (leg 3).</li>
+  <li><strong>Settle.</strong> <code>WAITSTEP</code> runs the <code>COBSWAIT</code> timer (36 seconds).</li>
+  <li><strong>Reopen.</strong> <code>OPENFIL</code> makes the files available to CICS again.</li>
+</ol>
+<p>Interest calculation (<code>INTCALC</code>) and the transaction merge (<code>COMBTRAN</code>) are <em>not</em> in the CA-7 listing. They are scheduled in the Control-M definition (<code>MONTHLY-InterestCalculation</code>) and run in the full sequence of
+<a class="src" href="../scripts/run_full_batch.sh">scripts/run_full_batch.sh</a>. See <a href="#other-schedules">§4</a>.</p>
+
+<!-- ===================================================================== -->
+<h2 id="sources"><span class="num">2</span>Source files</h2>
+<div class="table-wrap"><table>
+  <tr><th>File</th><th>What it defines</th></tr>
+  <tr><td class="mono"><a href="../app/scheduler/CardDemo.ca7">app/scheduler/CardDemo.ca7</a></td><td>CA-7 <code>LJOB,JOB=…,LIST=ALL</code> listings with the <em>TRIGGERED JOBS</em> section for each job (570 lines).</td></tr>
+  <tr><td class="mono"><a href="../app/scheduler/CardDemo.controlm">app/scheduler/CardDemo.controlm</a></td><td>The same estate in Control-M XML: DAILY, WEEKLY and MONTHLY folders with IN/OUT conditions.</td></tr>
+  <tr><td class="mono"><a href="../scripts/run_full_batch.sh">scripts/run_full_batch.sh</a></td><td>FTP/JES submission of the full batch sequence, with <code>sleep</code> between jobs.</td></tr>
+  <tr><td class="mono"><a href="../scripts/run_posting.sh">scripts/run_posting.sh</a>, <a href="../scripts/run_interest_calc.sh">scripts/run_interest_calc.sh</a></td><td>Shorter posting-only and interest-only sequences.</td></tr>
+  <tr><td class="mono"><a href="../app/jcl/">app/jcl/</a></td><td>Base JCL members. <code>CBPAUP0J</code> and <code>TRANEXTR</code> live in the optional-module folders (see <a href="#inventory">§5</a>).</td></tr>
+  <tr><td class="mono"><a href="../app/jcl/POSTTRAN.jcl">app/jcl/POSTTRAN.jcl</a> · <a href="../app/cbl/CBTRN02C.cbl">app/cbl/CBTRN02C.cbl</a></td><td>The daily posting job and its program (<a href="#posttran">§6</a>).</td></tr>
+  <tr><td class="mono"><a href="../README.md#running-batch-jobs">README.md</a></td><td>The "Running Batch Jobs" table that the job purposes below are taken from.</td></tr>
+</table></div>
+
+<!-- ===================================================================== -->
+<h2 id="chain"><span class="num">3</span>CA-7 trigger chain</h2>
+<p>The listing has three legs. Each one starts at <code>CLOSEFIL</code> and ends at <code>OPENFIL</code>, and blank-line gaps in the file separate them (after line 126 and after line 455). Arrow labels show the <code>SCHID</code> of the triggered job. Colour shows the schedule ID.</p>
+<div class="legend">
+  <span style="--c: var(--s030)">SCHID=030 (main path)</span>
+  <span style="--c: var(--s031)">SCHID=031</span>
+  <span style="--c: var(--s032)">SCHID=032</span>
+  <span style="--c: transparent; border:1px dashed var(--muted); height:10px">dashed box = CICS file close/open</span>
+</div>
+
+<h3 id="leg1"><span class="num">3.1</span>Leg 1 — authorization purge + daily posting</h3>
+<div class="leg">
+  <div class="leg-title">CLOSEFIL → OPENFIL <span class="meta">ca7 lines 18–150</span></div>
+  <div class="flow">
+    <div class="node cics">CLOSEFIL<small>SDSF · CEMT CLO</small></div>
+    <div class="arrow"><span class="lbl">SCHID=030</span><span class="ln"></span></div>
+    <div class="node">CBPAUP0J<small>IMS BMP CBPAUP0C</small></div>
+    <div class="arrow"><span class="lbl">SCHID=030</span><span class="ln"></span></div>
+    <div class="node core">POSTTRAN<small>CBTRN02C</small></div>
+    <div class="arrow"><span class="lbl">SCHID=030</span><span class="ln"></span></div>
+    <div class="node">WAITSTEP<small>COBSWAIT 36s</small></div>
+    <div class="arrow"><span class="lbl">SCHID=030</span><span class="ln"></span></div>
+    <div class="node cics end">OPENFIL<small>SDSF · CEMT OPE</small></div>
+  </div>
+</div>
+
+<h3 id="leg2"><span class="num">3.2</span>Leg 2 — reference-data refresh + read utilities</h3>
+<div class="leg">
+  <div class="leg-title">CLOSEFIL → TRANTYPE → (fork 031 / 032) → CLOSEFIL → READ* → OPENFIL <span class="meta">ca7 lines 159–455</span></div>
+  <div class="flow">
+    <div class="node cics">CLOSEFIL</div>
+    <div class="arrow"><span class="lbl">SCHID=030</span><span class="ln"></span></div>
+    <div class="node">TRANTYPE<small>IDCAMS</small></div>
+    <div class="arrow"><span class="lbl">SCHID=030</span><span class="ln"></span></div>
+    <div class="node">WAITSTEP</div>
+    <div class="arrow"><span class="lbl">fan-out</span><span class="ln"></span></div>
+    <div class="fork">
+      <div class="flow">
+        <div class="node cics s031">CLOSEFIL1<small>member CLOSEFIL</small></div>
+        <div class="arrow s031"><span class="lbl">SCHID=031</span><span class="ln"></span></div>
+        <div class="node s031">TRANCATG<small>IDCAMS</small></div>
+        <div class="arrow s031"><span class="lbl">SCHID=031</span><span class="ln"></span></div>
+        <div class="node s031">WAITSTEP</div>
+      </div>
+      <div class="flow">
+        <div class="node cics s032">CLOSEFIL2<small>member CLOSEFIL</small></div>
+        <div class="arrow s032"><span class="lbl">SCHID=032</span><span class="ln"></span></div>
+        <div class="node s032">TCATBALF<small>IDCAMS</small></div>
+        <div class="arrow s032"><span class="lbl">SCHID=032</span><span class="ln"></span></div>
+        <div class="node s032">WAITSTEP</div>
+      </div>
+    </div>
+    <div class="arrow"><span class="lbl">SCHID=030</span><span class="ln"></span></div>
+    <div class="node cics">CLOSEFIL</div>
+  </div>
+  <div class="flow" style="margin-top:14px">
+    <div class="arrow"><span class="lbl">SCHID=030</span><span class="ln"></span></div>
+    <div class="node">READACCT<small>CBACT01C</small></div>
+    <div class="arrow"><span class="lbl">SCHID=030</span><span class="ln"></span></div>
+    <div class="node">READCARD<small>CBACT02C</small></div>
+    <div class="arrow"><span class="lbl">SCHID=030</span><span class="ln"></span></div>
+    <div class="node">READCUST<small>CBCUS01C</small></div>
+    <div class="arrow"><span class="lbl">SCHID=030</span><span class="ln"></span></div>
+    <div class="node">READXREF<small>CBACT03C</small></div>
+    <div class="arrow"><span class="lbl">SCHID=030</span><span class="ln"></span></div>
+    <div class="node">WAITSTEP</div>
+    <div class="arrow"><span class="lbl">SCHID=030</span><span class="ln"></span></div>
+    <div class="node cics end">OPENFIL</div>
+  </div>
+</div>
+<div class="callout">
+  <strong>Fork.</strong> One <code>WAITSTEP</code> triggers both <code>CLOSEFIL1</code> (SCHID=031) and <code>CLOSEFIL2</code> (SCHID=032) (lines 216–217). Both are CA-7 job names that run JCL member <code>CLOSEFIL</code> (lines 225 and 252). Each branch ends in a <code>WAITSTEP</code> that triggers <code>CLOSEFIL</code> SCHID=030 (lines 303 and 335). The listing has only triggers and no requirement (join) definitions, so it does not say whether CA-7 waits for both branches before the READ* sequence starts.
+</div>
+
+<h3 id="leg3"><span class="num">3.3</span>Leg 3 — statements + category-balance print</h3>
+<div class="leg">
+  <div class="leg-title">CLOSEFIL → CREASTMT → TXT2PDF1 → OPENFIL → CLOSEFIL (031) → PRTCATBL → OPENFIL <span class="meta">ca7 lines 465–571</span></div>
+  <div class="flow">
+    <div class="node cics">CLOSEFIL</div>
+    <div class="arrow"><span class="lbl">SCHID=030</span><span class="ln"></span></div>
+    <div class="node">CREASTMT<small>CBSTM03A/B</small></div>
+    <div class="arrow"><span class="lbl">SCHID=030</span><span class="ln"></span></div>
+    <div class="node">TXT2PDF1<small>text → PDF</small></div>
+    <div class="arrow"><span class="lbl">SCHID=030</span><span class="ln"></span></div>
+    <div class="node">WAITSTEP</div>
+    <div class="arrow"><span class="lbl">SCHID=030</span><span class="ln"></span></div>
+    <div class="node cics">OPENFIL</div>
+  </div>
+  <div class="flow" style="margin-top:14px">
+    <div class="arrow s031"><span class="lbl">SCHID=031</span><span class="ln"></span></div>
+    <div class="node cics s031">CLOSEFIL</div>
+    <div class="arrow s031"><span class="lbl">SCHID=031</span><span class="ln"></span></div>
+    <div class="node s031">PRTCATBL<small>REPROC + SORT</small></div>
+    <div class="arrow s031"><span class="lbl">SCHID=031</span><span class="ln"></span></div>
+    <div class="node s031">WAITSTEP</div>
+    <div class="arrow s031"><span class="lbl">SCHID=031</span><span class="ln"></span></div>
+    <div class="node cics s031 end">OPENFIL</div>
+  </div>
+</div>
+
+<h3 id="edges"><span class="num">3.4</span>Trigger edge list</h3>
+<p>Every <code>JOB=… SCHID=…</code> line under a <em>TRIGGERED JOBS</em> heading, in file order.</p>
+<div class="table-wrap"><table>
+  <tr><th>Leg</th><th>Completing job</th><th>Triggers</th><th>SCHID</th><th>ca7 line</th></tr>
+  <tr><td>1</td><td class="job">CLOSEFIL</td><td class="job">CBPAUP0J</td><td><span class="tag s030">030</span></td><td class="mono">43</td></tr>
+  <tr><td>1</td><td class="job">CBPAUP0J</td><td class="job">POSTTRAN</td><td><span class="tag s030">030</span></td><td class="mono">70</td></tr>
+  <tr><td>1</td><td class="job">POSTTRAN</td><td class="job">WAITSTEP</td><td><span class="tag s030">030</span></td><td class="mono">97</td></tr>
+  <tr><td>1</td><td class="job">WAITSTEP</td><td class="job">OPENFIL</td><td><span class="tag s030">030</span></td><td class="mono">124</td></tr>
+  <tr><td>2</td><td class="job">CLOSEFIL</td><td class="job">TRANTYPE</td><td><span class="tag s030">030</span></td><td class="mono">162</td></tr>
+  <tr><td>2</td><td class="job">TRANTYPE</td><td class="job">WAITSTEP</td><td><span class="tag s030">030</span></td><td class="mono">189</td></tr>
+  <tr><td>2</td><td class="job">WAITSTEP</td><td class="job">CLOSEFIL1</td><td><span class="tag s031">031</span></td><td class="mono">216</td></tr>
+  <tr><td>2</td><td class="job">WAITSTEP</td><td class="job">CLOSEFIL2</td><td><span class="tag s032">032</span></td><td class="mono">217</td></tr>
+  <tr><td>2</td><td class="job">CLOSEFIL1</td><td class="job">TRANCATG</td><td><span class="tag s031">031</span></td><td class="mono">244</td></tr>
+  <tr><td>2</td><td class="job">CLOSEFIL2</td><td class="job">TCATBALF</td><td><span class="tag s032">032</span></td><td class="mono">271</td></tr>
+  <tr><td>2</td><td class="job">TRANCATG</td><td class="job">WAITSTEP</td><td><span class="tag s031">031</span></td><td class="mono">298</td></tr>
+  <tr><td>2</td><td class="job">WAITSTEP (031)</td><td class="job">CLOSEFIL</td><td><span class="tag s030">030</span></td><td class="mono">303</td></tr>
+  <tr><td>2</td><td class="job">TCATBALF</td><td class="job">WAITSTEP</td><td><span class="tag s032">032</span></td><td class="mono">330</td></tr>
+  <tr><td>2</td><td class="job">WAITSTEP (032)</td><td class="job">CLOSEFIL</td><td><span class="tag s030">030</span></td><td class="mono">335</td></tr>
+  <tr><td>2</td><td class="job">CLOSEFIL</td><td class="job">READACCT</td><td><span class="tag s030">030</span></td><td class="mono">340</td></tr>
+  <tr><td>2</td><td class="job">READACCT</td><td class="job">READCARD</td><td><span class="tag s030">030</span></td><td class="mono">367</td></tr>
+  <tr><td>2</td><td class="job">READCARD</td><td class="job">READCUST</td><td><span class="tag s030">030</span></td><td class="mono">394</td></tr>
+  <tr><td>2</td><td class="job">READCUST</td><td class="job">READXREF</td><td><span class="tag s030">030</span></td><td class="mono">421</td></tr>
+  <tr><td>2</td><td class="job">READXREF</td><td class="job">WAITSTEP</td><td><span class="tag s030">030</span></td><td class="mono">448</td></tr>
+  <tr><td>2</td><td class="job">WAITSTEP</td><td class="job">OPENFIL</td><td><span class="tag s030">030</span></td><td class="mono">453</td></tr>
+  <tr><td>3</td><td class="job">CLOSEFIL</td><td class="job">CREASTMT</td><td><span class="tag s030">030</span></td><td class="mono">468</td></tr>
+  <tr><td>3</td><td class="job">CREASTMT</td><td class="job">TXT2PDF1</td><td><span class="tag s030">030</span></td><td class="mono">495</td></tr>
+  <tr><td>3</td><td class="job">TXT2PDF1</td><td class="job">WAITSTEP</td><td><span class="tag s030">030</span></td><td class="mono">522</td></tr>
+  <tr><td>3</td><td class="job">WAITSTEP</td><td class="job">OPENFIL</td><td><span class="tag s030">030</span></td><td class="mono">527</td></tr>
+  <tr><td>3</td><td class="job">OPENFIL</td><td class="job">CLOSEFIL</td><td><span class="tag s031">031</span></td><td class="mono">532</td></tr>
+  <tr><td>3</td><td class="job">CLOSEFIL (031)</td><td class="job">PRTCATBL</td><td><span class="tag s031">031</span></td><td class="mono">537</td></tr>
+  <tr><td>3</td><td class="job">PRTCATBL</td><td class="job">WAITSTEP</td><td><span class="tag s031">031</span></td><td class="mono">564</td></tr>
+  <tr><td>3</td><td class="job">WAITSTEP (031)</td><td class="job">OPENFIL</td><td><span class="tag s031">031</span></td><td class="mono">569</td></tr>
+</table></div>
+
+<h3 id="reading"><span class="num">3.5</span>Reading the listing</h3>
+<ul>
+  <li>Every job definition has the same attributes: <code>SYSTEM-NAME=CARDDEMO</code>, <code>JCLLIB=&amp;CARDDEMOPRODJCL</code>, <code>MSGCLASS=A</code>, <code>REGION=4096K</code>, <code>ELAPTM=2359</code>. Every trigger has <code>QTM=0100 LEADTM=0000</code>.</li>
+  <li>Repeated jobs such as <code>WAITSTEP</code>, <code>CLOSEFIL</code> and <code>OPENFIL</code> usually appear as a bare <code>1LJOB,JOB=…</code> header followed only by their triggers. Each one is a separate trigger context under a different SCHID or leg, not a second job definition.</li>
+  <li>The full <code>OPENFIL</code> definition (lines 126–150) shows <code>N -- COMP TRIGGERS OTHER JOBS</code>. Leg 3 still lists <code>OPENFIL</code> triggering <code>CLOSEFIL</code> SCHID=031 (line 532). The two can coexist only if that trigger is specific to that schedule ID. The listing doesn't say which is true.</li>
+</ul>
+
+<!-- ===================================================================== -->
+<h2 id="other-schedules"><span class="num">4</span>Control-M &amp; script runs (where INTCALC/COMBTRAN run)</h2>
+<div class="grid2">
+  <div class="card">
+    <h4>Control-M · <a class="src" href="../app/scheduler/CardDemo.controlm">CardDemo.controlm</a></h4>
+    <ul style="margin:4px 0; padding-left:18px">
+      <li><code>DAILY-TransactionBackup</code> (DAYS=ALL): CLOSEFIL → TRANBKP → WAITSTEP → OPENFIL</li>
+      <li><code>WEEKLY-TransactionTypesDBRefresh</code> (SA): MNTTRDB2 → TRANEXTR</li>
+      <li><code>WEEKLY-DisclosureGroupsRefresh</code> (SA): CLOSEFIL → DISCGRP → WAITSTEP → OPENFIL</li>
+      <li><code>MONTHLY-InterestCalculation</code>: CLOSEFIL → INTCALC → COMBTRAN → WAITSTEP → OPENFIL</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>Script · <a class="src" href="../scripts/run_full_batch.sh">run_full_batch.sh</a></h4>
+    <p class="mono" style="font-size:12px; margin:4px 0">CLOSEFIL → ACCTFILE → CARDFILE → XREFFILE → CUSTFILE → TRANBKP → DISCGRP → TCATBALF → TRANTYPE → DUSRSECJ → <strong>POSTTRAN</strong> → INTCALC → TRANBKP → COMBTRAN → TRANIDX → OPENFIL</p>
+    <p class="meta" style="margin:4px 0">Submitted over FTP with <code>quote site filetype=JES</code>. <code>sleep 5/10</code> stands in for WAITSTEP. The script's job numbering skips 10, and "Job 15" is used twice.</p>
+  </div>
+</div>
+
+<!-- ===================================================================== -->
+<h2 id="inventory"><span class="num">5</span>Job inventory</h2>
+<p>The jobs from the README "Running Batch Jobs" table, in README order, with the README's own purpose text. Every JCL link was checked against the tree. <code>CREASTMT</code> is <code>.JCL</code> (upper-case extension). Two jobs are not in <code>app/jcl/</code>: <code>TRANEXTR</code> and <code>CBPAUP0J</code> are in their optional-module folders.</p>
+<div class="table-wrap"><table class="inv">
+  <tr><th>Job</th><th>Purpose (README)</th><th>JCL</th><th>Program / utility</th><th>CA-7</th><th>full_batch.sh</th><th>Control-M</th></tr>
+  <tr><td class="job">CLOSEFIL</td><td>Closes files opened by CICS</td><td><a class="src" href="../app/jcl/CLOSEFIL.jcl">app/jcl/CLOSEFIL.jcl</a></td><td class="mono">SDSF (CEMT … CLO)</td><td><span class="tag s030">1</span><span class="tag s030">2</span><span class="tag s030">3</span></td><td class="mono">1</td><td>DAILY, WEEKLY, MONTHLY</td></tr>
+  <tr><td class="job">ACCTFILE</td><td>Loads Account database using sample data</td><td><a class="src" href="../app/jcl/ACCTFILE.jcl">app/jcl/ACCTFILE.jcl</a></td><td class="mono">IDCAMS</td><td><span class="tag no">—</span></td><td class="mono">2</td><td>—</td></tr>
+  <tr><td class="job">CARDFILE</td><td>Loads Card database with credit card sample data</td><td><a class="src" href="../app/jcl/CARDFILE.jcl">app/jcl/CARDFILE.jcl</a></td><td class="mono">SDSF, IDCAMS</td><td><span class="tag no">—</span></td><td class="mono">3</td><td>—</td></tr>
+  <tr><td class="job">XREFFILE</td><td>Loads Customer Card account cross reference to VSAM</td><td><a class="src" href="../app/jcl/XREFFILE.jcl">app/jcl/XREFFILE.jcl</a></td><td class="mono">IDCAMS</td><td><span class="tag no">—</span></td><td class="mono">4</td><td>—</td></tr>
+  <tr><td class="job">CUSTFILE</td><td>Creates customer database</td><td><a class="src" href="../app/jcl/CUSTFILE.jcl">app/jcl/CUSTFILE.jcl</a></td><td class="mono">SDSF, IDCAMS</td><td><span class="tag no">—</span></td><td class="mono">5</td><td>—</td></tr>
+  <tr><td class="job">TRANBKP</td><td>Creates Transaction database / Backup Transaction database</td><td><a class="src" href="../app/jcl/TRANBKP.jcl">app/jcl/TRANBKP.jcl</a></td><td class="mono">REPROC, IDCAMS</td><td><span class="tag no">—</span></td><td class="mono">6, 14</td><td>DAILY</td></tr>
+  <tr><td class="job">TRANEXTR</td><td>Extracts latest Db2 data for Transaction types <span class="meta">(Db2: Transaction Type Mgmt)</span></td><td><a class="src" href="../app/app-transaction-type-db2/jcl/TRANEXTR.jcl">app/app-transaction-type-db2/jcl/TRANEXTR.jcl</a></td><td class="mono">IEBGENER, IKJEFT01</td><td><span class="tag no">—</span></td><td class="mono">—</td><td>WEEKLY (TransactionTypes)</td></tr>
+  <tr><td class="job">TRANCATG</td><td>Copies latest transaction category file to VSAM</td><td><a class="src" href="../app/jcl/TRANCATG.jcl">app/jcl/TRANCATG.jcl</a></td><td class="mono">IDCAMS</td><td><span class="tag s031">2</span></td><td class="mono">—</td><td>—</td></tr>
+  <tr><td class="job">TRANTYPE</td><td>Copies latest transaction type file to VSAM</td><td><a class="src" href="../app/jcl/TRANTYPE.jcl">app/jcl/TRANTYPE.jcl</a></td><td class="mono">IDCAMS</td><td><span class="tag s030">2</span></td><td class="mono">9</td><td>—</td></tr>
+  <tr><td class="job">DISCGRP</td><td>Copies initial disclosure Group file to VSAM</td><td><a class="src" href="../app/jcl/DISCGRP.jcl">app/jcl/DISCGRP.jcl</a></td><td class="mono">IDCAMS</td><td><span class="tag no">—</span></td><td class="mono">7</td><td>WEEKLY (DisclosureGroups)</td></tr>
+  <tr><td class="job">TCATBALF</td><td>Copies initial TCATBALF file to VSAM</td><td><a class="src" href="../app/jcl/TCATBALF.jcl">app/jcl/TCATBALF.jcl</a></td><td class="mono">IDCAMS</td><td><span class="tag s032">2</span></td><td class="mono">8</td><td>—</td></tr>
+  <tr><td class="job">DUSRSECJ</td><td>Sets up user security VSAM file</td><td><a class="src" href="../app/jcl/DUSRSECJ.jcl">app/jcl/DUSRSECJ.jcl</a></td><td class="mono">IEFBR14, IEBGENER, IDCAMS</td><td><span class="tag no">—</span></td><td class="mono">11</td><td>—</td></tr>
+  <tr><td class="job">POSTTRAN</td><td>Core transaction processing job</td><td><a class="src" href="../app/jcl/POSTTRAN.jcl">app/jcl/POSTTRAN.jcl</a></td><td class="mono"><a href="../app/cbl/CBTRN02C.cbl">CBTRN02C</a></td><td><span class="tag s030">1</span></td><td class="mono">12</td><td>—</td></tr>
+  <tr><td class="job">INTCALC</td><td>Run interest calculations</td><td><a class="src" href="../app/jcl/INTCALC.jcl">app/jcl/INTCALC.jcl</a></td><td class="mono"><a href="../app/cbl/CBACT04C.cbl">CBACT04C</a> PARM='2022071800'</td><td><span class="tag no">—</span></td><td class="mono">13</td><td>MONTHLY</td></tr>
+  <tr><td class="job">COMBTRAN</td><td>Combine system transactions with daily ones</td><td><a class="src" href="../app/jcl/COMBTRAN.jcl">app/jcl/COMBTRAN.jcl</a></td><td class="mono">SORT, IDCAMS REPRO</td><td><span class="tag no">—</span></td><td class="mono">15</td><td>MONTHLY</td></tr>
+  <tr><td class="job">CREASTMT</td><td>Produce transaction statement</td><td><a class="src" href="../app/jcl/CREASTMT.JCL">app/jcl/CREASTMT.JCL</a></td><td class="mono">SORT, IDCAMS, <a href="../app/cbl/CBSTM03A.CBL">CBSTM03A</a> → <a href="../app/cbl/CBSTM03B.CBL">CBSTM03B</a></td><td><span class="tag s030">3</span></td><td class="mono">—</td><td>—</td></tr>
+  <tr><td class="job">TRANIDX</td><td>Define alternate index on transaction file</td><td><a class="src" href="../app/jcl/TRANIDX.jcl">app/jcl/TRANIDX.jcl</a></td><td class="mono">IDCAMS</td><td><span class="tag no">—</span></td><td class="mono">15 (2nd)</td><td>—</td></tr>
+  <tr><td class="job">OPENFIL</td><td>Makes files available to CICS</td><td><a class="src" href="../app/jcl/OPENFIL.jcl">app/jcl/OPENFIL.jcl</a></td><td class="mono">SDSF (CEMT … OPE)</td><td><span class="tag s030">1</span><span class="tag s030">2</span><span class="tag s030">3</span></td><td class="mono">16</td><td>DAILY, WEEKLY, MONTHLY</td></tr>
+  <tr><td class="job">WAITSTEP</td><td>Defines a step to wait job for given time</td><td><a class="src" href="../app/jcl/WAITSTEP.jcl">app/jcl/WAITSTEP.jcl</a></td><td class="mono">COBSWAIT 00003600 cs = 36 s</td><td><span class="tag s030">1</span><span class="tag s030">2</span><span class="tag s030">3</span></td><td class="mono">(sleep)</td><td>DAILY, WEEKLY, MONTHLY</td></tr>
+  <tr><td class="job">CBPAUP0J</td><td>Purge expired authorizations <span class="meta">(IMS-DB2-MQ: Pending Authorizations)</span></td><td><a class="src" href="../app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl">app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl</a></td><td class="mono">DFSRRC00 BMP,CBPAUP0C,PSBPAUTB</td><td><span class="tag s030">1</span></td><td class="mono">—</td><td>—</td></tr>
+</table></div>
+
+<h3><span class="num">5.1</span>Jobs in CA-7 that are not in the README table</h3>
+<div class="table-wrap"><table>
+  <tr><th>Job</th><th>What the JCL does</th><th>JCL</th><th>Program</th><th>CA-7</th></tr>
+  <tr><td class="job">READACCT</td><td>Read/print the account file</td><td><a class="src" href="../app/jcl/READACCT.jcl">app/jcl/READACCT.jcl</a></td><td class="mono">CBACT01C</td><td><span class="tag s030">2</span></td></tr>
+  <tr><td class="job">READCARD</td><td>Read/print the card file</td><td><a class="src" href="../app/jcl/READCARD.jcl">app/jcl/READCARD.jcl</a></td><td class="mono">CBACT02C</td><td><span class="tag s030">2</span></td></tr>
+  <tr><td class="job">READCUST</td><td>Read/print the customer file</td><td><a class="src" href="../app/jcl/READCUST.jcl">app/jcl/READCUST.jcl</a></td><td class="mono">CBCUS01C</td><td><span class="tag s030">2</span></td></tr>
+  <tr><td class="job">READXREF</td><td>Read/print the card cross-reference file</td><td><a class="src" href="../app/jcl/READXREF.jcl">app/jcl/READXREF.jcl</a></td><td class="mono">CBACT03C</td><td><span class="tag s030">2</span></td></tr>
+  <tr><td class="job">TXT2PDF1</td><td>"Convert text file to a PDF file" (statement output)</td><td><a class="src" href="../app/jcl/TXT2PDF1.JCL">app/jcl/TXT2PDF1.JCL</a></td><td class="mono">IKJEFT1B (TXT2PDF exec)</td><td><span class="tag s030">3</span></td></tr>
+  <tr><td class="job">PRTCATBL</td><td>Unload TCATBALF, filter by parm date, sort by card number, print</td><td><a class="src" href="../app/jcl/PRTCATBL.jcl">app/jcl/PRTCATBL.jcl</a></td><td class="mono">REPROC, SORT</td><td><span class="tag s031">3</span></td></tr>
+  <tr><td class="job">CLOSEFIL1 / CLOSEFIL2</td><td>CA-7 aliases for the CLOSEFIL member (fork branches)</td><td><a class="src" href="../app/jcl/CLOSEFIL.jcl">app/jcl/CLOSEFIL.jcl</a></td><td class="mono">SDSF</td><td><span class="tag s031">2</span><span class="tag s032">2</span></td></tr>
+</table></div>
+
+<!-- ===================================================================== -->
+<h2 id="posttran"><span class="num">6</span>POSTTRAN deep dive — daily transaction posting</h2>
+<p><a class="src" href="../app/jcl/POSTTRAN.jcl">app/jcl/POSTTRAN.jcl</a> has a single step, <code>STEP15 EXEC PGM=CBTRN02C</code> (line 23). The header comment: <em>"Process and load daily transaction file and create transaction category balance and update transaction master vsam"</em>. Program: <a class="src" href="../app/cbl/CBTRN02C.cbl">app/cbl/CBTRN02C.cbl</a>.</p>
+
+<h3 id="pt-dd"><span class="num">6.1</span>DD / dataset table</h3>
+<div class="table-wrap"><table>
+  <tr><th>DD</th><th>Dataset</th><th>DISP</th><th>COBOL file (SELECT)</th><th>Org / access</th><th>OPEN</th><th>Key / record</th><th>Role</th></tr>
+  <tr><td class="job">DALYTRAN</td><td class="mono">AWS.M2.CARDDEMO.DALYTRAN.PS</td><td class="mono">SHR</td><td class="mono">DALYTRAN-FILE</td><td>Sequential</td><td class="mono">INPUT</td><td>350 B, <code>CVTRA06Y</code></td><td>Daily transactions to post</td></tr>
+  <tr><td class="job">TRANFILE</td><td class="mono">AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</td><td class="mono">SHR</td><td class="mono">TRANSACT-FILE</td><td>KSDS / random</td><td class="mono">OUTPUT</td><td><code>FD-TRANS-ID</code> X(16), <code>CVTRA05Y</code></td><td>Transaction master — posted records written</td></tr>
+  <tr><td class="job">XREFFILE</td><td class="mono">AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</td><td class="mono">SHR</td><td class="mono">XREF-FILE</td><td>KSDS / random</td><td class="mono">INPUT</td><td><code>FD-XREF-CARD-NUM</code> X(16), <code>CVACT03Y</code></td><td>Card → account lookup</td></tr>
+  <tr><td class="job">ACCTFILE</td><td class="mono">AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS</td><td class="mono">SHR</td><td class="mono">ACCOUNT-FILE</td><td>KSDS / random</td><td class="mono">I-O</td><td><code>FD-ACCT-ID</code> 9(11), <code>CVACT01Y</code></td><td>Account limit/expiry check; balances rewritten</td></tr>
+  <tr><td class="job">TCATBALF</td><td class="mono">AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS</td><td class="mono">SHR</td><td class="mono">TCATBAL-FILE</td><td>KSDS / random</td><td class="mono">I-O</td><td><code>FD-TRAN-CAT-KEY</code> = acct 9(11) + type X(2) + cat 9(4), <code>CVTRA01Y</code></td><td>Per-account, per-category running balance</td></tr>
+  <tr><td class="job">DALYREJS</td><td class="mono">AWS.M2.CARDDEMO.DALYREJS(+1)</td><td class="mono">(NEW,CATLG,DELETE)</td><td class="mono">DALYREJS-FILE</td><td>Sequential, GDG new generation</td><td class="mono">OUTPUT</td><td>RECFM=F LRECL=430 = 350 B record + 80 B trailer</td><td>Rejected transactions + reason</td></tr>
+  <tr><td class="job">STEPLIB</td><td class="mono">AWS.M2.CARDDEMO.LOADLIB</td><td class="mono">SHR</td><td colspan="5">Load library. <code>SYSPRINT</code>/<code>SYSOUT</code> go to <code>SYSOUT=*</code>.</td></tr>
+</table></div>
+<p class="meta">The reject trailer is <code>WS-VALIDATION-TRAILER</code> (line 180): <code>WS-VALIDATION-FAIL-REASON PIC 9(04)</code> + <code>WS-VALIDATION-FAIL-REASON-DESC PIC X(76)</code>. The DALYREJS GDG base is defined by <a class="src" href="../app/jcl/DALYREJS.jcl">app/jcl/DALYREJS.jcl</a>.</p>
+
+<h3 id="pt-flow"><span class="num">6.2</span>Program flow</h3>
+<pre><span class="c">*> CBTRN02C PROCEDURE DIVISION (line 193)</span>
+<span class="k">PERFORM</span> 0000-DALYTRAN-OPEN … 0500-TCATBALF-OPEN       <span class="c">*> any non-'00' status → 9999-ABEND-PROGRAM</span>
+<span class="k">PERFORM UNTIL</span> END-OF-FILE = <span class="s">'Y'</span>
+    <span class="k">PERFORM</span> 1000-DALYTRAN-GET-NEXT                  <span class="c">*> status '10' → EOF</span>
+    <span class="k">ADD</span> <span class="n">1</span> <span class="k">TO</span> WS-TRANSACTION-COUNT
+    <span class="k">MOVE</span> <span class="n">0</span> <span class="k">TO</span> WS-VALIDATION-FAIL-REASON
+    <span class="k">PERFORM</span> 1500-VALIDATE-TRAN                      <span class="c">*> 1500-A-LOOKUP-XREF, then 1500-B-LOOKUP-ACCT</span>
+    <span class="k">IF</span> WS-VALIDATION-FAIL-REASON = <span class="n">0</span>
+        <span class="k">PERFORM</span> 2000-POST-TRANSACTION               <span class="c">*> 2700 → 2800 → 2900</span>
+    <span class="k">ELSE</span>
+        <span class="k">ADD</span> <span class="n">1</span> <span class="k">TO</span> WS-REJECT-COUNT
+        <span class="k">PERFORM</span> 2500-WRITE-REJECT-REC               <span class="c">*> DALYTRAN record + trailer → DALYREJS</span>
+<span class="k">END-PERFORM</span>
+<span class="k">PERFORM</span> 9000-… 9500-CLOSE
+<span class="k">DISPLAY</span> <span class="s">'TRANSACTIONS PROCESSED :'</span> / <span class="s">'TRANSACTIONS REJECTED  :'</span>
+<span class="k">IF</span> WS-REJECT-COUNT > <span class="n">0</span>  <span class="k">MOVE</span> <span class="n">4</span> <span class="k">TO</span> RETURN-CODE         <span class="c">*> line 230</span></pre>
+
+<h3 id="pt-validate"><span class="num">6.3</span>Validation rules</h3>
+<div class="table-wrap"><table>
+  <tr><th>Code</th><th>Description literal</th><th>Paragraph</th><th>Condition</th></tr>
+  <tr><td class="mono"><span class="tag bad">100</span></td><td class="mono">'INVALID CARD NUMBER FOUND'</td><td class="mono">1500-A-LOOKUP-XREF (380)</td><td><code>READ XREF-FILE</code> keyed by <code>DALYTRAN-CARD-NUM</code> → <code>INVALID KEY</code>. If this fails the account lookup is skipped.</td></tr>
+  <tr><td class="mono"><span class="tag bad">101</span></td><td class="mono">'ACCOUNT RECORD NOT FOUND'</td><td class="mono">1500-B-LOOKUP-ACCT (393)</td><td><code>READ ACCOUNT-FILE</code> keyed by <code>XREF-ACCT-ID</code> → <code>INVALID KEY</code>.</td></tr>
+  <tr><td class="mono"><span class="tag bad">102</span></td><td class="mono">'OVERLIMIT TRANSACTION'</td><td class="mono">1500-B-LOOKUP-ACCT</td><td><code>WS-TEMP-BAL = ACCT-CURR-CYC-CREDIT − ACCT-CURR-CYC-DEBIT + DALYTRAN-AMT</code>; reject unless <code>ACCT-CREDIT-LIMIT &gt;= WS-TEMP-BAL</code>.</td></tr>
+  <tr><td class="mono"><span class="tag bad">103</span></td><td class="mono">'TRANSACTION RECEIVED AFTER ACCT EXPIRATION'</td><td class="mono">1500-B-LOOKUP-ACCT</td><td>Reject unless <code>ACCT-EXPIRAION-DATE &gt;= DALYTRAN-ORIG-TS(1:10)</code> (string compare of <code>YYYY-MM-DD</code>; the field name's spelling is from the copybook).</td></tr>
+</table></div>
+<div class="callout warn">
+  <strong>Ordering.</strong> The 102 and 103 checks are two separate <code>IF</code>s that both run after a successful account read. When a transaction is both over limit and after expiry, 103 overwrites 102 and the reject record shows <strong>103</strong>.
+</div>
+
+<h3 id="pt-post"><span class="num">6.4</span>Posting steps (<code>2000-POST-TRANSACTION</code>, line 424)</h3>
+<p>The program first copies the DALYTRAN fields into <code>TRAN-RECORD</code> (<code>CVTRA05Y</code>): id, type, category, source, description, amount, merchant id/name/city/zip, card number and original timestamp. It then sets <code>TRAN-PROC-TS</code> from <code>Z-GET-DB2-FORMAT-TIMESTAMP</code> (current date in <code>YYYY-MM-DD-HH.MM.SS.mmm0000</code> form). Three steps follow:</p>
+<ol class="steps">
+  <li><strong>Update TCATBALF</strong> — <code>2700-UPDATE-TCATBAL</code> (467). Key = <code>XREF-ACCT-ID</code> + <code>DALYTRAN-TYPE-CD</code> + <code>DALYTRAN-CAT-CD</code>.
+    <ul>
+      <li>Not found (status <code>23</code>): <code>2700-A-CREATE-TCATBAL-REC</code> runs <code>INITIALIZE</code>, sets <code>TRAN-CAT-BAL = DALYTRAN-AMT</code> and does a <code>WRITE</code>. It also displays <code>'TCATBAL record not found for key : … Creating.'</code></li>
+      <li>Found: <code>2700-B-UPDATE-TCATBAL-REC</code> adds the amount to <code>TRAN-CAT-BAL</code> and does a <code>REWRITE</code>.</li>
+      <li>Any other status abends the program.</li>
+    </ul></li>
+  <li><strong>Update account balance</strong> — <code>2800-UPDATE-ACCOUNT-REC</code> (545).
+<pre>ADD DALYTRAN-AMT TO ACCT-CURR-BAL
+IF DALYTRAN-AMT &gt;= 0   ADD DALYTRAN-AMT TO ACCT-CURR-CYC-CREDIT
+ELSE                   ADD DALYTRAN-AMT TO ACCT-CURR-CYC-DEBIT
+REWRITE FD-ACCTFILE-REC FROM ACCOUNT-RECORD</pre>
+    A <code>REWRITE</code> <code>INVALID KEY</code> sets reason <code>109</code> / <code>'ACCOUNT RECORD NOT FOUND'</code>. Posting has already been decided at that point, so the code is not checked: the transaction is still written and is not counted as a reject.</li>
+  <li><strong>Write transaction record</strong> — <code>2900-WRITE-TRANSACTION-FILE</code> (562) runs <code>WRITE FD-TRANFILE-REC FROM TRAN-RECORD</code>. Any status other than <code>00</code>, a duplicate key for example, abends the program.</li>
+</ol>
+
+<h3 id="pt-rc"><span class="num">6.5</span>Return codes</h3>
+<div class="table-wrap"><table>
+  <tr><th>Outcome</th><th>Result</th><th>Effect on the chain</th></tr>
+  <tr><td>All transactions posted</td><td class="mono"><span class="tag ok">RC=0</span></td><td>Normal completion. CA-7 triggers <code>WAITSTEP</code> SCHID=030.</td></tr>
+  <tr><td>One or more rejects written to DALYREJS(+1)</td><td class="mono"><span class="tag warn">RC=4</span></td><td><code>MOVE 4 TO RETURN-CODE</code> when <code>WS-REJECT-COUNT &gt; 0</code>. Valid transactions are still posted. The rejects need to be reviewed.</td></tr>
+  <tr><td>Open/read/write/rewrite I/O error</td><td class="mono"><span class="tag bad">U0999</span></td><td><code>9999-ABEND-PROGRAM</code> calls <code>CEE3ABD</code> with <code>ABCODE=999</code> after <code>9910-DISPLAY-IO-STATUS</code> prints <code>'FILE STATUS IS: NNNN'</code>.</td></tr>
+</table></div>
+<p class="meta">Run order: in the scripts, <code>TRANBKP</code> runs before <code>POSTTRAN</code> (<code>run_posting.sh</code> jobs 4→5, <code>run_full_batch.sh</code> jobs 6→12), and <code>TRANIDX</code> rebuilds the transaction AIX afterwards. In CA-7 leg 1, <code>CBPAUP0J</code> runs immediately before <code>POSTTRAN</code>.</p>
+
+<!-- ===================================================================== -->
+<h2 id="downstream"><span class="num">7</span>Downstream jobs</h2>
+<div class="grid2">
+  <div class="card">
+    <h4>INTCALC · <a class="src" href="../app/jcl/INTCALC.jcl">app/jcl/INTCALC.jcl</a></h4>
+    <p><code>CBACT04C</code> with <code>PARM='2022071800'</code> reads the TCATBALF balances that POSTTRAN built. For each balance it looks up the disclosure-group rate in <code>DISCGRP</code> and falls back to group <code>DEFAULT</code> on status 23. Monthly interest is <code>TRAN-CAT-BAL × DIS-INT-RATE / 1200</code>, written as system transactions to <code>SYSTRAN(+1)</code>. For each account it adds the total interest to <code>ACCT-CURR-BAL</code> and resets <code>CYC-CREDIT</code>/<code>CYC-DEBIT</code> to 0. Fees (<code>1400-COMPUTE-FEES</code>) are "To be implemented".</p>
+  </div>
+  <div class="card">
+    <h4>COMBTRAN · <a class="src" href="../app/jcl/COMBTRAN.jcl">app/jcl/COMBTRAN.jcl</a></h4>
+    <p>Merges <code>TRANSACT.BKUP(0)</code> and <code>SYSTRAN(0)</code> with a SORT on <code>TRAN-ID</code> into <code>TRANSACT.COMBINED(+1)</code>, then runs IDCAMS <code>REPRO</code> into <code>TRANSACT.VSAM.KSDS</code>. This puts the interest transactions into the transaction master next to the posted daily ones.</p>
+  </div>
+  <div class="card">
+    <h4>CREASTMT · <a class="src" href="../app/jcl/CREASTMT.JCL">app/jcl/CREASTMT.JCL</a></h4>
+    <p>Sorts the transaction master into <code>TRXFL</code> keyed by card number + transaction id. <code>CBSTM03A</code> (with called subroutine <code>CBSTM03B</code>) then writes one statement per card in XREF, to <code>STATEMNT.PS</code> (text) and <code>STATEMNT.HTML</code>. CA-7 leg 3 follows it with <code>TXT2PDF1</code>.</p>
+  </div>
+</div>
+
+<!-- ===================================================================== -->
+<h2 id="notes"><span class="num">8</span>Discrepancies &amp; notes</h2>
+<ul>
+  <li><strong>The chain name is ours.</strong> The string <code>CARDNITE</code> does not appear anywhere in this repository. The CA-7 listing does not name the chain; this doc uses the name as a label.</li>
+  <li><strong>Leg 2 does not go CLOSEFIL1/2 → READCARD.</strong> Each fork branch goes through its own refresh job (TRANCATG / TCATBALF) and WAITSTEP. Both then trigger <code>CLOSEFIL</code> (030) → <code>READACCT</code> → <code>READCARD</code> → <code>READCUST</code> → <code>READXREF</code>.</li>
+  <li><strong>CA-7 vs README.</strong> The CA-7 listing covers 15 distinct JCL members. ACCTFILE, CARDFILE, XREFFILE, CUSTFILE, TRANBKP, TRANEXTR, DISCGRP, DUSRSECJ, INTCALC, COMBTRAN and TRANIDX appear only in the README, the scripts and/or Control-M.</li>
+  <li><strong>Optional-module JCL.</strong> <code>CBPAUP0J</code> (IMS/DB2/MQ authorizations) is in the CA-7 posting leg, but its JCL is in <code>app/app-authorization-ims-db2-mq/jcl/</code>, not <code>app/jcl/</code>. <code>TRANEXTR</code> is in <code>app/app-transaction-type-db2/jcl/</code>.</li>
+  <li><strong>Hard-coded date.</strong> <code>INTCALC</code> passes the fixed <code>PARM='2022071800'</code>, so it is not driven by the schedule date.</li>
+</ul>
+
+<footer>
+  CardDemo batch reference · generated from repository sources · self-contained (no external assets).
+</footer>
+</main>
+</div>
+</body>
+</html>
