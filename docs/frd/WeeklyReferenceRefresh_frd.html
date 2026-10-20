@@ -61,6 +61,7 @@
   th { background: var(--black); color: #fff; font-weight: 700; font-size: 0.85em; letter-spacing: 0.04em; text-transform: uppercase; border-bottom: 2px solid var(--hsbc-red); }
   tr:nth-child(even) td { background: var(--panel); }
   code, .mono { font-family: "Consolas", "Menlo", monospace; font-size: 0.93em; background: var(--panel-2); padding: 1px 4px; border-radius: 0; color: var(--black); }
+  td, th, .cell .v, code, .mono { overflow-wrap: anywhere; }
 
   .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin: 16px 0; }
   .meta-grid .cell { background: var(--panel); border-top: 3px solid var(--hsbc-red); padding: 10px 12px; }
