@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HSBC — FRD — DailyTransactionBackup</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    if (window.mermaid) {
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "base",
+        themeVariables: {
+          primaryColor: "#ffffff", primaryBorderColor: "#db0011", primaryTextColor: "#000000",
+          lineColor: "#333333", fontFamily: "Univers Next for HSBC, Arial, Helvetica, sans-serif"
+        }
+      });
+    }
+  });
+</script>
+<style>
+  :root {
+    --hsbc-red: #db0011; --hsbc-red-dark: #af000d; --black: #000000;
+    --ink: #333333; --muted: #767676; --line: #d7d8d6; --bg: #ffffff;
+    --panel: #f3f3f3; --panel-2: #ededed;
+    --warn-bg: #fbe9ea; --warn-line: #db0011;
+    --tag-batch: #000000; --tag-online: #00847f;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Univers Next for HSBC", "Univers", Arial, Helvetica, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.5; }
+  a { color: var(--hsbc-red); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Brand bar */
+  .brand-bar { background: var(--bg); border-bottom: 1px solid var(--line); }
+  .brand-bar .inner { max-width: 1080px; margin: 0 auto; padding: 14px 40px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand svg { height: 28px; width: auto; display: block; }
+  .brand .wordmark { font-weight: 700; font-size: 1.35em; letter-spacing: 0.02em; color: var(--black); line-height: 1; }
+  .brand .division { border-left: 1px solid var(--line); padding-left: 12px; margin-left: 4px; font-size: 0.82em; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .classification { font-size: 0.72em; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--hsbc-red); border: 1px solid var(--hsbc-red); padding: 3px 10px; }
+  .red-rule { height: 4px; background: var(--hsbc-red); }
+
+  .page { max-width: 1080px; margin: 0 auto; padding: 32px 40px 80px; }
+
+  header.doc-head { padding-bottom: 20px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
+  .doc-kicker { font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.12em; color: var(--hsbc-red); font-weight: 700; margin-bottom: 8px; }
+  h1 { font-size: 2em; font-weight: 300; margin: 0 0 6px; color: var(--black); letter-spacing: -0.01em; }
+  h1 strong { font-weight: 700; }
+  h2 { font-size: 1.25em; font-weight: 700; margin: 44px 0 12px; padding: 0 0 6px 14px; border-left: 4px solid var(--hsbc-red); border-bottom: 1px solid var(--line); color: var(--black); }
+  h3 { font-size: 1.02em; font-weight: 700; margin: 24px 0 8px; color: var(--black); }
+  .subtitle { color: var(--muted); font-size: 0.98em; }
+
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 0; color: #fff; font-size: 0.5em; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; vertical-align: middle; position: relative; top: -4px; }
+  .tag.batch { background: var(--tag-batch); }
+  .tag.online { background: var(--tag-online); }
+
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.92em; }
+  th, td { border: 0; border-bottom: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--black); color: #fff; font-weight: 700; font-size: 0.85em; letter-spacing: 0.04em; text-transform: uppercase; border-bottom: 2px solid var(--hsbc-red); }
+  tr:nth-child(even) td { background: var(--panel); }
+  code, .mono { font-family: "Consolas", "Menlo", monospace; font-size: 0.93em; background: var(--panel-2); padding: 1px 4px; border-radius: 0; color: var(--black); }
+
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin: 16px 0; }
+  .meta-grid .cell { background: var(--panel); border-top: 3px solid var(--hsbc-red); padding: 10px 12px; }
+  .meta-grid .cell .k { font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .meta-grid .cell .v { font-weight: 700; color: var(--black); }
+
+  .note { background: var(--warn-bg); border-left: 4px solid var(--warn-line); padding: 10px 14px; margin: 14px 0; font-size: 0.92em; color: var(--black); }
+  .guidance { color: var(--muted); font-style: italic; font-size: 0.9em; }
+  .diagram { background: var(--bg); border: 1px solid var(--line); border-top: 3px solid var(--hsbc-red); padding: 16px; overflow-x: auto; }
+
+  nav.toc { background: var(--panel); border-left: 4px solid var(--black); padding: 12px 20px; font-size: 0.92em; }
+  nav.toc strong { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.85em; color: var(--black); }
+  nav.toc ol { margin: 6px 0; padding-left: 20px; columns: 2; column-gap: 32px; }
+  nav.toc li { break-inside: avoid; }
+  nav.toc a { color: var(--ink); }
+  nav.toc a:hover { color: var(--hsbc-red); }
+
+  footer { margin-top: 60px; border-top: 1px solid var(--line); padding-top: 14px; color: var(--muted); font-size: 0.82em; display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+  footer .legal { max-width: 70%; }
+  footer .brand svg { height: 18px; }
+  footer .brand .wordmark { font-size: 0.95em; }
+
+  @media print {
+    .page { padding: 0 0 40px; }
+    h2 { break-after: avoid; }
+    table, .diagram, .note { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="brand-bar">
+  <div class="inner">
+    <div class="brand">
+      <svg viewBox="0 0 400 200" role="img" aria-label="HSBC">
+        <polygon points="0,100 100,0 100,200" fill="#db0011"/>
+        <polygon points="400,100 300,0 300,200" fill="#db0011"/>
+        <polygon points="100,0 300,0 200,100" fill="#db0011"/>
+        <polygon points="100,200 300,200 200,100" fill="#db0011"/>
+        <polygon points="100,0 200,100 100,200" fill="#ffffff"/>
+        <polygon points="300,0 200,100 300,200" fill="#ffffff"/>
+      </svg>
+      <span class="wordmark">HSBC</span>
+      <span class="division">Technology &mdash; Mainframe Modernisation</span>
+    </div>
+    <span class="classification">Internal</span>
+  </div>
+</div>
+<div class="red-rule"></div>
+
+<div class="page">
+
+<header class="doc-head">
+  <div class="doc-kicker">Functional Requirement Document</div>
+  <h1><strong>DailyTransactionBackup</strong> <span class="tag batch">Batch</span></h1>
+  <div class="subtitle">Daily quiesce of the CICS VSAM files, generation backup of the transaction master <code>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</code> to the <code>TRANSACT.BKUP</code> GDG, delete/re-define of the empty cluster, timed wait, and re-open of the files to CICS. No COBOL business program runs in this chain; its requirements are data-safety semantics.</div>
+</header>
+
+<div class="meta-grid">
+  <div class="cell"><div class="k">Stream type</div><div class="v">Batch cycle</div></div>
+  <div class="cell"><div class="k">Application</div><div class="v">CARDDEMO</div></div>
+  <div class="cell"><div class="k">Scheduler table / CICS group</div><div class="v">Control-M folder <code>DAILY-TransactionBackup</code> (APPLICATION CARD-DEMO, SUB_APPLICATION CTRLM). No CA-7 SCHID contains TRANBKP.</div></div>
+  <div class="cell"><div class="k">Owner</div><div class="v">RUN_AS <code>xuemingh</code> (Control-M). CA-7 lists CLOSEFIL/WAITSTEP/OPENFIL with OWNER= <code>*NONE*</code>.</div></div>
+  <div class="cell"><div class="k">Run window / availability</div><div class="v">Start time not defined in repo; must end by TIMETO 23:00 (Control-M). CICS files TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC are unavailable online between CLOSEFIL and OPENFIL.</div></div>
+  <div class="cell"><div class="k">Calendar / frequency</div><div class="v">Daily — DAYS="ALL", every month JAN..DEC="1", RULE_BASED_CALENDARS "*"</div></div>
+  <div class="cell"><div class="k">Criticality</div><div class="v">Control-M CRITICAL="0", CONFIRM="0", MAXWAIT 7, MAXRERUN 5. Business criticality not defined in repo (see Q-07).</div></div>
+  <div class="cell"><div class="k">Doc status</div><div class="v">DRAFT</div></div>
+</div>
+
+<table>
+  <tr><th>Version</th><th>Date</th><th>Author</th><th>Change</th></tr>
+  <tr><td>0.1</td><td>2026-10-20</td><td>Devin</td><td>Initial draft</td></tr>
+</table>
+
+<nav class="toc">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#purpose">Business purpose</a></li>
+    <li><a href="#flow">Flow diagram</a></li>
+    <li><a href="#inventory">Job / screen inventory</a></li>
+    <li><a href="#dependencies">Dependencies</a></li>
+    <li><a href="#requirements">Functional requirements</a></li>
+    <li><a href="#restart">Restart, recovery &amp; error handling</a></li>
+    <li><a href="#nfr">Non-functional requirements</a></li>
+    <li><a href="#interfaces">Interfaces &amp; data layouts</a></li>
+    <li><a href="#security">Security &amp; access</a></li>
+    <li><a href="#target">Target-state mapping</a></li>
+    <li><a href="#open">Assumptions, debt &amp; open questions</a></li>
+  </ol>
+</nav>
+
+<h2 id="purpose">1. Business purpose</h2>
+<p>The transaction master <code>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</code> is the only copy of the posted card transactions that CICS reads online (CSD <code>FILE(TRANSACT)</code>, <code>app/csd/CARDDEMO.CSD:76-77</code>). It is defined with <code>RECOVERY(NONE)</code> and <code>JOURNAL(NO)</code> (<code>app/csd/CARDDEMO.CSD:82-84</code>), so CICS keeps no forward-recovery log for it. The posting program CBTRN02C opens the master <code>OUTPUT</code> (<code>app/cbl/CBTRN02C.cbl:256</code>), i.e. it replaces the file rather than appending to it. This chain exists to preserve the previous day's transactions before that replacement: TRANBKP copies every record to a new generation of the <code>AWS.M2.CARDDEMO.TRANSACT.BKUP</code> GDG and then deletes and re-defines the cluster empty (<code>app/jcl/TRANBKP.jcl:23-67</code>). CLOSEFIL and OPENFIL bracket the work so that CICS does not hold the dataset open while IDCAMS deletes it (<code>app/jcl/CLOSEFIL.jcl:26-30</code>, <code>app/jcl/OPENFIL.jcl:26-30</code>).</p>
+<p>If the chain does not run, (a) the next POSTTRAN overwrites the master with no retained copy of the prior content, (b) COMBTRAN, which reads <code>TRANSACT.BKUP(0)</code> (<code>app/jcl/COMBTRAN.jcl:23-24</code>), combines a stale generation, and (c) if CLOSEFIL ran but OPENFIL did not, the five files stay closed to the CICS region and every online screen that reads them fails.</p>
+<table>
+  <tr><th>Business capability</th><th>How this stream serves it</th></tr>
+  <tr><td>Transaction history retention</td><td>Keeps the last five daily images of the posted-transaction master as GDG generations <code>TRANSACT.BKUP(+1)</code>, <code>LIMIT(5) SCRATCH</code> (<code>app/jcl/DEFGDGB.jcl:24-28</code>; five generations G0072–G0076 are catalogued in <code>app/catlg/LISTCAT.txt:1631-1643</code>).</td></tr>
+  <tr><td>Daily transaction posting (S-11)</td><td>Guarantees POSTTRAN starts from an empty, correctly defined master (KEYS(16 0), RECORDSIZE(350 350)) — the pre-condition CBTRN02C's <code>OPEN OUTPUT</code> relies on (<code>app/jcl/TRANBKP.jcl:54-67</code>, <code>app/cbl/CBTRN02C.cbl:256</code>).</td></tr>
+  <tr><td>Monthly interest cycle (S-12)</td><td>Supplies the input <code>TRANSACT.BKUP(0)</code> that COMBTRAN merges with <code>SYSTRAN(0)</code> and reloads into the master (<code>app/jcl/COMBTRAN.jcl:22-48</code>).</td></tr>
+  <tr><td>Online card servicing availability</td><td>Closes and re-opens TRANSACT, CCXREF, ACCTDAT, CXACAIX and USRSEC in region <code>CICSAWSA</code> so batch and CICS never share the datasets (<code>app/jcl/CLOSEFIL.jcl:26-30</code>, <code>app/jcl/OPENFIL.jcl:26-30</code>).</td></tr>
+</table>
+
+<h2 id="flow">2. Flow diagram</h2>
+<div class="diagram">
+<pre class="mermaid">
+flowchart TD
+    S(["Control-M order: folder DAILY-TransactionBackup, DAYS=ALL"]) --> A["CLOSEFIL<br/>SDSF: CEMT SET FIL(...) CLO x5"]
+    A -- "+DAILY-TransactionBackup-CLOSEFIL" --> B["TRANBKP<br/>STEP05R REPROC: KSDS -> BKUP(+1)<br/>STEP05 IDCAMS: DELETE CLUSTER + AIX<br/>STEP10 IDCAMS COND=(4,LT): DEFINE CLUSTER"]
+    B -- "+DAILY-TransactionBackup-TRANBKP" --> C["WAITSTEP<br/>COBSWAIT / MVSWAIT 3600 cs"]
+    C -- "+DAILY-TransactionBackup-WAITSTEP" --> D["OPENFIL<br/>SDSF: CEMT SET FIL(...) OPE x5"]
+    D --> E(["End of folder: no OUTCOND"])
+    B -. "AIX and PATH deleted, not rebuilt in this folder" .-> X["TRANIDX (manual)<br/>DEFINE AIX KEYS(26 304), DEFINE PATH, BLDINDEX"]
+    X -.-> P["POSTTRAN (CA-7 SCHID=030 only)<br/>CBTRN02C OPEN OUTPUT TRANFILE"]
+    B -. "BKUP(0) read by" .-> M["COMBTRAN (Control-M MONTHLY-InterestCalculation)"]
+    classDef manual stroke-dasharray: 5 5;
+    class X,P,M manual;
+</pre>
+</div>
+<div class="note"><strong>Gating conditions:</strong> Control-M releases each job on the predecessor's OUT condition for the same ODATE and deletes that condition when the successor runs: CLOSEFIL adds <code>DAILY-TransactionBackup-CLOSEFIL</code> (<code>app/scheduler/CardDemo.controlm:5</code>); TRANBKP has INCOND on it, removes it and adds <code>DAILY-TransactionBackup-TRANBKP</code> (<code>:9-11</code>); WAITSTEP consumes that and adds <code>DAILY-TransactionBackup-WAITSTEP</code> (<code>:15-17</code>); OPENFIL consumes that and adds nothing (<code>:21-22</code>), so the folder ends there. No job in the folder carries an ON/DO condition-code rule — release is on "job ended OK", not on a specific RC. Inside TRANBKP the only step gate is <code>STEP10 EXEC PGM=IDCAMS,COND=(4,LT)</code> (<code>app/jcl/TRANBKP.jcl:51</code>): the re-define is skipped if any earlier step returned RC &gt; 4; the DELETE step has no COND and runs regardless of the REPRO result (<code>:37</code>). <strong>Scheduler disagreement:</strong> CA-7 has no TRANBKP at all. Its SCHID=030 daily network is CLOSEFIL → CBPAUP0J → POSTTRAN → WAITSTEP → OPENFIL (<code>app/scheduler/CardDemo.ca7:43</code>, <code>:70</code>, <code>:97</code>, <code>:124</code>; OPENFIL "N -- COMP TRIGGERS OTHER JOBS" at <code>:138</code>). The Control-M folder has TRANBKP and no POSTTRAN. This document describes the Control-M folder only and does not assert a combined CLOSEFIL → TRANBKP → POSTTRAN chain (Q-01).</div>
+
+<h2 id="inventory">3. Job / screen inventory</h2>
+<table>
+  <tr><th>Order</th><th>Job / Tranid</th><th>Program(s)</th><th>Function</th><th>Restart point / entry condition</th></tr>
+  <tr><td>1</td><td class="mono">CLOSEFIL</td><td class="mono">SDSF (step CLCIFIL)</td><td>Issues five MVS modify commands to region CICSAWSA: <code>CEMT SET FIL(TRANSACT ) CLO</code>, <code>FIL(CCXREF ) CLO</code>, <code>FIL(ACCTDAT ) CLO</code>, <code>FIL(CXACAIX ) CLO</code>, <code>FIL(USRSEC ) CLO</code> (<code>app/jcl/CLOSEFIL.jcl:22-30</code>).</td><td>Folder entry; Control-M JOBISN 1, no INCOND (<code>app/scheduler/CardDemo.controlm:4-5</code>). Rerunnable: closing an already closed file is a no-op.</td></tr>
+  <tr><td>2</td><td class="mono">TRANBKP</td><td class="mono">IDCAMS via PROC REPROC (STEP05R), IDCAMS (STEP05), IDCAMS (STEP10)</td><td>REPRO <code>TRANSACT.VSAM.KSDS</code> → <code>TRANSACT.BKUP(+1)</code> (<code>app/jcl/TRANBKP.jcl:23-33</code>, <code>app/proc/REPROC.prc:21-28</code>); DELETE cluster and alternate index (<code>:40-45</code>); DEFINE CLUSTER KEYS(16 0) RECORDSIZE(350 350) INDEXED (<code>:54-67</code>).</td><td>INCOND <code>DAILY-TransactionBackup-CLOSEFIL</code> (<code>app/scheduler/CardDemo.controlm:9</code>). Not idempotent: a rerun after a successful STEP05R REPROs an empty master into a further generation (FR-19). Restart from STEP10 only if STEP05R and STEP05 completed.</td></tr>
+  <tr><td>3</td><td class="mono">WAITSTEP</td><td class="mono">COBSWAIT → MVSWAIT (step WAIT)</td><td>Reads <code>00003600</code> from SYSIN and waits 3 600 centiseconds = 36 s (<code>app/jcl/WAITSTEP.jcl:20-26</code>, <code>app/cbl/COBSWAIT.cbl:36-38</code>, <code>app/asm/MVSWAIT.asm:20-23</code>).</td><td>INCOND <code>DAILY-TransactionBackup-TRANBKP</code> (<code>:15</code>). Freely rerunnable; no data touched.</td></tr>
+  <tr><td>4</td><td class="mono">OPENFIL</td><td class="mono">SDSF (step OPCIFIL)</td><td>Same five files, <code>CEMT SET FIL(...) OPE</code> (<code>app/jcl/OPENFIL.jcl:22-30</code>).</td><td>INCOND <code>DAILY-TransactionBackup-WAITSTEP</code> (<code>:21</code>). Rerunnable. Last job: no OUTCOND (<code>:20-24</code>).</td></tr>
+  <tr><td>—</td><td class="mono">TRANIDX</td><td class="mono">IDCAMS (STEP20, STEP25, STEP30)</td><td>Not in the folder. Rebuilds what TRANBKP STEP05 deleted: DEFINE ALTERNATEINDEX KEYS(26 304) NONUNIQUEKEY UPGRADE (<code>app/jcl/TRANIDX.jcl:25-34</code>), DEFINE PATH (<code>:42-44</code>), BLDINDEX (<code>:52-54</code>).</td><td>Manual; README order lists it after CREASTMT and before OPENFIL (<code>README.md:230</code>). Not present in either scheduler source (Q-04).</td></tr>
+</table>
+
+<h2 id="dependencies">4. Dependencies</h2>
+<h3>4.1 DB2 tables</h3>
+<table>
+  <tr><th>Table</th><th>Access</th><th>Used by</th><th>Notes</th></tr>
+  <tr><td class="mono">—</td><td>—</td><td class="mono">—</td><td>None. No step in CLOSEFIL, TRANBKP, WAITSTEP or OPENFIL references DB2 (no DSN/IKJEFT01 steps in <code>app/jcl/CLOSEFIL.jcl</code>, <code>TRANBKP.jcl</code>, <code>WAITSTEP.jcl</code>, <code>OPENFIL.jcl</code>).</td></tr>
+</table>
+<h3>4.2 VSAM files &amp; datasets</h3>
+<table>
+  <tr><th>Dataset</th><th>Type</th><th>Access</th><th>Used by</th><th>Notes</th></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</td><td>KSDS</td><td>R (REPRO), then DELETE/DEFINE</td><td class="mono">TRANBKP STEP05R, STEP05, STEP10</td><td><code>app/jcl/TRANBKP.jcl:26-27</code>, <code>:40-41</code>, <code>:54-67</code>. DATA/INDEX components <code>…KSDS.DATA</code>, <code>…KSDS.INDEX</code> (<code>:64-66</code>). CICS file TRANSACT (<code>app/csd/CARDDEMO.CSD:76-77</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANSACT.VSAM.AIX (+ .DATA, .INDEX, .PATH)</td><td>AIX / PATH</td><td>DELETE</td><td class="mono">TRANBKP STEP05</td><td><code>app/jcl/TRANBKP.jcl:43-44</code>. Deleted with the base cluster, re-created only by <code>app/jcl/TRANIDX.jcl:25-54</code> or <code>app/jcl/TRANFILE.jcl:82-111</code>. No CSD FILE definition maps this path (the CICS file CXACAIX is CARDXREF's AIX path, <code>app/csd/CARDDEMO.CSD:63-65</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANSACT.BKUP(+1)</td><td>GDG generation, PS FB 350</td><td>W (new generation)</td><td class="mono">TRANBKP STEP05R (PRC001.FILEOUT)</td><td><code>app/jcl/TRANBKP.jcl:29-33</code>: DISP=(NEW,CATLG,DELETE), DCB=(LRECL=350,RECFM=FB,BLKSIZE=0), SPACE=(CYL,(1,1),RLSE). GDG base LIMIT(5) SCRATCH (<code>app/jcl/DEFGDGB.jcl:24-28</code>). Also written as (+1) by TRANREPT (<code>app/jcl/TRANREPT.jcl:29-33</code>, <code>app/proc/TRANREPT.prc:27-31</code>); read as (0) by COMBTRAN (<code>app/jcl/COMBTRAN.jcl:23-24</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.CNTL(REPROCT)</td><td>PDS member (control cards)</td><td>R</td><td class="mono">REPROC PRC001 SYSIN</td><td><code>app/proc/REPROC.prc:27-28</code>. The member is not in the repo (Q-03); the REPRO statement itself is therefore not visible.</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.LOADLIB</td><td>Load library</td><td>R</td><td class="mono">WAITSTEP STEPLIB</td><td><code>app/jcl/WAITSTEP.jcl:23</code> (COBSWAIT, MVSWAIT).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.PROC</td><td>PROCLIB</td><td>R</td><td class="mono">TRANBKP JOBLIB JCLLIB</td><td><code>app/jcl/TRANBKP.jcl:19</code>; member REPROC = <code>app/proc/REPROC.prc</code>.</td></tr>
+  <tr><td class="mono">CICS files TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC (region CICSAWSA)</td><td>CICS FILE resources</td><td>CLO / OPE</td><td class="mono">CLOSEFIL, OPENFIL</td><td><code>app/jcl/CLOSEFIL.jcl:26-30</code>, <code>app/jcl/OPENFIL.jcl:26-30</code>; definitions <code>app/csd/CARDDEMO.CSD:1</code> (ACCTDAT), <code>:37</code> (CCXREF), <code>:63</code> (CXACAIX), <code>:76</code> (TRANSACT), <code>:88</code> (USRSEC). Only TRANSACT is touched by TRANBKP; the other four are closed because the same CLOSEFIL member serves every chain.</td></tr>
+</table>
+<h3>4.3 Shared utilities &amp; copybooks</h3>
+<table>
+  <tr><th>Asset</th><th>Kind</th><th>Role</th></tr>
+  <tr><td class="mono">app/proc/REPROC.prc</td><td>Proc</td><td>Generic IDCAMS REPRO wrapper: <code>PRC001 EXEC PGM=IDCAMS</code>, FILEIN/FILEOUT default to NULLFILE and are overridden by the job, SYSIN from <code>&amp;CNTLLIB(REPROCT)</code> (<code>app/proc/REPROC.prc:21-28</code>). Shared with TRANREPT (<code>app/jcl/TRANREPT.jcl:23-24</code>).</td></tr>
+  <tr><td class="mono">app/cbl/COBSWAIT.cbl</td><td>Subroutine (batch main)</td><td>ACCEPT 8-char PARM-VALUE from SYSIN, MOVE to <code>MVSWAIT-TIME PIC 9(8) COMP</code>, CALL 'MVSWAIT' (<code>app/cbl/COBSWAIT.cbl:30-38</code>).</td></tr>
+  <tr><td class="mono">app/asm/MVSWAIT.asm</td><td>Assembler subroutine</td><td>Loads the delay from the caller's parameter and issues the interval-timer wait; zeroes R15 before returning so the step always ends RC 0 (<code>app/asm/MVSWAIT.asm:20-26</code>).</td></tr>
+  <tr><td class="mono">app/cpy/CVTRA05Y.cpy</td><td>Copybook</td><td>TRAN-RECORD, 350 bytes: TRAN-ID PIC X(16) at offset 0 = primary key KEYS(16 0); TRAN-PROC-TS PIC X(26) at offset 304 = AIX key KEYS(26 304) (<code>app/cpy/CVTRA05Y.cpy:4-18</code>). Not copied by any program in this chain; it is the record contract the IDCAMS parameters must match.</td></tr>
+  <tr><td class="mono">app/jcl/DEFGDGB.jcl</td><td>One-off JCL</td><td>Defines GDG base <code>AWS.M2.CARDDEMO.TRANSACT.BKUP</code> LIMIT(5) SCRATCH; <code>IF LASTCC=12 THEN SET MAXCC=0</code> makes it rerunnable when the base exists (<code>app/jcl/DEFGDGB.jcl:24-29</code>). <code>app/jcl/DEFGDGD.jcl</code> defines the TRANTYPE/TRANCATG/DISCGRP GDGs only and is not used by this chain.</td></tr>
+  <tr><td class="mono">app/jcl/TRANFILE.jcl</td><td>One-off JCL</td><td>Initial build of the master: same DELETE/DEFINE as TRANBKP (<code>app/jcl/TRANFILE.jcl:35-62</code>), REPRO from <code>DALYTRAN.PS.INIT</code> (<code>:69-74</code>), then AIX, PATH, BLDINDEX (<code>:82-111</code>) and its own in-line CEMT CLO/OPE of TRANSACT and CXACAIX (<code>:26-27</code>, <code>:120-121</code>). It is the reference for the full "define + index" sequence TRANBKP only half performs.</td></tr>
+</table>
+<h3>4.4 Other applications &amp; external events</h3>
+<table>
+  <tr><th>Dependency</th><th>Direction</th><th>Mechanism</th><th>Notes</th></tr>
+  <tr><td>CICS region CICSAWSA</td><td>Upstream and downstream</td><td>MVS modify command via SDSF (<code>/F CICSAWSA,'CEMT SET FIL(…) CLO|OPE'</code>)</td><td><code>app/jcl/CLOSEFIL.jcl:26-30</code>, <code>app/jcl/OPENFIL.jcl:26-30</code>. The region must be up for the commands to take effect; the JCL has no check of the CEMT response.</td></tr>
+  <tr><td>POSTTRAN / CBTRN02C (S-11)</td><td>Downstream (consumer of the emptied master)</td><td>Dataset state</td><td>Opens TRANFILE OUTPUT on the cluster TRANBKP defined (<code>app/jcl/POSTTRAN.jcl:28-29</code>, <code>app/cbl/CBTRN02C.cbl:256</code>). Scheduled only in CA-7 SCHID=030, which does not include TRANBKP (<code>app/scheduler/CardDemo.ca7:70</code>).</td></tr>
+  <tr><td>COMBTRAN (S-12, Control-M MONTHLY-InterestCalculation)</td><td>Downstream (consumer of BKUP(0))</td><td>GDG relative generation</td><td><code>app/jcl/COMBTRAN.jcl:23-24</code> sorts <code>TRANSACT.BKUP(0)</code> with <code>SYSTRAN(0)</code> and REPROs the result into the master (<code>:41-48</code>).</td></tr>
+  <tr><td>TRANREPT (S-14, submitted from CICS CR00)</td><td>Peer producer of the same GDG</td><td>GDG (+1)</td><td><code>app/jcl/TRANREPT.jcl:29-33</code> also catalogs a new <code>TRANSACT.BKUP(+1)</code>; each report run consumes one of the five retained generations (Q-05).</td></tr>
+  <tr><td>CREASTMT (S-13), CBEXPORT (S-16)</td><td>Downstream readers of the master</td><td>DISP=SHR read</td><td><code>app/jcl/CREASTMT.JCL:45</code>, <code>app/jcl/CBEXPORT.jcl:55-56</code> read the master; after TRANBKP and before the next load they see an empty file.</td></tr>
+  <tr><td>Control-M calendar</td><td>Upstream (trigger)</td><td>Folder order, DAYS="ALL"</td><td><code>app/scheduler/CardDemo.controlm:4</code>. No external file-arrival or event condition.</td></tr>
+</table>
+
+<h2 id="requirements">5. Functional requirements</h2>
+<table>
+  <tr><th>ID</th><th>Requirement</th><th>Source</th><th>Acceptance criteria</th></tr>
+  <tr><td>FR-01</td><td>Before the backup starts, the five CICS files TRANSACT, CCXREF, ACCTDAT, CXACAIX and USRSEC are closed in region CICSAWSA so no online task holds the transaction master open.</td><td class="mono">app/jcl/CLOSEFIL.jcl:22-30</td><td>Given the chain is ordered, when TRANBKP starts, the online access path to the transaction store is disabled (legacy: CEMT INQ FIL(TRANSACT) shows CLOSED) and remains so until OPENFIL.</td></tr>
+  <tr><td>FR-02</td><td>Jobs run strictly in the order CLOSEFIL → TRANBKP → WAITSTEP → OPENFIL; each successor is released only by its immediate predecessor's completion condition for the same ODATE.</td><td class="mono">app/scheduler/CardDemo.controlm:5, :9, :15, :21</td><td>With CLOSEFIL not yet ended OK, TRANBKP does not start; with TRANBKP not ended OK, WAITSTEP and OPENFIL do not start.</td></tr>
+  <tr><td>FR-03</td><td>Each release condition is consumed by the successor (OUTCOND SIGN="-"), so one CLOSEFIL completion releases exactly one TRANBKP, one TRANBKP exactly one WAITSTEP, and so on.</td><td class="mono">app/scheduler/CardDemo.controlm:10, :16, :22</td><td>After OPENFIL ends, no DAILY-TransactionBackup-* condition remains for that ODATE; ordering the folder again requires a new CLOSEFIL run.</td></tr>
+  <tr><td>FR-04</td><td>The entire content of the transaction master is copied to a new backup generation <em>before</em> any record is deleted (backup-before-empty).</td><td class="mono">app/jcl/TRANBKP.jcl:23-33 (STEP05R precedes STEP05 at :37)</td><td>Record count and byte content of <code>TRANSACT.BKUP(+1)</code> equal those of the master as it stood when CLOSEFIL completed; the copy is in ascending TRAN-ID (primary key) order.</td></tr>
+  <tr><td>FR-05</td><td>The backup is a new catalogued generation with fixed 350-byte records; it is catalogued only if the copy step ends normally.</td><td class="mono">app/jcl/TRANBKP.jcl:29-33 (DISP=(NEW,CATLG,DELETE), LRECL=350, RECFM=FB)</td><td>After a successful run, the GDG has one more generation than before whose record length is 350 and whose layout is CVTRA05Y; after a failed copy step, no new generation is catalogued.</td></tr>
+  <tr><td>FR-06</td><td>At most five backup generations are retained; creating a sixth scratches the oldest.</td><td class="mono">app/jcl/DEFGDGB.jcl:24-28 (LIMIT(5) SCRATCH); app/catlg/LISTCAT.txt:1631-1643</td><td>After six consecutive successful runs, exactly five generations exist and the earliest of the six is no longer available.</td></tr>
+  <tr><td>FR-07</td><td>The most recent generation, whoever produced it, is the one downstream consumers read: COMBTRAN reads <code>TRANSACT.BKUP(0)</code>, and TRANREPT also writes <code>(+1)</code> to the same GDG.</td><td class="mono">app/jcl/COMBTRAN.jcl:23-24; app/jcl/TRANREPT.jcl:29-33</td><td>A migrated backup store exposes a "latest generation" that is the newest image regardless of producing job, and TRANREPT runs between two TRANBKP runs do not cause COMBTRAN to read a stale TRANBKP image.</td></tr>
+  <tr><td>FR-08</td><td>After the copy, both the base cluster and its alternate index are deleted; absence of either is tolerated (IDCAMS MAXCC ≤ 8 reset to 0).</td><td class="mono">app/jcl/TRANBKP.jcl:40-45</td><td>Running TRANBKP when the AIX (or the cluster) does not exist does not fail the job; after STEP05 neither <code>TRANSACT.VSAM.KSDS</code> nor <code>TRANSACT.VSAM.AIX</code> is catalogued.</td></tr>
+  <tr><td>FR-09</td><td>The master is re-defined empty with exactly: INDEXED, KEYS(16 0), RECORDSIZE(350 350), SHAREOPTIONS(2 3), ERASE, CYLINDERS(1 5), VOLUMES(AWSHJ1), DATA component <code>…KSDS.DATA</code>, INDEX component <code>…KSDS.INDEX</code>.</td><td class="mono">app/jcl/TRANBKP.jcl:54-67</td><td>LISTCAT of the new cluster shows KEYLEN 16, RKP 0, AVGLRECL = MAXLRECL = 350, SHROPTNS(2,3), ERASE, and the component names above; the cluster contains zero records.</td></tr>
+  <tr><td>FR-10</td><td>The re-define runs only if every earlier step ended with RC ≤ 4; the delete step runs unconditionally.</td><td class="mono">app/jcl/TRANBKP.jcl:37 (no COND), :51 (COND=(4,LT))</td><td>If STEP05R ends RC 8, STEP05 still executes and STEP10 is bypassed (FLUSH); if STEP05R ends RC 0 or 4, STEP10 executes.</td></tr>
+  <tr><td>FR-11</td><td>On completion of TRANBKP the master holds zero records and no alternate index or path exists over it; the next loader (POSTTRAN's <code>OPEN OUTPUT</code>, or COMBTRAN's REPRO) therefore starts from empty.</td><td class="mono">app/jcl/TRANBKP.jcl:40-67; app/cbl/CBTRN02C.cbl:256; app/jcl/COMBTRAN.jcl:41-48</td><td>A count of the transaction store immediately after TRANBKP is 0; a subsequent POSTTRAN leaves it holding exactly the records it posted.</td></tr>
+  <tr><td>FR-12</td><td>The primary key of the master is the 16-byte TRAN-ID at offset 0 and the record is 350 bytes — the cluster parameters must match the copybook, not the other way round.</td><td class="mono">app/cpy/CVTRA05Y.cpy:4-5, :18; app/jcl/TRANBKP.jcl:58-59</td><td>Inserting two records with the same TRAN-ID into the re-defined master is rejected as a duplicate key; a 351-byte record is rejected.</td></tr>
+  <tr><td>FR-13</td><td>Rebuilding the access path by processing timestamp (TRANIDX) must define a NONUNIQUE, UPGRADE alternate index on the 26 bytes at offset 304 (TRAN-PROC-TS), RECORDSIZE(350,350), a PATH <code>…AIX.PATH</code> over it, and populate it with BLDINDEX from the base cluster.</td><td class="mono">app/jcl/TRANIDX.jcl:25-34, :42-44, :52-54; app/cpy/CVTRA05Y.cpy:17</td><td>After TRANIDX, reading via the path by a TRAN-PROC-TS value returns every record with that timestamp (duplicates allowed), and records written later through the base cluster are visible through the path (UPGRADE).</td></tr>
+  <tr><td>FR-14</td><td>TRANIDX is not part of the DAILY-TransactionBackup folder or any CA-7 network; after TRANBKP the alternate index stays absent until TRANIDX (or TRANFILE) is run manually.</td><td class="mono">app/scheduler/CardDemo.controlm:3-24 (no TRANIDX); app/scheduler/CardDemo.ca7 (no TRANIDX); README.md:230</td><td>The migrated runbook either includes the index rebuild in the daily cycle or documents the manual step; no consumer depends on the AIX existing before TRANIDX has run.</td></tr>
+  <tr><td>FR-15</td><td>WAITSTEP pauses the chain for the number of centiseconds in columns 1–8 of its single SYSIN record (shipped value 00003600 = 36 s) and always ends RC 0.</td><td class="mono">app/jcl/WAITSTEP.jcl:20-26; app/cbl/COBSWAIT.cbl:31, :36-38; app/asm/MVSWAIT.asm:23, :26</td><td>Elapsed time between TRANBKP end and OPENFIL start is ≥ 36 s; WAITSTEP completes with RC 0 and reads/writes no business data.</td></tr>
+  <tr><td>FR-16</td><td>After the wait, the same five CICS files are re-opened in CICSAWSA, and the chain ends — OPENFIL releases nothing.</td><td class="mono">app/jcl/OPENFIL.jcl:22-30; app/scheduler/CardDemo.controlm:20-24</td><td>After OPENFIL, CEMT INQ FIL for TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC shows OPEN ENABLED; no further job is ordered by the folder.</td></tr>
+  <tr><td>FR-17</td><td>The folder is ordered every calendar day of every month and each job must finish by 23:00; a job may wait up to 7 days for its condition and be rerun up to 5 times.</td><td class="mono">app/scheduler/CardDemo.controlm:4, :8, :14, :20 (DAYS="ALL", JAN..DEC="1", TIMETO="23:00", MAXWAIT="7", MAXRERUN="5")</td><td>The migrated schedule triggers the chain daily including weekends and holidays, flags any job still running at 23:00, and limits automatic reruns to five.</td></tr>
+  <tr><td>FR-18</td><td>No release decision in the chain depends on a numeric return code: a job that ends OK releases its successor, a job that does not stops the chain. The only RC test is the in-job COND of FR-10.</td><td class="mono">app/scheduler/CardDemo.controlm:3-24 (no ON/DO statements); app/jcl/TRANBKP.jcl:51</td><td>A migrated chain treats "exit 0" as released and any other outcome as stop; it introduces no RC-4-is-OK tolerance between jobs that the legacy folder does not have.</td></tr>
+  <tr><td>FR-19</td><td>TRANBKP is not idempotent: rerunning it after a successful copy creates a further generation containing the now-empty master, which becomes <code>BKUP(0)</code> and ages the real backup by one.</td><td class="mono">app/jcl/TRANBKP.jcl:29-33 (unconditional (+1)); app/scheduler/CardDemo.controlm:8 (MAXRERUN="5")</td><td>Documented and tested behaviour for a rerun: either the migrated backup is idempotent per ODATE (preferred, deviation to be approved) or the runbook forbids rerun after STEP05R succeeded (see Q-09).</td></tr>
+  <tr><td>FR-20</td><td>The CICS TRANSACT file is defined RECOVERY(NONE), JOURNAL(NO), BACKUPTYPE(STATIC): the TRANBKP generation is the only point-in-time copy of posted transactions and must be durable for the retention period.</td><td class="mono">app/csd/CARDDEMO.CSD:76-85</td><td>The migrated backup artefact survives loss of the primary store and can restore the master to its state at CLOSEFIL time for any of the last five cycles.</td></tr>
+  <tr><td>FR-21</td><td>Between CLOSEFIL and OPENFIL, batch readers of the master (CREASTMT SORTIN, CBEXPORT TRANSACT DD) that run concurrently see the master either complete (before STEP05) or empty (after STEP10), never a partially deleted cluster — the delete/define is a single IDCAMS boundary per step.</td><td class="mono">app/jcl/TRANBKP.jcl:37-67; app/jcl/CREASTMT.JCL:45; app/jcl/CBEXPORT.jcl:55-56</td><td>A reader started after TRANBKP completes reads zero records and does not fail on open; readers are not scheduled inside the folder (none in <code>app/scheduler/CardDemo.controlm:3-24</code>).</td></tr>
+</table>
+
+<h2 id="restart">6. Restart, recovery &amp; error handling</h2>
+<h3>6.1 Return-code conventions</h3>
+<table>
+  <tr><th>RC</th><th>Meaning</th><th>Downstream effect</th></tr>
+  <tr><td class="mono">TRANBKP STEP05R RC 0</td><td>REPRO copied every record to BKUP(+1) (<code>app/jcl/TRANBKP.jcl:23-33</code>).</td><td>STEP05 and STEP10 run; job ends OK; WAITSTEP released.</td></tr>
+  <tr><td class="mono">TRANBKP STEP05R RC 4</td><td>IDCAMS warning (e.g. no records copied). Exact IDCAMS message not determinable from repo (Q-10).</td><td>COND=(4,LT) on STEP10 is not satisfied, so the define still runs (<code>:51</code>); the job ends with MAXCC 4 and Control-M releases WAITSTEP (no ON/DO rule).</td></tr>
+  <tr><td class="mono">TRANBKP STEP05R RC 8–16</td><td>REPRO failed (open error, I/O error, missing GDG base).</td><td>STEP05 DELETE still runs (no COND, <code>:37</code>) — the master is deleted although the backup may be incomplete; STEP10 is bypassed (<code>:51</code>). Job ends NOTOK in Control-M; chain stops before WAITSTEP; CICS files stay closed. Data-safety gap, see Q-09.</td></tr>
+  <tr><td class="mono">TRANBKP STEP05 RC ≤ 8 → 0</td><td>DELETE of a non-existent cluster or AIX gives IDCAMS RC 8; reset to 0 by <code>IF MAXCC LE 08 THEN SET MAXCC = 0</code> (<code>:42</code>, <code>:45</code>).</td><td>Treated as success; STEP10 runs.</td></tr>
+  <tr><td class="mono">TRANBKP STEP10 RC 0</td><td>Cluster defined (<code>:54-67</code>).</td><td>Job ends OK.</td></tr>
+  <tr><td class="mono">TRANBKP STEP10 RC 12</td><td>DEFINE failed (duplicate name because DELETE did not run, volume AWSHJ1 unavailable, space).</td><td>Job NOTOK; master absent; chain stops; CICS files stay closed.</td></tr>
+  <tr><td class="mono">WAITSTEP RC 0</td><td>Always: MVSWAIT zeroes R15 (<code>app/asm/MVSWAIT.asm:26</code>); COBSWAIT has no error path (<code>app/cbl/COBSWAIT.cbl:34-40</code>).</td><td>OPENFIL released.</td></tr>
+  <tr><td class="mono">CLOSEFIL / OPENFIL RC</td><td>Not defined in repo. The SDSF step issues modify commands and the JCL does not test the CEMT response (<code>app/jcl/CLOSEFIL.jcl:22-31</code>, <code>app/jcl/OPENFIL.jcl:22-31</code>).</td><td>A CEMT failure (file still open, region down) is not visible to the scheduler as a bad RC — Q-06.</td></tr>
+</table>
+<h3>6.2 Abends</h3>
+<table>
+  <tr><th>Abend</th><th>Job / Program</th><th>Meaning</th><th>Recovery</th></tr>
+  <tr><td class="mono">JCL error / allocation failure on PRC001.FILEOUT</td><td class="mono">TRANBKP STEP05R</td><td>GDG base <code>AWS.M2.CARDDEMO.TRANSACT.BKUP</code> not defined, or (+1) cannot be catalogued (<code>app/jcl/TRANBKP.jcl:29-33</code>).</td><td>Run <code>app/jcl/DEFGDGB.jcl</code> (STEP05, <code>:21-29</code>), then rerun TRANBKP from the top. No data has been deleted because the job fails before STEP05.</td></tr>
+  <tr><td class="mono">IDCAMS open failure on FILEIN (RC 12)</td><td class="mono">TRANBKP STEP05R</td><td>Master still open to CICS (CLOSEFIL ineffective) or cluster missing.</td><td>Confirm CEMT INQ FIL(TRANSACT) CLOSED; if the cluster is missing, restore from <code>BKUP(0)</code> via <code>app/jcl/TRANFILE.jcl</code>-style DEFINE + REPRO, then rerun. Because STEP05 runs anyway (<code>:37</code>), check whether the cluster was deleted before restarting.</td></tr>
+  <tr><td class="mono">S806 / module not found</td><td class="mono">WAITSTEP (COBSWAIT)</td><td>STEPLIB <code>AWS.M2.CARDDEMO.LOADLIB</code> missing COBSWAIT or MVSWAIT (<code>app/jcl/WAITSTEP.jcl:22-23</code>).</td><td>Rebuild/relink; rerun WAITSTEP. Nothing to back out.</td></tr>
+  <tr><td class="mono">No abend path</td><td class="mono">CLOSEFIL, OPENFIL</td><td>SDSF batch returns to the scheduler regardless of command outcome; no abend code is defined in the repo.</td><td>Operator verifies file state with CEMT INQ FIL and reruns the job; both are idempotent.</td></tr>
+</table>
+<h3>6.3 Restart / checkpoint semantics</h3>
+<p>There is no checkpoint and no commit interval: every step is a single IDCAMS or SDSF invocation that either completes or not. Restart rules that follow from the JCL: (1) CLOSEFIL, WAITSTEP and OPENFIL may be rerun at any time with no side effect (<code>app/jcl/CLOSEFIL.jcl:26-30</code>, <code>app/jcl/WAITSTEP.jcl:22-26</code>, <code>app/jcl/OPENFIL.jcl:26-30</code>). (2) TRANBKP that failed in STEP05R before cataloguing <code>BKUP(+1)</code> (DISP third parameter DELETE, <code>app/jcl/TRANBKP.jcl:29</code>) may be rerun from the top <em>provided STEP05 has not already deleted the cluster</em>; because STEP05 carries no COND (<code>:37</code>) that must be checked with LISTCAT first. (3) TRANBKP that failed in STEP10 must be restarted at STEP10 only (the backup generation already exists and the master is already gone); a rerun from the top would REPRO a missing or empty cluster and burn a generation (FR-19). (4) Control-M allows MAXRERUN 5 and MAXWAIT 7 (<code>app/scheduler/CardDemo.controlm:8</code>); the JCL has no RESTART= card, so step-level restart is an operator action. (5) The recovery copy for the master is always the newest generation <code>TRANSACT.BKUP(0)</code>; the restore sequence is DEFINE CLUSTER (<code>app/jcl/TRANBKP.jcl:54-67</code>) → REPRO from the generation (pattern of <code>app/jcl/COMBTRAN.jcl:41-48</code>) → TRANIDX (<code>app/jcl/TRANIDX.jcl:22-54</code>). No backout job exists in the repo.</p>
+
+<h2 id="nfr">7. Non-functional requirements</h2>
+<table>
+  <tr><th>ID</th><th>Category</th><th>Requirement</th></tr>
+  <tr><td>NFR-01</td><td>Window</td><td>Every job in the folder must complete by 23:00 on its ODATE (<code>TIMETO="23:00"</code>, <code>app/scheduler/CardDemo.controlm:4, :8, :14, :20</code>). Earliest start: not defined in repo (Q-07).</td></tr>
+  <tr><td>NFR-02</td><td>Availability</td><td>Online unavailability of TRANSACT, CCXREF, ACCTDAT, CXACAIX and USRSEC is bounded by CLOSEFIL start → OPENFIL end, which includes the fixed 36 s wait (<code>app/jcl/WAITSTEP.jcl:26</code>). A migrated design that needs no quiesce (target state D-2, single database) removes this outage.</td></tr>
+  <tr><td>NFR-03</td><td>Volume</td><td>Backup generation sized SPACE=(CYL,(1,1),RLSE) and the master CYLINDERS(1 5) on VOLUMES(AWSHJ1) (<code>app/jcl/TRANBKP.jcl:32, :55-56</code>); record volume per day is not defined in repo. Volume AWSHJ1 is an environment constant, not a requirement (Q-07).</td></tr>
+  <tr><td>NFR-04</td><td>Retention</td><td>Five generations of the daily backup (<code>app/jcl/DEFGDGB.jcl:26-27</code>), shared with TRANREPT output — effective retention in days is lower when TRANREPT runs (Q-05).</td></tr>
+  <tr><td>NFR-05</td><td>Resilience</td><td>Scheduler tolerances: MAXWAIT 7 days, MAXRERUN 5, AUTOARCH 1, CRITICAL 0 (<code>app/scheduler/CardDemo.controlm:4</code>). Rerun of TRANBKP must respect FR-19.</td></tr>
+  <tr><td>NFR-06</td><td>Throughput</td><td>Not defined in repo. The copy is a sequential REPRO of the full master; there is no partial or incremental backup.</td></tr>
+</table>
+
+<h2 id="interfaces">8. Interfaces &amp; data layouts</h2>
+<table>
+  <tr><th>Interface</th><th>Layout (copybook)</th><th>Producer</th><th>Consumer</th></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</td><td class="mono">app/cpy/CVTRA05Y.cpy:4-18 (TRAN-RECORD, 350 bytes, key TRAN-ID X(16) @0)</td><td>POSTTRAN/CBTRN02C (<code>app/jcl/POSTTRAN.jcl:28-29</code>), COMBTRAN STEP10 (<code>app/jcl/COMBTRAN.jcl:41-48</code>), TRANFILE (<code>app/jcl/TRANFILE.jcl:67-74</code>)</td><td>TRANBKP STEP05R (<code>app/jcl/TRANBKP.jcl:26-27</code>); CICS FILE(TRANSACT) (<code>app/csd/CARDDEMO.CSD:76-77</code>); CREASTMT (<code>app/jcl/CREASTMT.JCL:45</code>); TRANREPT (<code>app/jcl/TRANREPT.jcl:26-27</code>); CBEXPORT (<code>app/jcl/CBEXPORT.jcl:55-56</code>)</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANSACT.BKUP(+1) / (0)</td><td class="mono">app/cpy/CVTRA05Y.cpy:4-18 (same 350-byte image, FB, no header/trailer)</td><td>TRANBKP STEP05R (<code>app/jcl/TRANBKP.jcl:29-33</code>); TRANREPT STEP05R (<code>app/jcl/TRANREPT.jcl:29-33</code>)</td><td>COMBTRAN SORTIN (<code>app/jcl/COMBTRAN.jcl:23-24</code>); TRANREPT SORTIN (<code>app/jcl/TRANREPT.jcl:38-39</code>)</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANSACT.VSAM.AIX.PATH</td><td class="mono">Alternate key TRAN-PROC-TS X(26) @304 (app/cpy/CVTRA05Y.cpy:17); AIX KEYS(26 304) NONUNIQUEKEY (app/jcl/TRANIDX.jcl:27-28)</td><td>TRANIDX STEP20–30 (<code>app/jcl/TRANIDX.jcl:22-54</code>); TRANFILE STEP20–30 (<code>app/jcl/TRANFILE.jcl:79-111</code>)</td><td>No consumer found in <code>app/</code> (no JCL DD or CSD FILE references the path; see Q-06)</td></tr>
+  <tr><td class="mono">WAITSTEP SYSIN</td><td class="mono">1 record, columns 1-8 numeric centiseconds, rest commentary (app/cbl/COBSWAIT.cbl:31; app/jcl/WAITSTEP.jcl:26)</td><td>In-stream JCL (<code>app/jcl/WAITSTEP.jcl:25-26</code>)</td><td>COBSWAIT ACCEPT FROM SYSIN (<code>app/cbl/COBSWAIT.cbl:36</code>)</td></tr>
+  <tr><td class="mono">MVSWAIT parameter</td><td class="mono">One fullword binary, PIC 9(8) COMP (app/cbl/COBSWAIT.cbl:30)</td><td>COBSWAIT CALL 'MVSWAIT' USING (<code>app/cbl/COBSWAIT.cbl:38</code>)</td><td>MVSWAIT L 5,0(1) / L 1,0(5) (<code>app/asm/MVSWAIT.asm:20-22</code>)</td></tr>
+  <tr><td class="mono">CEMT command strings</td><td class="mono">'CEMT SET FIL(xxxxxxxx ) CLO|OPE' — 8-char file name padded with a blank (app/jcl/CLOSEFIL.jcl:26-30)</td><td>CLOSEFIL / OPENFIL ISFIN</td><td>CICS region CICSAWSA via MVS MODIFY</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.CNTL(REPROCT)</td><td class="mono">IDCAMS control statements — content not in repo (Q-03)</td><td>Not in repo</td><td>REPROC PRC001 SYSIN (<code>app/proc/REPROC.prc:27-28</code>)</td></tr>
+</table>
+
+<h2 id="security">9. Security &amp; access</h2>
+<table>
+  <tr><th>Item</th><th>Value</th></tr>
+  <tr><td>Job owner / RACF identity</td><td class="mono">Control-M RUN_AS="xuemingh", CREATED_BY="XUEMINGH" (app/scheduler/CardDemo.controlm:4, :8, :14, :20). CA-7 OWNER= *NONE* for CLOSEFIL, WAITSTEP, OPENFIL (app/scheduler/CardDemo.ca7:35, :116, and the OPENFIL block). JOB cards use NOTIFY=&amp;SYSUID with no USER= (app/jcl/TRANBKP.jcl:1-2). RACF profile for the datasets: not defined in repo (Q-07).</td></tr>
+  <tr><td>Sensitive data handled</td><td>Full card number TRAN-CARD-NUM X(16), merchant identity and transaction amounts (<code>app/cpy/CVTRA05Y.cpy:10-15</code>) are copied in clear to every <code>TRANSACT.BKUP</code> generation, retained for five generations and readable DISP=SHR by any job (<code>app/jcl/COMBTRAN.jcl:23</code>).</td></tr>
+  <tr><td>Regulatory obligations</td><td>Not defined in repo. PAN-at-rest in the backup generations is an item for the migration's data-protection review, not a legacy requirement stated in source.</td></tr>
+  <tr><td>Operator authority</td><td>CLOSEFIL/OPENFIL require authority to issue MVS MODIFY to CICSAWSA from SDSF batch (<code>app/jcl/CLOSEFIL.jcl:22-26</code>); the authorising profile is not in the repo.</td></tr>
+</table>
+
+<h2 id="target">10. Target-state mapping</h2>
+<table>
+  <tr><th>Legacy asset</th><th>Disposition</th><th>Target component</th><th>Test evidence</th></tr>
+  <tr><td class="mono">CLOSEFIL (app/jcl/CLOSEFIL.jcl)</td><td>Retire</td><td>No job registered; the target has one PostgreSQL database and no CICS file to quiesce (target state D-2; boundary B-15 in <code>docs/migration/streams/OperationsChain/OperationsChain_functional_requirement.md</code> FR-OC-20).</td><td class="mono">migration/carddemo/backend/src/test/java/com/carddemo/batch/operations/FileControlJobsRemovedTest.java (noFileOpenOrCloseJobExistsInTheTarget)</td></tr>
+  <tr><td class="mono">OPENFIL (app/jcl/OPENFIL.jcl)</td><td>Retire</td><td>As CLOSEFIL.</td><td class="mono">migration/carddemo/backend/src/test/java/com/carddemo/batch/operations/FileControlJobsRemovedTest.java</td></tr>
+  <tr><td class="mono">TRANBKP STEP05R — backup copy to TRANSACT.BKUP(+1)</td><td>Not yet migrated</td><td>Deferred as a database-operations concern (pg_dump/snapshot) in <code>docs/migration/streams/DailyTransactionPosting/DailyTransactionPosting_migration_plan.md</code> §5; no Spring Batch job, table or file implements the generation copy, retention (FR-04–FR-07) or restore.</td><td>None</td></tr>
+  <tr><td class="mono">TRANBKP STEP05/STEP10 — empty and re-define the master</td><td>Rewrite (effect only)</td><td class="mono">migration/carddemo/backend/src/main/java/com/carddemo/batch/posttran/TransactionMasterInitializer.java (beforeStep: deleteAllInBatch on transactions, once per job execution); table transactions in migration/carddemo/backend/src/main/resources/db/migration/V1__baseline_carddemo_estate.sql:80-96 (id VARCHAR(16) PK = KEYS(16 0))</td><td class="mono">migration/carddemo/backend/src/test/java/com/carddemo/batch/posttran/PostTranJobIntegrationTest.java (emptiesTheTransactionMasterBeforePosting, restartsFromTheLastCommittedChunk)</td></tr>
+  <tr><td class="mono">TRANIDX (app/jcl/TRANIDX.jcl) — AIX on TRAN-PROC-TS</td><td>Rewrite</td><td class="mono">migration/carddemo/backend/src/main/resources/db/migration/V1100__posttran_transaction_proc_ts_index.sql (idx_transactions_proc_ts; non-unique, maintained by the database = UPGRADE)</td><td class="mono">migration/carddemo/backend/src/test/java/com/carddemo/batch/posttran/PostTranJobIntegrationTest.java (indexesPostedTransactionsByProcessingTimestamp)</td></tr>
+  <tr><td class="mono">WAITSTEP (app/jcl/WAITSTEP.jcl, COBSWAIT, MVSWAIT)</td><td>Rewrite</td><td class="mono">migration/carddemo/backend/src/main/java/com/carddemo/batch/operations/WaitStepJobConfiguration.java, WaitControlCard.java; default card migration/carddemo/backend/src/main/resources/ctl/WAITSTEP.sysin</td><td class="mono">migration/carddemo/backend/src/test/java/com/carddemo/batch/operations/WaitStepJobTest.java, WaitControlCardTest.java</td></tr>
+  <tr><td class="mono">Control-M folder DAILY-TransactionBackup (ordering)</td><td>Rewrite (contract only)</td><td class="mono">migration/carddemo/backend/src/main/java/com/carddemo/batch/operations/OperationsChainSchedule.java:31-36 (three JobTrigger edges); no scheduler is implemented — jobs expose exit codes 0/12 only</td><td class="mono">migration/carddemo/backend/src/test/java/com/carddemo/batch/operations/OperationsChainScheduleTest.java (controlMGraphMatchesTheFolderDefinitions, contractDocumentListsEveryTrigger)</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANSACT.BKUP GDG (DEFGDGB.jcl)</td><td>Not yet migrated</td><td>No target artefact. Target-state rule for GDGs is "date/sequence-suffixed files under carddemo.batch.data-dir" (<code>docs/migration/CardDemo_target_state.md:100</code>); nothing applies it to this GDG. COMBTRAN's read of BKUP(0) is handled inside S-12 (<code>migration/carddemo/backend/src/main/java/com/carddemo/batch/intcalc/CombineTransactionsTasklet.java</code>), not via a backup store.</td><td class="mono">migration/carddemo/backend/src/test/java/com/carddemo/batch/intcalc/CombineTransactionsJobIntegrationTest.java (S-12 side only)</td></tr>
+  <tr><td class="mono">CICS FILE(TRANSACT) / CXACAIX definitions (CARDDEMO.CSD)</td><td>Retire</td><td>No CICS; JPA entity over <code>transactions</code> (React/Spring Boot online streams read the same table).</td><td>Covered by the online stream tests, out of scope here</td></tr>
+</table>
+
+<h2 id="open">11. Assumptions, technical debt &amp; open questions</h2>
+<table>
+  <tr><th>ID</th><th>Type</th><th>Description</th><th>Owner</th><th>Status</th></tr>
+  <tr><td>Q-01</td><td>Question</td><td>The two scheduler sources disagree. CA-7 SCHID=030 daily network is CLOSEFIL → CBPAUP0J → POSTTRAN → WAITSTEP → OPENFIL with no TRANBKP (<code>app/scheduler/CardDemo.ca7:43, :70, :97, :124, :138</code>); Control-M DAILY-TransactionBackup is CLOSEFIL → TRANBKP → WAITSTEP → OPENFIL with no POSTTRAN (<code>app/scheduler/CardDemo.controlm:3-24</code>). Which scheduler is the production source of truth, and is TRANBKP meant to precede POSTTRAN on the same day? This FRD does not assert a combined chain.</td><td>Scheduling / app owner</td><td>Open</td></tr>
+  <tr><td>Q-02</td><td>Assumption</td><td>Control-M "ended OK" is assumed to be the default (no ON/DO, no MAXRC in the export). Whether TRANBKP MAXCC 4 from STEP05R counts as OK in the production Control-M defaults is not determinable from the repo.</td><td>Scheduling</td><td>Open</td></tr>
+  <tr><td>Q-03</td><td>Question</td><td>The REPRO control statements live in <code>AWS.M2.CARDDEMO.CNTL(REPROCT)</code> (<code>app/proc/REPROC.prc:27-28</code>), which is not in the repo. Assumed to be <code>REPRO INFILE(FILEIN) OUTFILE(FILEOUT)</code> with no FROMKEY/TOKEY/SKIP/COUNT. Confirm, since any filter there changes FR-04.</td><td>App owner</td><td>Open</td></tr>
+  <tr><td>Q-04</td><td>Debt</td><td>TRANBKP deletes the alternate index (<code>app/jcl/TRANBKP.jcl:43-44</code>) but nothing in either scheduler rebuilds it; TRANIDX is manual and the README places it after CREASTMT (<code>README.md:230</code>). Decide whether the index rebuild belongs in the daily cycle in the target.</td><td>Migration team</td><td>Open</td></tr>
+  <tr><td>Q-05</td><td>Debt</td><td><code>TRANSACT.BKUP</code> is written (+1) by both TRANBKP and TRANREPT (<code>app/jcl/TRANREPT.jcl:29-33</code>) and read (0) by COMBTRAN (<code>app/jcl/COMBTRAN.jcl:23-24</code>). With LIMIT(5), on-demand report runs shorten the effective daily retention and COMBTRAN may read a TRANREPT unload rather than the TRANBKP image. Separate the two GDGs in the target or document the sharing.</td><td>Migration team</td><td>Open</td></tr>
+  <tr><td>Q-06</td><td>Debt</td><td>CLOSEFIL/OPENFIL do not check the CEMT result (<code>app/jcl/CLOSEFIL.jcl:22-31</code>); CXACAIX is CARDXREF's AIX path, not TRANSACT's (<code>app/csd/CARDDEMO.CSD:63-65</code>); and <code>TRANSACT.VSAM.AIX.PATH</code> has no CSD FILE entry and no JCL consumer in <code>app/</code>. The AIX's purpose and consumer should be confirmed before it is carried into the target beyond <code>idx_transactions_proc_ts</code>.</td><td>App owner</td><td>Open</td></tr>
+  <tr><td>Q-07</td><td>Question</td><td>Not defined in repo: earliest start time / run window (only TIMETO 23:00), RACF owner and dataset profiles (CA-7 OWNER= *NONE*, Control-M RUN_AS xuemingh is a personal id), business criticality, daily record volumes, and whether VOLUMES(AWSHJ1) is a production or demo volume.</td><td>App owner / Operations</td><td>Open</td></tr>
+  <tr><td>Q-08</td><td>Debt</td><td>Existing analyses cite <code>TRANBKP.jcl:68-113</code>, <code>TRANBKP.jcl:82-113</code> and <code>TRANIDX.jcl:173-182</code> (<code>docs/migration/streams/DailyTransactionPosting/DailyTransactionPosting_analysis.md:44-47</code>, <code>…_functional_requirement.md:14, :36</code>, <code>migration/…/TransactionMasterInitializer.java:15</code>, <code>V1100__posttran_transaction_proc_ts_index.sql:3</code>). The committed files are 71 and 58 lines long; the correct ranges are <code>TRANBKP.jcl:23-67</code> and <code>TRANIDX.jcl:25-54</code>. Stale citations to be corrected in those documents.</td><td>Migration team</td><td>Open</td></tr>
+  <tr><td>Q-09</td><td>Debt</td><td>Data-safety gap in the legacy JCL: STEP05 DELETE has no COND (<code>app/jcl/TRANBKP.jcl:37</code>), so a failed REPRO (RC 8+) still deletes the master while the backup generation is not catalogued (DISP …,DELETE, <code>:29</code>). Combined with FR-19 (non-idempotent rerun) a migrated backup should be transactional: copy and empty succeed or fail together, and a rerun for the same ODATE does not create a second generation. This is a deliberate deviation from legacy behaviour and needs sign-off.</td><td>Migration team / app owner</td><td>Open</td></tr>
+  <tr><td>Q-10</td><td>Question</td><td>Behaviour when the master is empty at TRANBKP time (e.g. second run of the day, or POSTTRAN never ran): IDCAMS REPRO return code and message for an empty KSDS are not determinable from the repo, and they decide whether STEP10 runs (COND=(4,LT)). Needs a test on the reference environment.</td><td>App owner</td><td>Open</td></tr>
+  <tr><td>Q-11</td><td>Assumption</td><td>The purpose of the 36 s WAITSTEP between TRANBKP and OPENFIL is not stated anywhere in the repo; assumed to be an operational delay (catalog/CICS settle) copied from every other chain. The target keeps the job (S-17) but no requirement in this FRD depends on the delay's value beyond FR-15.</td><td>Operations</td><td>Open</td></tr>
+  <tr><td>Q-12</td><td>Assumption</td><td>CA-7 job names CLOSEFIL1/CLOSEFIL2 (reference-data network, <code>app/scheduler/CardDemo.ca7:216-217</code>) have no JCL member in <code>app/jcl</code>; they do not appear in this Control-M folder and are assumed to be scheduler aliases of CLOSEFIL.jcl. Not in scope here beyond noting the naming.</td><td>Scheduling</td><td>Open</td></tr>
+</table>
+
+<footer>
+  <div class="legal">
+    Functional Requirement Document &mdash; aws-mainframe-modernization-carddemo.<br>
+    Classification: INTERNAL. &copy; HSBC Holdings plc. For internal use only.
+  </div>
+  <div class="brand">
+    <svg viewBox="0 0 400 200" role="img" aria-label="HSBC">
+      <polygon points="0,100 100,0 100,200" fill="#db0011"/>
+      <polygon points="400,100 300,0 300,200" fill="#db0011"/>
+      <polygon points="100,0 300,0 200,100" fill="#db0011"/>
+      <polygon points="100,200 300,200 200,100" fill="#db0011"/>
+      <polygon points="100,0 200,100 100,200" fill="#ffffff"/>
+      <polygon points="300,0 200,100 300,200" fill="#ffffff"/>
+    </svg>
+    <span class="wordmark">HSBC</span>
+  </div>
+</footer>
+
+</div>
+</body>
+</html>
