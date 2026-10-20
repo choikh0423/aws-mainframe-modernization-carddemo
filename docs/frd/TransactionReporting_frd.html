@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HSBC — FRD — TransactionReporting</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    if (window.mermaid) {
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "base",
+        themeVariables: {
+          primaryColor: "#ffffff", primaryBorderColor: "#db0011", primaryTextColor: "#000000",
+          lineColor: "#333333", fontFamily: "Univers Next for HSBC, Arial, Helvetica, sans-serif"
+        }
+      });
+    }
+  });
+</script>
+<style>
+  :root {
+    --hsbc-red: #db0011; --hsbc-red-dark: #af000d; --black: #000000;
+    --ink: #333333; --muted: #767676; --line: #d7d8d6; --bg: #ffffff;
+    --panel: #f3f3f3; --panel-2: #ededed;
+    --warn-bg: #fbe9ea; --warn-line: #db0011;
+    --tag-batch: #000000; --tag-online: #00847f;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Univers Next for HSBC", "Univers", Arial, Helvetica, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.5; }
+  a { color: var(--hsbc-red); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Brand bar */
+  .brand-bar { background: var(--bg); border-bottom: 1px solid var(--line); }
+  .brand-bar .inner { max-width: 1080px; margin: 0 auto; padding: 14px 40px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand svg { height: 28px; width: auto; display: block; }
+  .brand .wordmark { font-weight: 700; font-size: 1.35em; letter-spacing: 0.02em; color: var(--black); line-height: 1; }
+  .brand .division { border-left: 1px solid var(--line); padding-left: 12px; margin-left: 4px; font-size: 0.82em; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .classification { font-size: 0.72em; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--hsbc-red); border: 1px solid var(--hsbc-red); padding: 3px 10px; }
+  .red-rule { height: 4px; background: var(--hsbc-red); }
+
+  .page { max-width: 1080px; margin: 0 auto; padding: 32px 40px 80px; }
+
+  header.doc-head { padding-bottom: 20px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
+  .doc-kicker { font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.12em; color: var(--hsbc-red); font-weight: 700; margin-bottom: 8px; }
+  h1 { font-size: 2em; font-weight: 300; margin: 0 0 6px; color: var(--black); letter-spacing: -0.01em; }
+  h1 strong { font-weight: 700; }
+  h2 { font-size: 1.25em; font-weight: 700; margin: 44px 0 12px; padding: 0 0 6px 14px; border-left: 4px solid var(--hsbc-red); border-bottom: 1px solid var(--line); color: var(--black); }
+  h3 { font-size: 1.02em; font-weight: 700; margin: 24px 0 8px; color: var(--black); }
+  .subtitle { color: var(--muted); font-size: 0.98em; }
+
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 0; color: #fff; font-size: 0.5em; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; vertical-align: middle; position: relative; top: -4px; }
+  .tag.batch { background: var(--tag-batch); }
+  .tag.online { background: var(--tag-online); }
+
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.92em; }
+  th, td { border: 0; border-bottom: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--black); color: #fff; font-weight: 700; font-size: 0.85em; letter-spacing: 0.04em; text-transform: uppercase; border-bottom: 2px solid var(--hsbc-red); }
+  tr:nth-child(even) td { background: var(--panel); }
+  code, .mono { font-family: "Consolas", "Menlo", monospace; font-size: 0.93em; background: var(--panel-2); padding: 1px 4px; border-radius: 0; color: var(--black); }
+  td, th, .cell .v, code, .mono { overflow-wrap: anywhere; }
+
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin: 16px 0; }
+  .meta-grid .cell { background: var(--panel); border-top: 3px solid var(--hsbc-red); padding: 10px 12px; }
+  .meta-grid .cell .k { font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .meta-grid .cell .v { font-weight: 700; color: var(--black); }
+
+  .note { background: var(--warn-bg); border-left: 4px solid var(--warn-line); padding: 10px 14px; margin: 14px 0; font-size: 0.92em; color: var(--black); }
+  .guidance { color: var(--muted); font-style: italic; font-size: 0.9em; }
+  .diagram { background: var(--bg); border: 1px solid var(--line); border-top: 3px solid var(--hsbc-red); padding: 16px; overflow-x: auto; }
+
+  nav.toc { background: var(--panel); border-left: 4px solid var(--black); padding: 12px 20px; font-size: 0.92em; }
+  nav.toc strong { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.85em; color: var(--black); }
+  nav.toc ol { margin: 6px 0; padding-left: 20px; columns: 2; column-gap: 32px; }
+  nav.toc li { break-inside: avoid; }
+  nav.toc a { color: var(--ink); }
+  nav.toc a:hover { color: var(--hsbc-red); }
+
+  footer { margin-top: 60px; border-top: 1px solid var(--line); padding-top: 14px; color: var(--muted); font-size: 0.82em; display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+  footer .legal { max-width: 70%; }
+  footer .brand svg { height: 18px; }
+  footer .brand .wordmark { font-size: 0.95em; }
+
+  @media print {
+    .page { padding: 0 0 40px; }
+    h2 { break-after: avoid; }
+    table, .diagram, .note { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="brand-bar">
+  <div class="inner">
+    <div class="brand">
+      <svg viewBox="0 0 400 200" role="img" aria-label="HSBC">
+        <polygon points="0,100 100,0 100,200" fill="#db0011"/>
+        <polygon points="400,100 300,0 300,200" fill="#db0011"/>
+        <polygon points="100,0 300,0 200,100" fill="#db0011"/>
+        <polygon points="100,200 300,200 200,100" fill="#db0011"/>
+        <polygon points="100,0 200,100 100,200" fill="#ffffff"/>
+        <polygon points="300,0 200,100 300,200" fill="#ffffff"/>
+      </svg>
+      <span class="wordmark">HSBC</span>
+      <span class="division">Technology &mdash; Mainframe Modernisation</span>
+    </div>
+    <span class="classification">Internal</span>
+  </div>
+</div>
+<div class="red-rule"></div>
+
+<div class="page">
+
+<header class="doc-head">
+  <div class="doc-kicker">Functional Requirement Document</div>
+  <h1><strong>TransactionReporting</strong> <span class="tag batch">Batch</span></h1>
+  <div class="subtitle">CardDemo transaction reporting chain: the CR00 online screen submits the TRANREPT daily-transaction report through the CICS internal reader, and the CA-7 SCHID=031 network prints the TCATBALF category-balance file (CLOSEFIL &rarr; PRTCATBL &rarr; WAITSTEP &rarr; OPENFIL).</div>
+</header>
+
+<div class="meta-grid">
+  <div class="cell"><div class="k">Stream type</div><div class="v">Batch cycle</div></div>
+  <div class="cell"><div class="k">Application</div><div class="v">CARDDEMO</div></div>
+  <div class="cell"><div class="k">Scheduler table / CICS group</div><div class="v">CA-7 SCHID=031 (PRTCATBL network); TRANREPT has no scheduler entry &mdash; submitted by CICS CR00, GROUP(CARDDEMO)</div></div>
+  <div class="cell"><div class="k">Owner</div><div class="v">*NONE* (CA-7 <code>OWNER= *NONE*</code>, <code>CardDemo.ca7:556</code>)</div></div>
+  <div class="cell"><div class="k">Run window / availability</div><div class="v">Not defined in repo (CA-7 lists only <code>DONT SCHEDULE BEFORE 03237 AT 0000</code>, <code>ELAPTM=2359</code>)</div></div>
+  <div class="cell"><div class="k">Calendar / frequency</div><div class="v">TRANREPT: on demand (CR00). PRTCATBL: completion-triggered after the SCHID=030 statement network's OPENFIL; no calendar in repo</div></div>
+  <div class="cell"><div class="k">Criticality</div><div class="v">Not defined in repo (CA-7 <code>PRTY=000</code>; absent from Control-M)</div></div>
+  <div class="cell"><div class="k">Doc status</div><div class="v">DRAFT</div></div>
+</div>
+
+<table>
+  <tr><th>Version</th><th>Date</th><th>Author</th><th>Change</th></tr>
+  <tr><td>0.1</td><td>2026-10-20</td><td>Devin</td><td>Initial draft</td></tr>
+</table>
+
+<nav class="toc">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#purpose">Business purpose</a></li>
+    <li><a href="#flow">Flow diagram</a></li>
+    <li><a href="#inventory">Job / screen inventory</a></li>
+    <li><a href="#dependencies">Dependencies</a></li>
+    <li><a href="#requirements">Functional requirements</a></li>
+    <li><a href="#restart">Restart, recovery &amp; error handling</a></li>
+    <li><a href="#nfr">Non-functional requirements</a></li>
+    <li><a href="#interfaces">Interfaces &amp; data layouts</a></li>
+    <li><a href="#security">Security &amp; access</a></li>
+    <li><a href="#target">Target-state mapping</a></li>
+    <li><a href="#open">Assumptions, debt &amp; open questions</a></li>
+  </ol>
+</nav>
+
+<h2 id="purpose">1. Business purpose</h2>
+<p>TransactionReporting produces the two printed views of posted card activity that CardDemo offers. The <strong>Daily Transaction Report</strong> (<code>TRANREPT</code>, program <code>CBTRN03C</code>) lists every posted transaction whose processing date falls in a requested range, grouped by card with account, page and grand totals; it is requested by an operator from the CICS screen <code>CR00</code> (<code>CORPT00C</code>), which builds a JCL deck and hands it to JES through the extra-partition transient data queue <code>JOBS</code> (<code>app/csd/CARDDEMO.CSD:499-503</code>). The <strong>category-balance print</strong> (<code>PRTCATBL</code>) unloads the <code>TCATBALF</code> VSAM file maintained by posting and writes a sorted, edited listing of balance per account / transaction type / category; CA-7 runs it inside a CLOSEFIL &rarr; PRTCATBL &rarr; WAITSTEP &rarr; OPENFIL bracket that takes the CICS files offline while batch reads them (<code>app/scheduler/CardDemo.ca7:529-571</code>).</p>
+<p>If the chain does not run, no transaction report is produced for the requested period (the CR00 user receives a "submitted" message but no output), and the category balance listing for the day is missing; because <code>CLOSEFIL</code>/<code>OPENFIL</code> bracket the print, a failure between them leaves <code>TRANSACT</code>, <code>CCXREF</code>, <code>ACCTDAT</code>, <code>CXACAIX</code> and <code>USRSEC</code> closed to CICS until <code>OPENFIL</code> is run by hand (<code>app/jcl/OPENFIL.jcl:26-30</code>).</p>
+<table>
+  <tr><th>Business capability</th><th>How this stream serves it</th></tr>
+  <tr><td>Operational reporting of posted card transactions for a period</td><td>CR00 lets an operator ask for the current month, current year or a custom date range (<code>app/cbl/CORPT00C.cbl:212-256</code>); TRANREPT extracts, filters and sorts <code>TRANSACT</code> and <code>CBTRN03C</code> formats a 133-byte print report with totals (<code>app/proc/TRANREPT.prc:21-78</code>).</td></tr>
+  <tr><td>Category-level balance oversight</td><td>PRTCATBL unloads <code>TCATBALF</code> and prints balance per account, type and category, sorted on the full key (<code>app/jcl/PRTCATBL.jcl:29-63</code>).</td></tr>
+  <tr><td>Online / batch file integrity</td><td>CLOSEFIL and OPENFIL issue <code>CEMT SET FIL ... CLO/OPE</code> to region <code>CICSAWSA</code> so batch can take the VSAM files while CICS is quiesced; WAITSTEP inserts a 36&nbsp;s pause (<code>app/jcl/CLOSEFIL.jcl:26-30</code>, <code>app/jcl/WAITSTEP.jcl:22-26</code>).</td></tr>
+  <tr><td>Operator self-service (online to batch)</td><td>The internal reader hand-off means no scheduler entry is needed for TRANREPT; the JCL and its date parameters are generated at request time (<code>app/cbl/CORPT00C.cbl:81-125</code>, <code>:498-523</code>).</td></tr>
+</table>
+
+<h2 id="flow">2. Flow diagram</h2>
+<div class="diagram">
+<pre class="mermaid">
+flowchart TD
+    subgraph TA["Trigger (a) - online to batch via CICS CR00"]
+        U["Operator picks Monthly / Yearly / Custom on CORPT0A, confirms Y"] --> CR["CR00 / CORPT00C validates dates, builds TRNRPT00 JCL deck"]
+        CR --> TDQ["WRITEQ TD JOBS - TDQ TYPE EXTRA, DDNAME INREADER"]
+        TDQ --> JES["JES internal reader: job TRNRPT00, EXEC PROC=TRANREPT"]
+        JES --> S1["STEP01R REPROC: TRANSACT KSDS to TRANSACT.BKUP(+1)"]
+        S1 --> S2["STEP05R SORT: INCLUDE date range, SORT by card to TRANSACT.DALY(+1)"]
+        S2 --> S3["STEP10R CBTRN03C: Daily Transaction Report to TRANREPT(+1)"]
+    end
+    subgraph TB["Trigger (b) - CA-7 SCHID=031 network"]
+        O0["OPENFIL - end of SCHID=030 statement network"] --> C1["CLOSEFIL - CEMT SET FIL CLO x5"]
+        C1 --> P1["PRTCATBL - DELDEF, REPROC unload TCATBALF, SORT to TCATBALF.REPT"]
+        P1 --> W1["WAITSTEP - COBSWAIT 36 s"]
+        W1 --> O1["OPENFIL - CEMT SET FIL OPE x5"]
+    end
+    S3 ~~~ O0
+</pre>
+</div>
+<div class="note"><strong>Gating conditions:</strong>
+(a) No scheduler releases TRANREPT: <code>TRANREPT</code> appears in neither <code>CardDemo.ca7</code> nor <code>CardDemo.controlm</code>. The job is released when <code>CORPT00C</code> has validated the request, the operator has typed <code>Y</code> in the confirm field, and all deck lines have been written to TDQ <code>JOBS</code> with <code>DFHRESP(NORMAL)</code> (<code>app/cbl/CORPT00C.cbl:464-508</code>, <code>:525-535</code>). Inside the job there is no <code>COND=</code> on any step (<code>app/proc/TRANREPT.prc:21,35,57</code>), so SORT and CBTRN03C run regardless of the REPRO return code; CBTRN03C itself abends on any non-zero file status.
+(b) CA-7 uses completion triggers only: <code>OPENFIL</code> (end of the SCHID=030 CREASTMT &rarr; TXT2PDF1 network) triggers <code>CLOSEFIL SCHID=031</code> (<code>CardDemo.ca7:529-532</code>); CLOSEFIL triggers <code>PRTCATBL SCHID=031</code> (<code>:534-537</code>); PRTCATBL triggers <code>WAITSTEP SCHID=031</code> (<code>:563-564</code>); WAITSTEP triggers <code>OPENFIL SCHID=031</code> (<code>:566-569</code>), whose LJOB block lists no triggered jobs (<code>:571</code>), so the network ends there. All triggers carry <code>QTM=0100 LEADTM=0000 SUBMTM=0000</code>; no CA-7 requirement (<code>RQMT</code>) or <code>COND=</code> code gates any step, and PRTCATBL's three steps have no <code>COND=</code> either (<code>app/jcl/PRTCATBL.jcl:21,29,43</code>).
+<strong>Estate gotcha:</strong> the two scheduler sources disagree on the daily chain. CA-7 SCHID=030 is CLOSEFIL &rarr; CBPAUP0J &rarr; POSTTRAN &rarr; WAITSTEP &rarr; OPENFIL (no TRANBKP, <code>CardDemo.ca7:40-126</code>); Control-M <code>DAILY-TransactionBackup</code> is CLOSEFIL &rarr; TRANBKP &rarr; WAITSTEP &rarr; OPENFIL (no POSTTRAN, <code>CardDemo.controlm:3-25</code>). This FRD does not assert a combined daily chain; the PRTCATBL network exists only in CA-7 (zero matches for PRTCATBL/TRANREPT/TCATBALF in <code>CardDemo.controlm</code>). Note also that CA-7 reuses <code>SCHID=031</code> for the unrelated CLOSEFIL1 &rarr; TRANCATG &rarr; WAITSTEP segment (<code>CardDemo.ca7:216-298</code>); see Q-03.</div>
+
+<h2 id="inventory">3. Job / screen inventory</h2>
+<table>
+  <tr><th>Order</th><th>Job / Tranid</th><th>Program(s)</th><th>Function</th><th>Restart point / entry condition</th></tr>
+  <tr><td>a.0</td><td class="mono">CR00 (CICS)</td><td class="mono">CORPT00C, CSUTLDTC</td><td><strong>Entry condition for trigger (a).</strong> Screen <code>CORPT0A</code> / mapset <code>CORPT00</code> (<code>app/csd/CARDDEMO.CSD:137</code>, <code>:242</code>, <code>:409-410</code>); validates the report type and dates, builds the <code>TRNRPT00</code> deck (<code>app/cbl/CORPT00C.cbl:81-125</code>) and writes it to TDQ <code>JOBS</code> (<code>:515-523</code>).</td><td>Re-entrant pseudo-conversation (<code>CDEMO-PGM-REENTER</code>, <code>:177-183</code>); the chain starts when the deck reaches the internal reader. PF3 returns to <code>COMEN01C</code> (<code>:187-189</code>).</td></tr>
+  <tr><td>a.1</td><td class="mono">TRNRPT00 &rarr; STEP10 EXEC PROC=TRANREPT / STEP01R</td><td class="mono">IDCAMS (REPROC, REPROCT)</td><td>Unload <code>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</code> to <code>AWS.M2.CARDDEMO.TRANSACT.BKUP(+1)</code>, LRECL 350 (<code>app/proc/TRANREPT.prc:21-31</code>, <code>app/proc/REPROC.prc:21-28</code>, <code>app/ctl/REPROCT.ctl:15</code>).</td><td>Rerun from the top of the job; a rerun creates a fresh (+1) generation.</td></tr>
+  <tr><td>a.2</td><td class="mono">TRANREPT / STEP05R</td><td class="mono">SORT (DFSORT SYMNAMES)</td><td>Keep records whose <code>TRAN-PROC-DT</code> (cols 305-314) is within <code>PARM-START-DATE</code>..<code>PARM-END-DATE</code> inclusive and sort by <code>TRAN-CARD-NUM</code> (cols 263-278) into <code>TRANSACT.DALY(+1)</code> (<code>app/proc/TRANREPT.prc:35-53</code>). CR00 overrides <code>SYMNAMES</code> with the requested dates (<code>app/cbl/CORPT00C.cbl:97-114</code>).</td><td>Restartable from this step only by hand-editing the DD to the existing BKUP generation; no COND= gating.</td></tr>
+  <tr><td>a.3</td><td class="mono">TRANREPT / STEP10R</td><td class="mono">CBTRN03C</td><td>Formats the Daily Transaction Report into <code>AWS.M2.CARDDEMO.TRANREPT(+1)</code>, LRECL 133 (<code>app/proc/TRANREPT.prc:57-78</code>, <code>app/cbl/CBTRN03C.cbl:159-217</code>). CR00 supplies <code>DATEPARM</code> in-stream (<code>app/cbl/CORPT00C.cbl:115-123</code>).</td><td>No checkpoint; whole-step rerun. Abends U0999 on any I/O error (<code>app/cbl/CBTRN03C.cbl:626-630</code>).</td></tr>
+  <tr><td>a.alt</td><td class="mono">TRANREPT (standalone JCL)</td><td class="mono">IDCAMS, SORT, CBTRN03C</td><td>Same three steps with hard-coded dates <code>2022-01-01</code>..<code>2022-07-06</code> and a catalogued <code>AWS.M2.CARDDEMO.DATEPARM</code> (<code>app/jcl/TRANREPT.jcl:23-80</code>). Two steps share the name <code>STEP05R</code> (<code>:23</code>, <code>:37</code>).</td><td>Manual submission only (README "Running Batch Jobs" does not list it).</td></tr>
+  <tr><td>a.pre</td><td class="mono">REPTFILE / DEFGDGB</td><td class="mono">IDCAMS</td><td>One-time definition of the report GDG base: <code>REPTFILE.jcl</code> defines <code>AWS.M2.CARDDEMO.TRANREPT</code> with <code>LIMIT(10)</code> (<code>app/jcl/REPTFILE.jcl:25-28</code>); <code>DEFGDGB.jcl</code> defines the same base and <code>TRANSACT.BKUP</code>, <code>TRANSACT.DALY</code>, <code>TCATBALF.BKUP</code> with <code>LIMIT(5)</code> (<code>app/jcl/DEFGDGB.jcl:25-44</code>).</td><td>Set-up only; see Q-07.</td></tr>
+  <tr><td>b.1</td><td class="mono">CLOSEFIL</td><td class="mono">SDSF</td><td><code>/F CICSAWSA,'CEMT SET FIL(...) CLO'</code> for TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC (<code>app/jcl/CLOSEFIL.jcl:22-30</code>).</td><td>Triggered by OPENFIL of SCHID=030 (<code>CardDemo.ca7:529-532</code>). Idempotent; rerun safe.</td></tr>
+  <tr><td>b.2</td><td class="mono">PRTCATBL</td><td class="mono">IEFBR14, IDCAMS (REPROC), SORT</td><td><code>DELDEF</code> deletes <code>TCATBALF.REPT</code> (<code>app/jcl/PRTCATBL.jcl:21-25</code>); <code>STEP05R</code> unloads <code>TCATBALF.VSAM.KSDS</code> to <code>TCATBALF.BKUP(+1)</code> LRECL 50 (<code>:29-39</code>); <code>STEP10R</code> sorts on account/type/category and edits the balance into <code>TCATBALF.REPT</code> (<code>:43-63</code>).</td><td>Triggered by CLOSEFIL SCHID=031 (<code>CardDemo.ca7:534-537</code>). Rerun from top: DELDEF makes the output idempotent, BKUP gets a new generation.</td></tr>
+  <tr><td>b.3</td><td class="mono">WAITSTEP</td><td class="mono">COBSWAIT &rarr; MVSWAIT</td><td>Waits <code>00003600</code> centiseconds = 36 s (<code>app/jcl/WAITSTEP.jcl:22-26</code>, <code>app/cbl/COBSWAIT.cbl:36-38</code>, <code>app/asm/MVSWAIT.asm:23</code>).</td><td>Triggered by PRTCATBL (<code>CardDemo.ca7:563-564</code>). Rerun safe.</td></tr>
+  <tr><td>b.4</td><td class="mono">OPENFIL</td><td class="mono">SDSF</td><td><code>CEMT SET FIL(...) OPE</code> for the same five files (<code>app/jcl/OPENFIL.jcl:22-30</code>).</td><td>Triggered by WAITSTEP (<code>CardDemo.ca7:566-569</code>); last job of the network (<code>:571</code>). Must be run manually if any predecessor fails.</td></tr>
+</table>
+
+<h2 id="dependencies">4. Dependencies</h2>
+<h3>4.1 DB2 tables</h3>
+<table>
+  <tr><th>Table</th><th>Access</th><th>Used by</th><th>Notes</th></tr>
+  <tr><td class="mono">&mdash;</td><td>&mdash;</td><td class="mono">&mdash;</td><td>No DB2. CBTRN03C is VSAM/QSAM only (<code>app/cbl/CBTRN03C.cbl:29-56</code>); PRTCATBL, CLOSEFIL, OPENFIL and WAITSTEP execute utilities only (<code>app/jcl/PRTCATBL.jcl:21-63</code>). CORPT00C issues no SQL (<code>app/cbl/CORPT00C.cbl:163-202</code>).</td></tr>
+</table>
+<h3>4.2 VSAM files &amp; datasets</h3>
+<table>
+  <tr><th>Dataset</th><th>Type</th><th>Access</th><th>Used by</th><th>Notes</th></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</td><td>KSDS</td><td>R</td><td class="mono">TRANREPT STEP01R (IDCAMS)</td><td>Posted transactions, 350-byte <code>TRAN-RECORD</code> (<code>app/cpy/CVTRA05Y.cpy:4-18</code>); unloaded with <code>DISP=SHR</code> (<code>app/proc/TRANREPT.prc:24-25</code>). Closed to CICS as file <code>TRANSACT</code> by CLOSEFIL (<code>app/jcl/CLOSEFIL.jcl:26</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANSACT.VSAM.AIX / .AIX.PATH</td><td>AIX + PATH</td><td>&mdash;</td><td class="mono">(TRANIDX defines it)</td><td>Alternate index on <code>TRAN-PROC-TS</code>, <code>KEYS(26 304) NONUNIQUEKEY UPGRADE</code> (<code>app/jcl/TRANIDX.jcl:6-15</code>, path <code>:20-22</code>). <strong>Not referenced</strong> by TRANREPT.prc/jcl or CBTRN03C; the date selection is done by SORT and re-checked in the program. See Q-11.</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANSACT.BKUP(+1)</td><td>GDG, FB 350</td><td>W then R</td><td class="mono">TRANREPT STEP01R &rarr; STEP05R</td><td>Sequential unload in key order (<code>app/proc/TRANREPT.prc:27-31</code>, <code>:36-37</code>); base <code>LIMIT(5)</code> (<code>app/jcl/DEFGDGB.jcl:25-26</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANSACT.DALY(+1)</td><td>GDG, FB 350</td><td>W then R</td><td class="mono">TRANREPT STEP05R &rarr; STEP10R (CBTRN03C TRANFILE)</td><td>Date-filtered, card-sorted extract (<code>app/proc/TRANREPT.prc:49-53</code>, <code>:63-64</code>); base <code>LIMIT(5)</code> (<code>app/jcl/DEFGDGB.jcl:31-32</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</td><td>KSDS</td><td>R (random)</td><td class="mono">CBTRN03C (CARDXREF)</td><td>Card &rarr; customer/account cross-reference, key <code>XREF-CARD-NUM</code> (<code>app/cbl/CBTRN03C.cbl:33-37</code>, <code>app/cpy/CVACT03Y.cpy:4-8</code>). Known to CICS as <code>CCXREF</code> (closed by CLOSEFIL).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANTYPE.VSAM.KSDS</td><td>KSDS</td><td>R (random)</td><td class="mono">CBTRN03C (TRANTYPE)</td><td>Type code &rarr; description (<code>app/cbl/CBTRN03C.cbl:39-43</code>, <code>app/cpy/CVTRA03Y.cpy:4-7</code>). Not closed by CLOSEFIL.</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANCATG.VSAM.KSDS</td><td>KSDS</td><td>R (random)</td><td class="mono">CBTRN03C (TRANCATG)</td><td>Type+category &rarr; description, key 6 bytes (<code>app/cbl/CBTRN03C.cbl:45-49</code>, <code>app/jcl/TRANCATG.jcl:36-41</code>, <code>app/cpy/CVTRA04Y.cpy:4-9</code>). Not closed by CLOSEFIL.</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.DATEPARM</td><td>PS, FB 80</td><td>R</td><td class="mono">CBTRN03C (DATEPARM)</td><td>One record: start date cols 1-10, end date cols 12-21 (<code>app/cbl/CBTRN03C.cbl:122-125</code>, <code>:220-243</code>). CR00 replaces the DD with an in-stream card (<code>app/cbl/CORPT00C.cbl:115-123</code>); the catalogued dataset exists (<code>app/catlg/LISTCAT.txt:818</code>) but its content is not in the repo.</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANREPT(+1)</td><td>GDG, FB 133</td><td>W</td><td class="mono">CBTRN03C (TRANREPT)</td><td>The report (<code>app/proc/TRANREPT.prc:74-78</code>). Base defined with <code>LIMIT(10)</code> in <code>app/jcl/REPTFILE.jcl:25-28</code> and <code>LIMIT(5)</code> in <code>app/jcl/DEFGDGB.jcl:37-38</code> (Q-07).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS</td><td>KSDS</td><td>R</td><td class="mono">PRTCATBL STEP05R (IDCAMS)</td><td>Category balances, <code>KEYS(17 0) RECORDSIZE(50 50)</code> (<code>app/jcl/TCATBALF.jcl:36-41</code>, <code>app/cpy/CVTRA01Y.cpy:4-10</code>); read with <code>DISP=SHR</code> (<code>app/jcl/PRTCATBL.jcl:32-33</code>). <strong>Not</strong> in the CLOSEFIL list (Q-12).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TCATBALF.BKUP(+1)</td><td>GDG, FB 50</td><td>W then R</td><td class="mono">PRTCATBL STEP05R &rarr; STEP10R</td><td><code>app/jcl/PRTCATBL.jcl:35-39</code>, <code>:44-45</code>; base <code>LIMIT(5)</code> (<code>app/jcl/DEFGDGB.jcl:43-44</code>), generations G0005-G0009 catalogued (<code>app/catlg/LISTCAT.txt:1202-1214</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TCATBALF.REPT</td><td>PS, FB 40</td><td>W (delete/recreate)</td><td class="mono">PRTCATBL DELDEF, STEP10R</td><td>Deleted by IEFBR14 <code>DISP=(MOD,DELETE)</code> (<code>app/jcl/PRTCATBL.jcl:21-25</code>), recreated by SORT (<code>:59-63</code>). OUTREC builds 41 bytes against LRECL=40 (Q-08).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.PROC / .CNTL / .LOADLIB</td><td>PDS</td><td>R</td><td class="mono">All jobs</td><td>JCLLIB for REPROC/TRANREPT (<code>app/jcl/PRTCATBL.jcl:19</code>, <code>app/cbl/CORPT00C.cbl:89-90</code>), <code>REPROCT</code> control card (<code>app/proc/REPROC.prc:27-28</code>), STEPLIB for CBTRN03C and COBSWAIT (<code>app/proc/TRANREPT.prc:58-59</code>, <code>app/jcl/WAITSTEP.jcl:23</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.JCL(INTRDRJ2), AWS.M2.CARDEMO.FTP.TEST*</td><td>PDS member, PS</td><td>R / W</td><td class="mono">INTRDRJ1, INTRDRJ2</td><td>Stand-alone internal-reader demonstration: INTRDRJ1 IEBGENERs member INTRDRJ2 to <code>SYSOUT=(A,INTRDR)</code> (<code>app/jcl/INTRDRJ1.JCL:14-18</code>); INTRDRJ2 only REPROs a test file (<code>app/jcl/INTRDRJ2.JCL:7-13</code>). Illustrates the mechanism CR00 uses but is <strong>not</strong> part of this chain (Q-16).</td></tr>
+</table>
+<h3>4.3 Shared utilities &amp; copybooks</h3>
+<table>
+  <tr><th>Asset</th><th>Kind</th><th>Role</th></tr>
+  <tr><td class="mono">REPROC (app/proc/REPROC.prc) + REPROCT (app/ctl/REPROCT.ctl)</td><td>Proc + control card</td><td>Generic IDCAMS <code>REPRO INFILE(FILEIN) OUTFILE(FILEOUT)</code> used by both unload steps (<code>REPROC.prc:21-28</code>, <code>REPROCT.ctl:15</code>). Note <code>TRANREPT.prc:1</code> also names its PROC <code>REPROC</code> (Q-06).</td></tr>
+  <tr><td class="mono">CVTRA05Y</td><td>Copybook</td><td><code>TRAN-RECORD</code> 350 bytes; gives SORT offsets 263 (<code>TRAN-CARD-NUM</code>) and 305 (<code>TRAN-PROC-TS</code>) (<code>app/cpy/CVTRA05Y.cpy:4-18</code>); copied by CBTRN03C (<code>:93</code>) and CORPT00C (<code>:146</code>).</td></tr>
+  <tr><td class="mono">CVTRA07Y</td><td>Copybook</td><td>Report line layouts: name header, detail, column headers, dashes, page/account/grand totals (<code>app/cpy/CVTRA07Y.cpy:4-66</code>).</td></tr>
+  <tr><td class="mono">CVACT03Y, CVTRA03Y, CVTRA04Y</td><td>Copybooks</td><td>CARDXREF, TRANTYPE, TRANCATG record layouts for the three lookups (<code>app/cbl/CBTRN03C.cbl:98-108</code>).</td></tr>
+  <tr><td class="mono">CVTRA01Y</td><td>Copybook</td><td><code>TRAN-CAT-BAL-RECORD</code>: the SORT SYMNAMES in PRTCATBL (<code>app/jcl/PRTCATBL.jcl:47-50</code>) mirror its fields (<code>app/cpy/CVTRA01Y.cpy:4-10</code>).</td></tr>
+  <tr><td class="mono">CSUTLDTC (app/cbl/CSUTLDTC.cbl)</td><td>Subroutine</td><td>CEEDAYS-based date validation called by CORPT00C for custom ranges (<code>app/cbl/CORPT00C.cbl:392-394</code>, <code>:412-414</code>; <code>CSUTLDTC.cbl:116-124</code>).</td></tr>
+  <tr><td class="mono">COCOM01Y, CORPT00 (map copybook), COTTL01Y, CSDAT01Y, CSMSG01Y</td><td>Copybooks</td><td>COMMAREA, BMS symbolic map, titles, date/time and message constants used by CORPT00C (<code>app/cbl/CORPT00C.cbl:138-144</code>).</td></tr>
+  <tr><td class="mono">COBSWAIT / MVSWAIT</td><td>Subroutine (COBOL + Assembler)</td><td>Timed wait for WAITSTEP (<code>app/cbl/COBSWAIT.cbl:36-38</code>, <code>app/asm/MVSWAIT.asm:23</code>).</td></tr>
+  <tr><td class="mono">IDCAMS, DFSORT, IEBGENER, IEFBR14, SDSF</td><td>System utilities</td><td>Unload, filter/sort, internal-reader copy, delete, CEMT console commands.</td></tr>
+</table>
+<h3>4.4 Other applications &amp; external events</h3>
+<table>
+  <tr><th>Dependency</th><th>Direction</th><th>Mechanism</th><th>Notes</th></tr>
+  <tr><td>CICS transaction CR00 / CORPT00C (Reporting online stream)</td><td>Upstream (trigger a)</td><td><code>EXEC CICS WRITEQ TD QUEUE('JOBS')</code> &rarr; extra-partition TDQ <code>DDNAME(INREADER)</code> &rarr; JES internal reader</td><td><code>app/cbl/CORPT00C.cbl:517-523</code>; <code>app/csd/CARDDEMO.CSD:499-503</code> (<code>TYPE(EXTRA) TYPEFILE(OUTPUT) RECORDSIZE(80) DISPOSITION(MOD) ERROROPTION(IGNORE) OPENTIME(INITIAL)</code>). The CICS region's <code>INREADER</code> DD must point at <code>SYSOUT=(*,INTRDR)</code>; that JCL is not in the repo (Q-15).</td></tr>
+  <tr><td>CA-7 SCHID=030 statement network (CLOSEFIL &rarr; CREASTMT &rarr; TXT2PDF1 &rarr; WAITSTEP &rarr; OPENFIL)</td><td>Upstream (trigger b)</td><td>CA-7 completion trigger: its OPENFIL triggers <code>CLOSEFIL SCHID=031</code></td><td><code>app/scheduler/CardDemo.ca7:465-532</code>. The category-balance print therefore runs only after statements have been produced.</td></tr>
+  <tr><td>CICS region CICSAWSA</td><td>Downstream / bracket</td><td>SDSF <code>/<wbr>F CICSAWSA,'CEMT SET FIL(...) CLO|OPE'</code></td><td><code>app/jcl/CLOSEFIL.jcl:26-30</code>, <code>app/jcl/OPENFIL.jcl:26-30</code>. Online file availability depends on OPENFIL completing.</td></tr>
+  <tr><td>Daily posting (POSTTRAN / CBTRN02C)</td><td>Upstream data</td><td>File feed: populates <code>TRAN-PROC-TS</code> in TRANSACT and the balances in TCATBALF</td><td>Data dependency only; no scheduler link from POSTTRAN to TRANREPT or PRTCATBL in either scheduler source.</td></tr>
+  <tr><td>Reference-data reloads (TRANTYPE, TRANCATG SCHID=030/031 segments)</td><td>Upstream data</td><td>File feed: TRANTYPE / TRANCATG KSDS re-created from PS files</td><td><code>app/scheduler/CardDemo.ca7:159-298</code>; <code>app/jcl/TRANCATG.jcl:54-62</code>. A missing type/category code makes CBTRN03C abend (FR-16).</td></tr>
+  <tr><td>Control-M</td><td>&mdash;</td><td>&mdash;</td><td>No folder references TRANREPT, PRTCATBL or TCATBALF (<code>app/scheduler/CardDemo.controlm</code>, folders DAILY-TransactionBackup, WEEKLY-*, MONTHLY-InterestCalculation only).</td></tr>
+</table>
+
+<h2 id="requirements">5. Functional requirements</h2>
+<table>
+  <tr><th>ID</th><th>Requirement</th><th>Source</th><th>Acceptance criteria</th></tr>
+  <tr><td>FR-01</td><td>CR00 accepts exactly one report type. The Monthly, Yearly and Custom selectors are tested in that order; if none is set the screen shows <code>Select a report type to print report...</code> with the cursor on Monthly.</td><td class="mono">app/cbl/CORPT00C.cbl:212-213, 239, 256, 437-442</td><td>Enter with all three blank &rarr; that message, no job submitted. Enter with Monthly and Custom both set &rarr; Monthly semantics apply.</td></tr>
+  <tr><td>FR-02</td><td>Monthly report range = first day of the current month to the last day of the current month (computed as the day before the first of the following month, with year roll-over).</td><td class="mono">app/cbl/CORPT00C.cbl:214-236</td><td>On 2026-02-10 the deck carries <code>PARM-START-DATE,C'2026-02-01'</code> and <code>PARM-END-DATE,C'2026-02-28'</code>; on 2026-12-05 the end date is <code>2026-12-31</code>.</td></tr>
+  <tr><td>FR-03</td><td>Yearly report range = <code>YYYY-01-01</code> to <code>YYYY-12-31</code> of the current year.</td><td class="mono">app/cbl/CORPT00C.cbl:239-253</td><td>Yearly selected in 2026 &rarr; <code>2026-01-01</code> / <code>2026-12-31</code> in both SYMNAMES and DATEPARM cards.</td></tr>
+  <tr><td>FR-04</td><td>Custom range requires all six date fields; the first empty field (start MM, DD, YYYY, then end MM, DD, YYYY) produces its own message, e.g. <code>Start Date - Month can NOT be empty...</code>, and positions the cursor on that field.</td><td class="mono">app/cbl/CORPT00C.cbl:258-303</td><td>Submit Custom with only end-year blank &rarr; <code>End Date - Year can NOT be empty...</code>, nothing written to TDQ.</td></tr>
+  <tr><td>FR-05</td><td>Custom fields are normalised with <code>NUMVAL-C</code> and then range-checked: month must be numeric and &le; 12, day numeric and &le; 31, year numeric; each failure has a distinct message (<code>Start Date - Not a valid Month...</code> etc.).</td><td class="mono">app/cbl/CORPT00C.cbl:305-379</td><td>Month <code>13</code> &rarr; month message; day <code>32</code> &rarr; day message; <code>1 </code> is accepted as <code>01</code>.</td></tr>
+  <tr><td>FR-06</td><td>Each custom date is validated as <code>YYYY-MM-DD</code> through <code>CSUTLDTC</code> (CEEDAYS). Severity <code>0000</code> passes; any other severity fails with <code>Start/End Date - Not a valid date...</code> unless the message number is <code>2513</code>.</td><td class="mono">app/cbl/CORPT00C.cbl:388-426; app/cbl/CSUTLDTC.cbl:116-124</td><td><code>2026-02-30</code> is rejected; <code>2026-02-28</code> is accepted. Start after end is <strong>not</strong> rejected (no such check exists).</td></tr>
+  <tr><td>FR-07</td><td>Submission needs explicit confirmation: blank confirm &rarr; <code>Please confirm to print the &lt;type&gt; report...</code>; <code>N</code>/<code>n</code> clears the screen; <code>Y</code>/<code>y</code> submits; any other value &rarr; <code>"&lt;v&gt;" is not a valid value to confirm...</code>.</td><td class="mono">app/cbl/CORPT00C.cbl:464-494</td><td>Each of the four confirm states yields the stated behaviour; only <code>Y</code>/<code>y</code> results in TDQ writes.</td></tr>
+  <tr><td>FR-08</td><td>The generated deck is: <code>/<wbr>/<wbr>TRNRPT00 JOB 'TRAN REPORT',CLASS=A,MSGCLASS=0,</code> / <code>// NOTIFY=&amp;SYSUID</code> / <code>/<wbr>/<wbr>JOBLIB JCLLIB ORDER=('AWS.M2.CARDDEMO.PROC')</code> / <code>//STEP10 EXEC PROC=TRANREPT</code> / <code>//STEP05R.SYMNAMES DD *</code> with the two field definitions and <code>PARM-START-DATE</code>, <code>PARM-END-DATE</code> literals / <code>//STEP10R.DATEPARM DD *</code> with <code>start end</code> (cols 1-10, 12-21) / terminated by <code>/*</code> cards.</td><td class="mono">app/cbl/CORPT00C.cbl:81-125, 429-432</td><td>Capturing the TDQ output for a Custom 2026-01-01..2026-01-31 request yields exactly those 80-byte cards with both dates substituted in both places.</td></tr>
+  <tr><td>FR-09</td><td>The deck is written card by card (80 bytes) to TDQ <code>JOBS</code>; the loop stops after the first <code>/*EOF</code>, blank or low-values card (that sentinel card is itself written) or after 1000 cards. A non-NORMAL response stops the loop and shows <code>Unable to Write TDQ (JOBS)...</code>.</td><td class="mono">app/cbl/CORPT00C.cbl:496-508, 515-535; app/csd/CARDDEMO.CSD:499-503</td><td>The internal reader receives 17 cards ending in <code>/*EOF</code>; with the queue disabled the user sees the TDQ message and no job appears.</td></tr>
+  <tr><td>FR-10</td><td>After a successful write the input fields are re-initialised and <code>&lt;Monthly|Yearly|Custom&gt; report submitted for printing ...</code> is shown in green. PF3 transfers to <code>COMEN01C</code>; any other AID shows the invalid-key message; an empty COMMAREA routes to <code>COSGN00C</code>.</td><td class="mono">app/cbl/CORPT00C.cbl:172-174, 184-194, 445-456</td><td>Message text matches character for character; PF3 lands on the main menu; PF1 shows <code>CCDA-MSG-INVALID-KEY</code>.</td></tr>
+  <tr><td>FR-11</td><td>TRANREPT step 1 unloads the full TRANSACT KSDS (<code>DISP=SHR</code>) into a new <code>TRANSACT.BKUP(+1)</code> generation, FB 350, via IDCAMS REPRO (key order = ascending TRAN-ID).</td><td class="mono">app/proc/TRANREPT.prc:21-31; app/proc/REPROC.prc:21-28; app/ctl/REPROCT.ctl:15</td><td>Record count of BKUP(+1) equals the KSDS record count; records are in ascending <code>TRAN-ID</code>.</td></tr>
+  <tr><td>FR-12</td><td>TRANREPT step 2 keeps records whose processing <em>date</em> (<code>TRAN-PROC-TS</code> bytes 1-10, record cols 305-314, CH compare) is &ge; start and &le; end (inclusive) and sorts them ascending on <code>TRAN-CARD-NUM</code> (cols 263-278, ZD) into <code>TRANSACT.DALY(+1)</code> with the same DCB.</td><td class="mono">app/proc/TRANREPT.prc:35-53; app/cpy/CVTRA05Y.cpy:15-17</td><td>A record dated exactly on the end date is kept; one dated the next day is dropped; output is non-decreasing in card number and still 350 bytes.</td></tr>
+  <tr><td>FR-13</td><td>CBTRN03C reads one DATEPARM record: start date cols 1-10, end date cols 12-21, and displays <code>Reporting from &lt;start&gt; to &lt;end&gt;</code>. An empty DATEPARM (status 10) ends the program normally with an empty report; any other status abends.</td><td class="mono">app/cbl/CBTRN03C.cbl:122-125, 168, 220-243</td><td>Empty DATEPARM &rarr; RC 0, zero-record TRANREPT(+1). Missing DD &rarr; <code>ERROR OPENING DATE PARM FILE</code> + U0999.</td></tr>
+  <tr><td>FR-14</td><td>Only records whose <code>TRAN-PROC-TS(1:10)</code> lies within the DATEPARM range are reported and totalled; the program re-applies the same inclusive test the SORT step applied. (The <code>NEXT SENTENCE</code> used for out-of-range records has disputed semantics &mdash; see Q-09.)</td><td class="mono">app/cbl/CBTRN03C.cbl:173-178</td><td>With SORT and DATEPARM ranges equal (the CR00 case) every DALY record appears in the report exactly once.</td></tr>
+  <tr><td>FR-15</td><td>Records are grouped by card: when the card number changes, an <code>Account Total</code> line (then a dashes line) is written for the previous card (not before the first), the account total is reset, and the new card is resolved to its account ID through CARDXREF.</td><td class="mono">app/cbl/CBTRN03C.cbl:181-188, 306-316</td><td>Two cards with 3 and 2 transactions produce one Account Total line (after the 3rd detail) equal to the sum of the first card's amounts; the detail lines show the XREF account ID, not the card number.</td></tr>
+  <tr><td>FR-16</td><td>Each card, type code and type+category key is looked up by random READ; an <code>INVALID KEY</code> displays <code>INVALID CARD NUMBER : </code>/<code>INVALID TRANSACTION TYPE : </code>/<code>INVALID TRAN CATG KEY : </code> plus <code>FILE STATUS IS: 0023</code> and abends. There is no skip-and-continue.</td><td class="mono">app/cbl/CBTRN03C.cbl:484-512, 633-646</td><td>A transaction with an unknown category code makes the step end with U0999 and a partial report file; no "unknown" placeholder is written.</td></tr>
+  <tr><td>FR-17</td><td>Report lines are 133 bytes. Before the first in-range detail four header lines are written: <code>DALYREPT</code> / <code>Daily Transaction Report</code> / <code>Date Range: &lt;start&gt; to &lt;end&gt;</code>, a blank line, the column header (<code>Transaction ID</code>, <code>Account ID</code>, <code>Transaction Type</code>, <code>Tran Category</code>, <code>Tran Source</code>, <code>Amount</code>) and a line of 133 dashes. Detail = tran ID, account ID, <code>TT-desc(15)</code>, <code>CCCC-desc(29)</code>, source, amount <code>-ZZZ,ZZZ,ZZZ.ZZ</code>.</td><td class="mono">app/cbl/CBTRN03C.cbl:274-280, 324-341, 361-374; app/cpy/CVTRA07Y.cpy:4-48</td><td>Byte-for-byte comparison of the first four lines and a detail line against a golden run (<code>migration/<wbr>carddemo/<wbr>backend/<wbr>src/<wbr>test/<wbr>resources/<wbr>tranreport/<wbr>CBTRN03C_golden_report.txt</code>) passes.</td></tr>
+  <tr><td>FR-18</td><td>Page break every 20 lines: when the running line counter (headers included) is a multiple of 20 before a detail is written, a <code>Page Total</code> line (<code>+ZZZ,ZZZ,ZZZ.ZZ</code>) and a dashes line are written, the page total is added to the grand total and reset, and the four header lines are repeated.</td><td class="mono">app/cbl/CBTRN03C.cbl:127-132, 282-285, 293-304</td><td>With 40 in-range details the report contains two mid-report Page Total lines whose sum, plus the final page total, equals the Grand Total.</td></tr>
+  <tr><td>FR-19</td><td>At end of file the amount of the <em>last record read</em> is added once more to the page and account totals, then <code>Page Total</code>, dashes and <code>Grand Total</code> are written; no Account Total is written for the last card. If no in-range record was processed, no totals are written at all.</td><td class="mono">app/cbl/CBTRN03C.cbl:197-204, 318-322</td><td>Final Page Total = sum of amounts on the last page + last amount again (legacy behaviour, reproduced in <code>migration/<wbr>.../<wbr>TransactionReportWriter.java:152-168</code>); the report ends with the Grand Total line, not an Account Total. See Q-10 for whether the target must keep this.</td></tr>
+  <tr><td>FR-20</td><td>Every OPEN, READ (non-EOF), WRITE and CLOSE failure displays a fixed message (<code>ERROR OPENING TRANFILE</code>, <code>ERROR WRITING REPTFILE</code>, <code>ERROR CLOSING CROSS REF FILE</code>, ...) and the 4-digit file status, then abends via <code>CEE3ABD</code> with code 999 and no dump (TIMING 0).</td><td class="mono">app/cbl/CBTRN03C.cbl:343-359, 376-481, 514-621, 626-630</td><td>Removing the CARDXREF DD yields <code>ERROR OPENING CROSS REF FILE</code>, <code>FILE STATUS IS: 0035</code>, abend U0999, step RC not 0.</td></tr>
+  <tr><td>FR-21</td><td>PRTCATBL: (1) deletes any existing <code>TCATBALF.REPT</code>; (2) REPROs the TCATBALF KSDS to <code>TCATBALF.BKUP(+1)</code>, FB 50; (3) sorts on <code>TRANCAT-ACCT-ID</code>(1,11,ZD), <code>TRANCAT-TYPE-CD</code>(12,2,CH), <code>TRANCAT-CD</code>(14,4,ZD) ascending and writes <code>acct X type X cat X balance</code> with the balance edited <code>TTTTTTTTT.TT</code> followed by 9 blanks to <code>TCATBALF.REPT</code>.</td><td class="mono">app/jcl/PRTCATBL.jcl:21-25, 29-39, 43-63; app/cpy/CVTRA01Y.cpy:4-10</td><td>Output line for key <code>00000000040 / 01 / 0001</code> balance 12345 (cents) reads <code>00000000040 01 0001 000000123.45</code>; lines are in ascending key order; rerunning the job replaces the file rather than appending.</td></tr>
+  <tr><td>FR-22</td><td>CLOSEFIL closes, and OPENFIL re-opens, exactly the CICS files <code>TRANSACT</code>, <code>CCXREF</code>, <code>ACCTDAT</code>, <code>CXACAIX</code>, <code>USRSEC</code> on region <code>CICSAWSA</code> via SDSF modify commands; TCATBALF, TRANTYPE and TRANCATG are not touched.</td><td class="mono">app/jcl/CLOSEFIL.jcl:22-30; app/jcl/OPENFIL.jcl:22-30</td><td>After CLOSEFIL, CEMT INQ FIL shows the five files CLOSED and TCATBALF unchanged; after OPENFIL all five are OPEN ENABLED.</td></tr>
+  <tr><td>FR-23</td><td>WAITSTEP pauses for the SYSIN value in centiseconds (<code>00003600</code> = 36 s) by calling MVSWAIT (STIMER) before OPENFIL is released.</td><td class="mono">app/jcl/WAITSTEP.jcl:22-26; app/cbl/COBSWAIT.cbl:36-38; app/asm/MVSWAIT.asm:23</td><td>Elapsed time between PRTCATBL end and OPENFIL start is &ge; 36 s; changing the card to <code>00000100</code> gives a 1 s wait.</td></tr>
+  <tr><td>FR-24</td><td>Each run creates a new generation of <code>TRANSACT.BKUP</code>, <code>TRANSACT.DALY</code>, <code>TRANREPT</code> and <code>TCATBALF.BKUP</code> (<code>DISP=(NEW,CATLG,DELETE)</code>); the oldest rolls off at the GDG limit (5 per DEFGDGB; 10 for TRANREPT per REPTFILE).</td><td class="mono">app/proc/TRANREPT.prc:27-31, 49-53, 74-78; app/jcl/PRTCATBL.jcl:35-39; app/jcl/DEFGDGB.jcl:25-44; app/jcl/REPTFILE.jcl:25-28</td><td>Two consecutive runs produce two distinct catalogued generations; a failed step leaves no generation behind (DELETE on abnormal end).</td></tr>
+  <tr><td>FR-25</td><td>Trigger (b) ordering is strictly sequential by completion: CLOSEFIL &rarr; PRTCATBL &rarr; WAITSTEP &rarr; OPENFIL, each released only when its predecessor completes (CA-7 trigger, no RQMT, no COND=); the network is itself released by OPENFIL of the SCHID=030 statement network.</td><td class="mono">app/scheduler/CardDemo.ca7:529-571</td><td>A migrated scheduler/orchestrator runs the four jobs in that order and never starts PRTCATBL before CLOSEFIL has ended (<code>OperationsChainScheduleTest</code> re-derives these edges from the CA-7 source).</td></tr>
+</table>
+
+<h2 id="restart">6. Restart, recovery &amp; error handling</h2>
+<h3>6.1 Return-code conventions</h3>
+<table>
+  <tr><th>RC</th><th>Meaning</th><th>Downstream effect</th></tr>
+  <tr><td class="mono">0</td><td>CBTRN03C reached <code>GOBACK</code>; all files opened, read and closed with status 00 (or DATEPARM/TRANFILE status 10 at EOF) (<code>app/cbl/CBTRN03C.cbl:215-217</code>).</td><td>TRANREPT(+1) is catalogued. No scheduler consumes the RC.</td></tr>
+  <tr><td class="mono">APPL-RESULT 0 / 8 / 12 / 16</td><td>Internal status of CBTRN03C: 0 = OK, 8 = pre-set before each I/O, 12 = I/O error, 16 = EOF (<code>app/cbl/CBTRN03C.cbl:150-152</code>, <code>:251-258</code>). Never returned to JCL; 12 always ends in an abend.</td><td>Only 0 and 16 let processing continue.</td></tr>
+  <tr><td class="mono">IDCAMS 0 / 4 / 8 / 12</td><td>REPRO result of STEP01R / PRTCATBL STEP05R (<code>app/proc/REPROC.prc:21-28</code>).</td><td>No <code>COND=</code> on later steps (<code>app/proc/TRANREPT.prc:35,57</code>; <code>app/jcl/PRTCATBL.jcl:43</code>): SORT runs anyway and fails on a missing/empty input generation.</td></tr>
+  <tr><td class="mono">SORT 0 / 16</td><td>DFSORT of STEP05R / PRTCATBL STEP10R; 16 on control-statement or record-length error (<code>app/proc/TRANREPT.prc:43-47</code>; <code>app/jcl/PRTCATBL.jcl:51-63</code>).</td><td>In TRANREPT, CBTRN03C still runs and abends on the missing DALY(+1) generation (<code>ERROR OPENING TRANFILE</code>).</td></tr>
+  <tr><td class="mono">CICS DFHRESP</td><td><code>WRITEQ TD</code> response other than NORMAL (<code>app/cbl/CORPT00C.cbl:525-535</code>).</td><td>Deck is truncated; the user sees <code>Unable to Write TDQ (JOBS)...</code>; a partial deck may already be in the reader (Q-15).</td></tr>
+</table>
+<h3>6.2 Abends</h3>
+<table>
+  <tr><th>Abend</th><th>Job / Program</th><th>Meaning</th><th>Recovery</th></tr>
+  <tr><td class="mono">U0999 (CEE3ABD 999)</td><td class="mono">TRANREPT STEP10R / CBTRN03C</td><td>Any file status other than 00 (or 10 at EOF) on OPEN/READ/WRITE/CLOSE, or INVALID KEY on CARDXREF/TRANTYPE/TRANCATG; message + <code>FILE STATUS IS: NNNN</code> + <code>ABENDING PROGRAM</code> (<code>app/cbl/CBTRN03C.cbl:484-512</code>, <code>:626-646</code>).</td><td>Fix the data (missing xref/type/category) or DD, then resubmit the whole TRNRPT00 job from CR00 (or rerun TRANREPT.jcl). The uncatalogued TRANREPT(+1) is deleted automatically.</td></tr>
+  <tr><td class="mono">SORT ICE message / RC 16</td><td class="mono">PRTCATBL STEP10R</td><td>OUTREC builds a 41-byte record for a 40-byte SORTOUT (<code>app/jcl/PRTCATBL.jcl:53-56</code> vs <code>:61</code>) &mdash; inferred from the field lengths, not observed in a run (Q-08).</td><td>Correct LRECL or OUTREC, rerun PRTCATBL (DELDEF makes it idempotent).</td></tr>
+  <tr><td class="mono">JCL error (missing generation)</td><td class="mono">TRANREPT STEP05R / STEP10R</td><td>If REPRO or SORT failed, the (+1) generation it should have created does not exist; the next step fails on allocation.</td><td>Rerun the whole job.</td></tr>
+  <tr><td class="mono">(none)</td><td class="mono">CLOSEFIL, OPENFIL, WAITSTEP</td><td>SDSF command failures are reported in <code>ISFOUT</code>/<code>CMDOUT</code> only (<code>app/jcl/CLOSEFIL.jcl:23-24</code>); COBSWAIT has no error path (<code>app/cbl/COBSWAIT.cbl:34-40</code>).</td><td>Check CEMT output manually; rerun.</td></tr>
+</table>
+<h3>6.3 Restart / checkpoint semantics</h3>
+<p>There are no checkpoints or commit points anywhere in the chain. CBTRN03C is a single pass over a sequential extract with no restart key (<code>app/cbl/CBTRN03C.cbl:170-206</code>); the unit of restart is the whole job. Because every output is either a new GDG generation (<code>DISP=(NEW,CATLG,DELETE)</code>, <code>app/proc/TRANREPT.prc:27,49,74</code>; <code>app/jcl/PRTCATBL.jcl:35</code>) or a dataset deleted first (<code>TCATBALF.REPT</code>, <code>app/jcl/PRTCATBL.jcl:21-25</code>), a cold rerun is always safe and needs no backout. A rerun of TRANREPT on the same day simply produces another generation; the job name <code>TRNRPT00</code> is fixed in CORPT00C (<code>app/cbl/CORPT00C.cbl:83-84</code>), so concurrent requests queue in JES by name. For trigger (b), if PRTCATBL or WAITSTEP fails the CICS files remain closed until OPENFIL is submitted manually (<code>app/jcl/OPENFIL.jcl:26-30</code>); CA-7 will not auto-release it because the trigger chain is broken (<code>app/scheduler/CardDemo.ca7:563-569</code>).</p>
+
+<h2 id="nfr">7. Non-functional requirements</h2>
+<table>
+  <tr><th>ID</th><th>Category</th><th>Requirement</th></tr>
+  <tr><td>NFR-01</td><td>Volume</td><td>Not defined in repo. The only sizing is the JCL space allocation <code>SPACE=(CYL,(1,1),RLSE)</code> for every extract and report (<code>app/proc/TRANREPT.prc:30,52,77</code>; <code>app/jcl/PRTCATBL.jcl:38,62</code>). Raised as Q-05.</td></tr>
+  <tr><td>NFR-02</td><td>Window</td><td>Not defined in repo. CA-7 shows <code>ELAPTM=2359</code>, <code>CPUTM=00023</code> and <code>DONT SCHEDULE BEFORE 03237 AT 0000</code> for PRTCATBL (<code>app/scheduler/CardDemo.ca7:558-560</code>) &mdash; template values, not a window. CR00 submissions can arrive at any time the region is up.</td></tr>
+  <tr><td>NFR-03</td><td>Availability</td><td>Trigger (b) takes TRANSACT, CCXREF, ACCTDAT, CXACAIX and USRSEC offline for the duration of PRTCATBL + 36 s (<code>app/jcl/CLOSEFIL.jcl:26-30</code>, <code>app/jcl/WAITSTEP.jcl:26</code>); the target must bound this outage or remove the need for it (see section 10, CLOSEFIL/OPENFIL disposition).</td></tr>
+  <tr><td>NFR-04</td><td>Retention</td><td>Extracts and reports are kept for 5 generations (<code>app/jcl/DEFGDGB.jcl:25-44</code>); REPTFILE defines 10 for TRANREPT (<code>app/jcl/REPTFILE.jcl:27</code>). Q-07.</td></tr>
+  <tr><td>NFR-05</td><td>Output format</td><td>Report lines are fixed 133-byte print records, 20 lines per page including headers (<code>app/cbl/CBTRN03C.cbl:84-85</code>, <code>:131-132</code>); the category listing is fixed-format text (<code>app/jcl/PRTCATBL.jcl:53-56</code>). Migrated output must be byte-comparable to the legacy layout.</td></tr>
+  <tr><td>NFR-06</td><td>Throughput</td><td>Not defined in repo. Single-threaded sequential processing; no parallelism assumptions in the source.</td></tr>
+  <tr><td>NFR-07</td><td>Observability</td><td>CBTRN03C writes <code>START OF EXECUTION OF PROGRAM CBTRN03C</code>, <code>Reporting from ... to ...</code>, every in-range <code>TRAN-RECORD</code>, and <code>END OF EXECUTION OF PROGRAM CBTRN03C</code> to SYSOUT (<code>app/<wbr>cbl/<wbr>CBTRN03C.cbl:160, 180, 232-233, 215</code>). The per-record DISPLAY exposes full card numbers (section 9).</td></tr>
+</table>
+
+<h2 id="interfaces">8. Interfaces &amp; data layouts</h2>
+<table>
+  <tr><th>Interface</th><th>Layout (copybook)</th><th>Producer</th><th>Consumer</th></tr>
+  <tr><td class="mono">CORPT0A screen (mapset CORPT00)</td><td class="mono">CORPT00 (app/bms/CORPT00.bms: MONTHLY, YEARLY, CUSTOM, SDTMM/SDTDD/SDTYYYY, EDTMM/EDTDD/EDTYYYY, CONFIRM, ERRMSG)</td><td>Operator</td><td>CORPT00C (<code>app/cbl/CORPT00C.cbl:596-604</code>)</td></tr>
+  <tr><td class="mono">CARDDEMO-COMMAREA</td><td class="mono">COCOM01Y (CDEMO-TO-PROGRAM, CDEMO-FROM-TRANID, CDEMO-PGM-REENTER, CDEMO-PGM-CONTEXT)</td><td>COMEN01C / COSGN00C</td><td>CORPT00C (<code>app/cbl/CORPT00C.cbl:172-183</code>, <code>:540-551</code>)</td></tr>
+  <tr><td class="mono">TDQ JOBS &rarr; INREADER</td><td class="mono">80-byte JCL cards (JOB-DATA, app/cbl/CORPT00C.cbl:81-127); CSD TDQUEUE(JOBS) RECORDSIZE(80) FIXED UNBLOCKED (app/csd/CARDDEMO.CSD:499-503)</td><td>CORPT00C</td><td>JES internal reader (job TRNRPT00)</td></tr>
+  <tr><td class="mono">STEP05R.SYMNAMES (in-stream override)</td><td class="mono">DFSORT SYMNAMES: TRAN-CARD-NUM,263,16,ZD / TRAN-PROC-DT,305,10,CH / PARM-START-DATE,C'yyyy-mm-dd' / PARM-END-DATE,C'yyyy-mm-dd'</td><td>CORPT00C (<code>:97-114</code>) or TRANREPT.prc defaults (<code>:38-42</code>)</td><td>SORT STEP05R</td></tr>
+  <tr><td class="mono">DATEPARM record</td><td class="mono">WS-DATEPARM-RECORD: start X(10), filler X(1), end X(10) within an 80-byte record (app/cbl/CBTRN03C.cbl:87-88, 122-125)</td><td>CORPT00C in-stream (<code>:115-123</code>) or AWS.M2.CARDDEMO.DATEPARM</td><td>CBTRN03C 0550-DATEPARM-READ</td></tr>
+  <tr><td class="mono">TRANSACT KSDS / TRANSACT.BKUP(+1) / TRANSACT.DALY(+1)</td><td class="mono">CVTRA05Y TRAN-RECORD, 350 bytes (TRAN-ID, TRAN-TYPE-CD, TRAN-CAT-CD, TRAN-SOURCE, TRAN-DESC, TRAN-AMT S9(09)V99, merchant fields, TRAN-CARD-NUM, TRAN-ORIG-TS, TRAN-PROC-TS)</td><td>POSTTRAN / CICS add-transaction (upstream); REPRO and SORT steps</td><td>SORT STEP05R; CBTRN03C TRANFILE (<code>app/cbl/CBTRN03C.cbl:61-65</code>)</td></tr>
+  <tr><td class="mono">CARDXREF KSDS</td><td class="mono">CVACT03Y CARD-XREF-RECORD (XREF-CARD-NUM X(16), XREF-CUST-ID 9(09), XREF-ACCT-ID 9(11))</td><td>XREFFILE load job</td><td>CBTRN03C 1500-A-LOOKUP-XREF</td></tr>
+  <tr><td class="mono">TRANTYPE KSDS</td><td class="mono">CVTRA03Y TRAN-TYPE-RECORD (TRAN-TYPE X(02), TRAN-TYPE-DESC X(50))</td><td>TRANTYPE load job</td><td>CBTRN03C 1500-B-LOOKUP-TRANTYPE</td></tr>
+  <tr><td class="mono">TRANCATG KSDS</td><td class="mono">CVTRA04Y TRAN-CAT-RECORD (TRAN-TYPE-CD X(02) + TRAN-CAT-CD 9(04), TRAN-CAT-TYPE-DESC X(50))</td><td>TRANCATG load job (<code>app/jcl/TRANCATG.jcl:54-62</code>)</td><td>CBTRN03C 1500-C-LOOKUP-TRANCATG</td></tr>
+  <tr><td class="mono">TRANREPT(+1) report</td><td class="mono">CVTRA07Y: REPORT-NAME-HEADER, TRANSACTION-HEADER-1/2, TRANSACTION-DETAIL-REPORT, REPORT-PAGE-TOTALS, REPORT-ACCOUNT-TOTALS, REPORT-GRAND-TOTALS; 133-byte FB</td><td>CBTRN03C</td><td>Print / operator</td></tr>
+  <tr><td class="mono">TCATBALF KSDS / TCATBALF.BKUP(+1)</td><td class="mono">CVTRA01Y TRAN-CAT-BAL-RECORD (TRANCAT-ACCT-ID 9(11), TRANCAT-TYPE-CD X(02), TRANCAT-CD 9(04), TRAN-CAT-BAL S9(09)V99), 50 bytes</td><td>POSTTRAN (upstream); PRTCATBL STEP05R</td><td>PRTCATBL STEP10R SORT</td></tr>
+  <tr><td class="mono">TCATBALF.REPT</td><td class="mono">No copybook; SORT OUTREC: acct(11) X type(2) X cat(4) X balance EDIT=(TTTTTTTTT.TT) 9X (app/jcl/PRTCATBL.jcl:53-56)</td><td>PRTCATBL</td><td>Print / operator</td></tr>
+  <tr><td class="mono">WAITSTEP SYSIN</td><td class="mono">8-digit centiseconds in cols 1-8 (app/jcl/WAITSTEP.jcl:26; app/cbl/COBSWAIT.cbl:31, 36)</td><td>JCL</td><td>COBSWAIT &rarr; MVSWAIT</td></tr>
+  <tr><td class="mono">CEMT console commands</td><td class="mono">/F CICSAWSA,'CEMT SET FIL(name ) CLO|OPE' (app/jcl/CLOSEFIL.jcl:26-30, app/jcl/OPENFIL.jcl:26-30)</td><td>CLOSEFIL / OPENFIL</td><td>CICS region CICSAWSA</td></tr>
+</table>
+
+<h2 id="security">9. Security &amp; access</h2>
+<table>
+  <tr><th>Item</th><th>Value</th></tr>
+  <tr><td>Job owner / RACF identity</td><td class="mono">CA-7 OWNER= *NONE* for PRTCATBL and the bracket jobs (app/scheduler/CardDemo.ca7:556); job cards carry NOTIFY=&amp;SYSUID and no USER= (app/jcl/PRTCATBL.jcl:1-2, app/cbl/CORPT00C.cbl:83-86), so TRNRPT00 runs under the CICS region's internal-reader identity. RACF profiles are not in the repo (Q-05).</td></tr>
+  <tr><td>Sensitive data handled</td><td>Full 16-digit card numbers (PAN) in TRANSACT, BKUP and DALY extracts (<code>app/cpy/CVTRA05Y.cpy:15</code>) and in CARDXREF; CBTRN03C <code>DISPLAY TRAN-RECORD</code> writes every in-range record, PAN included, to SYSOUT (<code>app/cbl/CBTRN03C.cbl:180</code>) and <code>INVALID CARD NUMBER :</code> prints the PAN (<code>:487</code>) &mdash; Q-13. The report itself carries account IDs and amounts (<code>app/cpy/CVTRA07Y.cpy:16-30</code>); TCATBALF.REPT carries account IDs and balances.</td></tr>
+  <tr><td>Regulatory obligations</td><td>Not defined in repo.</td></tr>
+  <tr><td>Online access control</td><td>CR00 is reachable only through the signed-on menu flow (<code>COSGN00C</code> &rarr; <code>COMEN01C</code>); CORPT00C itself performs no authorisation check beyond requiring a COMMAREA (<code>app/cbl/CORPT00C.cbl:172-174</code>). TDQ <code>JOBS</code> has <code>ERROROPTION(IGNORE)</code> (<code>app/csd/CARDDEMO.CSD:501</code>).</td></tr>
+</table>
+
+<h2 id="target">10. Target-state mapping</h2>
+<table>
+  <tr><th>Legacy asset</th><th>Disposition</th><th>Target component</th><th>Test evidence</th></tr>
+  <tr><td class="mono">CR00 / CORPT00C (screen + deck builder)</td><td>Rewrite</td><td><code>migration/<wbr>carddemo/<wbr>backend/<wbr>src/<wbr>main/<wbr>java/<wbr>com/<wbr>carddemo/<wbr>reporting/<wbr>controller/<wbr>ReportSubmissionController.java</code> (<code>POST /api/reports/transactions</code>, line 30), <code>reporting/<wbr>service/<wbr>ReportSubmissionService.java</code>, <code>ReportPeriodResolver.java</code>, <code>ReportType.java</code>, <code>validator/<wbr>ReportRequestValidator.java</code>, <code>ReportingMessages.java</code>; React page <code>migration/<wbr>carddemo/<wbr>frontend/<wbr>src/<wbr>pages/<wbr>reporting/<wbr>TransactionReportsPage.js</code> via <code>frontend/src/api/reports.js</code>, route <code>/reports</code> (<code>frontend/<wbr>src/<wbr>routes/<wbr>registry.js:135-138</code>)</td><td><code>backend/<wbr>src/<wbr>test/<wbr>java/<wbr>com/<wbr>carddemo/<wbr>reporting/<wbr>controller/<wbr>ReportSubmissionControllerTest.java</code>, <code>reporting/<wbr>service/<wbr>ReportSubmissionServiceTest.java</code>, <code>reporting/<wbr>service/<wbr>ReportPeriodTest.java</code>, <code>reporting/<wbr>validator/<wbr>ReportRequestValidatorTest.java</code>. No frontend test for <code>TransactionReportsPage</code> (Q-19).</td></tr>
+  <tr><td class="mono">TDQ JOBS / internal reader hand-off</td><td>Rewrite</td><td>Port <code>reporting/<wbr>port/<wbr>TransactionReportJobLauncher.java</code> + <code>TransactionReportJobRequest.java</code>; JCL deck image kept in <code>reporting/<wbr>service/<wbr>TranReportJclDeck.java</code>; adapters <code>batch/<wbr>tranreport/<wbr>TransactionReportJobLauncherAdapter.java</code> (Spring Batch launch) and <code>reporting/<wbr>adapter/<wbr>NoOpTransactionReportJobLauncher.java</code></td><td><code>reporting/<wbr>service/<wbr>TranReportJclDeckTest.java</code>, <code>reporting/<wbr>adapter/<wbr>NoOpTransactionReportJobLauncherTest.java</code></td></tr>
+  <tr><td class="mono">TRANREPT.prc / TRANREPT.jcl (job TRNRPT00)</td><td>Rewrite</td><td>Spring Batch job <code>TRANREPT</code> in <code>batch/<wbr>tranreport/<wbr>TranReportJobConfiguration.java</code> (JOB_NAME line 70; steps <code>STEP05R</code> line 132, <code>STEP05RSORT</code> line 168, <code>STEP10R</code> line 188); GDG generations become suffixed files via <code>batch/<wbr>tranreport/<wbr>TranReportFiles.java:43-47</code></td><td><code>batch/<wbr>tranreport/<wbr>TranReportJobTest.java</code>; golden output <code>backend/<wbr>src/<wbr>test/<wbr>resources/<wbr>tranreport/<wbr>CBTRN03C_golden_report.txt</code> with fixture <code>transact.txt</code></td></tr>
+  <tr><td class="mono">STEP01R REPROC unload + STEP05R SORT</td><td>Rewrite</td><td><code>batch/<wbr>tranreport/<wbr>TransactionExtractSortTasklet.java</code>, <code>TransactionRecordImage.java</code> (350-byte image, SORT offsets)</td><td><code>batch/<wbr>tranreport/<wbr>TransactionExtractSortTaskletTest.java</code>, <code>TransactionRecordImageTest.java</code></td></tr>
+  <tr><td class="mono">CBTRN03C + CVTRA07Y</td><td>Rewrite</td><td><code>batch/<wbr>tranreport/<wbr>TransactionReportWriter.java</code> (legacy EOF and page semantics reproduced, lines 127-168), <code>TranReportPictures.java</code> (COBOL PICTURE editing), <code>PostedTransaction.java</code></td><td><code>batch/<wbr>tranreport/<wbr>TransactionReportWriterTest.java</code>, <code>TranReportPicturesTest.java</code>, <code>TranReportJobTest.java</code> (golden comparison)</td></tr>
+  <tr><td class="mono">PRTCATBL.jcl</td><td>Rewrite</td><td>Spring Batch job <code>PRTCATBL</code> in <code>batch/<wbr>tranreport/<wbr>PrintCategoryBalanceJobConfiguration.java</code> (JOB_NAME line 57; steps <code>DELDEF</code> line 122, <code>STEP05R</code> line 146, <code>STEP10R</code> line 181), <code>CategoryBalanceSortTasklet.java</code> (writes the full 41-byte line, lines 36-39), <code>CategoryBalanceRecordImage.java</code></td><td><code>batch/<wbr>tranreport/<wbr>PrintCategoryBalanceJobTest.java</code>, <code>CategoryBalanceSortTaskletTest.java</code></td></tr>
+  <tr><td class="mono">TRANSACT.VSAM.KSDS (+ AIX)</td><td>Rewrite (VSAM &rarr; table)</td><td>Table <code>transactions</code> (<code>backend/<wbr>src/<wbr>main/<wbr>resources/<wbr>db/<wbr>migration/<wbr>V1__baseline_carddemo_estate.sql:80</code>); <code>TRAN-PROC-TS</code> index <code>V1100__posttran_transaction_proc_ts_index.sql</code> replaces the TRANIDX alternate index</td><td>Covered indirectly by <code>TranReportJobTest</code> fixture load; no dedicated migration test</td></tr>
+  <tr><td class="mono">CARDXREF / TRANTYPE / TRANCATG KSDS</td><td>Rewrite (VSAM &rarr; table)</td><td>Tables <code>card_xref</code> (V1 line 70), <code>transaction_types</code> (line 136), <code>transaction_categories</code> (line 143)</td><td>Lookup failures exercised in <code>TransactionReportWriterTest</code></td></tr>
+  <tr><td class="mono">TCATBALF.VSAM.KSDS</td><td>Rewrite (VSAM &rarr; table)</td><td>Table <code>transaction_category_balances</code> (V1 line 118); entity <code>common/<wbr>domain/<wbr>TransactionCategoryBalanceRecord.java</code>, repository <code>common/<wbr>repository/<wbr>TransactionCategoryBalanceRepository.java</code></td><td><code>batch/<wbr>tranreport/<wbr>PrintCategoryBalanceJobTest.java</code></td></tr>
+  <tr><td class="mono">DATEPARM / SYMNAMES date parameters</td><td>Rewrite</td><td>Job parameters carried by <code>batch/<wbr>tranreport/<wbr>TransactionReportSubmission.java</code> and <code>TransactionReportLauncher.java</code></td><td><code>TranReportJobTest.java</code>, <code>ReportPeriodTest.java</code></td></tr>
+  <tr><td class="mono">CLOSEFIL / OPENFIL</td><td>Retire</td><td>No file open/close jobs in the target; the database needs no CICS quiesce. Asserted by <code>batch/<wbr>operations/<wbr>FileControlJobsRemovedTest.java:27-31</code></td><td><code>batch/<wbr>operations/<wbr>FileControlJobsRemovedTest.java</code></td></tr>
+  <tr><td class="mono">WAITSTEP (COBSWAIT / MVSWAIT)</td><td>Rewrite (contract kept)</td><td><code>batch/<wbr>operations/<wbr>WaitStepJobConfiguration.java</code> (step <code>WAIT</code> line 88), <code>WaitControlCard.java</code> (centisecond card)</td><td><code>batch/<wbr>operations/<wbr>WaitStepJobTest.java</code>, <code>WaitControlCardTest.java</code></td></tr>
+  <tr><td class="mono">CA-7 SCHID=031 network (CardDemo.ca7:529-571)</td><td>Rewrite (documented contract, scheduler not migrated)</td><td><code>batch/<wbr>operations/<wbr>OperationsChainSchedule.java:81-84</code> (chain <code>CategoryBalanceReport</code>: OPENFIL &rarr; CLOSEFIL &rarr; PRTCATBL &rarr; WAITSTEP &rarr; OPENFIL, condition 031); prose in <code>docs/<wbr>migration/<wbr>streams/<wbr>OperationsChain/<wbr>OperationsChain_orchestration_contract.md:124-125</code></td><td><code>batch/<wbr>operations/<wbr>OperationsChainScheduleTest.java</code> (re-derives triggers from the CA-7 and Control-M sources)</td></tr>
+  <tr><td class="mono">INTRDRJ1 / INTRDRJ2, REPTFILE, DEFGDGB, TRANIDX</td><td>Retire</td><td>Demonstration and one-time definition jobs; GDG bases and the AIX have no target artefact (files are suffixed per generation by <code>TranReportFiles</code>; the proc-ts index is a Flyway migration)</td><td>Not applicable</td></tr>
+  <tr><td class="mono">CSUTLDTC</td><td>Rewrite (shared)</td><td>Date validation is performed by <code>reporting/<wbr>validator/<wbr>ReportRequestValidator.java</code>; the shared port of CSUTLDTC noted in <code>docs/<wbr>migration/<wbr>CardDemo_inventory.md:192</code> lives in the earlier <code>migration/transaction-management</code> module</td><td><code>reporting/<wbr>validator/<wbr>ReportRequestValidatorTest.java</code></td></tr>
+</table>
+
+<h2 id="open">11. Assumptions, technical debt &amp; open questions</h2>
+<table>
+  <tr><th>ID</th><th>Type</th><th>Description</th><th>Owner</th><th>Status</th></tr>
+  <tr><td>Q-01</td><td>Question</td><td><strong>Scheduler sources disagree on the daily chain.</strong> CA-7 SCHID=030: CLOSEFIL &rarr; CBPAUP0J &rarr; POSTTRAN &rarr; WAITSTEP &rarr; OPENFIL, no TRANBKP (<code>app/scheduler/CardDemo.ca7:40-126</code>). Control-M DAILY-TransactionBackup: CLOSEFIL &rarr; TRANBKP &rarr; WAITSTEP &rarr; OPENFIL, no POSTTRAN (<code>app/scheduler/CardDemo.controlm:3-25</code>). Which is production? This FRD deliberately does not assert a combined chain; the reporting chain only depends on POSTTRAN data having been produced.</td><td>Scheduling / ops owner</td><td>Open</td></tr>
+  <tr><td>Q-02</td><td>Assumption</td><td>TRANREPT has no entry in CA-7 or Control-M (zero matches in both files); the FRD assumes the CR00 internal-reader submission is the only production trigger, and <code>app/jcl/TRANREPT.jcl</code> (hard-coded 2022 dates, <code>:43-44</code>) is a developer convenience.</td><td>Application owner</td><td>Open</td></tr>
+  <tr><td>Q-03</td><td>Debt</td><td>CA-7 reuses <code>SCHID=031</code> for two unrelated segments: CLOSEFIL1 &rarr; TRANCATG &rarr; WAITSTEP (<code>CardDemo.ca7:216-298</code>) and CLOSEFIL &rarr; PRTCATBL &rarr; WAITSTEP &rarr; OPENFIL (<code>:532-569</code>). <code>CLOSEFIL1</code>/<code>CLOSEFIL2</code> point at JCL member <code>CLOSEFIL</code> (<code>:225</code>, <code>:252</code>) and have no member of their own in <code>app/jcl</code>. The reporting chain uses <code>CLOSEFIL</code>, not CLOSEFIL1, but the shared SCHID must be disentangled before any scheduler migration.</td><td>Scheduling owner</td><td>Open</td></tr>
+  <tr><td>Q-04</td><td>Question</td><td>Control-M has no PRTCATBL, TCATBALF or TRANREPT definitions. Is the category-balance print still required in the target, or was it dropped when Control-M replaced CA-7?</td><td>Business owner</td><td>Open</td></tr>
+  <tr><td>Q-05</td><td>Question</td><td>Run window, RACF owner / job identity, criticality and volumes are not defined in the repo (CA-7 <code>OWNER= *NONE*</code>, <code>PRTY=000</code>, placeholder <code>ELAPTM=2359</code>; <code>CardDemo.ca7:556-560</code>).</td><td>Ops owner</td><td>Open</td></tr>
+  <tr><td>Q-06</td><td>Debt</td><td><code>app/proc/TRANREPT.prc:1</code> declares <code>//REPROC PROC</code> while the member is TRANREPT and CR00 executes <code>PROC=TRANREPT</code> (<code>app/cbl/CORPT00C.cbl:93-94</code>); the proc also invokes <code>PROC=REPROC</code> internally (<code>:21</code>). Member-name resolution makes it work on z/OS; the target must not inherit the naming confusion.</td><td>Migration team</td><td>Open</td></tr>
+  <tr><td>Q-07</td><td>Debt</td><td>GDG base <code>AWS.M2.CARDDEMO.TRANREPT</code> is defined with <code>LIMIT(10)</code> in <code>app/jcl/REPTFILE.jcl:25-28</code> and <code>LIMIT(5)</code> in <code>app/jcl/DEFGDGB.jcl:37-38</code>. Which retention applies?</td><td>Ops owner</td><td>Open</td></tr>
+  <tr><td>Q-08</td><td>Debt</td><td>PRTCATBL <code>OUTREC</code> builds 11+1+2+1+4+1+12+9 = 41 bytes (<code>app/jcl/PRTCATBL.jcl:53-56</code>) but SORTOUT declares <code>LRECL=40</code> (<code>:61</code>). Inferred length mismatch; the target writes all 41 characters (<code>CategoryBalanceSortTasklet.java:36-39</code>). Confirm the real output width from a mainframe run.</td><td>Migration team</td><td>Open</td></tr>
+  <tr><td>Q-09</td><td>Question</td><td><code>NEXT SENTENCE</code> at <code>app/cbl/CBTRN03C.cbl:177</code> sits inside an inline PERFORM whose only separator period is after <code>END-PERFORM</code> (<code>:206</code>). Standard semantics would leave the loop on the first out-of-range record (ending the report without totals); the target implemented "skip this record and continue" (<code>TransactionReportWriter.java:127-131</code>). Harmless when the SORT and DATEPARM ranges match (always true via CR00) but must be settled for parity.</td><td>Migration team</td><td>Open</td></tr>
+  <tr><td>Q-10</td><td>Question</td><td>Legacy end-of-file quirks (FR-19): the last record's amount is added twice to page/account totals and the last account never gets an Account Total (<code>app/cbl/CBTRN03C.cbl:197-204</code>). The target reproduces them deliberately (<code>TransactionReportWriter.java:152-168</code>). Keep as parity or fix as a known defect?</td><td>Business owner</td><td>Open</td></tr>
+  <tr><td>Q-11</td><td>Assumption</td><td>The alternate index on <code>TRAN-PROC-TS</code> (<code>app/jcl/TRANIDX.jcl:6-22</code>) is <strong>not</strong> referenced by TRANREPT or CBTRN03C; date selection is done by SORT over a full unload. The FRD treats the AIX as outside this chain (it serves online CT00 browsing).</td><td>Migration team</td><td>Open</td></tr>
+  <tr><td>Q-12</td><td>Debt</td><td>CLOSEFIL does not close <code>TCATBALF</code>, <code>TRANTYPE</code> or <code>TRANCATG</code> (<code>app/jcl/CLOSEFIL.jcl:26-30</code>), yet PRTCATBL reads TCATBALF with <code>DISP=SHR</code> (<code>app/jcl/PRTCATBL.jcl:32-33</code>) while CICS may still hold it open; the bracket protects TRANSACT, not the file actually printed.</td><td>Ops owner</td><td>Open</td></tr>
+  <tr><td>Q-13</td><td>Debt</td><td>CBTRN03C writes every reported <code>TRAN-RECORD</code>, including the full PAN, to SYSOUT (<code>app/cbl/CBTRN03C.cbl:180</code>) and prints the PAN on <code>INVALID CARD NUMBER :</code> (<code>:487</code>). The target must not log PANs.</td><td>Security</td><td>Open</td></tr>
+  <tr><td>Q-14</td><td>Debt</td><td><code>app/jcl/TRANREPT.jcl</code> uses the step name <code>STEP05R</code> twice (<code>:23</code>, <code>:37</code>) and hard-codes <code>2022-01-01</code>..<code>2022-07-06</code>; CR00's overrides (<code>STEP05R.SYMNAMES</code>, <code>STEP10R.DATEPARM</code>) target the proc, where the first step is <code>STEP01R</code> (<code>app/proc/TRANREPT.prc:21</code>), so they are unambiguous there.</td><td>Migration team</td><td>Open</td></tr>
+  <tr><td>Q-15</td><td>Debt</td><td>TDQ <code>JOBS</code> is <code>ERROROPTION(IGNORE) DISPOSITION(MOD)</code> (<code>app/csd/CARDDEMO.CSD:501-503</code>) and CORPT00C writes the <code>/*EOF</code> sentinel card to the reader (<code>app/cbl/CORPT00C.cbl:501-507</code>); a mid-deck TDQ failure can leave a partial job in JES. The CICS start-up JCL defining <code>INREADER</code> is not in the repo.</td><td>Ops owner</td><td>Open</td></tr>
+  <tr><td>Q-16</td><td>Assumption</td><td><code>INTRDRJ1.JCL</code>/<code>INTRDRJ2.JCL</code> demonstrate the internal reader by copying a member to <code>SYSOUT=(A,INTRDR)</code> and REPROing a test FTP file (<code>app/jcl/INTRDRJ1.JCL:14-18</code>, <code>app/jcl/INTRDRJ2.JCL:7-13</code>); they do not submit TRANREPT and are excluded from the chain.</td><td>Migration team</td><td>Open</td></tr>
+  <tr><td>Q-17</td><td>Debt</td><td>CORPT00C never checks that start &le; end for a custom range (<code>app/cbl/CORPT00C.cbl:381-426</code>); an inverted range submits a job that yields an empty report. Should the target reject it?</td><td>Business owner</td><td>Open</td></tr>
+  <tr><td>Q-18</td><td>Question</td><td>The catalogued <code>AWS.M2.CARDDEMO.DATEPARM</code> (<code>app/catlg/LISTCAT.txt:818</code>) used by the standalone JCL has no content in the repo; the date range of a manual TRANREPT run is therefore unknown.</td><td>Ops owner</td><td>Open</td></tr>
+  <tr><td>Q-19</td><td>Debt</td><td>Target gap: <code>frontend/<wbr>src/<wbr>pages/<wbr>reporting/<wbr>TransactionReportsPage.js</code> has no test (no <code>*.test.js</code> under <code>pages/reporting</code>), unlike the other migrated screens.</td><td>Migration team</td><td>Open</td></tr>
+  <tr><td>Q-20</td><td>Assumption</td><td>The target retires CLOSEFIL/OPENFIL (<code>FileControlJobsRemovedTest.java:27-31</code>) on the grounds that a relational store needs no CICS quiesce; the 36 s WAITSTEP contract is kept only as a documented step. Confirm the business accepts that the "files offline" window disappears rather than being re-created.</td><td>Architecture</td><td>Open</td></tr>
+</table>
+
+<footer>
+  <div class="legal">
+    Functional Requirement Document &mdash; aws-mainframe-modernization-carddemo.<br>
+    Classification: INTERNAL. &copy; HSBC Holdings plc. For internal use only.
+  </div>
+  <div class="brand">
+    <svg viewBox="0 0 400 200" role="img" aria-label="HSBC">
+      <polygon points="0,100 100,0 100,200" fill="#db0011"/>
+      <polygon points="400,100 300,0 300,200" fill="#db0011"/>
+      <polygon points="100,0 300,0 200,100" fill="#db0011"/>
+      <polygon points="100,200 300,200 200,100" fill="#db0011"/>
+      <polygon points="100,0 200,100 100,200" fill="#ffffff"/>
+      <polygon points="300,0 200,100 300,200" fill="#ffffff"/>
+    </svg>
+    <span class="wordmark">HSBC</span>
+  </div>
+</footer>
+
+</div>
+</body>
+</html>
