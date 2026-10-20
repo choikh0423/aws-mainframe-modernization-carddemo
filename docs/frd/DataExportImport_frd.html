@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HSBC — FRD — DataExportImport</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    if (window.mermaid) {
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "base",
+        themeVariables: {
+          primaryColor: "#ffffff", primaryBorderColor: "#db0011", primaryTextColor: "#000000",
+          lineColor: "#333333", fontFamily: "Univers Next for HSBC, Arial, Helvetica, sans-serif"
+        }
+      });
+    }
+  });
+</script>
+<style>
+  :root {
+    --hsbc-red: #db0011; --hsbc-red-dark: #af000d; --black: #000000;
+    --ink: #333333; --muted: #767676; --line: #d7d8d6; --bg: #ffffff;
+    --panel: #f3f3f3; --panel-2: #ededed;
+    --warn-bg: #fbe9ea; --warn-line: #db0011;
+    --tag-batch: #000000; --tag-online: #00847f;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Univers Next for HSBC", "Univers", Arial, Helvetica, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.5; }
+  a { color: var(--hsbc-red); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Brand bar */
+  .brand-bar { background: var(--bg); border-bottom: 1px solid var(--line); }
+  .brand-bar .inner { max-width: 1080px; margin: 0 auto; padding: 14px 40px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand svg { height: 28px; width: auto; display: block; }
+  .brand .wordmark { font-weight: 700; font-size: 1.35em; letter-spacing: 0.02em; color: var(--black); line-height: 1; }
+  .brand .division { border-left: 1px solid var(--line); padding-left: 12px; margin-left: 4px; font-size: 0.82em; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .classification { font-size: 0.72em; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--hsbc-red); border: 1px solid var(--hsbc-red); padding: 3px 10px; }
+  .red-rule { height: 4px; background: var(--hsbc-red); }
+
+  .page { max-width: 1080px; margin: 0 auto; padding: 32px 40px 80px; }
+
+  header.doc-head { padding-bottom: 20px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
+  .doc-kicker { font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.12em; color: var(--hsbc-red); font-weight: 700; margin-bottom: 8px; }
+  h1 { font-size: 2em; font-weight: 300; margin: 0 0 6px; color: var(--black); letter-spacing: -0.01em; }
+  h1 strong { font-weight: 700; }
+  h2 { font-size: 1.25em; font-weight: 700; margin: 44px 0 12px; padding: 0 0 6px 14px; border-left: 4px solid var(--hsbc-red); border-bottom: 1px solid var(--line); color: var(--black); }
+  h3 { font-size: 1.02em; font-weight: 700; margin: 24px 0 8px; color: var(--black); }
+  .subtitle { color: var(--muted); font-size: 0.98em; }
+
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 0; color: #fff; font-size: 0.5em; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; vertical-align: middle; position: relative; top: -4px; }
+  .tag.batch { background: var(--tag-batch); }
+  .tag.online { background: var(--tag-online); }
+
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.92em; }
+  th, td { border: 0; border-bottom: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--black); color: #fff; font-weight: 700; font-size: 0.85em; letter-spacing: 0.04em; text-transform: uppercase; border-bottom: 2px solid var(--hsbc-red); }
+  tr:nth-child(even) td { background: var(--panel); }
+  code, .mono { font-family: "Consolas", "Menlo", monospace; font-size: 0.93em; background: var(--panel-2); padding: 1px 4px; border-radius: 0; color: var(--black); }
+
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin: 16px 0; }
+  .meta-grid .cell { background: var(--panel); border-top: 3px solid var(--hsbc-red); padding: 10px 12px; }
+  .meta-grid .cell .k { font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .meta-grid .cell .v { font-weight: 700; color: var(--black); }
+
+  .note { background: var(--warn-bg); border-left: 4px solid var(--warn-line); padding: 10px 14px; margin: 14px 0; font-size: 0.92em; color: var(--black); }
+  .guidance { color: var(--muted); font-style: italic; font-size: 0.9em; }
+  .diagram { background: var(--bg); border: 1px solid var(--line); border-top: 3px solid var(--hsbc-red); padding: 16px; overflow-x: auto; }
+
+  nav.toc { background: var(--panel); border-left: 4px solid var(--black); padding: 12px 20px; font-size: 0.92em; }
+  nav.toc strong { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.85em; color: var(--black); }
+  nav.toc ol { margin: 6px 0; padding-left: 20px; columns: 2; column-gap: 32px; }
+  nav.toc li { break-inside: avoid; }
+  nav.toc a { color: var(--ink); }
+  nav.toc a:hover { color: var(--hsbc-red); }
+
+  footer { margin-top: 60px; border-top: 1px solid var(--line); padding-top: 14px; color: var(--muted); font-size: 0.82em; display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+  footer .legal { max-width: 70%; }
+  footer .brand svg { height: 18px; }
+  footer .brand .wordmark { font-size: 0.95em; }
+
+  @media print {
+    .page { padding: 0 0 40px; }
+    h2 { break-after: avoid; }
+    table, .diagram, .note { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="brand-bar">
+  <div class="inner">
+    <div class="brand">
+      <svg viewBox="0 0 400 200" role="img" aria-label="HSBC">
+        <polygon points="0,100 100,0 100,200" fill="#db0011"/>
+        <polygon points="400,100 300,0 300,200" fill="#db0011"/>
+        <polygon points="100,0 300,0 200,100" fill="#db0011"/>
+        <polygon points="100,200 300,200 200,100" fill="#db0011"/>
+        <polygon points="100,0 200,100 100,200" fill="#ffffff"/>
+        <polygon points="300,0 200,100 300,200" fill="#ffffff"/>
+      </svg>
+      <span class="wordmark">HSBC</span>
+      <span class="division">Technology &mdash; Mainframe Modernisation</span>
+    </div>
+    <span class="classification">Internal</span>
+  </div>
+</div>
+<div class="red-rule"></div>
+
+<div class="page">
+
+<header class="doc-head">
+  <div class="doc-kicker">Functional Requirement Document</div>
+  <h1><strong>DataExportImport</strong> <span class="tag batch">Batch</span></h1>
+  <div class="subtitle">CBEXPORT &rarr; FTPJCL &rarr; CBIMPORT: unload the five CardDemo VSAM masters into one 500-byte multi-record export file, hand it off by FTP, and split it back into one normalised flat file per record type.</div>
+</header>
+
+<div class="meta-grid">
+  <div class="cell"><div class="k">Stream type</div><div class="v">Batch cycle</div></div>
+  <div class="cell"><div class="k">Application</div><div class="v">CARDDEMO</div></div>
+  <div class="cell"><div class="k">Scheduler table / CICS group</div><div class="v">None &mdash; manual run (no entry in <code>app/scheduler/CardDemo.ca7</code> or <code>app/scheduler/CardDemo.controlm</code>)</div></div>
+  <div class="cell"><div class="k">Owner</div><div class="v">Not defined in repo (JOB cards carry only <code>NOTIFY=&amp;SYSUID</code>; no scheduler RUN_AS)</div></div>
+  <div class="cell"><div class="k">Run window / availability</div><div class="v">Not defined in repo</div></div>
+  <div class="cell"><div class="k">Calendar / frequency</div><div class="v">On demand (branch migration / data transfer, <code>app/jcl/CBEXPORT.jcl:19-20</code>)</div></div>
+  <div class="cell"><div class="k">Criticality</div><div class="v">Not defined in repo</div></div>
+  <div class="cell"><div class="k">Doc status</div><div class="v">DRAFT</div></div>
+</div>
+
+<table>
+  <tr><th>Version</th><th>Date</th><th>Author</th><th>Change</th></tr>
+  <tr><td>0.1</td><td>2026-10-20</td><td>Devin</td><td>Initial draft</td></tr>
+</table>
+
+<nav class="toc">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#purpose">Business purpose</a></li>
+    <li><a href="#flow">Flow diagram</a></li>
+    <li><a href="#inventory">Job / screen inventory</a></li>
+    <li><a href="#dependencies">Dependencies</a></li>
+    <li><a href="#requirements">Functional requirements</a></li>
+    <li><a href="#restart">Restart, recovery &amp; error handling</a></li>
+    <li><a href="#nfr">Non-functional requirements</a></li>
+    <li><a href="#interfaces">Interfaces &amp; data layouts</a></li>
+    <li><a href="#security">Security &amp; access</a></li>
+    <li><a href="#target">Target-state mapping</a></li>
+    <li><a href="#open">Assumptions, debt &amp; open questions</a></li>
+  </ol>
+</nav>
+
+<h2 id="purpose">1. Business purpose</h2>
+<p>The DataExportImport chain moves a complete copy of the CardDemo master data between systems. <code>CBEXPORT</code> reads every record of the customer, account, card cross-reference, transaction and card VSAM clusters and writes them, in that order, into a single multi-record export cluster <code>AWS.M2.CARDDEMO.EXPORT.DATA</code> whose records carry a one-byte type code, a run timestamp, a global sequence number and a branch/region stamp (<code>app/cbl/CBEXPORT.cbl:5-10</code>, <code>app/cbl/CBEXPORT.cbl:27-30</code>). <code>FTPJCL</code> is the estate's only transport artefact: a <code>PGM=FTP</code> job that pushes a mainframe dataset to an external FTP server (<code>app/jcl/FTPJCL.JCL:22-29</code>). <code>CBIMPORT</code> reads the export file and splits it back into one normalised flat file per record type, writing an error line for every record whose type it does not recognise (<code>app/cbl/CBIMPORT.cbl:5-11</code>, <code>app/cbl/CBIMPORT.cbl:28-32</code>).</p>
+<p>The chain has no scheduler entry: neither <code>CBEXPORT</code>, <code>CBIMPORT</code> nor <code>FTPJCLS</code> appears in the CA-7 LJOB listing (<code>app/scheduler/CardDemo.ca7</code>, jobs listed at lines 18-337) or in any Control-M folder (<code>app/scheduler/CardDemo.controlm</code>, folders at lines 3, 26, 32, 57, 64), and the README's "Running Batch Jobs" run-book does not list them either (<code>README.md:207-230</code>). It is an operator-triggered chain whose order is fixed by the data flow: the export file must exist before it can be transferred or imported. If it does not run, no branch/estate data copy is produced; the daily posting and statement cycles are unaffected because neither program updates a CardDemo master (<code>app/cbl/CBEXPORT.cbl:35-69</code> opens the masters <code>INPUT</code> only; <code>app/cbl/CBIMPORT.cbl:43-71</code> writes new sequential datasets, not the VSAM masters).</p>
+<table>
+  <tr><th>Business capability</th><th>How this stream serves it</th></tr>
+  <tr><td>Branch migration / bulk data transfer</td><td>Produces a self-describing, single-file snapshot of all five masters that can be shipped to another system (<code>app/jcl/CBEXPORT.jcl:19-20</code>).</td></tr>
+  <tr><td>Data on-boarding on the receiving side</td><td>Re-normalises the snapshot into copybook-layout flat files (<code>CVCUS01Y</code>, <code>CVACT01Y</code>, <code>CVACT03Y</code>, <code>CVTRA05Y</code>, <code>CVACT02Y</code>) that the estate's load jobs (<code>CUSTFILE</code>, <code>ACCTFILE</code>, <code>XREFFILE</code>, <code>TRANBKP</code>, <code>CARDFILE</code>) consume (<code>app/jcl/CBIMPORT.jcl:19-20</code>, <code>README.md:213-217</code>).</td></tr>
+  <tr><td>Operational control</td><td>Both programs print per-type and total record counts so the operator can reconcile export against import (<code>app/cbl/CBEXPORT.cbl:563-573</code>, <code>app/cbl/CBIMPORT.cbl:465-478</code>).</td></tr>
+  <tr><td>Data-quality reporting</td><td>Unknown record types are written to a 132-byte error file instead of stopping the run (<code>app/cbl/CBIMPORT.cbl:425-446</code>).</td></tr>
+</table>
+
+<h2 id="flow">2. Flow diagram</h2>
+<div class="diagram">
+<pre class="mermaid">
+flowchart TD
+    subgraph MASTERS["VSAM masters (CICS group CARDDEMO, DISP=SHR)"]
+        direction TB
+        M1[("CUSTDATA.VSAM.KSDS")]
+        M2[("ACCTDATA.VSAM.KSDS")]
+        M3[("CARDXREF.VSAM.KSDS")]
+        M4[("TRANSACT.VSAM.KSDS")]
+        M5[("CARDDATA.VSAM.KSDS")]
+    end
+    subgraph JOB1["Job CBEXPORT (app/jcl/CBEXPORT.jcl)"]
+        direction TB
+        E1["STEP01 PGM=IDCAMS: DELETE/DEFINE AWS.M2.CARDDEMO.EXPORT.DATA"] --> E2["STEP02 PGM=CBEXPORT"]
+    end
+    MASTERS --> E2
+    E2 --> X[("AWS.M2.CARDDEMO.EXPORT.DATA (KSDS, 500-byte)")]
+    X -. "operator submits; PUT dsn must be edited (FTPJCL.JCL:40)" .-> F
+    subgraph JOB2["Job FTPJCLS (app/jcl/FTPJCL.JCL)"]
+        F["STEP1 PGM=FTP: ASCII PUT to /ftpfolder"]
+    end
+    F -. "plain FTP" .-> R[("External FTP server")]
+    X -. "operator submits after CBEXPORT ends" .-> I
+    subgraph JOB3["Job CBIMPORT (app/jcl/CBIMPORT.jcl)"]
+        I["STEP01 PGM=CBIMPORT"]
+    end
+    subgraph OUT["Import outputs (DISP=NEW,CATLG,DELETE)"]
+        direction TB
+        O1["CUSTOUT CUSTDATA.IMPORT (500)"]
+        O2["ACCTOUT ACCTDATA.IMPORT (300)"]
+        O3["XREFOUT CARDXREF.IMPORT (50)"]
+        O4["TRNXOUT TRANSACT.IMPORT (350)"]
+        O5["CARDOUT (150) - no DD in CBIMPORT.jcl"]
+        O6["ERROUT IMPORT.ERRORS (132)"]
+    end
+    I --> OUT
+    style O5 stroke:#db0011,stroke-dasharray: 5 5
+</pre>
+</div>
+<div class="note"><strong>Gating conditions:</strong> There are no scheduler release rules for this chain: no CA-7 <code>TRIGGERED JOBS</code> block names <code>CBEXPORT</code>, <code>CBIMPORT</code> or <code>FTPJCLS</code> (<code>app/scheduler/CardDemo.ca7</code>) and no Control-M <code>INCOND</code>/<code>OUTCOND</code> references them (<code>app/scheduler/CardDemo.controlm</code>). Ordering is the operator's responsibility and follows the data dependency: <code>CBIMPORT</code> and <code>FTPJCLS</code> can only run after <code>CBEXPORT</code> has ended, because both read <code>AWS.M2.CARDDEMO.EXPORT.DATA</code> (<code>app/jcl/CBEXPORT.jcl:62-63</code>, <code>app/jcl/CBIMPORT.jcl:28-29</code>). Inside the jobs no step carries <code>COND=</code> or <code>IF/THEN</code>: <code>CBEXPORT</code> STEP02 runs regardless of the IDCAMS return code of STEP01 (<code>app/jcl/CBEXPORT.jcl:24-43</code>), and the IDCAMS <code>SET MAXCC = 0</code> after the <code>DELETE</code> masks a "cluster not found" on first run (<code>app/jcl/CBEXPORT.jcl:27-28</code>). Failure in either COBOL program is signalled by an LE abend (<code>CALL 'CEE3ABD'</code>, <code>app/cbl/CBEXPORT.cbl:579</code>, <code>app/cbl/CBIMPORT.cbl:484</code>), not by a return code. <strong>Estate gotcha:</strong> the two scheduler sources disagree on the daily chain that shares these masters &mdash; CA-7 SCHID=030 runs CLOSEFIL &rarr; CBPAUP0J &rarr; POSTTRAN &rarr; WAITSTEP &rarr; OPENFIL (<code>app/scheduler/CardDemo.ca7:43-124</code>), Control-M <code>DAILY-TransactionBackup</code> runs CLOSEFIL &rarr; TRANBKP &rarr; WAITSTEP &rarr; OPENFIL (<code>app/scheduler/CardDemo.controlm:3-50</code>) &mdash; so the window in which CICS has <code>TRANSACT</code>/<code>CCXREF</code>/<code>ACCTDAT</code> closed cannot be asserted from a single source (see Q-02, Q-06). <code>CLOSEFIL1</code>/<code>CLOSEFIL2</code> are not touched by this chain.</div>
+
+<h2 id="inventory">3. Job / screen inventory</h2>
+<table>
+  <tr><th>Order</th><th>Job / Tranid</th><th>Program(s)</th><th>Function</th><th>Restart point / entry condition</th></tr>
+  <tr><td>1</td><td class="mono">CBEXPORT (STEP01)</td><td class="mono">IDCAMS</td><td><code>DELETE AWS.M2.CARDDEMO.EXPORT.DATA CLUSTER PURGE</code>, <code>SET MAXCC = 0</code>, <code>DEFINE CLUSTER ... INDEXED KEYS(4 28) RECORDSIZE(500 500) CYLINDERS(10 5) FREESPACE(10 10) SHAREOPTIONS(2 3)</code> (<code>app/jcl/CBEXPORT.jcl:24-39</code>).</td><td>Idempotent; always rerunnable from this step. Entry: five master clusters exist (<code>app/jcl/CBEXPORT.jcl:49-58</code>).</td></tr>
+  <tr><td>1</td><td class="mono">CBEXPORT (STEP02)</td><td class="mono">CBEXPORT</td><td>Reads CUSTFILE, ACCTFILE, XREFFILE, TRANSACT, CARDFILE sequentially and writes one 500-byte export record per input record to EXPFILE (<code>app/jcl/CBEXPORT.jcl:43-63</code>, <code>app/cbl/CBEXPORT.cbl:149-158</code>).</td><td>Restart = rerun the whole job from STEP01 (STEP01 empties the cluster; the program has no checkpoint and OPENs EXPFILE <code>OUTPUT</code>, <code>app/cbl/CBEXPORT.cbl:235</code>). No PARM/SYSIN.</td></tr>
+  <tr><td>2</td><td class="mono">FTPJCLS</td><td class="mono">FTP</td><td>Connects to the site FTP server and <code>PUT</code>s a mainframe dataset in ASCII to <code>/ftpfolder</code> (<code>app/jcl/FTPJCL.JCL:30-41</code>). As shipped, the dataset named is <code>'AWS.M2.CARDEMO.FTP.TEST'</code> &rarr; <code>welcome.txt</code>, not the export file (<code>app/jcl/FTPJCL.JCL:40</code>; see Q-05).</td><td>Rerunnable; a failed transfer is resubmitted. Entry: export dataset exists and the control cards have been edited for the site (<code>app/jcl/FTPJCL.JCL:23-29</code>).</td></tr>
+  <tr><td>3</td><td class="mono">CBIMPORT (STEP01)</td><td class="mono">CBIMPORT</td><td>Reads EXPFILE, dispatches on the type byte, writes CUSTOUT/ACCTOUT/XREFOUT/TRNXOUT/CARDOUT in copybook layout and ERROUT for unknown types (<code>app/jcl/CBIMPORT.jcl:22-60</code>, <code>app/cbl/CBIMPORT.cbl:165-171</code>, <code>app/cbl/CBIMPORT.cbl:272-285</code>).</td><td>Rerun from start after deleting the five <code>DISP=(NEW,CATLG,DELETE)</code> outputs (<code>app/jcl/CBIMPORT.jcl:33-60</code>). No checkpoint. Entry: EXPFILE exists; a <code>CARDOUT</code> DD must be supplied (<code>app/cbl/CBIMPORT.cbl:63-66</code>; see Q-03).</td></tr>
+</table>
+
+<h2 id="dependencies">4. Dependencies</h2>
+<h3>4.1 DB2 tables</h3>
+<table>
+  <tr><th>Table</th><th>Access</th><th>Used by</th><th>Notes</th></tr>
+  <tr><td class="mono">&mdash;</td><td>&mdash;</td><td class="mono">&mdash;</td><td>None. Neither program contains EXEC SQL; all data access is VSAM/QSAM (<code>app/cbl/CBEXPORT.cbl:34-69</code>, <code>app/cbl/CBIMPORT.cbl:36-71</code>).</td></tr>
+</table>
+<h3>4.2 VSAM files &amp; datasets</h3>
+<table>
+  <tr><th>Dataset</th><th>Type</th><th>Access</th><th>Used by</th><th>Notes</th></tr>
+  <tr><td class="mono">AWS.M2.<wbr>CARDDEMO.<wbr>CUSTDATA.<wbr>VSAM.KSDS</td><td>KSDS, KEYS(9 0), RECORDSIZE 500</td><td>R</td><td class="mono">CBEXPORT (DD CUSTFILE)</td><td><code>DISP=SHR</code> (<code>app/jcl/CBEXPORT.jcl:49-50</code>); defined in <code>app/jcl/CUSTFILE.jcl:46-52</code>; CICS file <code>CUSTDAT</code> (<code>app/csd/CARDDEMO.CSD:50-52</code>). Not closed by CLOSEFIL (<code>app/jcl/CLOSEFIL.jcl:26-30</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.<wbr>CARDDEMO.<wbr>ACCTDATA.<wbr>VSAM.KSDS</td><td>KSDS, KEYS(11 0), RECORDSIZE 300</td><td>R</td><td class="mono">CBEXPORT (DD ACCTFILE)</td><td><code>DISP=SHR</code> (<code>app/jcl/CBEXPORT.jcl:51-52</code>); defined in <code>app/jcl/ACCTFILE.jcl:36-42</code>; CICS file <code>ACCTDAT</code> (<code>app/csd/CARDDEMO.CSD:1-2</code>), closed by CLOSEFIL (<code>app/jcl/CLOSEFIL.jcl:28</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.<wbr>CARDDEMO.<wbr>CARDXREF.<wbr>VSAM.KSDS</td><td>KSDS, KEYS(16 0), RECORDSIZE 50</td><td>R</td><td class="mono">CBEXPORT (DD XREFFILE)</td><td><code>DISP=SHR</code> (<code>app/jcl/CBEXPORT.jcl:53-54</code>); defined in <code>app/jcl/XREFFILE.jcl:39-45</code>; CICS file <code>CCXREF</code> (<code>app/csd/CARDDEMO.CSD:37-39</code>), closed by CLOSEFIL (<code>app/jcl/CLOSEFIL.jcl:27</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.<wbr>CARDDEMO.<wbr>TRANSACT.<wbr>VSAM.KSDS</td><td>KSDS, KEYS(16 0), RECORDSIZE 350</td><td>R</td><td class="mono">CBEXPORT (DD TRANSACT)</td><td><code>DISP=SHR</code> (<code>app/jcl/CBEXPORT.jcl:55-56</code>); defined in <code>app/jcl/TRANFILE.jcl:49-55</code> / <code>app/jcl/TRANBKP.jcl:54</code>; CICS file <code>TRANSACT</code> (<code>app/csd/CARDDEMO.CSD:76-77</code>), closed by CLOSEFIL (<code>app/jcl/CLOSEFIL.jcl:26</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.<wbr>CARDDEMO.<wbr>CARDDATA.<wbr>VSAM.KSDS</td><td>KSDS, KEYS(16 0), RECORDSIZE 150</td><td>R</td><td class="mono">CBEXPORT (DD CARDFILE)</td><td><code>DISP=SHR</code> (<code>app/jcl/CBEXPORT.jcl:57-58</code>); defined in <code>app/jcl/CARDFILE.jcl:50-56</code>; CICS file <code>CARDDAT</code> (<code>app/csd/CARDDEMO.CSD:25-26</code>). Not closed by CLOSEFIL (<code>app/jcl/CLOSEFIL.jcl:26-30</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.<wbr>CARDDEMO.<wbr>EXPORT.DATA</td><td>KSDS, KEYS(4 28), RECORDSIZE(500 500), SHAREOPTIONS(2 3)</td><td>W (CBEXPORT) / R (CBIMPORT)</td><td class="mono">CBEXPORT (DD EXPFILE), CBIMPORT (DD EXPFILE)</td><td>Recreated every run by STEP01 (<code>app/jcl/CBEXPORT.jcl:27-38</code>); written <code>OPEN OUTPUT</code> sequentially on key <code>EXPORT-SEQUENCE-NUM</code> (<code>app/cbl/CBEXPORT.cbl:65-69</code>, <code>app/cbl/CBEXPORT.cbl:235</code>); read sequentially by CBIMPORT (<code>app/cbl/CBIMPORT.cbl:37-41</code>). Sample unload: <code>app/data/EBCDIC/<wbr>AWS.M2.CARDDEMO.EXPORT.DATA.PS</code> (500 records).</td></tr>
+  <tr><td class="mono">AWS.M2.<wbr>CARDDEMO.<wbr>CUSTDATA.IMPORT</td><td>PS, FB, LRECL 500</td><td>W</td><td class="mono">CBIMPORT (DD CUSTOUT)</td><td><code>DISP=(NEW,CATLG,DELETE)</code>, <code>SPACE=(TRK,(50,25),RLSE)</code> (<code>app/jcl/CBIMPORT.jcl:33-37</code>); layout <code>CVCUS01Y</code> (<code>app/cbl/CBIMPORT.cbl:81-84</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.<wbr>CARDDEMO.<wbr>ACCTDATA.IMPORT</td><td>PS, FB, LRECL 300</td><td>W</td><td class="mono">CBIMPORT (DD ACCTOUT)</td><td><code>DISP=(NEW,CATLG,DELETE)</code> (<code>app/jcl/CBIMPORT.jcl:38-42</code>); layout <code>CVACT01Y</code> (<code>app/cbl/CBIMPORT.cbl:86-89</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.<wbr>CARDDEMO.<wbr>CARDXREF.IMPORT</td><td>PS, FB, LRECL 50</td><td>W</td><td class="mono">CBIMPORT (DD XREFOUT)</td><td><code>DISP=(NEW,CATLG,DELETE)</code> (<code>app/jcl/CBIMPORT.jcl:43-47</code>); layout <code>CVACT03Y</code> (<code>app/cbl/CBIMPORT.cbl:91-94</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.<wbr>CARDDEMO.<wbr>TRANSACT.IMPORT</td><td>PS, FB, LRECL 350</td><td>W</td><td class="mono">CBIMPORT (DD TRNXOUT)</td><td><code>DISP=(NEW,CATLG,DELETE)</code> (<code>app/jcl/CBIMPORT.jcl:48-52</code>); layout <code>CVTRA05Y</code> (<code>app/cbl/CBIMPORT.cbl:96-99</code>).</td></tr>
+  <tr><td class="mono">(CARDOUT &mdash; no DSN)</td><td>PS, FB, LRECL 150 (program FD)</td><td>W</td><td class="mono">CBIMPORT (DD CARDOUT)</td><td>Program declares and opens it (<code>app/cbl/CBIMPORT.cbl:63-66</code>, <code>app/cbl/CBIMPORT.cbl:101-104</code>, <code>app/cbl/CBIMPORT.cbl:233-238</code>) but <code>app/jcl/CBIMPORT.jcl:22-65</code> has no CARDOUT DD. See Q-03.</td></tr>
+  <tr><td class="mono">AWS.M2.<wbr>CARDDEMO.<wbr>IMPORT.ERRORS</td><td>PS, FB, LRECL 132</td><td>W</td><td class="mono">CBIMPORT (DD ERROUT)</td><td><code>DISP=(NEW,CATLG,DELETE)</code> (<code>app/jcl/CBIMPORT.jcl:56-60</code>); layout <code>WS-ERROR-RECORD</code> (<code>app/cbl/CBIMPORT.cbl:152-160</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDEMO.FTP.TEST</td><td>Unknown (not defined in repo)</td><td>R (FTP PUT)</td><td class="mono">FTPJCLS</td><td>Dataset named in the FTP <code>PUT</code> (<code>app/jcl/FTPJCL.JCL:40</code>); not created by any job in <code>app/jcl</code>; note the <code>CARDEMO</code> spelling. See Q-05.</td></tr>
+  <tr><td class="mono">AWS.M2.<wbr>CARDDEMO.<wbr>LOADLIB</td><td>PDS(E)</td><td>R</td><td class="mono">CBEXPORT, CBIMPORT</td><td>STEPLIB (<code>app/jcl/CBEXPORT.jcl:44-45</code>, <code>app/jcl/CBIMPORT.jcl:23-24</code>).</td></tr>
+</table>
+<h3>4.3 Shared utilities &amp; copybooks</h3>
+<table>
+  <tr><th>Asset</th><th>Kind</th><th>Role</th></tr>
+  <tr><td class="mono">CVEXPORT</td><td>Copybook</td><td>500-byte export record: common prefix + five <code>REDEFINES</code> of the 460-byte data area (<code>app/cpy/CVEXPORT.cpy:9-100</code>); copied by both programs (<code>app/cbl/CBEXPORT.cbl:96</code>, <code>app/cbl/CBIMPORT.cbl:113</code>).</td></tr>
+  <tr><td class="mono">CVCUS01Y</td><td>Copybook</td><td>Customer record, 500 bytes (<code>app/cpy/CVCUS01Y.cpy:4-23</code>); FD of CUSTFILE in CBEXPORT (<code>app/cbl/CBEXPORT.cbl:74-75</code>) and CUSTOUT in CBIMPORT (<code>app/cbl/CBIMPORT.cbl:81-84</code>).</td></tr>
+  <tr><td class="mono">CVACT01Y</td><td>Copybook</td><td>Account record, 300 bytes (<code>app/cpy/CVACT01Y.cpy:4-17</code>); <code>app/cbl/CBEXPORT.cbl:77-78</code>, <code>app/cbl/CBIMPORT.cbl:86-89</code>.</td></tr>
+  <tr><td class="mono">CVACT02Y</td><td>Copybook</td><td>Card record, 150 bytes (<code>app/cpy/CVACT02Y.cpy:4-11</code>); <code>app/cbl/CBEXPORT.cbl:86-87</code>, <code>app/cbl/CBIMPORT.cbl:101-104</code>.</td></tr>
+  <tr><td class="mono">CVACT03Y</td><td>Copybook</td><td>Card cross-reference record, 50 bytes (<code>app/cpy/CVACT03Y.cpy:4-8</code>); <code>app/cbl/CBEXPORT.cbl:80-81</code>, <code>app/cbl/CBIMPORT.cbl:91-94</code>.</td></tr>
+  <tr><td class="mono">CVTRA05Y</td><td>Copybook</td><td>Transaction record, 350 bytes (<code>app/cpy/CVTRA05Y.cpy:4-18</code>); <code>app/cbl/CBEXPORT.cbl:83-84</code>, <code>app/cbl/CBIMPORT.cbl:96-99</code>.</td></tr>
+  <tr><td class="mono">CEE3ABD</td><td>LE callable service</td><td>Abend path of both programs (<code>app/cbl/CBEXPORT.cbl:576-579</code>, <code>app/cbl/CBIMPORT.cbl:481-484</code>).</td></tr>
+  <tr><td class="mono">IDCAMS</td><td>Utility</td><td>Export cluster delete/define (<code>app/jcl/CBEXPORT.jcl:24-39</code>).</td></tr>
+  <tr><td class="mono">FTP</td><td>z/OS Communications Server client</td><td>File transfer step (<code>app/jcl/FTPJCL.JCL:30</code>).</td></tr>
+</table>
+<h3>4.4 Other applications &amp; external events</h3>
+<table>
+  <tr><th>Dependency</th><th>Direction</th><th>Mechanism</th><th>Notes</th></tr>
+  <tr><td>CICS region CICSAWSA (online CardDemo)</td><td>Upstream</td><td>Shared VSAM clusters, <code>DISP=SHR</code> / <code>SHAREOPTIONS(2 3)</code></td><td>The five masters are CICS files in group CARDDEMO (<code>app/csd/CARDDEMO.CSD:1,25,37,50,76</code>). <code>CLOSEFIL</code>/<code>OPENFIL</code> close/open only TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC (<code>app/jcl/CLOSEFIL.jcl:26-30</code>, <code>app/jcl/OPENFIL.jcl:26-30</code>); CBEXPORT does not invoke them. See Q-06.</td></tr>
+  <tr><td>External FTP server (site-specific)</td><td>Downstream</td><td>FTP <code>PUT</code>, ASCII mode, target folder <code>/ftpfolder</code></td><td>Host, user id and password are in-stream control cards flagged "SUBJECT TO CHANGE FOR SITE" (<code>app/jcl/FTPJCL.JCL:23-25</code>, <code>app/jcl/FTPJCL.JCL:33-35</code>). The comment also describes a receive variant (<code>GET</code>) (<code>app/jcl/FTPJCL.JCL:28</code>).</td></tr>
+  <tr><td>Load jobs CUSTFILE / ACCTFILE / XREFFILE / TRANBKP / CARDFILE</td><td>Downstream</td><td>File feed (copybook-layout PS datasets)</td><td>CBIMPORT's outputs are in the same layouts as the <code>app/data</code> unloads those jobs REPRO into VSAM (<code>app/cbl/CBIMPORT.cbl:81-104</code>, <code>README.md:213-217</code>); the hand-over is not wired in JCL.</td></tr>
+  <tr><td>Scheduler (CA-7 / Control-M)</td><td>&mdash;</td><td>None</td><td>No definition for any job of this chain (<code>app/scheduler/CardDemo.ca7</code>, <code>app/scheduler/CardDemo.controlm</code>). See Q-01.</td></tr>
+</table>
+
+<h2 id="requirements">5. Functional requirements</h2>
+<table>
+  <tr><th>ID</th><th>Requirement</th><th>Source</th><th>Acceptance criteria</th></tr>
+  <tr><td>FR-01</td><td>Every CBEXPORT run starts from an empty export file: the export cluster is deleted (<code>PURGE</code>) and redefined before the program runs; a missing cluster on first run is not an error (<code>SET MAXCC = 0</code>).</td><td class="mono">app/jcl/CBEXPORT.jcl:27-38</td><td>Running the export twice yields a file containing only the second run's records; the first run on a clean system ends RC 0.</td></tr>
+  <tr><td>FR-02</td><td>CBEXPORT opens the five masters <code>INPUT</code> and the export file <code>OUTPUT</code>; any file status other than <code>00</code> on OPEN displays <code>ERROR: Cannot open &lt;FD-NAME&gt;, Status: nn</code> and abends.</td><td class="mono">app/cbl/CBEXPORT.cbl:198-240</td><td>With one master absent, the job log shows that exact line naming the COBOL FD (e.g. <code>CUSTOMER-INPUT</code>) followed by <code>CBEXPORT: ABENDING PROGRAM</code>, and no export records are written.</td></tr>
+  <tr><td>FR-03</td><td>Export order is by file then by key: all customers, then accounts, then cross-references, then transactions, then cards; each KSDS is read with <code>ACCESS MODE IS SEQUENTIAL</code>, i.e. ascending key order, and every record is exported (no selection).</td><td class="mono">app/cbl/CBEXPORT.cbl:35-63, 151-157, 249-252</td><td>The type bytes of the export file form exactly five contiguous runs C, A, X, T, D whose lengths equal the record counts of the five masters; within each run the mapped key fields are ascending.</td></tr>
+  <tr><td>FR-04</td><td>Record type codes are <code>C</code> customer, <code>A</code> account, <code>X</code> card cross-reference, <code>T</code> transaction, <code>D</code> card, in byte 0 of the record.</td><td class="mono">app/cbl/CBEXPORT.cbl:274, 343, 407, 462, 527; app/cpy/CVEXPORT.cpy:10</td><td>Each export record's first byte is one of the five codes and matches its source file.</td></tr>
+  <tr><td>FR-05</td><td>One run timestamp is captured at start (<code>ACCEPT ... FROM DATE YYYYMMDD</code>/<code>TIME</code>) and formatted as <code>YYYY-MM-DD HH:MM:SS.00</code> (22 characters, hundredths literal <code>.00</code>) into the 26-byte <code>EXPORT-TIMESTAMP</code> of every record.</td><td class="mono">app/cbl/CBEXPORT.cbl:172-195, 275; app/cpy/CVEXPORT.cpy:11-15</td><td>All records of one run carry the identical timestamp at offset 1-26, ending in <code>.00</code> followed by four spaces.</td></tr>
+  <tr><td>FR-06</td><td>A single 1-based sequence counter is incremented once per written record across all five groups and stored as a 4-byte binary <code>PIC 9(9) COMP</code> at offset 27.</td><td class="mono">app/cbl/CBEXPORT.cbl:123, 276-277; app/cpy/CVEXPORT.cpy:16</td><td>Sequence numbers run 1..N without gaps or repeats across the whole file, N = total records exported.</td></tr>
+  <tr><td>FR-07</td><td>Branch id and region code are constants <code>'0001'</code> and <code>'NORTH'</code> on every record; there is no branch parameter.</td><td class="mono">app/cbl/CBEXPORT.cbl:278-279, 347-348, 411-412, 466-467, 531-532</td><td>Bytes 31-34 are <code>0001</code> and 35-39 are <code>NORTH</code> on every record regardless of input data.</td></tr>
+  <tr><td>FR-08</td><td>Each export record is <code>INITIALIZE</code>d, then source fields are moved 1:1 into the type-specific <code>REDEFINES</code> of <code>CVEXPORT</code>, including its <code>COMP</code> and <code>COMP-3</code> fields; unmapped tail bytes are spaces (alphanumeric) / zero (numeric).</td><td class="mono">app/cbl/CBEXPORT.cbl:271-299, 340-362, 404-417, 459-482, 524-540; app/cpy/CVEXPORT.cpy:24-100</td><td>For a known source record, the export record decoded with <code>CVEXPORT</code> yields identical field values (names, addresses, signed amounts incl. negative and zero, FICO, CVV, 26-char timestamps); FILLER areas are spaces.</td></tr>
+  <tr><td>FR-09</td><td>A READ with status other than <code>00</code>/<code>10</code> or a WRITE with status other than <code>00</code> displays <code>ERROR: Reading &lt;FD&gt;, Status: nn</code> / <code>ERROR: Writing export record, Status: nn</code> and abends.</td><td class="mono">app/cbl/CBEXPORT.cbl:258-266, 301-307 (and 327-335, 364-370, 391-399, 419-425, 446-454, 484-490, 511-519, 542-548)</td><td>A write failure (e.g. export file full) terminates the run with those two lines and no success statistics.</td></tr>
+  <tr><td>FR-10</td><td>CBEXPORT prints the fixed set of progress lines and, at end, per-type counts and a total, each counter as a 9-digit zero-padded number; total equals the sum of the five counts.</td><td class="mono">app/cbl/CBEXPORT.cbl:138-144, 163-169, 245-255, 314-324, 378-388, 433-443, 498-508, 563-573</td><td>Job log contains <code>CBEXPORT: Total Records Exported: nnnnnnnnn</code> equal to the file's record count and to the sum of the five per-type lines.</td></tr>
+  <tr><td>FR-11</td><td>CBIMPORT opens the export file <code>INPUT</code> and six outputs <code>OUTPUT</code> (customer, account, xref, transaction, card, error); an OPEN failure displays <code>ERROR: Cannot open &lt;FD&gt;, Status: nn</code> and abends. Outputs are new datasets (<code>DISP=(NEW,CATLG,DELETE)</code>), so the import replaces rather than appends.</td><td class="mono">app/cbl/CBIMPORT.cbl:198-245; app/jcl/CBIMPORT.jcl:33-60</td><td>Missing export file &rarr; <code>ERROR: Cannot open EXPORT-INPUT, Status: 35</code> then <code>CBIMPORT: ABENDING PROGRAM</code>; successful run creates all outputs with record lengths 500/300/50/350/150/132.</td></tr>
+  <tr><td>FR-12</td><td>Dispatch is on <code>EXPORT-REC-TYPE</code> only: C/A/X/T/D records are mapped 1:1 back into <code>CVCUS01Y</code>/<code>CVACT01Y</code>/<code>CVACT03Y</code>/<code>CVTRA05Y</code>/<code>CVACT02Y</code> (all DISPLAY fields, signed amounts with trailing overpunch) and written to the matching output in input order.</td><td class="mono">app/cbl/CBIMPORT.cbl:272-285, 288-320, 323-349, 352-369, 372-399, 402-422</td><td>Export-then-import of a master file reproduces every field value; output files are byte-interchangeable with the corresponding <code>app/data/ASCII</code> unload layout.</td></tr>
+  <tr><td>FR-13</td><td>No validation, de-duplication, sequence, timestamp, branch or referential check is performed on import; <code>3000-VALIDATE-IMPORT</code> unconditionally displays <code>CBIMPORT: Import validation completed</code> and <code>CBIMPORT: No validation errors detected</code>. Duplicate keys are written as-is (outputs are sequential).</td><td class="mono">app/cbl/CBIMPORT.cbl:272-285, 449-452</td><td>An export file containing two records with the same <code>CUST-ID</code> produces two customer output records and the two validation lines are still printed.</td></tr>
+  <tr><td>FR-14</td><td>A record whose type byte is not C/A/X/T/D is counted in <code>WS-UNKNOWN-RECORD-TYPE-COUNT</code> and one 132-byte error line is written: <code>FUNCTION CURRENT-DATE</code> (21 chars in X(26)) <code>|</code> type <code>|</code> 7-digit sequence <code>|</code> <code>Unknown record type encountered</code> padded to 50, then 43 spaces; processing continues.</td><td class="mono">app/cbl/CBIMPORT.cbl:152-160, 283-284, 425-434</td><td>A file with one <code>Z</code> record completes normally with <code>Errors Written: 000000001</code>, <code>Unknown Record Types: 000000001</code>, and ERROUT holds exactly one line in that layout.</td></tr>
+  <tr><td>FR-15</td><td>A WRITE failure on a data output abends (<code>ERROR: Writing &lt;type&gt; record, Status: nn</code>), but a WRITE failure on the error file only displays <code>ERROR: Writing error record, Status: nn</code> and continues, still incrementing <code>WS-ERROR-RECORDS-WRITTEN</code>.</td><td class="mono">app/cbl/CBIMPORT.cbl:312-318, 341-347, 361-367, 391-397, 414-420, 437-446</td><td>Simulated error-file write failure: run completes with the message and the counter incremented; simulated customer-file write failure: run abends.</td></tr>
+  <tr><td>FR-16</td><td><code>WS-TOTAL-RECORDS-READ</code> counts every record read (including unknown types); per-type counters count records written; the end-of-run statistics print all eight counters as 9-digit numbers.</td><td class="mono">app/cbl/CBIMPORT.cbl:140-147, 253, 465-478</td><td><code>Total Records Read</code> = sum of five <code>Imported</code> counts + <code>Unknown Record Types</code>.</td></tr>
+  <tr><td>FR-17</td><td>Fatal errors in either program are signalled by <code>&lt;PGM&gt;: ABENDING PROGRAM</code> followed by <code>CALL 'CEE3ABD'</code> (LE abend); success is a normal <code>GOBACK</code>. No step carries <code>COND=</code>; neither program accepts PARM or SYSIN.</td><td class="mono">app/cbl/CBEXPORT.cbl:158, 576-579; app/cbl/CBIMPORT.cbl:171, 481-484; app/jcl/CBEXPORT.jcl:24-43; app/jcl/CBIMPORT.jcl:22</td><td>Successful run: all steps RC 0. Failure: step ends in an abend (no return code), message pair present in SYSOUT.</td></tr>
+  <tr><td>FR-18</td><td>The transfer step uses in-stream FTP control cards: host, user id, password, <code>ASCII</code>, <code>pwd</code>, <code>dir</code>, <code>cd /ftpfolder</code>, <code>PUT '&lt;mainframe dsn&gt;' &lt;remote name&gt;</code>, <code>QUIT</code>; host/user/password are site placeholders to be edited before use. The hand-off of <code>AWS.M2.CARDDEMO.EXPORT.DATA</code> is therefore an operator/configuration concern, not program logic.</td><td class="mono">app/jcl/FTPJCL.JCL:22-29, 30-41</td><td>A migrated system exposes the transfer target (host/folder/credentials) as configuration outside the export and import components; no credential is embedded in program code.</td></tr>
+  <tr><td>FR-19</td><td>CBIMPORT requires a card output (<code>CARDOUT</code>, 150-byte <code>CVACT02Y</code> records) even though <code>CBIMPORT.jcl</code> does not define it; the program is the specification.</td><td class="mono">app/cbl/CBIMPORT.cbl:63-66, 101-104, 233-238, 402-422; app/jcl/CBIMPORT.jcl:22-65</td><td>Importing a file with <code>D</code> records produces a card output file with one 150-byte record per <code>D</code> record.</td></tr>
+  <tr><td>FR-20</td><td>Neither program mutates CardDemo master data: CBEXPORT only reads the masters; CBIMPORT only writes new flat files. Loading the import files into VSAM is left to the existing load jobs.</td><td class="mono">app/cbl/CBEXPORT.cbl:200-228; app/cbl/CBIMPORT.cbl:43-71; app/jcl/CBIMPORT.jcl:33-60</td><td>Master record counts and contents are identical before and after a full export/import cycle.</td></tr>
+  <tr><td>FR-21</td><td>The export file is a KSDS keyed on the 4-byte sequence number (<code>KEYS(4 28)</code>, 500-byte fixed records) and is written/read in ascending key order.</td><td class="mono">app/jcl/CBEXPORT.jcl:30-36; app/cbl/CBEXPORT.cbl:65-69, 89-92; app/cbl/CBIMPORT.cbl:37-41, 76-79</td><td>File length is an exact multiple of 500; records are retrievable in sequence-number order. (Key offset discrepancy: see Q-04.)</td></tr>
+</table>
+
+<h2 id="restart">6. Restart, recovery &amp; error handling</h2>
+<h3>6.1 Return-code conventions</h3>
+<table>
+  <tr><th>RC</th><th>Meaning</th><th>Downstream effect</th></tr>
+  <tr><td class="mono">0000 (CBEXPORT STEP01)</td><td>IDCAMS delete/define succeeded, or delete failed and <code>SET MAXCC = 0</code> reset it (<code>app/jcl/CBEXPORT.jcl:27-28</code>).</td><td>STEP02 runs. Note STEP02 has no <code>COND=</code>, so it also runs after a non-zero DEFINE and then fails the EXPFILE OPEN (<code>app/jcl/CBEXPORT.jcl:43</code>, <code>app/cbl/CBEXPORT.cbl:235-240</code>).</td></tr>
+  <tr><td class="mono">0000 (CBEXPORT STEP02 / CBIMPORT STEP01)</td><td>Program reached <code>GOBACK</code> after printing statistics (<code>app/cbl/CBEXPORT.cbl:157-158</code>, <code>app/cbl/CBIMPORT.cbl:170-171</code>). Neither program sets <code>RETURN-CODE</code>.</td><td>Operator may run FTPJCLS / CBIMPORT. Unknown-type records do <em>not</em> change the RC (<code>app/cbl/CBIMPORT.cbl:425-434</code>).</td></tr>
+  <tr><td class="mono">Abend (no RC)</td><td>Any OPEN/READ/WRITE failure &rarr; <code>CALL 'CEE3ABD'</code> (<code>app/cbl/CBEXPORT.cbl:576-579</code>, <code>app/cbl/CBIMPORT.cbl:481-484</code>). The abend code argument is not passed in source, so the exact user abend code is not determinable from the repo.</td><td>Job ends abnormally; downstream jobs must not be submitted. Target runtime maps this to exit code 12 (<code>BatchJobLauncher.java:45-46</code>, package <code>com.carddemo.batch</code> under <code>migration/carddemo/backend</code>).</td></tr>
+  <tr><td class="mono">FTP step RC</td><td>Set by the FTP client; not coded or tested in the JCL (<code>app/jcl/FTPJCL.JCL:30-41</code>). Not defined in repo.</td><td>Operator inspects SYSPRINT; resubmit.</td></tr>
+</table>
+<h3>6.2 Abends</h3>
+<table>
+  <tr><th>Abend</th><th>Job / Program</th><th>Meaning</th><th>Recovery</th></tr>
+  <tr><td class="mono">CEE3ABD after "Cannot open"</td><td class="mono">CBEXPORT / CBIMPORT</td><td>A DD is missing or the dataset cannot be opened (status e.g. 35). Includes CBIMPORT's <code>CARD-OUTPUT</code> when no CARDOUT DD is supplied (<code>app/cbl/CBIMPORT.cbl:233-238</code>).</td><td>Fix DD/dataset, rerun whole job (CBEXPORT from STEP01).</td></tr>
+  <tr><td class="mono">CEE3ABD after "Reading"</td><td class="mono">CBEXPORT / CBIMPORT</td><td>READ status not 00/10 on a master or the export file (<code>app/cbl/CBEXPORT.cbl:262-266</code>, <code>app/cbl/CBIMPORT.cbl:263-267</code>).</td><td>Investigate cluster integrity (VERIFY), rerun from start.</td></tr>
+  <tr><td class="mono">CEE3ABD after "Writing"</td><td class="mono">CBEXPORT / CBIMPORT</td><td>WRITE status not 00 on EXPFILE or on a CBIMPORT data output (<code>app/cbl/CBEXPORT.cbl:303-307</code>, <code>app/cbl/CBIMPORT.cbl:314-318</code>). Not raised for the error file (<code>app/cbl/CBIMPORT.cbl:441-444</code>).</td><td>Increase space (<code>CYLINDERS(10 5)</code> / <code>SPACE=(TRK,...)</code>), delete partial outputs, rerun.</td></tr>
+  <tr><td class="mono">JCL error (duplicate dataset)</td><td class="mono">CBIMPORT</td><td>Rerun without deleting the five <code>DISP=(NEW,CATLG,DELETE)</code> outputs fails at allocation (<code>app/jcl/CBIMPORT.jcl:33-60</code>); no delete step exists.</td><td>Delete <code>AWS.M2.CARDDEMO.*.IMPORT</code> / <code>IMPORT.ERRORS</code> and resubmit. See Q-11.</td></tr>
+</table>
+<h3>6.3 Restart / checkpoint semantics</h3>
+<p>Neither program has checkpoints, commit intervals or a restart key: both are single-pass, read-to-EOF programs that open their outputs with <code>OPEN OUTPUT</code> (<code>app/cbl/CBEXPORT.cbl:235</code>, <code>app/cbl/CBIMPORT.cbl:205-240</code>). Restart is always a cold rerun from the first step. For <code>CBEXPORT</code> the IDCAMS step guarantees a clean export cluster (<code>app/jcl/CBEXPORT.jcl:27-38</code>); for <code>CBIMPORT</code> the operator must first delete the catalogued outputs. There is no backout: the chain never updates a master, so nothing needs to be backed out (<code>app/cbl/CBEXPORT.cbl:200-228</code>, <code>app/cbl/CBIMPORT.cbl:43-71</code>). A re-export produces a new run timestamp and restarts the sequence at 1 (<code>app/cbl/CBEXPORT.cbl:123</code>, <code>app/cbl/CBEXPORT.cbl:172-195</code>).</p>
+
+<h2 id="nfr">7. Non-functional requirements</h2>
+<table>
+  <tr><th>ID</th><th>Category</th><th>Requirement</th></tr>
+  <tr><td>NFR-01</td><td>Volume</td><td>Sample estate: 500 export records (50 C, 50 A, 50 X, 300 T, 50 D) = 250,000 bytes (<code>app/data/EBCDIC/AWS.M2.CARDDEMO.EXPORT.DATA.PS</code>). Production volumes: Not defined in repo (Q-07).</td></tr>
+  <tr><td>NFR-02</td><td>Capacity</td><td>Export cluster allocated <code>CYLINDERS(10 5)</code>, <code>FREESPACE(10 10)</code> (<code>app/jcl/CBEXPORT.jcl:34-35</code>); import outputs <code>SPACE=(TRK,(50,25))</code>, <code>(50,25)</code>, <code>(25,10)</code>, <code>(100,50)</code>, errors <code>(10,5)</code> with <code>RLSE</code> (<code>app/jcl/CBIMPORT.jcl:36,41,46,51,59</code>).</td></tr>
+  <tr><td>NFR-03</td><td>Window</td><td>Not defined in repo; no scheduler entry, no <code>TIME=</code> on CBEXPORT/CBIMPORT. FTPJCLS has <code>TIME=1440</code>, <code>REGION=0M</code> (<code>app/jcl/FTPJCL.JCL:1-2</code>) and <code>REGION=2048K</code> on the step (<code>app/jcl/FTPJCL.JCL:30</code>).</td></tr>
+  <tr><td>NFR-04</td><td>Throughput</td><td>Single-threaded sequential pass per file, one WRITE per record, no buffering parameters beyond the cluster defaults (<code>app/cbl/CBEXPORT.cbl:149-158</code>).</td></tr>
+  <tr><td>NFR-05</td><td>Portability of the file format</td><td>The export file contains binary (<code>COMP</code>) and packed (<code>COMP-3</code>) fields (<code>app/cpy/CVEXPORT.cpy:16, 25, 41, 47, 49, 54, 65, 66, 78, 83, 84</code>); it must be transferred in binary, yet FTPJCL uses <code>ASCII</code> mode (<code>app/jcl/FTPJCL.JCL:36</code>). See Q-05.</td></tr>
+  <tr><td>NFR-06</td><td>Observability</td><td>All progress and statistics messages are <code>DISPLAY</code> to SYSOUT (<code>app/jcl/CBEXPORT.jcl:67-68</code>, <code>app/jcl/CBIMPORT.jcl:64-65</code>); counters are <code>PIC 9(9)</code>, i.e. max 999,999,999 records per type (<code>app/cbl/CBEXPORT.cbl:138-144</code>, <code>app/cbl/CBIMPORT.cbl:140-147</code>).</td></tr>
+</table>
+
+<h2 id="interfaces">8. Interfaces &amp; data layouts</h2>
+<table>
+  <tr><th>Interface</th><th>Layout (copybook)</th><th>Producer</th><th>Consumer</th></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.EXPORT.DATA (DD EXPFILE)</td><td class="mono">CVEXPORT (app/cpy/CVEXPORT.cpy:9-100), 500 bytes</td><td>CBEXPORT (<code>app/cbl/CBEXPORT.cbl:301</code>)</td><td>CBIMPORT (<code>app/cbl/CBIMPORT.cbl:261</code>); FTPJCLS after editing the PUT (<code>app/jcl/FTPJCL.JCL:40</code>)</td></tr>
+  <tr><td class="mono">CUSTFILE &rarr; CUSTOUT</td><td class="mono">CVCUS01Y (app/cpy/CVCUS01Y.cpy:4-23), 500 bytes</td><td>CUSTFILE load job (<code>app/jcl/CUSTFILE.jcl</code>) / CBIMPORT (<code>app/cbl/CBIMPORT.cbl:312</code>)</td><td>CBEXPORT (<code>app/cbl/CBEXPORT.cbl:260</code>) / downstream load</td></tr>
+  <tr><td class="mono">ACCTFILE &rarr; ACCTOUT</td><td class="mono">CVACT01Y (app/cpy/CVACT01Y.cpy:4-17), 300 bytes</td><td>ACCTFILE load job / CBIMPORT (<code>app/cbl/CBIMPORT.cbl:341</code>)</td><td>CBEXPORT (<code>app/cbl/CBEXPORT.cbl:329</code>) / downstream load</td></tr>
+  <tr><td class="mono">XREFFILE &rarr; XREFOUT</td><td class="mono">CVACT03Y (app/cpy/CVACT03Y.cpy:4-8), 50 bytes</td><td>XREFFILE load job / CBIMPORT (<code>app/cbl/CBIMPORT.cbl:361</code>)</td><td>CBEXPORT (<code>app/cbl/CBEXPORT.cbl:393</code>) / downstream load</td></tr>
+  <tr><td class="mono">TRANSACT &rarr; TRNXOUT</td><td class="mono">CVTRA05Y (app/cpy/CVTRA05Y.cpy:4-18), 350 bytes</td><td>TRANBKP/TRANFILE load / CBIMPORT (<code>app/cbl/CBIMPORT.cbl:391</code>)</td><td>CBEXPORT (<code>app/cbl/CBEXPORT.cbl:448</code>) / downstream load</td></tr>
+  <tr><td class="mono">CARDFILE &rarr; CARDOUT</td><td class="mono">CVACT02Y (app/cpy/CVACT02Y.cpy:4-11), 150 bytes</td><td>CARDFILE load job / CBIMPORT (<code>app/cbl/CBIMPORT.cbl:414</code>)</td><td>CBEXPORT (<code>app/cbl/CBEXPORT.cbl:513</code>) / downstream load</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.IMPORT.ERRORS (DD ERROUT)</td><td class="mono">WS-ERROR-RECORD (app/cbl/CBIMPORT.cbl:152-160), 132 bytes</td><td>CBIMPORT (<code>app/cbl/CBIMPORT.cbl:439</code>)</td><td>Operator / data-quality review</td></tr>
+  <tr><td class="mono">FTP SYSIN control cards</td><td class="mono">In-stream (app/jcl/FTPJCL.JCL:32-41)</td><td>Operator edits per site</td><td>z/OS FTP client</td></tr>
+  <tr><td class="mono">PARM / SYSIN</td><td class="mono">None</td><td>&mdash;</td><td>CBEXPORT and CBIMPORT take no parameters (<code>app/jcl/CBEXPORT.jcl:43</code>, <code>app/jcl/CBIMPORT.jcl:22</code>).</td></tr>
+</table>
+<h3>8.1 Export record layout (CVEXPORT, 0-based offsets)</h3>
+<table>
+  <tr><th>Offset</th><th>Len</th><th>Field</th><th>PIC / storage</th><th>Source</th></tr>
+  <tr><td class="mono">0</td><td class="mono">1</td><td class="mono">EXPORT-REC-TYPE</td><td class="mono">X(1): C / A / X / T / D</td><td class="mono">app/cpy/CVEXPORT.cpy:10</td></tr>
+  <tr><td class="mono">1</td><td class="mono">26</td><td class="mono">EXPORT-TIMESTAMP</td><td class="mono">X(26) (REDEFINES: date X(10), sep X(1), time X(15))</td><td class="mono">app/cpy/CVEXPORT.cpy:11-15</td></tr>
+  <tr><td class="mono">27</td><td class="mono">4</td><td class="mono">EXPORT-SEQUENCE-NUM</td><td class="mono">9(9) COMP (big-endian binary)</td><td class="mono">app/cpy/CVEXPORT.cpy:16</td></tr>
+  <tr><td class="mono">31</td><td class="mono">4</td><td class="mono">EXPORT-BRANCH-ID</td><td class="mono">X(4) = '0001'</td><td class="mono">app/cpy/CVEXPORT.cpy:17</td></tr>
+  <tr><td class="mono">35</td><td class="mono">5</td><td class="mono">EXPORT-REGION-CODE</td><td class="mono">X(5) = 'NORTH'</td><td class="mono">app/cpy/CVEXPORT.cpy:18</td></tr>
+  <tr><td class="mono">40</td><td class="mono">460</td><td class="mono">EXPORT-RECORD-DATA</td><td class="mono">X(460), redefined per type below</td><td class="mono">app/cpy/CVEXPORT.cpy:19</td></tr>
+  <tr><td class="mono">40</td><td class="mono">460</td><td class="mono">C: EXPORT-CUSTOMER-DATA</td><td class="mono">CUST-ID 9(9) COMP; names 3&times;X(25); ADDR-LINE X(50)&times;3; STATE X(2); COUNTRY X(3); ZIP X(10); PHONE X(15)&times;2; SSN 9(9); GOVT-ID X(20); DOB X(10); EFT-ACCT X(10); PRI-HOLDER X(1); FICO 9(3) COMP-3; FILLER X(134)</td><td class="mono">app/cpy/CVEXPORT.cpy:24-42</td></tr>
+  <tr><td class="mono">40</td><td class="mono">460</td><td class="mono">A: EXPORT-ACCOUNT-DATA</td><td class="mono">ACCT-ID 9(11); STATUS X(1); CURR-BAL S9(10)V99 COMP-3; CREDIT-LIMIT S9(10)V99; CASH-CREDIT-LIMIT S9(10)V99 COMP-3; OPEN/EXPIRY/REISSUE X(10)&times;3; CYC-CREDIT S9(10)V99; CYC-DEBIT S9(10)V99 COMP; ZIP X(10); GROUP-ID X(10); FILLER X(352)</td><td class="mono">app/cpy/CVEXPORT.cpy:47-60</td></tr>
+  <tr><td class="mono">40</td><td class="mono">460</td><td class="mono">T: EXPORT-TRANSACTION-DATA</td><td class="mono">TRAN-ID X(16); TYPE-CD X(2); CAT-CD 9(4); SOURCE X(10); DESC X(100); AMT S9(9)V99 COMP-3; MERCHANT-ID 9(9) COMP; MERCHANT-NAME X(50); CITY X(50); ZIP X(10); CARD-NUM X(16); ORIG-TS X(26); PROC-TS X(26); FILLER X(140)</td><td class="mono">app/cpy/CVEXPORT.cpy:65-79</td></tr>
+  <tr><td class="mono">40</td><td class="mono">460</td><td class="mono">X: EXPORT-CARD-XREF-DATA</td><td class="mono">CARD-NUM X(16); CUST-ID 9(9); ACCT-ID 9(11) COMP; FILLER X(427)</td><td class="mono">app/cpy/CVEXPORT.cpy:84-88</td></tr>
+  <tr><td class="mono">40</td><td class="mono">460</td><td class="mono">D: EXPORT-CARD-DATA</td><td class="mono">CARD-NUM X(16); ACCT-ID 9(11) COMP; CVV-CD 9(3) COMP; EMBOSSED-NAME X(50); EXPIRY X(10); STATUS X(1); FILLER X(373)</td><td class="mono">app/cpy/CVEXPORT.cpy:93-100</td></tr>
+</table>
+
+<h2 id="security">9. Security &amp; access</h2>
+<table>
+  <tr><th>Item</th><th>Value</th></tr>
+  <tr><td>Job owner / RACF identity</td><td class="mono">Not defined in repo &mdash; JOB cards specify <code>NOTIFY=&amp;SYSUID</code> and no <code>USER=</code> (<code>app/jcl/CBEXPORT.jcl:1-2</code>, <code>app/jcl/FTPJCL.JCL:1-2</code>, <code>app/jcl/CBIMPORT.jcl:1-2</code>); no scheduler owner exists for these jobs (Q-07).</td></tr>
+  <tr><td>Sensitive data handled</td><td>Full PII and card data in clear: customer SSN, government-issued id, date of birth, phone numbers and addresses (<code>app/cpy/CVEXPORT.cpy:25-42</code>); full PAN and CVV (<code>app/cpy/CVEXPORT.cpy:65-76</code>, <code>app/cpy/CVEXPORT.cpy:93-96</code>); account balances and credit limits (<code>app/cpy/CVEXPORT.cpy:47-60</code>). The export file is the whole estate, not one branch (FR-03, FR-07).</td></tr>
+  <tr><td>Transfer credentials</td><td>FTPJCL carries the FTP host, user id (<code>carddemousr</code>) and a clear-text password literal as in-stream SYSIN cards (<code>app/jcl/FTPJCL.JCL:33-35</code>); the header marks them as site placeholders (<code>app/jcl/FTPJCL.JCL:23-25</code>). No production credential or RACF profile is held in the repo. Transfer is plain FTP in ASCII mode, not FTPS/SFTP (<code>app/jcl/FTPJCL.JCL:30</code>, <code>app/jcl/FTPJCL.JCL:36</code>).</td></tr>
+  <tr><td>Regulatory obligations</td><td>Not defined in repo. PAN + CVV in a transferable flat file would ordinarily fall under PCI-DSS scope; raised as Q-13.</td></tr>
+</table>
+
+<h2 id="target">10. Target-state mapping</h2>
+<p>Target paths below are relative to <code>migration/carddemo/backend/src/main/java/com/carddemo/batch/exportimport/</code> (main) and <code>migration/carddemo/backend/src/test/java/com/carddemo/batch/exportimport/</code> (tests) unless given in full. No Flyway migration or React screen belongs to this stream.</p>
+<table>
+  <tr><th>Legacy asset</th><th>Disposition</th><th>Target component</th><th>Test evidence</th></tr>
+  <tr><td class="mono">app/jcl/CBEXPORT.jcl (job CBEXPORT)</td><td>Rewrite</td><td>Spring Batch job <code>"CBEXPORT"</code> &mdash; <code>ExportJob<wbr>Configuration.java:115-154</code> (steps <code>STEP01</code> = clear export file + capture run timestamp, <code>STEP02</code> = export). Evidence: <code>rerunning<wbr>Cbexport<wbr>Replaces<wbr>The<wbr>File<wbr>Rather<wbr>Than<wbr>Appending<wbr>To<wbr>It</code>.</td><td class="mono">ExportImportJobIntegration<wbr>Test.java:108</td></tr>
+  <tr><td class="mono">app/cbl/CBEXPORT.cbl</td><td>Rewrite</td><td><code>ExportSourceItemReader</code>, <code>ExportRecordCodec</code>, <code>ExportFileItemWriter</code>, <code>ExportStatistics</code>; masters read from the shared JPA tables in legacy key order.</td><td class="mono">ExportImportJobIntegration<wbr>Test.java:69, 90, 182;<br>ExportRecordCodec<wbr>Test.java:24-126</td></tr>
+  <tr><td class="mono">app/jcl/CBIMPORT.jcl (job CBIMPORT)</td><td>Rewrite</td><td>Spring Batch job <code>"CBIMPORT"</code> &mdash; <code>ImportJob<wbr>Configuration.java:70-90</code> (step <code>STEP01</code>); writes all six outputs including the card file the JCL lacked. Evidence: <code>cbimport<wbr>Splits<wbr>The<wbr>Export<wbr>File<wbr>Into<wbr>Its<wbr>Six<wbr>Normalised<wbr>Files</code>, <code>cbimport<wbr>Abends<wbr>When<wbr>The<wbr>Export<wbr>File<wbr>Is<wbr>Missing</code>.</td><td class="mono">ExportImportJobIntegration<wbr>Test.java:118, 201</td></tr>
+  <tr><td class="mono">app/cbl/CBIMPORT.cbl</td><td>Rewrite</td><td><code>ExportFileItemReader</code>, <code>ImportRecordCodec</code>, <code>ImportOutputItemWriter</code>, <code>ImportErrorRecord</code>, <code>ImportStatistics</code> (same package).</td><td class="mono">ExportImportJobIntegration<wbr>Test.java:142, 159;<br>ImportRecordCodec<wbr>Test.java:17-82;<br>ImportErrorRecord<wbr>Test.java:21-46;<br>ExportImportStatistics<wbr>Test.java:51</td></tr>
+  <tr><td class="mono">app/cpy/CVEXPORT.cpy (COMP / COMP-3 / DISPLAY encodings)</td><td>Rewrite (byte-identical)</td><td><code>MainframeFieldCodec</code>, <code>MainframeTimestamps</code>, <code>com.carddemo.common.batch.<wbr>FixedWidthRecord</code>.</td><td class="mono">MainframeFieldCodec<wbr>Test.java:23-135;<br>ExportRecordCodec<wbr>Test.java:76-126</td></tr>
+  <tr><td class="mono">CALL 'CEE3ABD' / abend convention</td><td>Rewrite</td><td><code>com.carddemo.common.batch.<wbr>AbendService</code>, <code>ExportImportSysout</code>; launcher exit code 12 (<code>com.carddemo.batch.<wbr>BatchJobLauncher.java:45-46</code>).</td><td class="mono">ExportImportSysout<wbr>Test.java:46-99;<br>ExportImportJobIntegration<wbr>Test.java:201</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.EXPORT.DATA + *.IMPORT datasets</td><td>Rewrite</td><td>Files under <code>carddemo.batch.export-import-dir</code> (default <code>./data/exportimport</code>; <code>migration/carddemo/backend/</code> <code>src/main/resources/application.yml:54</code>).</td><td class="mono">ExportImportJobIntegration<wbr>Test.java:69, 118</td></tr>
+  <tr><td class="mono">app/jcl/FTPJCL.JCL (job FTPJCLS)</td><td>Retire (transport deferred)</td><td>Not migrated: the hand-off medium (object store vs shared filesystem) is a deployment decision; no component on <code>devin/carddemo-integration</code> performs a transfer.</td><td class="mono">Not yet migrated</td></tr>
+  <tr><td class="mono">VSAM masters CUSTDATA / ACCTDATA / CARDXREF / TRANSACT / CARDDATA</td><td>Rewrite (shared)</td><td>Tables created by Flyway <code>V1__baseline_carddemo_estate.sql</code> (<code>migration/carddemo/backend/</code> <code>src/main/resources/db/migration/</code>); this stream adds no Flyway migration and no React screen.</td><td class="mono">Owning streams (read-only here)</td></tr>
+</table>
+
+<h2 id="open">11. Assumptions, technical debt &amp; open questions</h2>
+<table>
+  <tr><th>ID</th><th>Type</th><th>Description</th><th>Owner</th><th>Status</th></tr>
+  <tr><td>Q-01</td><td>Assumption</td><td>The chain is manual. No CA-7 or Control-M definition exists for CBEXPORT, CBIMPORT or FTPJCLS (<code>app/scheduler/CardDemo.ca7</code>, <code>app/scheduler/CardDemo.controlm</code>) and the README run-book omits them (<code>README.md:207-230</code>); the order CBEXPORT &rarr; FTPJCL &rarr; CBIMPORT is taken from the data dependency and operator convention. Confirm whether a production scheduler entry exists elsewhere.</td><td>Batch operations</td><td>Open</td></tr>
+  <tr><td>Q-02</td><td>Debt</td><td>Estate gotcha: the two scheduler sources disagree on the daily network that shares these masters. CA-7 SCHID=030: CLOSEFIL &rarr; CBPAUP0J &rarr; POSTTRAN &rarr; WAITSTEP &rarr; OPENFIL, no TRANBKP (<code>app/scheduler/CardDemo.ca7:43-124</code>); Control-M DAILY-TransactionBackup: CLOSEFIL &rarr; TRANBKP &rarr; WAITSTEP &rarr; OPENFIL, no POSTTRAN (<code>app/scheduler/CardDemo.controlm:3-50</code>). No single combined daily chain is asserted in this document. CA-7 also names CLOSEFIL1/CLOSEFIL2 (<code>app/scheduler/CardDemo.ca7:216-217</code>) that have no member in <code>app/jcl</code>; this chain does not reference them.</td><td>Scheduling / migration architect</td><td>Open</td></tr>
+  <tr><td>Q-03</td><td>Debt</td><td><code>CBIMPORT.jcl</code> has no <code>CARDOUT</code> DD while the program SELECTs and OPENs <code>CARD-OUTPUT</code> (<code>app/cbl/CBIMPORT.cbl:63-66</code>, <code>app/cbl/CBIMPORT.cbl:233-238</code>; <code>app/jcl/CBIMPORT.jcl:22-65</code>). As shipped the legacy job abends at OPEN. The target writes the card file (program taken as the specification). Confirm intended DSN.</td><td>Application owner</td><td>Open</td></tr>
+  <tr><td>Q-04</td><td>Debt</td><td>IDCAMS <code>KEYS(4 28)</code> (<code>app/jcl/CBEXPORT.jcl:32</code>) places the key at offset 28, but <code>EXPORT-SEQUENCE-NUM</code> starts at offset 27 in <code>CVEXPORT</code> (1 + 26 bytes; <code>app/cpy/CVEXPORT.cpy:10-16</code>). Off-by-one between cluster definition and record layout; harmless for the sequential program but wrong for keyed access.</td><td>Application owner</td><td>Open</td></tr>
+  <tr><td>Q-05</td><td>Question</td><td>FTPJCL as shipped does not transfer the export file: it <code>PUT</code>s <code>'AWS.M2.CARDEMO.FTP.TEST'</code> as <code>welcome.txt</code> (<code>app/jcl/FTPJCL.JCL:40</code>, note the <code>CARDEMO</code> spelling), in <code>ASCII</code> mode (<code>app/jcl/FTPJCL.JCL:36</code>) which would corrupt the <code>COMP</code>/<code>COMP-3</code> fields of the export record, and its header comments describe both send and receive use (<code>app/jcl/FTPJCL.JCL:22-29</code>). Credentials are clear-text in-stream (<code>app/jcl/FTPJCL.JCL:33-35</code>). Confirm the real transport (direction, mode, mechanism) for the target.</td><td>Integration architect</td><td>Open</td></tr>
+  <tr><td>Q-06</td><td>Question</td><td>CBEXPORT reads the masters with <code>DISP=SHR</code> (<code>app/jcl/CBEXPORT.jcl:49-58</code>) while CICS has them open (<code>app/csd/CARDDEMO.CSD:1-77</code>). CLOSEFIL closes only TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC (<code>app/jcl/CLOSEFIL.jcl:26-30</code>) &mdash; not CUSTDAT or CARDDAT. The repo does not state whether the export must run inside a CLOSEFIL/OPENFIL window; a point-in-time-consistent snapshot is not guaranteed otherwise.</td><td>Batch operations</td><td>Open</td></tr>
+  <tr><td>Q-07</td><td>Question</td><td>Run window, owner/RACF identity, criticality and production volumes are not defined in the repo (no scheduler entry; JOB cards carry only <code>NOTIFY=&amp;SYSUID</code>).</td><td>Batch operations</td><td>Open</td></tr>
+  <tr><td>Q-08</td><td>Question</td><td>The sample export unload <code>app/data/EBCDIC/AWS.M2.CARDDEMO.EXPORT.DATA.PS</code> carries timestamps of the form <code>2025-09-28 22:53:40.000000</code> (26 chars), whereas the program writes <code>YYYY-MM-DD HH:MM:SS.00</code> plus four spaces (<code>app/cbl/CBEXPORT.cbl:190-194</code>). The sample was produced by a different build; which format is the contract?</td><td>Application owner</td><td>Open</td></tr>
+  <tr><td>Q-09</td><td>Debt</td><td>Branch id <code>'0001'</code> and region <code>'NORTH'</code> are literals (<code>app/cbl/CBEXPORT.cbl:278-279</code>) and the whole estate is exported, despite the "branch migration" purpose (<code>app/cbl/CBEXPORT.cbl:8</code>). Preserved as-is; a real per-branch selection would be new scope.</td><td>Product owner</td><td>Open</td></tr>
+  <tr><td>Q-10</td><td>Debt</td><td>The header promises "validate data integrity using checksums" (<code>app/cbl/CBIMPORT.cbl:31</code>) but <code>3000-VALIDATE-IMPORT</code> only prints two success lines (<code>app/cbl/CBIMPORT.cbl:449-452</code>); there is no duplicate-key or referential check. Preserved as-is (FR-13).</td><td>Application owner</td><td>Open</td></tr>
+  <tr><td>Q-11</td><td>Debt</td><td>CBIMPORT outputs are <code>DISP=(NEW,CATLG,DELETE)</code> with no preceding delete step (<code>app/jcl/CBIMPORT.jcl:33-60</code>), so a rerun fails at allocation until the operator deletes the previous outputs.</td><td>Batch operations</td><td>Open</td></tr>
+  <tr><td>Q-12</td><td>Debt</td><td>Error-line quirks preserved: timestamp is the raw 21-character <code>FUNCTION CURRENT-DATE</code> in a 26-byte field (<code>app/cbl/CBIMPORT.cbl:429</code>), the sequence is truncated to 7 digits (<code>app/cbl/CBIMPORT.cbl:157</code>), and <code>WS-IMPORT-DATE</code>/<code>WS-IMPORT-TIME</code> are built but never written to the file (<code>app/cbl/CBIMPORT.cbl:178-188</code>).</td><td>Application owner</td><td>Open</td></tr>
+  <tr><td>Q-13</td><td>Question</td><td>Full PAN, CVV, SSN and DOB leave the system in one clear-text file (<code>app/cpy/CVEXPORT.cpy:24-100</code>). Regulatory handling (PCI-DSS, data residency) is not defined in the repo and the target leaves the transfer mechanism (object store vs shared filesystem) undecided.</td><td>Security / compliance</td><td>Open</td></tr>
+</table>
+
+<footer>
+  <div class="legal">
+    Functional Requirement Document &mdash; aws-mainframe-modernization-carddemo.<br>
+    Classification: INTERNAL. &copy; HSBC Holdings plc. For internal use only.
+  </div>
+  <div class="brand">
+    <svg viewBox="0 0 400 200" role="img" aria-label="HSBC">
+      <polygon points="0,100 100,0 100,200" fill="#db0011"/>
+      <polygon points="400,100 300,0 300,200" fill="#db0011"/>
+      <polygon points="100,0 300,0 200,100" fill="#db0011"/>
+      <polygon points="100,200 300,200 200,100" fill="#db0011"/>
+      <polygon points="100,0 200,100 100,200" fill="#ffffff"/>
+      <polygon points="300,0 200,100 300,200" fill="#ffffff"/>
+    </svg>
+    <span class="wordmark">HSBC</span>
+  </div>
+</footer>
+
+</div>
+</body>
+</html>
