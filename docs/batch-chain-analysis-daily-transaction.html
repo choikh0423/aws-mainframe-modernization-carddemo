@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CardDemo — Daily Transaction Batch Chain Analysis</title>
+<style>
+  :root {
+    --ink: #1f2933; --muted: #52606d; --line: #d9e2ec; --bg: #f7f9fb; --card: #fff;
+    --blue: #1f6feb; --blue-bg: #e8f1ff; --green: #1a7f37; --green-bg: #e6f4ea;
+    --amber: #9a6700; --amber-bg: #fff4d6; --red: #b42318; --red-bg: #fdecea;
+    --violet: #6e40c9; --violet-bg: #f1ebff; --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.55 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink); background: var(--bg); }
+  header { background: #102a43; color: #fff; padding: 28px 40px 22px; }
+  header h1 { margin: 0 0 6px; font-size: 24px; }
+  header p { margin: 0; color: #bcccdc; }
+  nav { background: #fff; border-bottom: 1px solid var(--line); padding: 10px 40px; position: sticky; top: 0; z-index: 2; }
+  nav a { color: var(--blue); text-decoration: none; margin-right: 18px; font-size: 14px; white-space: nowrap; }
+  main { max-width: 1180px; margin: 0 auto; padding: 24px 40px 60px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 22px 26px; margin-bottom: 22px; }
+  h2 { margin: 0 0 14px; font-size: 20px; border-bottom: 2px solid var(--line); padding-bottom: 6px; }
+  h3 { margin: 22px 0 8px; font-size: 16px; }
+  code, .mono { font-family: var(--mono); font-size: 12.5px; background: #f0f4f8; padding: 1px 5px; border-radius: 3px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 4px; font-size: 13.5px; }
+  th, td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+  th { background: #f0f4f8; font-weight: 600; }
+  table.kv th { width: 200px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+
+  /* flow diagram */
+  .flow { display: flex; flex-wrap: nowrap; align-items: stretch; gap: 0; margin: 14px 0 6px; overflow-x: auto; }
+  .node { border: 2px solid var(--blue); background: var(--blue-bg); border-radius: 8px; padding: 10px 8px; flex: 1 1 0; min-width: 112px; text-align: center; }
+  .node b { display: block; font-family: var(--mono); font-size: 14px; }
+  .node span { display: block; font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+  .node.cics { border-color: var(--violet); background: var(--violet-bg); }
+  .node.ims { border-color: var(--amber); background: var(--amber-bg); }
+  .node.vsam { border-color: var(--green); background: var(--green-bg); }
+  .node.wait { border-color: #7b8794; background: #f0f4f8; }
+  .node.ghost { border-style: dashed; opacity: .9; }
+  .arrow { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 0 6px; color: var(--muted); font-size: 11px; flex: 0 0 40px; }
+  .arrow::after { content: "\2192"; font-size: 22px; line-height: 1; color: #7b8794; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12.5px; color: var(--muted); margin-top: 8px; }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; border: 2px solid; }
+  .src-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px; }
+  .src { border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; background: #fbfcfd; }
+  .src h4 { margin: 0 0 6px; font-size: 14px; }
+  .src .flow .node { min-width: 0; padding: 6px 4px; }
+  .src .flow .node b { font-size: 11.5px; }
+  .src .flow .arrow { flex: 0 0 22px; padding: 0; }
+  .src .flow .arrow::after { font-size: 16px; }
+
+  /* callouts */
+  .callout { border-left: 5px solid var(--blue); background: var(--blue-bg); border-radius: 6px; padding: 12px 16px; margin: 12px 0; }
+  .callout h4 { margin: 0 0 6px; font-size: 15px; }
+  .callout p, .callout ul { margin: 6px 0; }
+  .callout ul { padding-left: 20px; }
+  .callout.warn { border-color: var(--amber); background: var(--amber-bg); }
+  .callout.risk { border-color: var(--red); background: var(--red-bg); }
+  .callout.ok { border-color: var(--green); background: var(--green-bg); }
+  .callout.ims { border-color: var(--violet); background: var(--violet-bg); }
+  .tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 10px; margin-right: 4px; white-space: nowrap; }
+  .t-cics { background: var(--violet-bg); color: var(--violet); }
+  .t-ims { background: var(--amber-bg); color: var(--amber); }
+  .t-vsam { background: var(--green-bg); color: var(--green); }
+  .t-gdg { background: var(--blue-bg); color: var(--blue); }
+  .t-seq { background: #f0f4f8; color: var(--muted); }
+  .t-util { background: #f0f4f8; color: #334e68; }
+  .t-cobol { background: #e3f8ff; color: #035388; }
+  .t-asm { background: #ffe3ec; color: #a30f45; }
+  .t-lib { background: #fffbea; color: #8d6b00; }
+  .jobhead { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .jobhead .seq { font-family: var(--mono); color: var(--muted); }
+  pre { font-family: var(--mono); font-size: 12px; background: #102a43; color: #d9e2ec; padding: 10px 12px; border-radius: 6px; overflow-x: auto; margin: 8px 0; }
+  footer { text-align: center; color: var(--muted); font-size: 12.5px; padding: 10px 0 30px; }
+  @media (max-width: 860px) { main, header, nav { padding-left: 16px; padding-right: 16px; } .src-grid { grid-template-columns: 1fr; } }
+  @media print { nav { display: none; } section { break-inside: avoid; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>CardDemo — Daily Transaction Batch Chain</h1>
+  <p>Migration-planning analysis of <span class="mono" style="background:#243b53;color:#fff">CLOSEFIL → TRANBKP → CBPAUP0J → POSTTRAN → WAITSTEP → OPENFIL</span>. Every fact below is cited to a file and line in this repository.</p>
+</header>
+
+<nav>
+  <a href="#overview">1. Chain overview</a>
+  <a href="#jobs">2. Per-job detail</a>
+  <a href="#modules">3. Module dependencies</a>
+  <a href="#datasets">4. Dataset / DB dependencies</a>
+  <a href="#migration">5. Migration considerations</a>
+  <a href="#sources">Sources</a>
+</nav>
+
+<main>
+
+<!-- ================================================================ 1 -->
+<section id="overview">
+  <h2>1. Chain overview</h2>
+
+  <p>Planning view of the daily transaction cycle (CA-7 schedule ID <b>SCHID=030</b>). The online CICS region is quiesced, the transaction master is backed up and re-created empty, expired IMS pending authorizations are purged, the day's transactions are posted, and the online files are reopened.</p>
+
+  <div class="flow" role="img" aria-label="CLOSEFIL to TRANBKP to CBPAUP0J to POSTTRAN to WAITSTEP to OPENFIL">
+    <div class="node cics"><b>CLOSEFIL</b><span>SDSF → CEMT CLO<br>region CICSAWSA</span></div>
+    <div class="arrow">ctm</div>
+    <div class="node vsam ghost"><b>TRANBKP</b><span>REPROC backup<br>IDCAMS DELETE/DEFINE</span></div>
+    <div class="arrow">030</div>
+    <div class="node ims"><b>CBPAUP0J</b><span>IMS BMP DFSRRC00<br>CBPAUP0C / PSBPAUTB</span></div>
+    <div class="arrow">030</div>
+    <div class="node vsam"><b>POSTTRAN</b><span>COBOL CBTRN02C<br>post DALYTRAN</span></div>
+    <div class="arrow">030</div>
+    <div class="node wait"><b>WAITSTEP</b><span>COBSWAIT → MVSWAIT<br>36 s</span></div>
+    <div class="arrow">030</div>
+    <div class="node cics"><b>OPENFIL</b><span>SDSF → CEMT OPE<br>region CICSAWSA</span></div>
+  </div>
+  <div class="legend">
+    <span><i style="border-color:var(--violet);background:var(--violet-bg)"></i>CICS region coupling</span>
+    <span><i style="border-color:var(--green);background:var(--green-bg)"></i>VSAM batch</span>
+    <span><i style="border-color:var(--amber);background:var(--amber-bg)"></i>IMS BMP</span>
+    <span><i style="border-color:#7b8794;background:#f0f4f8"></i>Utility / delay</span>
+    <span><i style="border-color:var(--green);border-style:dashed"></i>Placed by Control-M only (not in the CA-7 SCHID=030 network)</span>
+    <span>Arrow label: <b>030</b> = CA-7 trigger with SCHID=030, <b>ctm</b> = Control-M INCOND/OUTCOND</span>
+  </div>
+
+  <h3>Fallback: sequence table</h3>
+  <table>
+    <thead><tr><th>#</th><th>Job</th><th>Successor</th><th>CA-7 evidence (<code>app/scheduler/CardDemo.ca7</code>)</th><th>Control-M evidence (<code>app/scheduler/CardDemo.controlm</code>, folder <code>DAILY-TransactionBackup</code>)</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><code>CLOSEFIL</code></td><td><code>TRANBKP</code> (Control-M) / <code>CBPAUP0J</code> (CA-7)</td><td>L18–43: <code>JOB=CBPAUP0J SCHID=030</code></td><td>OUTCOND <code>DAILY-TransactionBackup-CLOSEFIL</code> (+)</td></tr>
+      <tr><td>2</td><td><code>TRANBKP</code></td><td><code>CBPAUP0J</code> (planning) / <code>WAITSTEP</code> (Control-M)</td><td><em>Not defined in CardDemo.ca7</em></td><td>INCOND <code>…-CLOSEFIL</code>; OUTCOND <code>…-TRANBKP</code> (+), <code>…-CLOSEFIL</code> (−)</td></tr>
+      <tr><td>3</td><td><code>CBPAUP0J</code></td><td><code>POSTTRAN</code></td><td>L45–70: <code>JOB=POSTTRAN SCHID=030</code></td><td><em>Not in any Control-M folder</em></td></tr>
+      <tr><td>4</td><td><code>POSTTRAN</code></td><td><code>WAITSTEP</code></td><td>L72–97: <code>JOB=WAITSTEP SCHID=030</code></td><td><em>Not in any Control-M folder</em></td></tr>
+      <tr><td>5</td><td><code>WAITSTEP</code></td><td><code>OPENFIL</code></td><td>L99–124: <code>JOB=OPENFIL SCHID=030</code></td><td>INCOND <code>…-TRANBKP</code>; OUTCOND <code>…-WAITSTEP</code> (+)</td></tr>
+      <tr><td>6</td><td><code>OPENFIL</code></td><td>— (end of chain)</td><td>L126–138: <code>N -- COMP TRIGGERS OTHER JOBS</code></td><td>INCOND <code>…-WAITSTEP</code>; OUTCOND <code>…-WAITSTEP</code> (−)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <h4>Sources of truth for trigger order — and where they disagree</h4>
+    <p><code>app/scheduler/CardDemo.ca7</code> and <code>app/scheduler/CardDemo.controlm</code> (folder <code>DAILY-TransactionBackup</code>) are the authoritative trigger definitions. Neither one alone contains the six-job chain above:</p>
+    <div class="src-grid">
+      <div class="src">
+        <h4>CA-7, SCHID=030 (CardDemo.ca7 L18–138)</h4>
+        <div class="flow">
+          <div class="node cics"><b>CLOSEFIL</b></div><div class="arrow"></div>
+          <div class="node ims"><b>CBPAUP0J</b></div><div class="arrow"></div>
+          <div class="node vsam"><b>POSTTRAN</b></div><div class="arrow"></div>
+          <div class="node wait"><b>WAITSTEP</b></div><div class="arrow"></div>
+          <div class="node cics"><b>OPENFIL</b></div>
+        </div>
+      </div>
+      <div class="src">
+        <h4>Control-M, DAILY-TransactionBackup (CardDemo.controlm L3–25)</h4>
+        <div class="flow">
+          <div class="node cics"><b>CLOSEFIL</b></div><div class="arrow"></div>
+          <div class="node vsam"><b>TRANBKP</b></div><div class="arrow"></div>
+          <div class="node wait"><b>WAITSTEP</b></div><div class="arrow"></div>
+          <div class="node cics"><b>OPENFIL</b></div>
+        </div>
+      </div>
+    </div>
+    <ul>
+      <li>The planning chain is the <b>union</b> of the two. TRANBKP's placement between CLOSEFIL and CBPAUP0J is an inference, not a scheduler record. It is a hard data dependency, though: CBTRN02C opens TRANSACT <code>OUTPUT</code> (<code>CBTRN02C.cbl</code> L256), which needs the empty cluster that TRANBKP's STEP10 re-defines. TRANBKP therefore has to finish before POSTTRAN.</li>
+      <li>CA-7 also has a second SCHID=030 occurrence of CLOSEFIL (L159–162) that triggers <code>TRANTYPE → WAITSTEP → CLOSEFIL1/CLOSEFIL2</code> (SCHIDs 031/032). That is the reference-data reload network and is out of scope here, but it re-uses the same CLOSEFIL/WAITSTEP JCL members.</li>
+      <li>All CA-7 job definitions in the chain show <code>JCLLIB=&amp;CARDDEMOPRODJCL</code>, <code>QTM=0100</code>, <code>LEADTM=0000</code>, <code>Y -- JOB MARKED AS MAINT ONLY</code>.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================================================================ 2 -->
+<section id="jobs">
+  <h2>2. Per-job detail</h2>
+
+  <div class="jobhead"><h3>CLOSEFIL</h3><span class="seq">step 1 of 6</span><span class="tag t-cics">CICS</span></div>
+  <table class="kv">
+    <tr><th>JCL member</th><td><code>app/jcl/CLOSEFIL.jcl</code></td></tr>
+    <tr><th>Steps / programs</th><td><code>CLCIFIL EXEC PGM=SDSF</code> (L22). <code>ISFIN</code> in-stream issues five MVS MODIFY commands (L26–30):<pre> /F CICSAWSA,'CEMT SET FIL(TRANSACT ) CLO'
+ /F CICSAWSA,'CEMT SET FIL(CCXREF ) CLO'
+ /F CICSAWSA,'CEMT SET FIL(ACCTDAT ) CLO'
+ /F CICSAWSA,'CEMT SET FIL(CXACAIX ) CLO'
+ /F CICSAWSA,'CEMT SET FIL(USRSEC ) CLO'</pre></td></tr>
+    <tr><th>Purpose</th><td>Close the CardDemo VSAM files in CICS region <code>CICSAWSA</code> so batch can take exclusive control of them. No STEPLIB, no datasets of its own.</td></tr>
+    <tr><th>CA-7 trigger successor</th><td><code>CBPAUP0J</code> (SCHID=030, CardDemo.ca7 L43). Control-M successor: <code>TRANBKP</code>.</td></tr>
+  </table>
+
+  <div class="jobhead"><h3>TRANBKP</h3><span class="seq">step 2 of 6</span><span class="tag t-vsam">VSAM</span><span class="tag t-gdg">GDG</span></div>
+  <table class="kv">
+    <tr><th>JCL member</th><td><code>app/jcl/TRANBKP.jcl</code></td></tr>
+    <tr><th>Steps / programs</th><td>
+      <code>JOBLIB JCLLIB ORDER=('AWS.M2.CARDDEMO.PROC')</code> (L19)<br>
+      <b>STEP05R</b> <code>EXEC PROC=REPROC,CNTLLIB=AWS.M2.CARDDEMO.CNTL</code> (L23) → proc <code>app/proc/REPROC.prc</code>: <code>PRC001 EXEC PGM=IDCAMS</code>, SYSIN <code>&amp;CNTLLIB(REPROCT)</code> = <code>app/ctl/REPROCT.ctl</code>: <code>REPRO INFILE(FILEIN) OUTFILE(FILEOUT)</code>. FILEIN = TRANSACT KSDS, FILEOUT = <code>TRANSACT.BKUP(+1)</code> (LRECL=350, FB).<br>
+      <b>STEP05</b> <code>EXEC PGM=IDCAMS</code> (L37): <code>DELETE …TRANSACT.VSAM.KSDS CLUSTER</code> and <code>DELETE …TRANSACT.VSAM.AIX ALTERNATEINDEX</code>, each followed by <code>IF MAXCC LE 08 THEN SET MAXCC = 0</code>.<br>
+      <b>STEP10</b> <code>EXEC PGM=IDCAMS,COND=(4,LT)</code> (L51): <code>DEFINE CLUSTER</code> TRANSACT KSDS, <code>KEYS(16 0)</code>, <code>RECORDSIZE(350 350)</code>, <code>SHAREOPTIONS(2 3)</code>, <code>ERASE</code>, <code>INDEXED</code>.
+    </td></tr>
+    <tr><th>Purpose</th><td>Back the transaction master up to a new GDG generation, then delete and re-create it <b>empty</b> for the day's posting.</td></tr>
+    <tr><th>CA-7 trigger successor</th><td><em>None. TRANBKP is not defined in CardDemo.ca7.</em> Control-M successor: <code>WAITSTEP</code> (OUTCOND <code>DAILY-TransactionBackup-TRANBKP</code>). Planning successor: <code>CBPAUP0J</code>.</td></tr>
+  </table>
+  <div class="callout risk small">
+    <b>As coded:</b> STEP05 has no <code>COND</code>, so the DELETE runs even if the STEP05R backup REPRO fails. STEP05 also deletes the TRANSACT AIX, and nothing in this chain re-defines it. That is done by <code>app/jcl/TRANIDX.jcl</code> (<code>DEFINE ALTERNATEINDEX … KEYS(26 304)</code>, <code>DEFINE PATH</code>, <code>BLDINDEX</code>).
+  </div>
+
+  <div class="jobhead"><h3>CBPAUP0J</h3><span class="seq">step 3 of 6</span><span class="tag t-ims">IMS BMP</span></div>
+  <table class="kv">
+    <tr><th>JCL member</th><td><code>app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl</code></td></tr>
+    <tr><th>Steps / programs</th><td>
+      <b>STEP01</b> <code>EXEC PGM=DFSRRC00,PARM='BMP,CBPAUP0C,PSBPAUTB'</code> (L24–25)<br>
+      STEPLIB <code>IMS.SDFSRESL</code> + <code>XXXXXXXX.PROD.LOADLIB</code> (L26–27, placeholder HLQ, <b>not</b> <code>AWS.M2.CARDDEMO.LOADLIB</code>); <code>DFSRESLB</code>/<code>DFSSEL</code> = <code>IMS.SDFSRESL</code>; <code>PROCLIB</code> = <code>IMS.PROCLIB</code>; <code>IMS</code> DD = <code>IMS.PSBLIB</code> + <code>IMS.DBDLIB</code>.<br>
+      SYSIN control card (L37): <code>00,00001,00001,Y</code> → <code>PRM-INFO</code> in CBPAUP0C = expiry-days <code>00</code>, checkpoint-freq <code>00001</code>, checkpoint-display-freq <code>00001</code>, debug <code>Y</code>.
+    </td></tr>
+    <tr><th>Program logic</th><td><code>app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl</code>: <code>EXEC DLI GN</code> root <code>PAUTSUM0</code> (L223), <code>GNP</code> child <code>PAUTDTL1</code> (L255). A detail is expired when <code>WS-DAY-DIFF &gt;= WS-EXPIRY-DAYS</code> (L284) and is then <code>DLET</code>-ed (L310). The summary is <code>DLET</code>-ed (L335) once its counts reach zero. <code>EXEC DLI CHKP</code> (L355) runs every <code>P-CHKP-FREQ</code> summaries. Defaults are 5 days / 5 summaries when the parm is non-numeric or blank (L196–206). Abend path sets RC 16.</td></tr>
+    <tr><th>Purpose</th><td>Purge expired pending authorizations from the IMS pending-authorization database before the day's transactions are posted.</td></tr>
+    <tr><th>CA-7 trigger successor</th><td><code>POSTTRAN</code> (SCHID=030, CardDemo.ca7 L70)</td></tr>
+  </table>
+
+  <div class="jobhead"><h3>POSTTRAN</h3><span class="seq">step 4 of 6</span><span class="tag t-cobol">COBOL</span><span class="tag t-vsam">VSAM</span></div>
+  <table class="kv">
+    <tr><th>JCL member</th><td><code>app/jcl/POSTTRAN.jcl</code></td></tr>
+    <tr><th>Steps / programs</th><td><b>STEP15</b> <code>EXEC PGM=CBTRN02C</code> (L23), STEPLIB <code>AWS.M2.CARDDEMO.LOADLIB</code> (L25). DDs: <code>TRANFILE</code>, <code>DALYTRAN</code>, <code>XREFFILE</code>, <code>DALYREJS</code> (NEW, RECFM=F, LRECL=430), <code>ACCTFILE</code>, <code>TCATBALF</code>.</td></tr>
+    <tr><th>Program logic</th><td><code>app/cbl/CBTRN02C.cbl</code> reads <code>DALYTRAN</code> sequentially. For each record it looks the card up in <code>XREFFILE</code> (reject 100 if missing), then the account in <code>ACCTFILE</code> (101 if missing). It rejects on credit limit (102) and on account expiry (103). A valid record updates or creates the <code>TCATBALF</code> category balance (L496), <code>REWRITE</code>s the account balances (L554) and <code>WRITE</code>s the transaction to <code>TRANFILE</code> (L564). Rejects are written to <code>DALYREJS</code> as the 350-byte record plus an 80-byte validation trailer. The program sets <code>RETURN-CODE 4</code> if any record was rejected (L230). Any I/O error abends through <code>CEE3ABD</code> (L711).</td></tr>
+    <tr><th>Purpose</th><td>Post the day's transactions: validate, update account and category balances, load the transaction master.</td></tr>
+    <tr><th>CA-7 trigger successor</th><td><code>WAITSTEP</code> (SCHID=030, CardDemo.ca7 L97)</td></tr>
+  </table>
+
+  <div class="jobhead"><h3>WAITSTEP</h3><span class="seq">step 5 of 6</span><span class="tag t-util">Utility</span></div>
+  <table class="kv">
+    <tr><th>JCL member</th><td><code>app/jcl/WAITSTEP.jcl</code></td></tr>
+    <tr><th>Steps / programs</th><td><code>WAIT EXEC PGM=COBSWAIT</code> (L22), STEPLIB <code>AWS.M2.CARDDEMO.LOADLIB</code>. SYSIN <code>00003600</code> = 3600 centiseconds = <b>36 seconds</b> (L20, L26). <code>app/cbl/COBSWAIT.cbl</code> runs <code>ACCEPT</code> on the value and <code>CALL 'MVSWAIT'</code>. <code>app/asm/MVSWAIT.asm</code> expands macro <code>ASMWAIT</code> (<code>app/maclib/ASMWAIT.mac</code>), which is <code>STIMER WAIT,BINTVL=…</code>.</td></tr>
+    <tr><th>Purpose</th><td>Fixed delay before the files are reopened in CICS.</td></tr>
+    <tr><th>CA-7 trigger successor</th><td><code>OPENFIL</code> (SCHID=030, CardDemo.ca7 L124)</td></tr>
+  </table>
+
+  <div class="jobhead"><h3>OPENFIL</h3><span class="seq">step 6 of 6</span><span class="tag t-cics">CICS</span></div>
+  <table class="kv">
+    <tr><th>JCL member</th><td><code>app/jcl/OPENFIL.jcl</code></td></tr>
+    <tr><th>Steps / programs</th><td><code>OPCIFIL EXEC PGM=SDSF</code> (L22). <code>ISFIN</code> issues <code>/F CICSAWSA,'CEMT SET FIL(xxx) OPE'</code> for TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC (L26–30).</td></tr>
+    <tr><th>Purpose</th><td>Reopen the CICS files and hand the data back to the online region.</td></tr>
+    <tr><th>CA-7 trigger successor</th><td>None. <code>N -- COMP TRIGGERS OTHER JOBS</code> (CardDemo.ca7 L138), so this is the end of chain.</td></tr>
+  </table>
+</section>
+
+<!-- ================================================================ 3 -->
+<section id="modules">
+  <h2>3. External module dependency matrix</h2>
+  <table>
+    <thead><tr><th>Job</th><th>Program</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>CLOSEFIL</td><td><code>SDSF</code></td><td><span class="tag t-util">IBM utility</span></td><td>Batch SDSF issuing <code>/F CICSAWSA,'CEMT SET FIL(…) CLO'</code> for TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC. The step RC shows that SDSF ran, not that each CEMT command succeeded.</td></tr>
+      <tr><td>OPENFIL</td><td><code>SDSF</code></td><td><span class="tag t-util">IBM utility</span></td><td>Same five files, <code>OPE</code>. Same RC caveat.</td></tr>
+      <tr><td>TRANBKP</td><td><code>REPROC</code> → <code>IDCAMS</code></td><td><span class="tag t-lib">PROC</span><span class="tag t-util">IBM utility</span></td><td><code>app/proc/REPROC.prc</code> (present), resolved through <code>JOBLIB JCLLIB ORDER=('AWS.M2.CARDDEMO.PROC')</code>. Control card from <code>AWS.M2.CARDDEMO.CNTL(REPROCT)</code> = <code>app/ctl/REPROCT.ctl</code>.</td></tr>
+      <tr><td>TRANBKP</td><td><code>IDCAMS</code> (STEP05, STEP10)</td><td><span class="tag t-util">IBM utility</span></td><td>DELETE cluster + AIX, then DEFINE CLUSTER. STEP10 <code>COND=(4,LT)</code>.</td></tr>
+      <tr><td>CBPAUP0J</td><td><code>DFSRRC00</code></td><td><span class="tag t-ims">IMS region controller</span></td><td><code>PARM='BMP,CBPAUP0C,PSBPAUTB'</code>. Runs as a BMP, so an active IMS control region is required. Libraries: <code>IMS.SDFSRESL</code>, <code>IMS.PROCLIB</code>, <code>IMS.PSBLIB</code>, <code>IMS.DBDLIB</code>.</td></tr>
+      <tr><td>CBPAUP0J</td><td><code>CBPAUP0C</code></td><td><span class="tag t-cobol">COBOL + EXEC DLI</span></td><td><code>app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl</code>. Copybooks <code>CIPAUSMY</code> (summary segment), <code>CIPAUDTY</code> (detail segment). Loaded from <code>XXXXXXXX.PROD.LOADLIB</code>.</td></tr>
+      <tr><td>CBPAUP0J</td><td><code>PSBPAUTB</code></td><td><span class="tag t-ims">PSB</span></td><td><code>app/app-authorization-ims-db2-mq/ims/PSBPAUTB.psb</code>: one DB PCB, <code>DBDNAME=DBPAUTP0,PROCOPT=AP,KEYLEN=14</code>, SENSEG <code>PAUTSUM0</code> → <code>PAUTDTL1</code>.</td></tr>
+      <tr><td>POSTTRAN</td><td><code>CBTRN02C</code></td><td><span class="tag t-cobol">COBOL batch</span></td><td><code>app/cbl/CBTRN02C.cbl</code>. Copybooks <code>CVTRA06Y</code>, <code>CVTRA05Y</code>, <code>CVACT03Y</code>, <code>CVACT01Y</code>, <code>CVTRA01Y</code>. Calls LE <code>CEE3ABD</code> on error.</td></tr>
+      <tr><td>WAITSTEP</td><td><code>COBSWAIT</code> → <code>MVSWAIT</code></td><td><span class="tag t-cobol">COBOL</span><span class="tag t-asm">HLASM</span></td><td><code>app/cbl/COBSWAIT.cbl</code> calls <code>app/asm/MVSWAIT.asm</code> (macro <code>app/maclib/ASMWAIT.mac</code>, <code>STIMER WAIT</code>).</td></tr>
+      <tr><td>POSTTRAN, WAITSTEP</td><td><code>AWS.M2.CARDDEMO.LOADLIB</code></td><td><span class="tag t-lib">Load library</span></td><td>STEPLIB for CBTRN02C and COBSWAIT. CBPAUP0J uses <code>XXXXXXXX.PROD.LOADLIB</code> instead. The HLQ has to be resolved before cut-over rehearsal.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ================================================================ 4 -->
+<section id="datasets">
+  <h2>4. Dataset / database dependency matrix</h2>
+  <table>
+    <thead><tr><th>Dataset / DB</th><th>Type</th><th>Job(s)</th><th>Access</th><th>Migration notes</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</code><br>+ <code>TRANSACT.VSAM.AIX</code></td>
+        <td><span class="tag t-vsam">VSAM KSDS</span> + AIX</td>
+        <td>TRANBKP<br>POSTTRAN</td>
+        <td>TRANBKP: read (REPRO) → DELETE cluster &amp; AIX → DEFINE cluster.<br>POSTTRAN DD <code>TRANFILE</code>: <code>OPEN OUTPUT</code>, random <code>WRITE</code>.</td>
+        <td>Key 16 bytes @0, record 350 bytes. AIX key 26 @304 (rebuilt by TRANIDX, not in this chain). After the chain, TRANSACT holds <b>only the day's posted transactions</b>. History lives in the BKUP GDG. CICS file <code>TRANSACT</code>.</td>
+      </tr>
+      <tr>
+        <td><code>AWS.M2.CARDDEMO.DALYTRAN.PS</code></td>
+        <td><span class="tag t-seq">Sequential PS</span></td>
+        <td>POSTTRAN</td>
+        <td>DD <code>DALYTRAN</code>, <code>OPEN INPUT</code>, sequential read</td>
+        <td>Upstream feed. No job in this chain creates it, so the arrival contract (time, completeness) needs an owner in the target.</td>
+      </tr>
+      <tr>
+        <td><code>AWS.M2.CARDDEMO.DALYREJS(+1)</code></td>
+        <td><span class="tag t-gdg">GDG</span></td>
+        <td>POSTTRAN</td>
+        <td>DD <code>DALYREJS</code>, <code>DISP=(NEW,CATLG,DELETE)</code>, <code>OPEN OUTPUT</code></td>
+        <td>Base defined in <code>app/jcl/DALYREJS.jcl</code>: <code>LIMIT(5) SCRATCH</code>. RECFM=F, LRECL=430 (350 data + 80 trailer).</td>
+      </tr>
+      <tr>
+        <td><code>AWS.M2.CARDDEMO.TRANSACT.BKUP(+1)</code></td>
+        <td><span class="tag t-gdg">GDG</span></td>
+        <td>TRANBKP</td>
+        <td>FILEOUT of REPRO, <code>DISP=(NEW,CATLG,DELETE)</code></td>
+        <td>Base defined in <code>app/jcl/DEFGDGB.jcl</code>: <code>LIMIT(5) SCRATCH</code>, so five days of transaction history are retained. LRECL=350 FB.</td>
+      </tr>
+      <tr>
+        <td><code>AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</code></td>
+        <td><span class="tag t-vsam">VSAM KSDS</span></td>
+        <td>POSTTRAN</td>
+        <td>DD <code>XREFFILE</code>, <code>OPEN INPUT</code>, random read by card number</td>
+        <td>CICS file <code>CCXREF</code>. Its AIX path <code>CARDXREF.VSAM.AIX.PATH</code> is CICS file <code>CXACAIX</code>.</td>
+      </tr>
+      <tr>
+        <td><code>AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS</code></td>
+        <td><span class="tag t-vsam">VSAM KSDS</span></td>
+        <td>POSTTRAN</td>
+        <td>DD <code>ACCTFILE</code>, <code>OPEN I-O</code>, read + <code>REWRITE</code></td>
+        <td>CICS file <code>ACCTDAT</code>. Balance updates are non-idempotent (<code>ADD DALYTRAN-AMT</code>), so a rerun without restoring the file double-posts.</td>
+      </tr>
+      <tr>
+        <td><code>AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS</code></td>
+        <td><span class="tag t-vsam">VSAM KSDS</span></td>
+        <td>POSTTRAN</td>
+        <td>DD <code>TCATBALF</code>, <code>OPEN I-O</code>, read + <code>WRITE</code>/<code>REWRITE</code></td>
+        <td>Not a CICS file in <code>app/csd/CARDDEMO.CSD</code>, so it is outside the close/open coupling. Missing keys are created (2700-A).</td>
+      </tr>
+      <tr>
+        <td>IMS DB <code>DBPAUTP0</code> (HIDAM/VSAM, DD <code>DDPAUTP0</code>)<br>+ index <code>DBPAUTX0</code> (DD <code>DDPAUTX0</code>)<br>via <code>PSBPAUTB</code>, <code>IMS.PSBLIB</code>, <code>IMS.DBDLIB</code></td>
+        <td><span class="tag t-ims">IMS DL/I</span></td>
+        <td>CBPAUP0J</td>
+        <td>PROCOPT=AP: <code>GN</code>/<code>GNP</code>, <code>DLET</code> detail &amp; summary, <code>CHKP</code></td>
+        <td>Segments <code>PAUTSUM0</code> (root, 100 B, key ACCNTID packed 6) → <code>PAUTDTL1</code> (200 B). Database DDs are not in the BMP JCL. The IMS control region allocates them, which is an ops dependency that is invisible in the JCL.</td>
+      </tr>
+      <tr>
+        <td>CICS files <code>TRANSACT</code>, <code>CCXREF</code>, <code>ACCTDAT</code>, <code>CXACAIX</code>, <code>USRSEC</code><br>(<code>app/csd/CARDDEMO.CSD</code>, GROUP CARDDEMO)</td>
+        <td><span class="tag t-cics">CICS FCT</span></td>
+        <td>CLOSEFIL<br>OPENFIL</td>
+        <td>CEMT <code>SET FIL CLO</code> / <code>OPE</code> in region CICSAWSA</td>
+        <td>DSNAMEs: TRANSACT → <code>TRANSACT.VSAM.KSDS</code>, CCXREF → <code>CARDXREF.VSAM.KSDS</code>, ACCTDAT → <code>ACCTDATA.VSAM.KSDS</code>, CXACAIX → <code>CARDXREF.VSAM.AIX.PATH</code>, USRSEC → <code>USRSEC.VSAM.KSDS</code>. All <code>RLSACCESS(NO)</code>. USRSEC is closed even though no job in this chain touches it.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ================================================================ 5 -->
+<section id="migration">
+  <h2>5. Migration considerations</h2>
+
+  <div class="callout ims">
+    <h4>CICS batch-window coupling (CLOSEFIL / OPENFIL)</h4>
+    <ul>
+      <li>The batch window exists because VSAM files defined <code>RLSACCESS(NO)</code> cannot be updated by batch while CICS holds them open. Online users get <code>NOTOPEN</code> on TRANSACT, CCXREF, ACCTDAT, CXACAIX and USRSEC from CLOSEFIL until OPENFIL. USRSEC is closed too, which affects sign-on (COSGN00C reads USRSEC).</li>
+      <li>On a relational target with row-level locking and transactional batch, the close/open pair usually becomes a <b>maintenance-mode flag</b> or is dropped. Decide explicitly whether online stays available during posting. If it does, the posting job needs commit-interval isolation against concurrent online account updates.</li>
+      <li>SDSF/CEMT success is not checked in the JCL. A target replacement should verify state, for example with a health endpoint, rather than fire and forget.</li>
+    </ul>
+  </div>
+
+  <div class="callout warn">
+    <h4>IMS BMP dependency (CBPAUP0J)</h4>
+    <ul>
+      <li>CBPAUP0J needs a running IMS control region, the PSB/DBD libraries and the IMS-allocated database datasets. None of that is in the JCL, and all of it has to be replaced, for example with relational tables (<code>pending_auth_summary</code>/<code>pending_auth_detail</code>) or an IMS-compatible runtime.</li>
+      <li>The <code>CHKP</code> every N roots maps to a chunk commit. The IMS restart-from-checkpoint behavior maps to restartable chunked batch.</li>
+      <li><b>Parity flags to decide:</b> the production SYSIN <code>00,00001,00001,Y</code> sets expiry-days = 0. With <code>WS-DAY-DIFF &gt;= WS-EXPIRY-DAYS</code> (L284), every detail qualifies for delete, and checkpoints run on every summary with debug output on. The summary-delete test reads <code>IF PA-APPROVED-AUTH-CNT &lt;= 0 AND PA-APPROVED-AUTH-CNT &lt;= 0</code> (L156): the same field twice, where the declined count was probably intended. Preserve both as coded or log them as legacy defects; don't "fix" them silently.</li>
+      <li>Ordering: CA-7 runs the purge <b>before</b> POSTTRAN. CBTRN02C does not read the IMS database, so nothing visible in the code depends on this order. Confirm with the business before parallelizing.</li>
+    </ul>
+  </div>
+
+  <div class="callout">
+    <h4>GDG handling</h4>
+    <ul>
+      <li><code>TRANSACT.BKUP</code> and <code>DALYREJS</code> are both <code>LIMIT(5) SCRATCH</code>, a rolling five-generation window. A target equivalent needs (a) generation naming (date or sequence suffix, or an object-store version), (b) automatic roll-off of the sixth generation, and (c) a relative-generation resolver for any downstream job that reads <code>(0)</code> or <code>(-1)</code>.</li>
+      <li><code>DISP=(NEW,CATLG,DELETE)</code> means a failed step leaves no generation. The target should only publish the new generation when the step succeeds.</li>
+      <li>TRANSACT.BKUP is the <b>only</b> transaction history. TRANBKP empties the master every day, so retention for audit or regulatory needs must be defined in the target. Five days is unlikely to be enough.</li>
+    </ul>
+  </div>
+
+  <div class="callout ok">
+    <h4>VSAM → target data store mapping</h4>
+    <table>
+      <thead><tr><th>VSAM</th><th>Key</th><th>Target table on this branch (<code>migration/carddemo/backend/…/V1__baseline_carddemo_estate.sql</code>)</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>TRANSACT KSDS (+AIX)</td><td>TRAN-ID (16)</td><td><code>transactions</code></td><td>DELETE/DEFINE + <code>OPEN OUTPUT</code> = truncate-and-load, not an append. AIX on proc-timestamp → secondary index.</td></tr>
+        <tr><td>DALYTRAN.PS</td><td>— (sequential)</td><td><code>daily_transactions</code> or a landed file</td><td>Keep the input order. Processing is strictly sequential.</td></tr>
+        <tr><td>CARDXREF KSDS (+AIX path)</td><td>card number</td><td><code>card_xref</code></td><td>AIX on account id → index.</td></tr>
+        <tr><td>ACCTDATA KSDS</td><td>ACCT-ID</td><td><code>accounts</code></td><td>Read-modify-write. Needs row locking if online stays up.</td></tr>
+        <tr><td>TCATBALF KSDS</td><td>acct + type + cat</td><td><code>transaction_category_balances</code></td><td>Upsert semantics (create if missing).</td></tr>
+        <tr><td>USRSEC KSDS</td><td>user id</td><td><code>sec_users</code></td><td>Only touched by close/open.</td></tr>
+        <tr><td>IMS DBPAUTP0</td><td>ACCNTID / PAUT9CTS</td><td><code>pending_auth_summary</code>, <code>pending_auth_detail</code></td><td>Parent/child → FK. Delete order is detail first, then summary.</td></tr>
+      </tbody>
+    </table>
+    <p class="small">Packed-decimal and zoned fields (amounts, ACCNTID <code>TYPE=P</code>) need explicit precision/scale mapping. EBCDIC key collation differs from ASCII/UTF-8, so ordered scans (<code>GN</code>, sequential REPRO) can return rows in a different order on the target.</p>
+  </div>
+
+  <div class="callout risk">
+    <h4>Scheduler trigger semantics (CA-7 SCHID vs Control-M INCOND/OUTCOND)</h4>
+    <ul>
+      <li><b>CA-7</b>: job-completion triggers. On successful completion a job triggers its successors under a schedule ID (<code>JOB=… SCHID=030 QTM=0100</code>). The same JCL member appears under several SCHIDs (CLOSEFIL and WAITSTEP occur in both the posting and the reference-reload networks). In a target, a SCHID becomes a separate DAG or run context, not a shared node.</li>
+      <li><b>Control-M</b>: condition-based. A job adds its own OUTCOND (<code>SIGN="+"</code>) on OK and deletes its predecessor's condition (<code>SIGN="-"</code>). The successor waits on INCOND with <code>ODATE="ODAT"</code>, so conditions are scoped to the order date. A target needs date-scoped run identity to stop yesterday's completion from releasing today's job.</li>
+      <li><b>The two definitions differ</b>. Control-M's daily folder has no CBPAUP0J or POSTTRAN, and CA-7 has no TRANBKP. Pick one source of truth for cut-over and reconcile it with operations before the chain is rebuilt.</li>
+      <li><b>RC=4 is meaningful</b>. CBTRN02C ends RC 4 whenever any record is rejected. Neither scheduler listing shows a condition-code rule, so check how each scheduler treats RC 4 (OK or NOTOK) in production and carry that rule into the target orchestration. Otherwise a day with rejects may block OPENFIL, or a real failure may pass.</li>
+      <li>WAITSTEP is a fixed 36-second sleep. In a target orchestrator this is usually replaced by an explicit readiness check, or removed.</li>
+    </ul>
+  </div>
+
+  <div class="callout">
+    <h4>Restart and rerun</h4>
+    <ul>
+      <li>TRANBKP must not be rerun after POSTTRAN has posted, because the delete/define would destroy the day's postings. POSTTRAN must not be rerun against an already-updated ACCTDATA/TCATBALF, because it would double-post. The safe restart point is "restore ACCTDATA + TCATBALF, re-run TRANBKP → POSTTRAN". Document this as the target recovery runbook.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================================================================ sources -->
+<section id="sources">
+  <h2>Sources read</h2>
+  <table>
+    <thead><tr><th>Area</th><th>Files</th></tr></thead>
+    <tbody>
+      <tr><td>Schedulers</td><td><code>app/scheduler/CardDemo.ca7</code>, <code>app/scheduler/CardDemo.controlm</code></td></tr>
+      <tr><td>JCL</td><td><code>app/jcl/CLOSEFIL.jcl</code>, <code>app/jcl/TRANBKP.jcl</code>, <code>app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl</code>, <code>app/jcl/POSTTRAN.jcl</code>, <code>app/jcl/WAITSTEP.jcl</code>, <code>app/jcl/OPENFIL.jcl</code>, <code>app/jcl/TRANIDX.jcl</code>, <code>app/jcl/DEFGDGB.jcl</code>, <code>app/jcl/DALYREJS.jcl</code></td></tr>
+      <tr><td>Procs / control cards</td><td><code>app/proc/REPROC.prc</code>, <code>app/ctl/REPROCT.ctl</code></td></tr>
+      <tr><td>Programs</td><td><code>app/cbl/CBTRN02C.cbl</code>, <code>app/cbl/COBSWAIT.cbl</code>, <code>app/asm/MVSWAIT.asm</code>, <code>app/maclib/ASMWAIT.mac</code>, <code>app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl</code></td></tr>
+      <tr><td>IMS</td><td><code>app/app-authorization-ims-db2-mq/ims/PSBPAUTB.psb</code>, <code>DBPAUTP0.dbd</code>, <code>DBPAUTX0.dbd</code></td></tr>
+      <tr><td>CICS</td><td><code>app/csd/CARDDEMO.CSD</code></td></tr>
+    </tbody>
+  </table>
+  <p class="small muted">Line references (Lnn) are to the files as committed on this branch. Items marked "as coded" describe the legacy behavior; they are not recommendations.</p>
+</section>
+
+</main>
+<footer>CardDemo migration planning · daily transaction batch chain · standalone page, no external assets</footer>
+</body>
+</html>
