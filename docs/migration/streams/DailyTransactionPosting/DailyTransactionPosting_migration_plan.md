@@ -52,9 +52,12 @@ is what preserves the previous content. `TransactionMasterInitializer` reproduce
 not wipe the chunks already committed (FR-S11-003, FR-S11-028).
 
 **`TRANBKP.jcl`, `TRANIDX.jcl`, `DALYREJS.jcl` (IDCAMS, effect only).** No IDCAMS is ported.
-- `TRANBKP` — backup-then-redefine of the transaction master. Its effect (POSTTRAN starts from an empty
-  master, the previous generation survives elsewhere) is the delete above; taking the backup itself is a
-  database-operations concern (`pg_dump`/snapshot), not application code. Recorded as deferred in §5.
+- `TRANBKP` — backup-then-redefine of the transaction master. Migrated as its own job, see
+  `DailyTransactionPosting_daily_chain.md`: `REPRO` becomes a chunk step writing one 350-byte CVTRA05Y
+  image per `transactions` row to the next `TRANSACT.BKUP.G<nnnn>V00` file (`LIMIT(5) SCRATCH`), the
+  IDCAMS `DELETE` becomes a step that empties the table, and the `DEFINE` has nothing to do. POSTTRAN
+  still empties the master itself (`TransactionMasterInitializer`), so it does not depend on TRANBKP
+  having run.
 - `TRANIDX` — a non-unique alternate index over the 26-byte processing timestamp at offset 304. Migrated as
   the Flyway migration `V1100__posttran_transaction_proc_ts_index.sql`, `idx_transactions_proc_ts` on
   `transactions(proc_ts)`, inside S-11's reserved band (FR-S11-024).
@@ -120,11 +123,11 @@ asserted instead: a failure mid-file, then a restart with the same job parameter
 
 ## 5. Deferred, with reasons
 
-- **Taking the TRANBKP backup copy.** POSTTRAN's dependency on it (an empty master at start) is
-  implemented; producing and retaining the backup generation itself is an operational database task and
-  has no COBOL logic to migrate.
-- **Scheduling.** The chain `TRANBKP → POSTTRAN → TRANIDX` was a JCL/scheduler sequence. The job is
-  launchable per the README (`--spring.batch.job.name=POSTTRAN`); wiring a scheduler is out of scope.
+- **Scheduling.** The daily chain now runs as one Spring Batch job, `DAILYTRN`
+  (`TRANBKP → CBPAUP0J → POSTTRAN → WAITSTEP`, see `DailyTransactionPosting_daily_chain.md`). Triggering
+  `DAILYTRN` once per business day from an enterprise scheduler is still out of scope; it is launchable
+  per the README (`--spring.batch.job.name=DAILYTRN --runDate=yyyy-MM-dd`). `TRANIDX` needs no run: its
+  index is schema (`V1100`).
 - **`CBTRN02C`'s file-status displays for I/O errors** are implemented as abends with the same text, but
   the numeric VSAM status codes have no equivalent in JPA; the message renders the COBOL literal with the
   status field left as the fixed `NNNN` shape the COBOL prints when it has none.
