@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HSBC — FRD — DailyTransactionPosting</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    if (window.mermaid) {
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "base",
+        themeVariables: {
+          primaryColor: "#ffffff", primaryBorderColor: "#db0011", primaryTextColor: "#000000",
+          lineColor: "#333333", fontFamily: "Univers Next for HSBC, Arial, Helvetica, sans-serif"
+        }
+      });
+    }
+  });
+</script>
+<style>
+  :root {
+    --hsbc-red: #db0011; --hsbc-red-dark: #af000d; --black: #000000;
+    --ink: #333333; --muted: #767676; --line: #d7d8d6; --bg: #ffffff;
+    --panel: #f3f3f3; --panel-2: #ededed;
+    --warn-bg: #fbe9ea; --warn-line: #db0011;
+    --tag-batch: #000000; --tag-online: #00847f;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Univers Next for HSBC", "Univers", Arial, Helvetica, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.5; }
+  a { color: var(--hsbc-red); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Brand bar */
+  .brand-bar { background: var(--bg); border-bottom: 1px solid var(--line); }
+  .brand-bar .inner { max-width: 1080px; margin: 0 auto; padding: 14px 40px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand svg { height: 28px; width: auto; display: block; }
+  .brand .wordmark { font-weight: 700; font-size: 1.35em; letter-spacing: 0.02em; color: var(--black); line-height: 1; }
+  .brand .division { border-left: 1px solid var(--line); padding-left: 12px; margin-left: 4px; font-size: 0.82em; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .classification { font-size: 0.72em; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--hsbc-red); border: 1px solid var(--hsbc-red); padding: 3px 10px; }
+  .red-rule { height: 4px; background: var(--hsbc-red); }
+
+  .page { max-width: 1080px; margin: 0 auto; padding: 32px 40px 80px; }
+
+  header.doc-head { padding-bottom: 20px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
+  .doc-kicker { font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.12em; color: var(--hsbc-red); font-weight: 700; margin-bottom: 8px; }
+  h1 { font-size: 2em; font-weight: 300; margin: 0 0 6px; color: var(--black); letter-spacing: -0.01em; }
+  h1 strong { font-weight: 700; }
+  h2 { font-size: 1.25em; font-weight: 700; margin: 44px 0 12px; padding: 0 0 6px 14px; border-left: 4px solid var(--hsbc-red); border-bottom: 1px solid var(--line); color: var(--black); }
+  h3 { font-size: 1.02em; font-weight: 700; margin: 24px 0 8px; color: var(--black); }
+  .subtitle { color: var(--muted); font-size: 0.98em; }
+
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 0; color: #fff; font-size: 0.5em; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; vertical-align: middle; position: relative; top: -4px; }
+  .tag.batch { background: var(--tag-batch); }
+  .tag.online { background: var(--tag-online); }
+
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.92em; }
+  th, td { border: 0; border-bottom: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--black); color: #fff; font-weight: 700; font-size: 0.85em; letter-spacing: 0.04em; text-transform: uppercase; border-bottom: 2px solid var(--hsbc-red); }
+  tr:nth-child(even) td { background: var(--panel); }
+  code, .mono { font-family: "Consolas", "Menlo", monospace; font-size: 0.93em; background: var(--panel-2); padding: 1px 4px; border-radius: 0; color: var(--black); }
+
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin: 16px 0; }
+  .meta-grid .cell { background: var(--panel); border-top: 3px solid var(--hsbc-red); padding: 10px 12px; }
+  .meta-grid .cell .k { font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .meta-grid .cell .v { font-weight: 700; color: var(--black); }
+
+  .note { background: var(--warn-bg); border-left: 4px solid var(--warn-line); padding: 10px 14px; margin: 14px 0; font-size: 0.92em; color: var(--black); }
+  .guidance { color: var(--muted); font-style: italic; font-size: 0.9em; }
+  .diagram { background: var(--bg); border: 1px solid var(--line); border-top: 3px solid var(--hsbc-red); padding: 16px; overflow-x: auto; }
+
+  nav.toc { background: var(--panel); border-left: 4px solid var(--black); padding: 12px 20px; font-size: 0.92em; }
+  nav.toc strong { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.85em; color: var(--black); }
+  nav.toc ol { margin: 6px 0; padding-left: 20px; columns: 2; column-gap: 32px; }
+  nav.toc li { break-inside: avoid; }
+  nav.toc a { color: var(--ink); }
+  nav.toc a:hover { color: var(--hsbc-red); }
+
+  footer { margin-top: 60px; border-top: 1px solid var(--line); padding-top: 14px; color: var(--muted); font-size: 0.82em; display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+  footer .legal { max-width: 70%; }
+  footer .brand svg { height: 18px; }
+  footer .brand .wordmark { font-size: 0.95em; }
+
+  @media print {
+    .page { padding: 0 0 40px; }
+    h2 { break-after: avoid; }
+    table, .diagram, .note { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="brand-bar">
+  <div class="inner">
+    <div class="brand">
+      <svg viewBox="0 0 400 200" role="img" aria-label="HSBC">
+        <polygon points="0,100 100,0 100,200" fill="#db0011"/>
+        <polygon points="400,100 300,0 300,200" fill="#db0011"/>
+        <polygon points="100,0 300,0 200,100" fill="#db0011"/>
+        <polygon points="100,200 300,200 200,100" fill="#db0011"/>
+        <polygon points="100,0 200,100 100,200" fill="#ffffff"/>
+        <polygon points="300,0 200,100 300,200" fill="#ffffff"/>
+      </svg>
+      <span class="wordmark">HSBC</span>
+      <span class="division">Technology &mdash; Mainframe Modernisation</span>
+    </div>
+    <span class="classification">Internal</span>
+  </div>
+</div>
+<div class="red-rule"></div>
+
+<div class="page">
+
+<header class="doc-head">
+  <div class="doc-kicker">Functional Requirement Document</div>
+  <h1><strong>DailyTransactionPosting</strong> <span class="tag batch">Batch</span> <!-- or: <span class="tag online">Online / BMS</span> --></h1>
+  <div class="subtitle">CA-7 SCHID=030 daily network of the CARDDEMO estate: close the CICS files, purge expired IMS pending authorisations (CBPAUP0J/CBPAUP0C), post the day&rsquo;s transactions to the transaction master, account master and category balances (POSTTRAN/CBTRN02C), wait, and reopen the CICS files.</div>
+</header>
+
+<div class="meta-grid">
+  <div class="cell"><div class="k">Stream type</div><div class="v">Batch cycle</div></div>
+  <div class="cell"><div class="k">Application</div><div class="v">CARDDEMO</div></div>
+  <div class="cell"><div class="k">Scheduler table / CICS group</div><div class="v">CA-7 SCHID=030 (first network, <code>app/scheduler/CardDemo.ca7</code>); no Control-M folder contains POSTTRAN</div></div>
+  <div class="cell"><div class="k">Owner</div><div class="v">*NONE* (CA-7 <code>OWNER= *NONE*</code> in every job block, <code>CardDemo.ca7:35</code> et seq.)</div></div>
+  <div class="cell"><div class="k">Run window / availability</div><div class="v">Not defined in repo (CA-7 lists only <code>DONT SCHEDULE BEFORE 03237 AT 0000</code>, <code>ELAPTM=2359</code>; see Q-03)</div></div>
+  <div class="cell"><div class="k">Calendar / frequency</div><div class="v">Daily by trigger chain (CA-7 <code>TRIGGERED JOBS</code>, <code>QTM=0100</code>); no calendar/schedule entry in repo (Q-03)</div></div>
+  <div class="cell"><div class="k">Criticality</div><div class="v">Not defined in repo (CA-7 <code>Y -- JOB MARKED AS MAINT ONLY</code>, <code>CardDemo.ca7:28</code>; Q-04)</div></div>
+  <div class="cell"><div class="k">Doc status</div><div class="v">DRAFT</div></div>
+</div>
+
+<table>
+  <tr><th>Version</th><th>Date</th><th>Author</th><th>Change</th></tr>
+  <tr><td>0.1</td><td>2026-10-20</td><td>Devin</td><td>Initial draft</td></tr>
+</table>
+
+<nav class="toc">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#purpose">Business purpose</a></li>
+    <li><a href="#flow">Flow diagram</a></li>
+    <li><a href="#inventory">Job / screen inventory</a></li>
+    <li><a href="#dependencies">Dependencies</a></li>
+    <li><a href="#requirements">Functional requirements</a></li>
+    <li><a href="#restart">Restart, recovery &amp; error handling</a></li>
+    <li><a href="#nfr">Non-functional requirements</a></li>
+    <li><a href="#interfaces">Interfaces &amp; data layouts</a></li>
+    <li><a href="#security">Security &amp; access</a></li>
+    <li><a href="#target">Target-state mapping</a></li>
+    <li><a href="#open">Assumptions, debt &amp; open questions</a></li>
+  </ol>
+</nav>
+
+<h2 id="purpose">1. Business purpose</h2>
+<p>DailyTransactionPosting is the CARDDEMO daily batch cycle that turns the day&rsquo;s captured card transactions into posted history and updated balances. The CICS files are first taken offline (<code>CLOSEFIL</code>, <code>app/jcl/CLOSEFIL.jcl:22-30</code>) so batch holds them exclusively; expired pending authorisations are purged from the IMS <code>DBPAUTP0</code> database (<code>CBPAUP0J</code> &rarr; <code>CBPAUP0C</code>, <code>app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl:24-25</code>); <code>POSTTRAN</code> runs <code>CBTRN02C</code> (<code>app/jcl/POSTTRAN.jcl:23</code>), which reads the sequential daily transaction file <code>DALYTRAN</code>, validates each record against the card cross-reference and account master, writes accepted records to the transaction master <code>TRANSACT</code>, rolls the amounts into the account master and the per-account transaction-category balances, and writes rejected records with a reason trailer to a new <code>DALYREJS</code> generation (<code>app/cbl/CBTRN02C.cbl:193-234</code>). <code>WAITSTEP</code> pauses 36 seconds (<code>app/jcl/WAITSTEP.jcl:26</code>) before <code>OPENFIL</code> gives the files back to CICS (<code>app/jcl/OPENFIL.jcl:22-30</code>).</p>
+<p>If the chain does not run, no daily transactions are posted: online transaction enquiry (<code>CT00/CT01</code>) shows stale history, account current balances and cycle credit/debit totals are not updated (so authorisation and interest/statement cycles work from wrong figures), expired authorisations keep consuming the pending-authorisation database, and &mdash; if <code>CLOSEFIL</code> ran but <code>OPENFIL</code> did not &mdash; the five CICS files stay closed and every online function that touches them fails.</p>
+<table>
+  <tr><th>Business capability</th><th>How this stream serves it</th></tr>
+  <tr><td>Transaction posting</td><td>Each valid <code>DALYTRAN</code> record becomes a <code>TRANSACT</code> record with a processing timestamp (<code>CBTRN02C.cbl:424-444</code>).</td></tr>
+  <tr><td>Account balance maintenance</td><td><code>ACCT-CURR-BAL</code>, <code>ACCT-CURR-CYC-CREDIT</code> / <code>-DEBIT</code> updated per posted transaction (<code>CBTRN02C.cbl:545-560</code>).</td></tr>
+  <tr><td>Spend-category reporting</td><td><code>TCATBALF</code> balance created or incremented per (account, type, category) (<code>CBTRN02C.cbl:467-542</code>); consumed by INTCALC and TRANREPT streams.</td></tr>
+  <tr><td>Exception handling</td><td>Invalid-card, missing-account, over-limit and post-expiry transactions are written to <code>DALYREJS(+1)</code> with a 4-digit reason and text (<code>CBTRN02C.cbl:380-420, 446-465</code>).</td></tr>
+  <tr><td>Authorisation hygiene</td><td>Pending authorisations older than the expiry window are deleted from IMS and the account summary counts/amounts reduced (<code>CBPAUP0C.cbl:277-348</code>).</td></tr>
+  <tr><td>Online availability</td><td>CICS files <code>TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC</code> closed before and reopened after batch (<code>CLOSEFIL.jcl:26-30</code>, <code>OPENFIL.jcl:26-30</code>).</td></tr>
+</table>
+
+<h2 id="flow">2. Flow diagram</h2>
+<div class="diagram">
+<pre class="mermaid">
+flowchart TD
+    subgraph CA7["CA-7 SCHID=030 first network (CardDemo.ca7:18-158) - this FRD"]
+        A["CLOSEFIL<br/>SDSF: CEMT SET FIL(...) CLO"] -->|"TRIGGER SCHID=030 QTM=0100 (ca7:43)"| B["CBPAUP0J<br/>DFSRRC00 BMP CBPAUP0C / PSBPAUTB"]
+        B -->|"TRIGGER SCHID=030 (ca7:70)"| C["POSTTRAN<br/>STEP15 PGM=CBTRN02C"]
+        C -->|"TRIGGER SCHID=030 (ca7:97)<br/>no COND=, RC 4 flows on"| D["WAITSTEP<br/>COBSWAIT 00003600 cs = 36 s"]
+        D -->|"TRIGGER SCHID=030 (ca7:124)"| E["OPENFIL<br/>SDSF: CEMT SET FIL(...) OPE<br/>no TRIGGERED JOBS = network end"]
+    end
+    G["IDCAMS neighbours - not scheduled<br/>DALYREJS.jcl: DEFINE GDG LIMIT(5) SCRATCH<br/>TRANIDX.jcl: DEFINE AIX KEYS(26 304) + PATH + BLDINDEX<br/>TRANBKP.jcl: REPRO + DELETE/DEFINE TRANSACT (empties it)"] -.->|"prerequisites (README order)"| C
+    C -->|"writes / rewrites"| T[("TRANSACT.VSAM.KSDS (OPEN OUTPUT load)<br/>ACCTDATA.VSAM.KSDS (REWRITE)<br/>TCATBALF.VSAM.KSDS (WRITE/REWRITE)<br/>DALYREJS(+1) GDG (rejects, LRECL 430)")]
+    E ~~~ M1
+    subgraph CTM["Control-M DAILY-TransactionBackup (CardDemo.controlm:3-25) - disagrees: no POSTTRAN, no CBPAUP0J"]
+        M1["CLOSEFIL"] -->|"INCOND ...-CLOSEFIL"| M2["TRANBKP"]
+        M2 -->|"INCOND ...-TRANBKP"| M3["WAITSTEP"]
+        M3 -->|"INCOND ...-WAITSTEP"| M4["OPENFIL"]
+    end
+</pre>
+</div>
+<div class="note"><strong>Gating conditions:</strong> CA-7 releases each successor purely on completion of its predecessor via <code>TRIGGERED JOBS ... SCHID=030 QTM=0100 LEADTM=0000</code> (<code>CardDemo.ca7:43, 70, 97, 124</code>); no job in the chain lists a requirement, calendar or condition-code test, and <code>OPENFIL</code> has no <code>TRIGGERED JOBS</code> block (<code>CardDemo.ca7:126-158</code>), so it ends the network. None of the five JCL members carries a <code>COND=</code> parameter (<code>CLOSEFIL.jcl</code>, <code>CBPAUP0J.jcl</code>, <code>POSTTRAN.jcl</code>, <code>WAITSTEP.jcl</code>, <code>OPENFIL.jcl</code>), and each has a single step, so a non-zero step RC does not by itself stop the chain &mdash; <code>POSTTRAN</code> ending RC&nbsp;4 (rejects present, <code>CBTRN02C.cbl:229-231</code>) still triggers <code>WAITSTEP</code>. Whether CA-7 treats <code>CBPAUP0C</code>&rsquo;s RC&nbsp;16 (<code>CBPAUP0C.cbl:382</code>) or a <code>CBTRN02C</code> U0999 abend (<code>CBTRN02C.cbl:707-711</code>) as a failed completion that withholds the trigger is not stated in the LJOB listing (Q-05). <strong>Estate gotcha:</strong> the two scheduler sources disagree &mdash; CA-7 SCHID=030 is <code>CLOSEFIL &rarr; CBPAUP0J &rarr; POSTTRAN &rarr; WAITSTEP &rarr; OPENFIL</code> (no TRANBKP), while Control-M <code>DAILY-TransactionBackup</code> is <code>CLOSEFIL &rarr; TRANBKP &rarr; WAITSTEP &rarr; OPENFIL</code> (no POSTTRAN, no CBPAUP0J; <code>CardDemo.controlm:4-24</code>, <code>RUN_AS="xuemingh"</code>, <code>DAYS="ALL"</code>, <code>TIMETO="23:00"</code>, <code>MAXRERUN="5"</code>). This document does not assert a single combined daily chain (Q-01).</div>
+
+<h2 id="inventory">3. Job / screen inventory</h2>
+<table>
+  <tr><th>Order</th><th>Job / Tranid</th><th>Program(s)</th><th>Function</th><th>Restart point / entry condition</th></tr>
+  <tr><td>1</td><td class="mono">CLOSEFIL</td><td class="mono">SDSF (step CLCIFIL)</td><td>Issues <code>/F CICSAWSA,'CEMT SET FIL(x) CLO'</code> for TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC (<code>app/jcl/CLOSEFIL.jcl:22-30</code>). CA-7 head of SCHID=030 network (<code>CardDemo.ca7:18-43</code>).</td><td>Idempotent; rerun from top. Entry: none listed in CA-7 (no requirements, <code>ca7:26-33</code>).</td></tr>
+  <tr><td>2</td><td class="mono">CBPAUP0J</td><td class="mono">DFSRRC00 &rarr; CBPAUP0C (PSB PSBPAUTB)</td><td>IMS BMP, <code>PARM='BMP,CBPAUP0C,PSBPAUTB'</code> (<code>app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl:24-25</code>); SYSIN <code>00,00001,00001,Y</code> (<code>:37</code>). Walks every <code>PAUTSUM0</code>/<code>PAUTDTL1</code> segment, deletes expired details and empty summaries, checkpoints (<code>CBPAUP0C.cbl:136-178</code>).</td><td>Triggered by CLOSEFIL (<code>ca7:43</code>). Takes <code>CHKP</code> every <code>P-CHKP-FREQ</code> summaries (<code>CBPAUP0C.cbl:160-163, 355</code>); no <code>XRST</code> in the program, so a rerun starts from the first segment (deletes already done are not repeated).</td></tr>
+  <tr><td>3</td><td class="mono">POSTTRAN</td><td class="mono">CBTRN02C (step STEP15)</td><td>Reads DALYTRAN, validates against XREFFILE/ACCTFILE, writes TRANFILE, rewrites ACCTFILE and TCATBALF, writes DALYREJS(+1) (<code>app/jcl/POSTTRAN.jcl:23-42</code>; <code>app/cbl/CBTRN02C.cbl:193-234</code>).</td><td>Triggered by CBPAUP0J (<code>ca7:70</code>). No checkpoint/restart logic; TRANFILE is <code>OPEN OUTPUT</code> (<code>CBTRN02C.cbl:256</code>) so rerun reloads TRANSACT from empty, but ACCTFILE/TCATBALF updates are not reversed &mdash; a rerun after a partial run double-posts (see &sect;6.3).</td></tr>
+  <tr><td>4</td><td class="mono">WAITSTEP</td><td class="mono">COBSWAIT &rarr; MVSWAIT (asm)</td><td>Waits the SYSIN value in centiseconds, <code>00003600</code> = 36 s (<code>app/jcl/WAITSTEP.jcl:22-26</code>; <code>app/cbl/COBSWAIT.cbl:36-38</code>; <code>app/asm/MVSWAIT.asm:20-27</code>).</td><td>Triggered by POSTTRAN (<code>ca7:97</code>). Stateless; rerun from top.</td></tr>
+  <tr><td>5</td><td class="mono">OPENFIL</td><td class="mono">SDSF (step OPCIFIL)</td><td>Issues <code>CEMT SET FIL(x) OPE</code> for the same five files (<code>app/jcl/OPENFIL.jcl:22-30</code>). Last job: no TRIGGERED JOBS block (<code>ca7:126-158</code>).</td><td>Triggered by WAITSTEP (<code>ca7:124</code>). Idempotent; rerun from top.</td></tr>
+  <tr><td>&mdash;</td><td class="mono">DALYREJS</td><td class="mono">IDCAMS (STEP05)</td><td>IDCAMS neighbour: <code>DEFINE GENERATIONDATAGROUP NAME(AWS.M2.CARDDEMO.DALYREJS) LIMIT(5) SCRATCH</code> (<code>app/jcl/DALYREJS.jcl:21-28</code>). Not in CA-7 or Control-M; one-time prerequisite for <code>DALYREJS(+1)</code>.</td><td>Run once before first POSTTRAN. Rerun fails if GDG base exists (no IF MAXCC handling).</td></tr>
+  <tr><td>&mdash;</td><td class="mono">TRANIDX</td><td class="mono">IDCAMS (STEP20/25/30)</td><td>IDCAMS neighbour: DEFINE AIX <code>TRANSACT.VSAM.AIX</code> <code>KEYS(26 304) NONUNIQUEKEY UPGRADE</code>, DEFINE PATH, BLDINDEX (<code>app/jcl/TRANIDX.jcl:22-54</code>). Not in CA-7 or Control-M; README lists it after CREASTMT (<code>README.md:230</code>).</td><td>Manual. Rerun fails on DEFINE if AIX exists (no IF MAXCC handling).</td></tr>
+</table>
+
+<h2 id="dependencies">4. Dependencies</h2>
+<h3>4.1 DB2 tables</h3>
+<table>
+  <tr><th>Table</th><th>Access</th><th>Used by</th><th>Notes</th></tr>
+  <tr><td class="mono">&mdash;</td><td>&mdash;</td><td class="mono">&mdash;</td><td>No program in this chain contains <code>EXEC SQL</code>. <code>CBTRN02C.cbl</code> and <code>COBSWAIT.cbl</code> are VSAM/QSAM only; <code>CBPAUP0C.cbl</code> is IMS DL/I only (<code>EXEC DLI</code>, <code>CBPAUP0C.cbl:223, 255, 310, 335, 355</code>). The <code>AUTHFRDS</code> DB2 table in <code>app/app-authorization-ims-db2-mq/ddl</code> belongs to the online PendingAuthorizations stream, not to this chain.</td></tr>
+</table>
+<h3>4.2 VSAM files &amp; datasets</h3>
+<table>
+  <tr><th>Dataset</th><th>Type</th><th>Access</th><th>Used by</th><th>Notes</th></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.DALYTRAN.PS</td><td>PS (QSAM, LRECL 350)</td><td>R</td><td class="mono">CBTRN02C (DD DALYTRAN)</td><td><code>POSTTRAN.jcl:30-31</code>; <code>OPEN INPUT</code>, sequential (<code>CBTRN02C.cbl:29-32, 238</code>). Layout <code>CVTRA06Y</code>. No JCL in <code>app/jcl</code> creates it; sample image in <code>app/data/EBCDIC/AWS.M2.CARDDEMO.DALYTRAN.PS</code> (Q-06).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</td><td>KSDS KEYS(16 0) RECORDSIZE(350 350)</td><td>W (load)</td><td class="mono">CBTRN02C (DD TRANFILE)</td><td><code>POSTTRAN.jcl:28-29</code>; <code>OPEN OUTPUT</code>, random by <code>FD-TRANS-ID</code> (<code>CBTRN02C.cbl:34-38, 256</code>). Cluster defined in <code>TRANFILE.jcl:49-61</code> / <code>TRANBKP.jcl:54-67</code>. CICS FILE(TRANSACT) <code>app/csd/CARDDEMO.CSD:76-77</code>.</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANSACT.VSAM.AIX (+ .PATH)</td><td>AIX KEYS(26 304) NONUNIQUE UPGRADE</td><td>built</td><td class="mono">TRANIDX (IDCAMS)</td><td><code>TRANIDX.jcl:25-34, 42-44, 52-54</code>. Key = <code>TRAN-PROC-TS</code> (offset 304, 26 bytes per <code>CVTRA05Y.cpy:17</code>). <code>UPGRADE</code> means CBTRN02C&rsquo;s writes maintain it if it exists at open.</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</td><td>KSDS KEYS(16 0) RECORDSIZE(50 50)</td><td>R</td><td class="mono">CBTRN02C (DD XREFFILE)</td><td><code>POSTTRAN.jcl:32-33</code>; <code>OPEN INPUT</code>, random by card number (<code>CBTRN02C.cbl:40-44, 275, 382-383</code>). Defined <code>XREFFILE.jcl:39-44</code>. CICS FILE(CCXREF) <code>CARDDEMO.CSD:37-39</code>; path CXACAIX <code>:63-65</code>.</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS</td><td>KSDS KEYS(11 0) RECORDSIZE(300 300)</td><td>R+W</td><td class="mono">CBTRN02C (DD ACCTFILE)</td><td><code>POSTTRAN.jcl:39-40</code>; <code>OPEN I-O</code>, READ by <code>XREF-ACCT-ID</code>, REWRITE (<code>CBTRN02C.cbl:51-55, 311, 394-395, 554</code>). Defined <code>ACCTFILE.jcl:36-41</code>. CICS FILE(ACCTDAT) <code>CARDDEMO.CSD:1-2</code>.</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS</td><td>KSDS KEYS(17 0) RECORDSIZE(50 50)</td><td>R+W</td><td class="mono">CBTRN02C (DD TCATBALF)</td><td><code>POSTTRAN.jcl:41-42</code>; <code>OPEN I-O</code>, READ/WRITE/REWRITE by (acct, type, cat) (<code>CBTRN02C.cbl:57-61, 329, 474, 510, 528</code>). Defined <code>TCATBALF.jcl:36-41</code>. Not a CICS file; not in CLOSEFIL/OPENFIL.</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.DALYREJS(+1)</td><td>GDG generation, RECFM=F LRECL=430</td><td>W</td><td class="mono">CBTRN02C (DD DALYREJS)</td><td><code>POSTTRAN.jcl:34-38</code> <code>DISP=(NEW,CATLG,DELETE)</code>; <code>OPEN OUTPUT</code> (<code>CBTRN02C.cbl:46-49, 293</code>). GDG base <code>LIMIT(5) SCRATCH</code> (<code>DALYREJS.jcl:24-28</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.USRSEC.VSAM.KSDS</td><td>KSDS</td><td>closed/opened only</td><td class="mono">CLOSEFIL / OPENFIL</td><td>Closed and reopened in CICS (<code>CLOSEFIL.jcl:30</code>, <code>OPENFIL.jcl:30</code>; <code>CARDDEMO.CSD:88-89</code>) although no batch program in this chain reads it.</td></tr>
+  <tr><td class="mono">IMS DB DBPAUTP0 (HIDAM/VSAM, DD DDPAUTP0)</td><td>IMS database</td><td>R+W (GN/GNP/DLET)</td><td class="mono">CBPAUP0C via PSBPAUTB</td><td><code>app/app-authorization-ims-db2-mq/ims/DBPAUTP0.dbd</code>: segments <code>PAUTSUM0</code> (100 B, key ACCNTID 6 B packed) and <code>PAUTDTL1</code> (200 B, key PAUT9CTS 8 B). PCB <code>PROCOPT=AP KEYLEN=14</code> (<code>PSBPAUTB.psb:17-19</code>). DD allocation not in CBPAUP0J.jcl (online-allocated BMP; Q-07).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.LOADLIB / XXXXXXXX.PROD.LOADLIB</td><td>PDS</td><td>R</td><td class="mono">POSTTRAN, WAITSTEP / CBPAUP0J</td><td><code>POSTTRAN.jcl:24-25</code>, <code>WAITSTEP.jcl:23</code>; <code>CBPAUP0J.jcl:27</code> uses a placeholder HLQ (Q-08).</td></tr>
+</table>
+<h3>4.3 Shared utilities &amp; copybooks</h3>
+<table>
+  <tr><th>Asset</th><th>Kind</th><th>Role</th></tr>
+  <tr><td class="mono">CVTRA06Y</td><td>Copybook</td><td><code>DALYTRAN-RECORD</code>, 350 bytes, daily transaction input (<code>app/cpy/CVTRA06Y.cpy:4-18</code>; copied <code>CBTRN02C.cbl:102</code>).</td></tr>
+  <tr><td class="mono">CVTRA05Y</td><td>Copybook</td><td><code>TRAN-RECORD</code>, 350 bytes, transaction master record (<code>app/cpy/CVTRA05Y.cpy:4-18</code>; <code>CBTRN02C.cbl:107</code>). <code>TRAN-PROC-TS</code> at offset 304 is the TRANIDX AIX key.</td></tr>
+  <tr><td class="mono">CVACT03Y</td><td>Copybook</td><td><code>CARD-XREF-RECORD</code>, 50 bytes: card &rarr; customer &rarr; account (<code>app/cpy/CVACT03Y.cpy:4-8</code>; <code>CBTRN02C.cbl:112</code>).</td></tr>
+  <tr><td class="mono">CVACT01Y</td><td>Copybook</td><td><code>ACCOUNT-RECORD</code>, 300 bytes: balances, credit limit, expiry date (<code>app/cpy/CVACT01Y.cpy:4-17</code>; <code>CBTRN02C.cbl:121</code>).</td></tr>
+  <tr><td class="mono">CVTRA01Y</td><td>Copybook</td><td><code>TRAN-CAT-BAL-RECORD</code>, 50 bytes, 17-byte key (<code>app/cpy/CVTRA01Y.cpy:4-10</code>; <code>CBTRN02C.cbl:126</code>).</td></tr>
+  <tr><td class="mono">CIPAUSMY / CIPAUDTY</td><td>Copybook</td><td>IMS <code>PENDING-AUTH-SUMMARY</code> / <code>PENDING-AUTH-DETAILS</code> segment layouts (<code>app/app-authorization-ims-db2-mq/cpy</code>; <code>CBPAUP0C.cbl:116-121</code>).</td></tr>
+  <tr><td class="mono">MVSWAIT</td><td>Assembler subroutine</td><td>Issues <code>STIMER WAIT,BINTVL=</code> via the <code>ASMWAIT</code> macro for the fullword centisecond value passed by COBSWAIT (<code>app/asm/MVSWAIT.asm:20-26</code>; <code>app/maclib/ASMWAIT.mac:19</code>).</td></tr>
+  <tr><td class="mono">CEE3ABD</td><td>LE callable service</td><td>User abend with code 999 on any CBTRN02C file error (<code>CBTRN02C.cbl:707-711</code>).</td></tr>
+  <tr><td class="mono">DFSRRC00 / PSBPAUTB</td><td>IMS region controller / PSB</td><td>BMP entry for CBPAUP0C (<code>CBPAUP0J.jcl:24-25</code>; <code>PSBPAUTB.psb:17-20</code>, <code>CMPAT=YES</code> so the program receives an I/O PCB and a DB PCB, <code>CBPAUP0C.cbl:82, 128-133</code>).</td></tr>
+  <tr><td class="mono">SDSF (batch), CEMT</td><td>System utilities</td><td>Modify-console commands to CICS region <code>CICSAWSA</code> (<code>CLOSEFIL.jcl:22-30</code>, <code>OPENFIL.jcl:22-30</code>).</td></tr>
+</table>
+<h3>4.4 Other applications &amp; external events</h3>
+<table>
+  <tr><th>Dependency</th><th>Direction</th><th>Mechanism</th><th>Notes</th></tr>
+  <tr><td>CICS region CICSAWSA (online CARDDEMO)</td><td>Upstream &amp; downstream</td><td>Console MODIFY / CEMT via SDSF</td><td>Online must release the files before POSTTRAN (<code>CLOSEFIL.jcl:26-30</code>) and gets them back after (<code>OPENFIL.jcl:26-30</code>). TRANSACT CSD definition allows ADD/UPDATE/DELETE online (<code>CARDDEMO.CSD:81-82</code>).</td></tr>
+  <tr><td>Daily transaction capture (producer of DALYTRAN.PS)</td><td>Upstream</td><td>File feed</td><td>No producer in the repo; the only writer-side artefact is the sample EBCDIC image (Q-06).</td></tr>
+  <tr><td>IMS control region (DBPAUTP0 online)</td><td>Upstream</td><td>BMP under DFSRRC00</td><td>BMP needs the IMS control region up and the database allocated; online authorisation programs (COPAUA0C/COPAUS*) share the database.</td></tr>
+  <tr><td>TRANBKP (backup + re-define TRANSACT)</td><td>Upstream (manual / Control-M)</td><td>README order; Control-M DAILY-TransactionBackup</td><td>Because TRANFILE is <code>OPEN OUTPUT</code> (<code>CBTRN02C.cbl:256</code>), TRANSACT must be empty when POSTTRAN starts; <code>TRANBKP.jcl:23-67</code> REPROs to <code>TRANSACT.BKUP(+1)</code> then deletes/redefines the cluster. Not in the CA-7 SCHID=030 network (Q-01, Q-02).</td></tr>
+  <tr><td>INTCALC / COMBTRAN / CREASTMT / TRANREPT</td><td>Downstream</td><td>Shared VSAM (TCATBALF, ACCTDATA, TRANSACT)</td><td>Consume the balances and transaction master this chain produces (<code>INTCALC.jcl:28-34</code>, <code>CREASTMT.JCL:84-85</code>, <code>TRANREPT.jcl:68</code>). Not scheduled after POSTTRAN in either scheduler source.</td></tr>
+  <tr><td>CA-7 scheduler</td><td>Orchestration</td><td>TRIGGERED JOBS SCHID=030</td><td><code>CardDemo.ca7:43, 70, 97, 124</code>; JCLLIB <code>&amp;CARDDEMOPRODJCL</code> (<code>ca7:35</code>).</td></tr>
+</table>
+
+<h2 id="requirements">5. Functional requirements</h2>
+<table>
+  <tr><th>ID</th><th>Requirement</th><th>Source</th><th>Acceptance criteria</th></tr>
+  <tr><td>FR-01</td><td>Before any batch update, CLOSEFIL closes exactly the CICS files TRANSACT, CCXREF, ACCTDAT, CXACAIX and USRSEC in region CICSAWSA with <code>CEMT SET FIL(x) CLO</code>; no other file is touched.</td><td class="mono">app/jcl/CLOSEFIL.jcl:22-30</td><td>In the target, the equivalent &ldquo;online quiesce&rdquo; (or its documented absence) is applied to the data behind those five files only; a run log shows the five close actions in that order.</td></tr>
+  <tr><td>FR-02</td><td>OPENFIL is the last job of the network and reopens the same five files with <code>CEMT SET FIL(x) OPE</code>; it is released only after WAITSTEP completes.</td><td class="mono">app/jcl/OPENFIL.jcl:22-30; app/scheduler/CardDemo.ca7:124, 126-158</td><td>After the chain, the five files are available online; OPENFIL never runs before WAITSTEP has completed; no job is triggered after OPENFIL.</td></tr>
+  <tr><td>FR-03</td><td>CBPAUP0J executes CBPAUP0C as an IMS BMP under DFSRRC00 with PSB PSBPAUTB (DB PCB PROCOPT=AP over PAUTSUM0/PAUTDTL1), using the second PCB.</td><td class="mono">app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl:24-25; ims/PSBPAUTB.psb:17-20; cbl/CBPAUP0C.cbl:80-82</td><td>Target job named CBPAUP0J runs the purge against the pending-authorisation summary/detail store with read + delete access only (no insert/replace).</td></tr>
+  <tr><td>FR-04</td><td>CBPAUP0C reads one SYSIN control card <code>ee,fffff,ddddd,x</code>: expiry days (2 digits, default 5 if non-numeric), checkpoint frequency (default 5 if blank/0), checkpoint display frequency (default 10 if blank/0), debug flag (anything but Y &rarr; N). Shipped card is <code>00,00001,00001,Y</code>, i.e. expiry 0 days.</td><td class="mono">CBPAUP0C.cbl:98-108, 189, 196-208; CBPAUP0J.jcl:37</td><td>Given card <code>00,00001,00001,Y</code> the run uses expiry=0, chkp-freq=1, display-freq=1, debug on and logs <code>CBPAUP0C PARM RECEIVED :00,00001,00001,Y</code>; given a blank card it uses 5/5/10/N.</td></tr>
+  <tr><td>FR-05</td><td>For every summary (GN PAUTSUM0) and each of its details (GNP PAUTDTL1), a detail is expired when <code>today(YYDDD) &minus; (99999 &minus; PA-AUTH-DATE-9C) &ge; expiry days</code>. An expired detail is deleted (DLET) and the parent summary is adjusted in memory: resp code &lsquo;00&rsquo; &rarr; approved count &minus;1 and approved amount &minus; PA-APPROVED-AMT; otherwise declined count &minus;1 and declined amount &minus; PA-TRANSACTION-AMT.</td><td class="mono">CBPAUP0C.cbl:223-226, 255-258, 280-293, 310-312</td><td>Fixture with details dated today, today&minus;4, today&minus;5 and expiry=5: only the today&minus;5 detail is deleted; the summary&rsquo;s approved/declined counters and amounts decrease by exactly that detail&rsquo;s values. Dates are compared on 9&rsquo;s-complement YYDDD, not calendar dates (year boundary is not handled; see Q-09).</td></tr>
+  <tr><td>FR-06</td><td>After its details are processed, a summary is deleted when <code>PA-APPROVED-AUTH-CNT &le; 0</code>. The declined count is <em>not</em> tested (the source repeats the approved-count condition twice), and the adjusted summary is never rewritten (REPL) when it is kept. Quirk, preserved unless Q-10 is resolved.</td><td class="mono">CBPAUP0C.cbl:156-158, 335-337</td><td>A summary with approved count 0 and declined count 3 is deleted together with its remaining declined details; a summary with approved count 1 is kept with its stored counters unchanged on disk.</td></tr>
+  <tr><td>FR-07</td><td>CBPAUP0C takes an IMS checkpoint (CHKP, id <code>RMAD0000</code>) after every <code>P-CHKP-FREQ</code> summaries and once more at end of run; the checkpoint id counter is never incremented and no XRST is issued.</td><td class="mono">CBPAUP0C.cbl:75-77, 160-163, 169, 355</td><td>With chkp-freq=1 a run over N summaries commits N+1 times; a restart begins from the first summary (deletions already committed are not undone).</td></tr>
+  <tr><td>FR-08</td><td>Any DL/I status other than blank (or GB at end of database on GN, GE/GB at end of parent on GNP) makes CBPAUP0C display the failing call and status, set RETURN-CODE 16 and GOBACK; on success it prints four totals: summaries read, summaries deleted, details read, details deleted.</td><td class="mono">CBPAUP0C.cbl:234-240, 261-270, 316-320, 341-345, 364-369, 173-176, 380-383</td><td>A forced DLET failure ends the job RC 16 with <code>CBPAUP0C ABENDING ...</code>; a clean run ends RC 0 and the four counters equal the fixture outcome.</td></tr>
+  <tr><td>FR-09</td><td>CBTRN02C opens its six files in this mode and order: DALYTRAN INPUT (sequential), TRANFILE OUTPUT (indexed, random by TRAN-ID), XREFFILE INPUT, DALYREJS OUTPUT, ACCTFILE I-O, TCATBALF I-O. Because TRANFILE is OUTPUT, posting <em>loads</em> the transaction master from empty rather than appending. Any non-&lsquo;00&rsquo; open status abends the step.</td><td class="mono">CBTRN02C.cbl:29-61, 195-200, 238, 256, 275, 293, 311, 329</td><td>Running POSTTRAN against a non-empty transaction master leaves only this run&rsquo;s transactions; an unavailable input ends with <code>ERROR OPENING ...</code>, <code>FILE STATUS IS: NNNN</code> and user abend U0999.</td></tr>
+  <tr><td>FR-10</td><td>Daily transactions are processed in file order in a single pass; status &lsquo;10&rsquo; ends the loop, any other non-&lsquo;00&rsquo; read status abends. Each record increments TRANSACTIONS PROCESSED and is either posted (reason 0) or written to rejects (reason &ne; 0); the reason is reset to 0 before each record.</td><td class="mono">CBTRN02C.cbl:202-219, 345-369</td><td>For an input of N records, PROCESSED = N and POSTED + REJECTED = N; an empty file yields counts 0 and RC 0.</td></tr>
+  <tr><td>FR-11</td><td>A transaction whose <code>DALYTRAN-CARD-NUM</code> has no CARDXREF record is rejected with reason <code>0100</code>, text <code>INVALID CARD NUMBER FOUND</code>; the account lookup and all later checks are skipped.</td><td class="mono">CBTRN02C.cbl:370-392</td><td>Unknown card &rarr; one reject line with trailer <code>0100INVALID CARD NUMBER FOUND</code>; no ACCT/TCATBAL change.</td></tr>
+  <tr><td>FR-12</td><td>The account is located by <code>XREF-ACCT-ID</code> from the cross-reference (never from the transaction). A missing account is rejected with reason <code>0101</code>, text <code>ACCOUNT RECORD NOT FOUND</code>.</td><td class="mono">CBTRN02C.cbl:393-399</td><td>Card present in XREF but its account absent &rarr; trailer <code>0101ACCOUNT RECORD NOT FOUND</code>.</td></tr>
+  <tr><td>FR-13</td><td>Over-limit rule: compute <code>ACCT-CURR-CYC-CREDIT &minus; ACCT-CURR-CYC-DEBIT + DALYTRAN-AMT</code>; if <code>ACCT-CREDIT-LIMIT</code> is less than that value reject with <code>0102 OVERLIMIT TRANSACTION</code>. Equality is accepted. <code>ACCT-CURR-BAL</code> is not used in the test.</td><td class="mono">CBTRN02C.cbl:403-413</td><td>Limit 1000.00, cycle credit 900.00, cycle debit 0, amount 100.00 &rarr; accepted; amount 100.01 &rarr; rejected 0102.</td></tr>
+  <tr><td>FR-14</td><td>Expiry rule: if <code>ACCT-EXPIRAION-DATE</code> (10 chars) is alphanumerically less than the first 10 characters of <code>DALYTRAN-ORIG-TS</code>, reject with <code>0103 TRANSACTION RECEIVED AFTER ACCT EXPIRATION</code>. The check runs even after an over-limit failure and overwrites reason 0102 with 0103 (quirk, preserved).</td><td class="mono">CBTRN02C.cbl:414-420</td><td>Expiry 2025-12-31, orig TS 2025-12-31-23.59.59.000000 &rarr; accepted; orig TS 2026-01-01-... &rarr; 0103. A transaction both over-limit and post-expiry reports 0103 only.</td></tr>
+  <tr><td>FR-15</td><td>A rejected transaction has no side effects and produces exactly one 430-byte reject record: the unmodified 350-byte DALYTRAN image followed by an 80-byte trailer = 4-digit zero-padded reason + 76-char space-padded description. The reject file is a new GDG generation, RECFM=F LRECL=430.</td><td class="mono">CBTRN02C.cbl:176-182, 211-216, 446-465; app/jcl/POSTTRAN.jcl:34-38</td><td>Byte compare of reject record positions 1-350 with the input record is identical; positions 351-354 = reason; 355-430 = description padded. Account and category balances for the rejected card are unchanged.</td></tr>
+  <tr><td>FR-16</td><td>A posted transaction copies TRAN-ID, TYPE-CD, CAT-CD, SOURCE, DESC, AMT, MERCHANT-ID/NAME/CITY/ZIP, CARD-NUM and ORIG-TS from the daily record unchanged; TRAN-PROC-TS is set to the current time formatted <code>YYYY-MM-DD-HH.MM.SS.hh0000</code> (26 chars). The daily record&rsquo;s own PROC-TS is discarded.</td><td class="mono">CBTRN02C.cbl:425-438, 692-705</td><td>Posted record fields 1-304 equal input fields 1-304; field 305-330 matches <code>^\d{4}-\d{2}-\d{2}-\d{2}\.\d{2}\.\d{2}\.\d{2}0000$</code> and is within the run window.</td></tr>
+  <tr><td>FR-17</td><td>Category balance: key = (XREF-ACCT-ID, DALYTRAN-TYPE-CD, DALYTRAN-CAT-CD). If no TCATBALF record exists (status 23) one is created with balance = amount and the message <code>TCATBAL record not found for key : &lt;17-byte key&gt;.. Creating.</code> is logged; otherwise the amount is added and the record rewritten. Any other read/write/rewrite status abends.</td><td class="mono">CBTRN02C.cbl:467-542</td><td>Two transactions of 10.00 and &minus;2.50 for a new (acct,type,cat) leave one TCATBALF record with balance 7.50 and one &ldquo;Creating.&rdquo; log line.</td></tr>
+  <tr><td>FR-18</td><td>Account update: <code>ACCT-CURR-BAL += amount</code>; if amount &ge; 0 then <code>ACCT-CURR-CYC-CREDIT += amount</code> else <code>ACCT-CURR-CYC-DEBIT += amount</code> (debit accumulates negative values). The record is REWRITTEN; an INVALID KEY on rewrite sets reason 0109 but the transaction has already been posted and the reason is reset before the next record, so 0109 can never reach the reject file (quirk, preserved).</td><td class="mono">CBTRN02C.cbl:545-560, 208</td><td>Amount +25.00 raises CURR-BAL and CYC-CREDIT by 25.00; amount &minus;25.00 lowers CURR-BAL by 25.00 and adds &minus;25.00 to CYC-DEBIT; no reject record ever carries 0109.</td></tr>
+  <tr><td>FR-19</td><td>Per posted transaction the write order is TCATBALF, then ACCTFILE, then TRANFILE. Effects accumulate in input order (every transaction re-reads the account and balance as left by the previous one). A TRANFILE write failure (e.g. duplicate TRAN-ID, status 22) logs <code>ERROR WRITING TO TRANSACTION FILE</code> and abends with CEE3ABD code 999.</td><td class="mono">CBTRN02C.cbl:440-442, 562-579, 707-711</td><td>Two transactions for the same account are validated against the balance updated by the first; a duplicated TRAN-ID in the input ends the step with user abend U0999 after the earlier records were applied (no rollback).</td></tr>
+  <tr><td>FR-20</td><td>End of run: close all six files, log <code>TRANSACTIONS PROCESSED :nnnnnnnnn</code> and <code>TRANSACTIONS REJECTED  :nnnnnnnnn</code> (9-digit zero-padded), and end RC 4 if any record was rejected, RC 0 otherwise. Rejects never fail the job and do not stop the CA-7 trigger.</td><td class="mono">CBTRN02C.cbl:221-232, 194; app/scheduler/CardDemo.ca7:97</td><td>Run with 1 reject &rarr; RC 4, both lines present, WAITSTEP still released; run with 0 rejects &rarr; RC 0.</td></tr>
+  <tr><td>FR-21</td><td>Each POSTTRAN run allocates a new DALYREJS generation (<code>(+1)</code>, DISP NEW,CATLG,DELETE); the GDG base is defined LIMIT(5) SCRATCH so at most the five most recent reject files are retained and older ones are physically deleted.</td><td class="mono">app/jcl/POSTTRAN.jcl:34-38; app/jcl/DALYREJS.jcl:24-28</td><td>Six consecutive runs leave exactly five reject outputs, the oldest removed; a run that abends before completion does not catalogue its generation (DELETE on abnormal end).</td></tr>
+  <tr><td>FR-22</td><td>TRANIDX builds a non-unique alternate index over TRAN-PROC-TS (<code>KEYS(26 304)</code>, UPGRADE, RECORDSIZE 350) on TRANSACT, defines a PATH and BLDINDEXes it, so posted transactions can be retrieved in processing-timestamp order.</td><td class="mono">app/jcl/TRANIDX.jcl:25-34, 42-44, 52-54</td><td>Querying posted transactions by processing timestamp uses an index (not a scan) and returns multiple rows for an identical timestamp.</td></tr>
+  <tr><td>FR-23</td><td>WAITSTEP suspends the chain for the SYSIN value in centiseconds (<code>00003600</code> = 36 s) by passing it as a binary fullword to MVSWAIT, which issues <code>STIMER WAIT,BINTVL=</code>; the step ends RC 0.</td><td class="mono">app/jcl/WAITSTEP.jcl:20-26; app/cbl/COBSWAIT.cbl:30-38; app/asm/MVSWAIT.asm:20-26; app/maclib/ASMWAIT.mac:19</td><td>Elapsed time between WAITSTEP start and end is &ge; 36 s with the shipped card; a non-numeric card is a failure of the step (COBOL MOVE of non-numeric PIC X to PIC 9 COMP is undefined; target must reject it explicitly).</td></tr>
+  <tr><td>FR-24</td><td>Chain order and release are exactly those of the CA-7 SCHID=030 network: CLOSEFIL &rarr; CBPAUP0J &rarr; POSTTRAN &rarr; WAITSTEP &rarr; OPENFIL, each released on predecessor completion with no condition-code gate; TRANBKP, TRANIDX and DALYREJS are not part of it.</td><td class="mono">app/scheduler/CardDemo.ca7:43, 70, 97, 124, 126-158; app/jcl/*.jcl (no COND=)</td><td>Orchestration contract test re-derives the four edges from <code>CardDemo.ca7</code>; no extra or missing edge; the Control-M folder is recorded separately (Q-01).</td></tr>
+</table>
+
+<h2 id="restart">6. Restart, recovery &amp; error handling</h2>
+<h3>6.1 Return-code conventions</h3>
+<table>
+  <tr><th>RC</th><th>Meaning</th><th>Downstream effect</th></tr>
+  <tr><td class="mono">POSTTRAN RC 0</td><td>All daily transactions posted, none rejected (<code>CBTRN02C.cbl:229-231</code>).</td><td>WAITSTEP triggered (<code>CardDemo.ca7:97</code>).</td></tr>
+  <tr><td class="mono">POSTTRAN RC 4</td><td>At least one record written to DALYREJS (<code>CBTRN02C.cbl:229-231</code>).</td><td>Chain continues (no COND= in <code>POSTTRAN.jcl</code>; no RC gate in CA-7). Rejects must be reviewed manually from <code>DALYREJS(0)</code>.</td></tr>
+  <tr><td class="mono">POSTTRAN U0999</td><td>Any file open/read/write/rewrite/close failure; <code>CALL 'CEE3ABD' USING 999</code> after <code>ABENDING PROGRAM</code> and <code>FILE STATUS IS: NNNN</code> (<code>CBTRN02C.cbl:707-727</code>).</td><td>Step abends; DALYREJS(+1) is deleted (DISP abnormal = DELETE, <code>POSTTRAN.jcl:34</code>). Whether CA-7 withholds the WAITSTEP trigger is not stated (Q-05).</td></tr>
+  <tr><td class="mono">CBPAUP0J RC 0</td><td>Purge completed; totals displayed (<code>CBPAUP0C.cbl:173-176</code>).</td><td>POSTTRAN triggered (<code>ca7:70</code>).</td></tr>
+  <tr><td class="mono">CBPAUP0J RC 16</td><td>DL/I GN/GNP/DLET/CHKP returned an unexpected status; program displays status and GOBACKs with RC 16 &mdash; it does not abend (<code>CBPAUP0C.cbl:380-383</code>).</td><td>Normal BMP termination commits work since the last CHKP (inference from IMS semantics; confirm, Q-05). No COND= on the step.</td></tr>
+  <tr><td class="mono">WAITSTEP RC 0</td><td>MVSWAIT clears R15 before return (<code>MVSWAIT.asm:26</code>); COBSWAIT STOP RUN.</td><td>OPENFIL triggered (<code>ca7:124</code>).</td></tr>
+  <tr><td class="mono">CLOSEFIL / OPENFIL</td><td>SDSF batch RC; CEMT response text goes to ISFOUT/CMDOUT (<code>CLOSEFIL.jcl:23-24</code>). A failed CEMT (file still open/closed) is not reflected in the step RC by anything in the JCL.</td><td>Not defined in repo (Q-11).</td></tr>
+  <tr><td class="mono">DALYREJS / TRANIDX IDCAMS</td><td>Standard IDCAMS MAXCC; no <code>IF MAXCC</code> handling in either job (<code>DALYREJS.jcl:21-28</code>, <code>TRANIDX.jcl:22-54</code>).</td><td>Not scheduled; a rerun against existing objects ends RC 12 and must be ignored or the objects deleted first.</td></tr>
+</table>
+<h3>6.2 Abends</h3>
+<table>
+  <tr><th>Abend</th><th>Job / Program</th><th>Meaning</th><th>Recovery</th></tr>
+  <tr><td class="mono">U0999</td><td class="mono">POSTTRAN / CBTRN02C</td><td>Generic file error; preceded by one of: <code>ERROR OPENING DALYTRAN</code>, <code>ERROR OPENING TRANSACTION FILE</code>, <code>ERROR OPENING CROSS REF FILE</code>, <code>ERROR OPENING DALY REJECTS FILE</code>, <code>ERROR OPENING ACCOUNT MASTER FILE</code>, <code>ERROR OPENING TRANSACTION BALANCE FILE</code>, <code>ERROR READING DALYTRAN FILE</code>, <code>ERROR READING TRANSACTION BALANCE FILE</code>, <code>ERROR WRITING TRANSACTION BALANCE FILE</code>, <code>ERROR REWRITING TRANSACTION BALANCE FILE</code>, <code>ERROR WRITING TO TRANSACTION FILE</code>, <code>ERROR WRITING TO REJECTS FILE</code>, <code>ERROR CLOSING ...</code> (<code>CBTRN02C.cbl:247, 265, 284, 302, 320, 338, 363, 489, 520, 538, 574, 460, 593-685</code>).</td><td>Fix the file condition (most likely: TRANSACT not empty &rarr; status on OPEN OUTPUT; duplicate TRAN-ID &rarr; status 22). Because ACCTFILE/TCATBALF updates before the abend are already applied, restore ACCTDATA and TCATBALF from backup (none in this chain &mdash; Q-12) before rerunning from the top.</td></tr>
+  <tr><td class="mono">(none &mdash; RC 16)</td><td class="mono">CBPAUP0J / CBPAUP0C</td><td>DL/I failure handled by display + RC 16, not an abend (<code>CBPAUP0C.cbl:380-383</code>). An unhandled IMS pseudo-abend (e.g. U0476 scheduling) would come from DFSRRC00, not the program.</td><td>Rerun from the top; deletes are idempotent (expired segments already gone are simply not found).</td></tr>
+  <tr><td class="mono">S0C7 (possible)</td><td class="mono">WAITSTEP / COBSWAIT</td><td>Non-numeric SYSIN moved to <code>PIC 9(8) COMP</code> (<code>COBSWAIT.cbl:36-37</code>) &mdash; behaviour undefined in COBOL; not observed in repo.</td><td>Correct the control card; rerun.</td></tr>
+  <tr><td class="mono">IEC/IDC errors</td><td class="mono">DALYREJS, TRANIDX</td><td>Duplicate DEFINE (object exists) or BLDINDEX on empty base.</td><td>Delete the object or skip the job; rerun.</td></tr>
+</table>
+<h3>6.3 Restart / checkpoint semantics</h3>
+<p><strong>POSTTRAN / CBTRN02C</strong> has no checkpoint, commit interval or restart key: it is a single VSAM load pass (<code>CBTRN02C.cbl:202-219</code>). TRANFILE is <code>OPEN OUTPUT</code> (<code>:256</code>), so a cold rerun reloads the transaction master from empty, and the JCL&rsquo;s <code>DALYREJS(+1) DISP=(NEW,CATLG,DELETE)</code> (<code>POSTTRAN.jcl:34</code>) gives a fresh reject generation. However ACCTFILE REWRITEs (<code>:554</code>) and TCATBALF WRITE/REWRITEs (<code>:510, :528</code>) are applied in place and are <em>not</em> reversed on abend, so a rerun after a partial run double-counts every transaction that was posted before the failure. No backout job exists in <code>app/jcl</code> for ACCTDATA or TCATBALF (Q-12). Legacy procedure is therefore: restore ACCTDATA/TCATBALF, ensure TRANSACT is empty (TRANBKP), rerun POSTTRAN from the top.</p>
+<p><strong>CBPAUP0J / CBPAUP0C</strong> takes <code>EXEC DLI CHKP ID(WK-CHKPT-ID)</code> after every <code>P-CHKP-FREQ</code> summaries and at end of run (<code>CBPAUP0C.cbl:160-163, 169, 355</code>), with a constant id <code>RMAD0000</code> (<code>:75-77</code>) and no <code>XRST</code>; a restart therefore reprocesses from the first summary, which is harmless because already-deleted segments are not re-read.</p>
+<p><strong>CLOSEFIL, WAITSTEP, OPENFIL</strong> are stateless and may be rerun at will. If the chain fails between CLOSEFIL and OPENFIL, OPENFIL must be run manually to restore online service.</p>
+
+<h2 id="nfr">7. Non-functional requirements</h2>
+<table>
+  <tr><th>ID</th><th>Category</th><th>Requirement</th></tr>
+  <tr><td>NFR-01</td><td>Volume</td><td>Not defined in repo. Capacity hints only: DALYREJS(+1) <code>SPACE=(CYL,(1,1))</code> (<code>POSTTRAN.jcl:37</code>); TRANSACT <code>CYLINDERS(1 5)</code> (<code>TRANBKP.jcl:55</code>); sample DALYTRAN image in <code>app/data/EBCDIC</code>. Q-13.</td></tr>
+  <tr><td>NFR-02</td><td>Window</td><td>Not defined in repo. CA-7 shows <code>ELAPTM=2359</code>, <code>CPUTM=00023</code>, <code>DONT SCHEDULE BEFORE 03237 AT 0000</code> (<code>CardDemo.ca7:37-39</code>); Control-M daily folder (different chain) has <code>TIMETO="23:00"</code> (<code>CardDemo.controlm:4</code>). Q-03.</td></tr>
+  <tr><td>NFR-03</td><td>Availability</td><td>The five CICS files are unavailable online between CLOSEFIL and OPENFIL (<code>CLOSEFIL.jcl:26-30</code>, <code>OPENFIL.jcl:26-30</code>); the target must either keep the same quiesce window or prove POSTTRAN is safe to run concurrently with online updates (TRANSACT is ADD/UPDATE/DELETE-enabled online, <code>CARDDEMO.CSD:81-82</code>).</td></tr>
+  <tr><td>NFR-04</td><td>Throughput</td><td>Legacy processes one record per read with random VSAM access to XREF, ACCT, TCATBAL and a write to TRANSACT (<code>CBTRN02C.cbl:202-219</code>); target may batch but must preserve input-order accumulation (FR-19).</td></tr>
+  <tr><td>NFR-05</td><td>Retention</td><td>Reject files: five generations (<code>DALYREJS.jcl:26</code>). Transaction master backups: five generations of <code>TRANSACT.BKUP</code> if TRANBKP is used (<code>TRANBKP.jcl:33</code>; GDG base not in <code>app/jcl</code>, Q-02).</td></tr>
+  <tr><td>NFR-06</td><td>Observability</td><td>Target must emit the legacy SYSOUT markers and counters verbatim: <code>START OF EXECUTION OF PROGRAM CBTRN02C</code>, <code>TRANSACTIONS PROCESSED :</code>, <code>TRANSACTIONS REJECTED  :</code>, <code>END OF EXECUTION OF PROGRAM CBTRN02C</code> (<code>CBTRN02C.cbl:194, 227-228, 232</code>) and CBPAUP0C&rsquo;s four totals (<code>CBPAUP0C.cbl:173-176</code>).</td></tr>
+  <tr><td>NFR-07</td><td>Pacing</td><td>WAITSTEP&rsquo;s 36 s delay (<code>WAITSTEP.jcl:26</code>) exists only to let CICS/VSAM settle before OPENFIL; target may replace it with an explicit readiness check but must keep the ordering.</td></tr>
+</table>
+
+<h2 id="interfaces">8. Interfaces &amp; data layouts</h2>
+<table>
+  <tr><th>Interface</th><th>Layout (copybook)</th><th>Producer</th><th>Consumer</th></tr>
+  <tr><td class="mono">DALYTRAN (AWS.M2.CARDDEMO.DALYTRAN.PS)</td><td class="mono">CVTRA06Y.cpy:4-18 &mdash; DALYTRAN-ID X(16), TYPE-CD X(2), CAT-CD 9(4), SOURCE X(10), DESC X(100), AMT S9(9)V99, MERCHANT-ID 9(9), MERCHANT-NAME X(50), MERCHANT-CITY X(50), MERCHANT-ZIP X(10), CARD-NUM X(16), ORIG-TS X(26), PROC-TS X(26), FILLER X(20) = 350</td><td>Upstream capture (not in repo, Q-06)</td><td>CBTRN02C (<code>CBTRN02C.cbl:346</code>)</td></tr>
+  <tr><td class="mono">TRANFILE (TRANSACT.VSAM.KSDS)</td><td class="mono">CVTRA05Y.cpy:4-18 &mdash; same 350-byte layout with TRAN- prefix; key TRAN-ID (1-16); TRAN-PROC-TS at 305-330 (AIX key, TRANIDX.jcl:27)</td><td>CBTRN02C (<code>:564</code>)</td><td>CICS COTRN00C/01C/02C (FILE TRANSACT, <code>CARDDEMO.CSD:76</code>), TRANBKP REPRO, CREASTMT, TRANREPT, COMBTRAN</td></tr>
+  <tr><td class="mono">XREFFILE (CARDXREF.VSAM.KSDS)</td><td class="mono">CVACT03Y.cpy:4-8 &mdash; XREF-CARD-NUM X(16) key, XREF-CUST-ID 9(9), XREF-ACCT-ID 9(11), FILLER X(14) = 50</td><td>XREFFILE.jcl load / online card maintenance</td><td>CBTRN02C (<code>:382-383</code>)</td></tr>
+  <tr><td class="mono">ACCTFILE (ACCTDATA.VSAM.KSDS)</td><td class="mono">CVACT01Y.cpy:4-17 &mdash; ACCT-ID 9(11) key, ACTIVE-STATUS X, CURR-BAL S9(10)V99, CREDIT-LIMIT S9(10)V99, CASH-CREDIT-LIMIT S9(10)V99, OPEN-DATE X(10), EXPIRAION-DATE X(10), REISSUE-DATE X(10), CURR-CYC-CREDIT S9(10)V99, CURR-CYC-DEBIT S9(10)V99, ADDR-ZIP X(10), GROUP-ID X(10), FILLER X(178) = 300</td><td>ACCTFILE.jcl load / online COACTUPC; CBTRN02C REWRITE (<code>:554</code>)</td><td>CBTRN02C (<code>:395</code>), INTCALC, CREASTMT, online</td></tr>
+  <tr><td class="mono">TCATBALF (TCATBALF.VSAM.KSDS)</td><td class="mono">CVTRA01Y.cpy:4-10 &mdash; key TRANCAT-ACCT-ID 9(11) + TRANCAT-TYPE-CD X(2) + TRANCAT-CD 9(4) (17 bytes), TRAN-CAT-BAL S9(9)V99, FILLER X(22) = 50</td><td>TCATBALF.jcl initial load; CBTRN02C WRITE/REWRITE (<code>:510, :528</code>)</td><td>CBTRN02C (<code>:474</code>), INTCALC (CBACT04C), TRANREPT</td></tr>
+  <tr><td class="mono">DALYREJS (AWS.M2.CARDDEMO.DALYREJS(+1))</td><td class="mono">CBTRN02C.cbl:81-84, 176-182 &mdash; REJECT-TRAN-DATA X(350) (DALYTRAN image) + VALIDATION-TRAILER X(80) = WS-VALIDATION-FAIL-REASON 9(4) + DESC X(76); RECFM=F LRECL=430 (POSTTRAN.jcl:36)</td><td>CBTRN02C (<code>:451</code>)</td><td>Manual review / downstream not in repo (Q-14)</td></tr>
+  <tr><td class="mono">CBPAUP0C SYSIN control card</td><td class="mono">CBPAUP0C.cbl:98-108 &mdash; P-EXPIRY-DAYS 9(2), &lsquo;,&rsquo;, P-CHKP-FREQ X(5), &lsquo;,&rsquo;, P-CHKP-DIS-FREQ X(5), &lsquo;,&rsquo;, P-DEBUG-FLAG X(1); shipped value <code>00,00001,00001,Y</code> (CBPAUP0J.jcl:37)</td><td>CBPAUP0J.jcl</td><td>CBPAUP0C (<code>:189</code>)</td></tr>
+  <tr><td class="mono">IMS segments PAUTSUM0 / PAUTDTL1</td><td class="mono">CIPAUSMY.cpy (PA-ACCT-ID S9(11) COMP-3, PA-APPROVED-AUTH-CNT/-DECLINED-AUTH-CNT S9(4) COMP, PA-APPROVED-AUTH-AMT/-DECLINED-AUTH-AMT S9(9)V99 COMP-3), CIPAUDTY.cpy (PA-AUTH-DATE-9C S9(5) COMP-3, PA-AUTH-RESP-CODE X(2), PA-TRANSACTION-AMT/PA-APPROVED-AMT S9(10)V99 COMP-3); DBPAUTP0.dbd: 100 / 200 bytes</td><td>Online COPAUA0C (authorisation)</td><td>CBPAUP0C GN/GNP/DLET (<code>:223, 255, 310, 335</code>)</td></tr>
+  <tr><td class="mono">COBSWAIT SYSIN</td><td class="mono">COBSWAIT.cbl:31 &mdash; PARM-VALUE X(8), numeric centiseconds; WAITSTEP.jcl:26 = 00003600</td><td>WAITSTEP.jcl</td><td>COBSWAIT &rarr; MVSWAIT fullword (<code>MVSWAIT.asm:20-22</code>)</td></tr>
+  <tr><td class="mono">CEMT console commands</td><td class="mono">CLOSEFIL.jcl:26-30 / OPENFIL.jcl:26-30 &mdash; <code>/F CICSAWSA,'CEMT SET FIL(name ) CLO|OPE'</code></td><td>SDSF batch step</td><td>CICS region CICSAWSA</td></tr>
+  <tr><td class="mono">IMS BMP PARM</td><td class="mono">CBPAUP0J.jcl:25 &mdash; <code>PARM='BMP,CBPAUP0C,PSBPAUTB'</code></td><td>CBPAUP0J.jcl</td><td>DFSRRC00</td></tr>
+</table>
+
+<h2 id="security">9. Security &amp; access</h2>
+<table>
+  <tr><th>Item</th><th>Value</th></tr>
+  <tr><td>Job owner / RACF identity</td><td class="mono">CA-7: OWNER= *NONE* for all five jobs (CardDemo.ca7:35, 62, 89, 116, 143); JCL: NOTIFY=&amp;SYSUID, no USER= (CLOSEFIL.jcl:1-2, POSTTRAN.jcl:1-2, WAITSTEP.jcl, OPENFIL.jcl:1-2, CBPAUP0J.jcl:1-2). Control-M (different chain) RUN_AS="xuemingh" (CardDemo.controlm:4). RACF profile not defined in repo (Q-15).</td></tr>
+  <tr><td>Sensitive data handled</td><td>Full PAN (<code>DALYTRAN-CARD-NUM</code>, <code>TRAN-CARD-NUM</code>, <code>XREF-CARD-NUM</code> X(16) in clear), account balances and credit limits (<code>CVACT01Y</code>), merchant and transaction descriptions, authorisation amounts in IMS. Reject file <code>DALYREJS</code> carries the full PAN in clear (<code>CBTRN02C.cbl:447</code>). CLOSEFIL/OPENFIL also cycle the user-security file <code>USRSEC</code> (<code>CLOSEFIL.jcl:30</code>).</td></tr>
+  <tr><td>Regulatory obligations</td><td>Not defined in repo. PCI-DSS scope is implied by clear-text PAN in DALYTRAN/TRANSACT/DALYREJS; the target must mask or tokenise PAN in logs and reject output (Q-16). The <code>TCATBAL record not found for key</code> log line prints only account id/type/category, not PAN (<code>CBTRN02C.cbl:476-477</code>).</td></tr>
+  <tr><td>Privileged operations</td><td>CLOSEFIL/OPENFIL issue MVS MODIFY commands to the CICS region through SDSF (<code>CLOSEFIL.jcl:22-30</code>) &mdash; requires SDSF/OPERCMDS authority; CBPAUP0J requires IMS BMP scheduling authority for PSBPAUTB (<code>CBPAUP0J.jcl:24-25</code>).</td></tr>
+</table>
+
+<h2 id="target">10. Target-state mapping</h2>
+<p>Test-evidence paths are relative to <code>migration/carddemo/backend/src/test/java/com/carddemo/batch/</code>. Target components below exist on <code>devin/carddemo-integration</code> under <code>migration/carddemo/</code> (Spring Boot 3 / Spring Batch 5 backend, Flyway, React). Stream register: <code>migration/carddemo/README.md:31-40</code> (S-11 DailyTransactionPosting, S-17 OperationsChain, S-20 PendingAuthPurgeAndIMSLoad). Mapping follows <code>docs/migration/CardDemo_target_state.md:93-100</code>.</p>
+<table>
+  <tr><th>Legacy asset</th><th>Disposition</th><th>Target component</th><th>Test evidence</th></tr>
+  <tr><td class="mono">CLOSEFIL.jcl (SDSF/CEMT CLO)</td><td>Retire</td><td>No file open/close job in the target: data lives in PostgreSQL tables shared by online and batch, so there is nothing to close. Recorded as a removed job in <code>com.carddemo.batch.operations</code>.</td><td class="mono">operations/<wbr>File<wbr>Control<wbr>Jobs<wbr>Removed<wbr>Test.java</td></tr>
+  <tr><td class="mono">OPENFIL.jcl (SDSF/CEMT OPE)</td><td>Retire</td><td>As above.</td><td class="mono">operations/<wbr>File<wbr>Control<wbr>Jobs<wbr>Removed<wbr>Test.java</td></tr>
+  <tr><td class="mono">CBPAUP0J.jcl / CBPAUP0C.cbl / PSBPAUTB</td><td>Rewrite</td><td>Spring Batch job <code>"CBPAUP0J"</code> &mdash; <code>com.carddemo.batch.authpurge.PendingAuthPurgeJobConfiguration</code> (<code>:93</code>), <code>PendingAuthPurgeService</code>, <code>PendingAuthSummaryReader</code>; IMS segments &rarr; JPA entities <code>PendingAuthSummaryRecord</code> / <code>PendingAuthDetailRecord</code> over tables from <code>V1__baseline_carddemo_estate.sql</code> / <code>V900__auth_fraud_column_types.sql</code>.</td><td class="mono">authpurge/<wbr>Pending<wbr>Auth<wbr>Purge<wbr>Service<wbr>Test.java<br>authpurge/<wbr>Pending<wbr>Auth<wbr>Batch<wbr>Jobs<wbr>Integration<wbr>Test.java<br>authpurge/<wbr>Pending<wbr>Auth<wbr>Segment<wbr>Format<wbr>Test.java</td></tr>
+  <tr><td class="mono">POSTTRAN.jcl STEP15 / CBTRN02C.cbl</td><td>Rewrite</td><td>Spring Batch job <code>"POSTTRAN"</code> &mdash; <code>com.carddemo.batch.posttran.PostTranJobConfiguration</code> (<code>:62</code>), <code>DailyTransactionPostingProcessor</code>, <code>TransactionValidationService</code> (reasons 100-103), <code>TransactionPostingService</code> (TCATBAL/ACCT/TRANSACT updates), <code>TransactionMasterInitializer</code> (OPEN OUTPUT semantics), <code>Db2TimestampFormatter</code>, <code>PostTranJobListener</code> (counts, RC 4). Package name is <code>batch.posttran</code>, not the <code>batch.posting</code> reserved in <code>migration/carddemo/README.md:31</code> (Q-17).</td><td class="mono">posttran/<wbr>Post<wbr>Tran<wbr>Job<wbr>Integration<wbr>Test.java<br>posttran/<wbr>Transaction<wbr>Validation<wbr>Service<wbr>Test.java<br>posttran/<wbr>Transaction<wbr>Posting<wbr>Service<wbr>Test.java<br>posttran/<wbr>Db2Timestamp<wbr>Formatter<wbr>Test.java</td></tr>
+  <tr><td class="mono">DALYTRAN.PS (CVTRA06Y)</td><td>Rewrite</td><td>Table + entity <code>com.carddemo.common.domain.DailyTransactionRecord</code>, <code>DailyTransactionRepository</code>; fixed-width image <code>batch.posttran.DailyTransactionImage</code> for byte-exact reject output.</td><td class="mono">posttran/<wbr>Daily<wbr>Transaction<wbr>Image<wbr>Test.java</td></tr>
+  <tr><td class="mono">TRANSACT.VSAM.KSDS (CVTRA05Y)</td><td>Rewrite</td><td><code>transactions</code> table (<code>V1__baseline_carddemo_estate.sql</code>), shared with the TransactionManagement online stream (<code>TransactionRecord</code> entity).</td><td class="mono">posttran/<wbr>Post<wbr>Tran<wbr>Job<wbr>Integration<wbr>Test.java<br>(empties<wbr>The<wbr>Transaction<wbr>Master<wbr>Before<wbr>Posting)</td></tr>
+  <tr><td class="mono">TRANIDX.jcl (AIX on TRAN-PROC-TS)</td><td>Rewrite</td><td>Flyway <code>V1100__posttran_transaction_proc_ts_index.sql</code>: <code>CREATE INDEX idx_transactions_proc_ts ON transactions (proc_ts)</code>; no PATH object needed.</td><td class="mono">posttran/<wbr>Post<wbr>Tran<wbr>Job<wbr>Integration<wbr>Test.java<br>(indexes<wbr>Posted<wbr>Transactions<wbr>By<wbr>Processing<wbr>Timestamp)</td></tr>
+  <tr><td class="mono">DALYREJS.jcl + DALYREJS(+1) GDG</td><td>Rewrite</td><td><code>batch.posttran.RejectFileGenerations</code> (date/sequence-suffixed files under <code>carddemo.batch.data-dir</code>, keep five) and <code>RejectRecord</code> (430-byte line).</td><td class="mono">posttran/<wbr>Reject<wbr>File<wbr>Generations<wbr>Test.java<br>posttran/<wbr>Reject<wbr>Record<wbr>Test.java</td></tr>
+  <tr><td class="mono">ACCTDATA / CARDXREF / TCATBALF KSDS</td><td>Rewrite</td><td>Tables in <code>V1__baseline_carddemo_estate.sql</code>, shared entities under <code>com.carddemo.common.domain</code>; seed <code>R__seed_carddemo_data.sql</code>.</td><td class="mono">posttran/<wbr>Transaction<wbr>Posting<wbr>Service<wbr>Test.java</td></tr>
+  <tr><td class="mono">WAITSTEP.jcl / COBSWAIT.cbl / MVSWAIT.asm</td><td>Rewrite</td><td>Spring Batch job <code>"WAITSTEP"</code> &mdash; <code>com.carddemo.batch.operations.WaitStepJobConfiguration</code> (<code>:72</code>) with <code>WaitControlCard</code> (centisecond card, default 00003600).</td><td class="mono">operations/<wbr>Wait<wbr>Step<wbr>Job<wbr>Test.java<br>operations/<wbr>Wait<wbr>Control<wbr>Card<wbr>Test.java</td></tr>
+  <tr><td class="mono">CA-7 SCHID=030 triggers / Control-M DAILY-TransactionBackup</td><td>Rehost (contract only)</td><td>No scheduler is migrated; <code>com.carddemo.batch.operations.OperationsChainSchedule</code> holds both graphs (CA-7 &ldquo;Posting&rdquo; edges CLOSEFIL&rarr;CBPAUP0J&rarr;POSTTRAN&rarr;WAITSTEP&rarr;OPENFIL) and <code>BatchJobLauncher</code> exposes exit codes 0/12 for the target scheduler.</td><td class="mono">operations/<wbr>Operations<wbr>Chain<wbr>Schedule<wbr>Test.java</td></tr>
+  <tr><td class="mono">CEE3ABD U0999 abend seam</td><td>Rewrite</td><td><code>com.carddemo.common.batch.AbendService</code> / <code>AbendException</code> (logs <code>ABENDING PROGRAM</code>, code 0999, fails step &rarr; exit 12).</td><td class="mono">posttran/<wbr>Transaction<wbr>Posting<wbr>Service<wbr>Test.java<br>(abend on duplicate id)</td></tr>
+  <tr><td class="mono">TRANBKP.jcl (REPRO + redefine TRANSACT)</td><td>&mdash;</td><td>Not part of this CA-7 chain; owned by the OperationsChain stream (Control-M DAILY-TransactionBackup). Not mapped here.</td><td class="mono">&mdash;</td></tr>
+  <tr><td class="mono">React frontend</td><td>n/a</td><td>No UI component for this batch chain in <code>migration/carddemo/frontend</code>; posted transactions surface through the TransactionManagement screens (CT00/CT01).</td><td class="mono">&mdash;</td></tr>
+</table>
+
+<h2 id="open">11. Assumptions, technical debt &amp; open questions</h2>
+<table>
+  <tr><th>ID</th><th>Type</th><th>Description</th><th>Owner</th><th>Status</th></tr>
+  <tr><td>Q-01</td><td>Assumption</td><td>Scheduler sources disagree: CA-7 SCHID=030 is CLOSEFIL&rarr;CBPAUP0J&rarr;POSTTRAN&rarr;WAITSTEP&rarr;OPENFIL (<code>CardDemo.ca7:43,70,97,124</code>), Control-M DAILY-TransactionBackup is CLOSEFIL&rarr;TRANBKP&rarr;WAITSTEP&rarr;OPENFIL (<code>CardDemo.controlm:4-24</code>). This FRD documents the CA-7 network only and does not assert a combined daily chain. Which scheduler is authoritative for production?</td><td>Scheduling / app owner</td><td>Open</td></tr>
+  <tr><td>Q-02</td><td>Question</td><td>TRANFILE is <code>OPEN OUTPUT</code> (<code>CBTRN02C.cbl:256</code>), so TRANSACT must be empty when POSTTRAN starts, yet nothing in the CA-7 network empties it (TRANBKP is only in Control-M / README order, <code>README.md:218,227</code>). How is TRANSACT emptied before POSTTRAN in production, and is the GDG base for <code>TRANSACT.BKUP</code> defined (not in <code>app/jcl</code>)?</td><td>App owner</td><td>Open</td></tr>
+  <tr><td>Q-03</td><td>Question</td><td>Run window, calendar and SLA are not defined in repo. CA-7 gives only <code>DONT SCHEDULE BEFORE 03237 AT 0000</code>, <code>ELAPTM=2359</code>, <code>QTM=0100</code> (<code>CardDemo.ca7:37-43</code>); no DAILY schedule entry is listed for CLOSEFIL. Confirm the actual start trigger and window.</td><td>Scheduling</td><td>Open</td></tr>
+  <tr><td>Q-04</td><td>Question</td><td>All five jobs are flagged <code>Y -- JOB MARKED AS MAINT ONLY</code> (<code>CardDemo.ca7:28</code>) and have <code>MSGCLASS=0</code>/<code>CLASS=A</code>; criticality is not stated. Confirm business criticality for the target SLA.</td><td>App owner</td><td>Open</td></tr>
+  <tr><td>Q-05</td><td>Question</td><td>No JCL in the chain has <code>COND=</code> and the CA-7 listing shows no RC gating, so POSTTRAN RC 4 flows on. Does CA-7 withhold the trigger when a job abends (CBTRN02C U0999) or ends RC 16 (CBPAUP0C GOBACK)? Also confirm whether a BMP ending RC 16 via GOBACK commits work since the last CHKP (IMS normal-termination semantics, inferred).</td><td>Scheduling / IMS admin</td><td>Open</td></tr>
+  <tr><td>Q-06</td><td>Question</td><td>No producer of <code>AWS.M2.CARDDEMO.DALYTRAN.PS</code> exists in the repo (only the EBCDIC sample under <code>app/data/EBCDIC</code>). Identify the upstream feed, its cut-off, and whether the file is replaced or appended daily.</td><td>Upstream owner</td><td>Open</td></tr>
+  <tr><td>Q-07</td><td>Question</td><td>CBPAUP0J.jcl allocates no database DD (<code>DDPAUTP0</code>) and uses <code>IEFRDER/IMSLOGR DD DUMMY</code> (<code>CBPAUP0J.jcl:43-44</code>): the BMP relies on the IMS control region holding the database. Confirm the online region must be up and the database not quiesced during the batch window.</td><td>IMS admin</td><td>Open</td></tr>
+  <tr><td>Q-08</td><td>Debt</td><td><code>CBPAUP0J.jcl:27</code> STEPLIB uses placeholder <code>XXXXXXXX.PROD.LOADLIB</code>; the job cannot run as committed.</td><td>App owner</td><td>Open</td></tr>
+  <tr><td>Q-09</td><td>Debt</td><td>CBPAUP0C expiry arithmetic is on YYDDD integers (<code>CBPAUP0C.cbl:280-284</code>): across a year boundary <code>CURRENT-YYDDD &minus; WS-AUTH-DATE</code> jumps by ~635, so every authorisation is treated as expired on 1 January; with the shipped card (expiry 00) every authorisation is expired the same day. Confirm intended expiry window and whether the target may use real date arithmetic.</td><td>App owner</td><td>Open</td></tr>
+  <tr><td>Q-10</td><td>Debt</td><td><code>CBPAUP0C.cbl:156</code> tests <code>PA-APPROVED-AUTH-CNT &le; 0 AND PA-APPROVED-AUTH-CNT &le; 0</code> (declined count never checked) and the adjusted summary counters are never REPLaced when the summary is kept. Preserve (parity) or fix in the target?</td><td>App owner</td><td>Open</td></tr>
+  <tr><td>Q-11</td><td>Question</td><td>CLOSEFIL/OPENFIL return codes: SDSF step RC does not reflect CEMT success (<code>CLOSEFIL.jcl:22-31</code>). How is a failed close/open detected in production before POSTTRAN runs with files still open to CICS?</td><td>Operations</td><td>Open</td></tr>
+  <tr><td>Q-12</td><td>Debt</td><td>POSTTRAN has no checkpoint and ACCTDATA/TCATBALF are updated in place (<code>CBTRN02C.cbl:510,528,554</code>); no backout or backup job for those two files exists in <code>app/jcl</code>. Rerun after a partial run double-posts. Target restart (FR for restartable chunk) is a deliberate deviation; confirm it is acceptable.</td><td>App owner / migration lead</td><td>Open</td></tr>
+  <tr><td>Q-13</td><td>Question</td><td>Volumes not defined in repo (records/day in DALYTRAN, TRANSACT size, rejects/day). Needed for NFR-01 and sizing of the target index/partitions.</td><td>App owner</td><td>Open</td></tr>
+  <tr><td>Q-14</td><td>Question</td><td>No consumer of <code>DALYREJS</code> exists in the repo (no reprocess or report job). Who reviews rejects and are they re-submitted via a later DALYTRAN?</td><td>Business ops</td><td>Open</td></tr>
+  <tr><td>Q-15</td><td>Question</td><td>RACF identity: CA-7 <code>OWNER= *NONE*</code>, JCL has no USER=. Confirm the production submitting user and its dataset/CEMT/IMS authorities.</td><td>Security</td><td>Open</td></tr>
+  <tr><td>Q-16</td><td>Question</td><td>Clear-text PAN in DALYTRAN, TRANSACT and DALYREJS (<code>CVTRA06Y.cpy:15</code>, <code>CVTRA05Y.cpy:15</code>, <code>CBTRN02C.cbl:447</code>). Confirm PCI scope and whether the target may mask PAN in reject files/logs (changes byte-for-byte parity of FR-15).</td><td>Security / compliance</td><td>Open</td></tr>
+  <tr><td>Q-17</td><td>Debt</td><td>Target package is <code>com.carddemo.batch.posttran</code> while <code>migration/carddemo/README.md:31</code> reserves <code>com.carddemo.batch.posting</code> for S-11; align the register or the package.</td><td>Migration lead</td><td>Open</td></tr>
+  <tr><td>Q-18</td><td>Assumption</td><td>CA-7 lists jobs CLOSEFIL1/CLOSEFIL2 (<code>CardDemo.ca7:216-271</code>, JCL member CLOSEFIL) in the SCHID=031/032 reference-data networks; they have no member in <code>app/jcl</code>. They are not part of this SCHID=030 chain and are flagged here only because they share the CLOSEFIL member.</td><td>Scheduling</td><td>Open</td></tr>
+  <tr><td>Q-19</td><td>Debt</td><td><code>DALYREJS.jcl:19</code> step comment reads &ldquo;DELETE TRANSACATION MASTER VSAM FILE&rdquo; but the step defines the DALYREJS GDG; and <code>CBTRN02C.cbl:649</code> reports <code>XREFFILE-STATUS</code> instead of <code>DALYREJS-STATUS</code> on a rejects-file close error. Documentation/diagnostic defects only.</td><td>App owner</td><td>Open</td></tr>
+</table>
+
+<footer>
+  <div class="legal">
+    Functional Requirement Document &mdash; aws-mainframe-modernization-carddemo.<br>
+    Classification: INTERNAL. &copy; HSBC Holdings plc. For internal use only.
+  </div>
+  <div class="brand">
+    <svg viewBox="0 0 400 200" role="img" aria-label="HSBC">
+      <polygon points="0,100 100,0 100,200" fill="#db0011"/>
+      <polygon points="400,100 300,0 300,200" fill="#db0011"/>
+      <polygon points="100,0 300,0 200,100" fill="#db0011"/>
+      <polygon points="100,200 300,200 200,100" fill="#db0011"/>
+      <polygon points="100,0 200,100 100,200" fill="#ffffff"/>
+      <polygon points="300,0 200,100 300,200" fill="#ffffff"/>
+    </svg>
+    <span class="wordmark">HSBC</span>
+  </div>
+</footer>
+
+</div>
+</body>
+</html>
