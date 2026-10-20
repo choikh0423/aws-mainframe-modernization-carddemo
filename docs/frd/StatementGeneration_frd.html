@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HSBC — FRD — StatementGeneration</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    if (window.mermaid) {
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "base",
+        themeVariables: {
+          primaryColor: "#ffffff", primaryBorderColor: "#db0011", primaryTextColor: "#000000",
+          lineColor: "#333333", fontFamily: "Univers Next for HSBC, Arial, Helvetica, sans-serif"
+        }
+      });
+    }
+  });
+</script>
+<style>
+  :root {
+    --hsbc-red: #db0011; --hsbc-red-dark: #af000d; --black: #000000;
+    --ink: #333333; --muted: #767676; --line: #d7d8d6; --bg: #ffffff;
+    --panel: #f3f3f3; --panel-2: #ededed;
+    --warn-bg: #fbe9ea; --warn-line: #db0011;
+    --tag-batch: #000000; --tag-online: #00847f;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Univers Next for HSBC", "Univers", Arial, Helvetica, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.5; }
+  a { color: var(--hsbc-red); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Brand bar */
+  .brand-bar { background: var(--bg); border-bottom: 1px solid var(--line); }
+  .brand-bar .inner { max-width: 1080px; margin: 0 auto; padding: 14px 40px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand svg { height: 28px; width: auto; display: block; }
+  .brand .wordmark { font-weight: 700; font-size: 1.35em; letter-spacing: 0.02em; color: var(--black); line-height: 1; }
+  .brand .division { border-left: 1px solid var(--line); padding-left: 12px; margin-left: 4px; font-size: 0.82em; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .classification { font-size: 0.72em; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--hsbc-red); border: 1px solid var(--hsbc-red); padding: 3px 10px; }
+  .red-rule { height: 4px; background: var(--hsbc-red); }
+
+  .page { max-width: 1080px; margin: 0 auto; padding: 32px 40px 80px; }
+
+  header.doc-head { padding-bottom: 20px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
+  .doc-kicker { font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.12em; color: var(--hsbc-red); font-weight: 700; margin-bottom: 8px; }
+  h1 { font-size: 2em; font-weight: 300; margin: 0 0 6px; color: var(--black); letter-spacing: -0.01em; }
+  h1 strong { font-weight: 700; }
+  h2 { font-size: 1.25em; font-weight: 700; margin: 44px 0 12px; padding: 0 0 6px 14px; border-left: 4px solid var(--hsbc-red); border-bottom: 1px solid var(--line); color: var(--black); }
+  h3 { font-size: 1.02em; font-weight: 700; margin: 24px 0 8px; color: var(--black); }
+  .subtitle { color: var(--muted); font-size: 0.98em; }
+
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 0; color: #fff; font-size: 0.5em; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; vertical-align: middle; position: relative; top: -4px; }
+  .tag.batch { background: var(--tag-batch); }
+  .tag.online { background: var(--tag-online); }
+
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.92em; }
+  th, td { border: 0; border-bottom: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--black); color: #fff; font-weight: 700; font-size: 0.85em; letter-spacing: 0.04em; text-transform: uppercase; border-bottom: 2px solid var(--hsbc-red); }
+  tr:nth-child(even) td { background: var(--panel); }
+  code, .mono { font-family: "Consolas", "Menlo", monospace; font-size: 0.93em; background: var(--panel-2); padding: 1px 4px; border-radius: 0; color: var(--black); }
+  td, th, .cell .v, code, .mono { overflow-wrap: anywhere; }
+
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin: 16px 0; }
+  .meta-grid .cell { background: var(--panel); border-top: 3px solid var(--hsbc-red); padding: 10px 12px; }
+  .meta-grid .cell .k { font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .meta-grid .cell .v { font-weight: 700; color: var(--black); }
+
+  .note { background: var(--warn-bg); border-left: 4px solid var(--warn-line); padding: 10px 14px; margin: 14px 0; font-size: 0.92em; color: var(--black); }
+  .guidance { color: var(--muted); font-style: italic; font-size: 0.9em; }
+  .diagram { background: var(--bg); border: 1px solid var(--line); border-top: 3px solid var(--hsbc-red); padding: 16px; overflow-x: auto; }
+
+  nav.toc { background: var(--panel); border-left: 4px solid var(--black); padding: 12px 20px; font-size: 0.92em; }
+  nav.toc strong { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.85em; color: var(--black); }
+  nav.toc ol { margin: 6px 0; padding-left: 20px; columns: 2; column-gap: 32px; }
+  nav.toc li { break-inside: avoid; }
+  nav.toc a { color: var(--ink); }
+  nav.toc a:hover { color: var(--hsbc-red); }
+
+  footer { margin-top: 60px; border-top: 1px solid var(--line); padding-top: 14px; color: var(--muted); font-size: 0.82em; display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+  footer .legal { max-width: 70%; }
+  footer .brand svg { height: 18px; }
+  footer .brand .wordmark { font-size: 0.95em; }
+
+  @media print {
+    .page { padding: 0 0 40px; }
+    h2 { break-after: avoid; }
+    table, .diagram, .note { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="brand-bar">
+  <div class="inner">
+    <div class="brand">
+      <svg viewBox="0 0 400 200" role="img" aria-label="HSBC">
+        <polygon points="0,100 100,0 100,200" fill="#db0011"/>
+        <polygon points="400,100 300,0 300,200" fill="#db0011"/>
+        <polygon points="100,0 300,0 200,100" fill="#db0011"/>
+        <polygon points="100,200 300,200 200,100" fill="#db0011"/>
+        <polygon points="100,0 200,100 100,200" fill="#ffffff"/>
+        <polygon points="300,0 200,100 300,200" fill="#ffffff"/>
+      </svg>
+      <span class="wordmark">HSBC</span>
+      <span class="division">Technology &mdash; Mainframe Modernisation</span>
+    </div>
+    <span class="classification">Internal</span>
+  </div>
+</div>
+<div class="red-rule"></div>
+
+<div class="page">
+
+<header class="doc-head">
+  <div class="doc-kicker">Functional Requirement Document</div>
+  <h1><strong>StatementGeneration</strong> <span class="tag batch">Batch</span></h1>
+  <div class="subtitle">CA-7 network SCHID=030: CLOSEFIL &rarr; CREASTMT &rarr; TXT2PDF1 &rarr; WAITSTEP &rarr; OPENFIL &mdash; closes the CICS files, rebuilds a card-keyed copy of TRANSACT, prints one plain-text and one HTML statement per CARDXREF card (CBSTM03A/CBSTM03B), renders the text statement to PDF, waits, then re-opens the CICS files.</div>
+</header>
+
+<div class="meta-grid">
+  <div class="cell"><div class="k">Stream type</div><div class="v">Batch cycle</div></div>
+  <div class="cell"><div class="k">Application</div><div class="v">CARDDEMO</div></div>
+  <div class="cell"><div class="k">Scheduler table / CICS group</div><div class="v">CA-7 SCHID=030 (<code>app/scheduler/CardDemo.ca7:465-529</code>); no Control-M folder contains CREASTMT or TXT2PDF1</div></div>
+  <div class="cell"><div class="k">Owner</div><div class="v">*NONE* (CA-7 <code>OWNER= *NONE*</code>, <code>CardDemo.ca7:487, 514</code>)</div></div>
+  <div class="cell"><div class="k">Run window / availability</div><div class="v">Not defined in repo (only <code>DONT SCHEDULE BEFORE 03237 AT 0000</code>, <code>CardDemo.ca7:491</code>; CICS files unavailable between CLOSEFIL and OPENFIL)</div></div>
+  <div class="cell"><div class="k">Calendar / frequency</div><div class="v">Not defined in repo &mdash; trigger-driven network, no calendar in the LJOB listing; README lists CREASTMT as a manual step of the batch sequence (<code>README.md:229</code>)</div></div>
+  <div class="cell"><div class="k">Criticality</div><div class="v">Not defined in repo (CA-7 <code>PRTY=000</code>, <code>CardDemo.ca7:489</code>)</div></div>
+  <div class="cell"><div class="k">Doc status</div><div class="v">DRAFT</div></div>
+</div>
+
+<table>
+  <tr><th>Version</th><th>Date</th><th>Author</th><th>Change</th></tr>
+  <tr><td>0.1</td><td>2026-10-20</td><td>Devin</td><td>Initial draft</td></tr>
+</table>
+
+<nav class="toc">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#purpose">Business purpose</a></li>
+    <li><a href="#flow">Flow diagram</a></li>
+    <li><a href="#inventory">Job / screen inventory</a></li>
+    <li><a href="#dependencies">Dependencies</a></li>
+    <li><a href="#requirements">Functional requirements</a></li>
+    <li><a href="#restart">Restart, recovery &amp; error handling</a></li>
+    <li><a href="#nfr">Non-functional requirements</a></li>
+    <li><a href="#interfaces">Interfaces &amp; data layouts</a></li>
+    <li><a href="#security">Security &amp; access</a></li>
+    <li><a href="#target">Target-state mapping</a></li>
+    <li><a href="#open">Assumptions, debt &amp; open questions</a></li>
+  </ol>
+</nav>
+
+<h2 id="purpose">1. Business purpose</h2>
+<p>The StatementGeneration chain produces the cardholder account statement for every card in the card/account cross-reference file. <code>CREASTMT</code> takes the posted transaction file (<code>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</code>), re-keys it by card number so that a card's transactions are contiguous, and runs <code>CBSTM03A</code>, which walks CARDXREF card by card, looks up the customer and account, and writes a statement in two renderings: a fixed-80-column plain-text file (<code>STATEMNT.PS</code>) and a 100-column HTML file (<code>STATEMNT.HTML</code>) (<code>app/jcl/CREASTMT.JCL:19-20, 79-96</code>; <code>app/cbl/CBSTM03A.CBL:5-9</code>). <code>TXT2PDF1</code> then converts the text statement into <code>STATEMNT.PS.PDF</code> with the TSO <code>TXT2PDF</code> utility (<code>app/jcl/TXT2PDF1.JCL:21, 38-39</code>). Because the statement program reads the same VSAM files CICS serves online, the chain is bracketed by <code>CLOSEFIL</code> and <code>OPENFIL</code>, which close and re-open the CICS files, with a timed <code>WAITSTEP</code> before re-opening (<code>app/jcl/CLOSEFIL.jcl:26-30</code>; <code>app/jcl/WAITSTEP.jcl:20-26</code>; <code>app/jcl/OPENFIL.jcl:26-30</code>).</p>
+<p>If the chain does not run, no customer statements (text, HTML or PDF) are produced for the cycle; the previous cycle's statement files remain cataloged until the next successful <code>STEP030</code>. If the chain starts but does not reach <code>OPENFIL</code>, the five CICS files stay closed and the online CardDemo transactions that use them fail until an operator re-opens them.</p>
+<table>
+  <tr><th>Business capability</th><th>How this stream serves it</th></tr>
+  <tr><td>Cardholder statement production</td><td>One statement per CARDXREF card with customer name/address, account id, current balance, FICO score, itemised transactions and a total (<code>CBSTM03A.CBL:316-329, 458-504</code>).</td></tr>
+  <tr><td>Statement distribution formats</td><td>Plain-text (80-byte) and HTML (100-byte) renderings from one pass (<code>CBSTM03A.CBL:44-47, 293</code>); PDF from the text rendering (<code>TXT2PDF1.JCL:38-39</code>).</td></tr>
+  <tr><td>Transaction re-keying for statement use</td><td>Card-keyed work copy of TRANSACT (<code>TRXFL.VSAM.KSDS</code>, key = card number + transaction id) rebuilt every run (<code>CREASTMT.JCL:22-62</code>).</td></tr>
+  <tr><td>Batch / online file hand-off</td><td>CICS files are closed before and re-opened after the batch work (<code>CLOSEFIL.jcl:26-30</code>, <code>OPENFIL.jcl:26-30</code>), with a 36-second settle delay (<code>WAITSTEP.jcl:26</code>).</td></tr>
+</table>
+
+<h2 id="flow">2. Flow diagram</h2>
+<div class="diagram">
+<pre class="mermaid">
+flowchart TD
+    A["CLOSEFIL<br/>SDSF: CEMT SET FIL(...) CLO x5"] -->|"CA-7 trigger SCHID=030"| B1
+    subgraph S1["CREASTMT (one job, five steps)"]
+        direction TB
+        B1["DELDEF01 - IDCAMS<br/>DELETE/DEFINE TRXFL"] --> B2["STEP010 - SORT<br/>TRANSACT to TRXFL.SEQ"]
+        B2 -->|"COND=(0,NE)"| B3["STEP020 - IDCAMS<br/>REPRO to TRXFL KSDS"]
+        B3 -->|"COND=(0,NE)"| B4["STEP030 - IEFBR14<br/>delete STATEMNT.HTML / .PS"]
+        B4 -->|"COND=(0,NE)"| B5["STEP040 - CBSTM03A<br/>(CALL CBSTM03B)"]
+    end
+    T[("TRANSACT.VSAM.KSDS")] --> B2
+    X[("CARDXREF / ACCTDATA / CUSTDATA KSDS")] --> B5
+    B5 --> P[("STATEMNT.PS (LRECL 80)")]
+    B5 --> H[("STATEMNT.HTML (LRECL 100)")]
+    B5 -->|"CA-7 trigger SCHID=030"| C["TXT2PDF1<br/>IKJEFT1B %TXT2PDF, COND=(0,NE)"]
+    P --> C
+    C --> PDF[("STATEMNT.PS.PDF")]
+    C -->|"CA-7 trigger SCHID=030"| D["WAITSTEP<br/>COBSWAIT 00003600 cs = 36 s"]
+    D -->|"CA-7 trigger SCHID=030"| E["OPENFIL<br/>SDSF: CEMT SET FIL(...) OPE x5"]
+    E -.->|"CA-7 lists CLOSEFIL SCHID=031<br/>(next network, PRTCATBL)"| F["CLOSEFIL (SCHID=031)"]
+</pre>
+</div>
+<div class="note"><strong>Gating conditions:</strong> The chain is a CA-7 trigger network, not a calendar: each job is released when its predecessor completes (<code>TRIGGERED JOBS ... SCHID=030 QTM=0100 LEADTM=0000</code>): CLOSEFIL&rarr;CREASTMT (<code>CardDemo.ca7:465-468</code>), CREASTMT&rarr;TXT2PDF1 (<code>:494-495</code>), TXT2PDF1&rarr;WAITSTEP (<code>:521-522</code>), WAITSTEP&rarr;OPENFIL (<code>:524-527</code>). Within CREASTMT, <code>STEP020</code>, <code>STEP030</code> and <code>STEP040</code> carry <code>COND=(0,NE)</code> and are bypassed as soon as any earlier step ends with RC &ne; 0 (<code>CREASTMT.JCL:56, 66, 79</code>); <code>DELDEF01</code> and <code>STEP010</code> have no COND. <code>TXT2PDF1</code>'s single step also carries <code>COND=(0,NE)</code> (<code>TXT2PDF1.JCL:26</code>), which is vacuous because it is the first step of its job. CA-7 triggers on job completion and the listing does not show a "good completion" RC requirement, so whether a non-zero CREASTMT releases TXT2PDF1 is <em>not determinable from the repo</em> (Q-05). <strong>Estate gotcha:</strong> the two scheduler sources disagree &mdash; CA-7's SCHID=030 networks (<code>CardDemo.ca7</code>) and Control-M's folders (<code>CardDemo.controlm</code>) describe different daily chains (CA-7: CLOSEFIL&rarr;CBPAUP0J&rarr;POSTTRAN&rarr;WAITSTEP&rarr;OPENFIL, <code>:18-147</code>; Control-M DAILY-TransactionBackup: CLOSEFIL&rarr;TRANBKP&rarr;WAITSTEP&rarr;OPENFIL, <code>CardDemo.controlm:3-25</code>). The StatementGeneration chain exists <strong>only in CA-7</strong>; <code>CardDemo.controlm</code> has no CREASTMT or TXT2PDF1 job, so no INCOND/OUTCOND ordering is defined for it (Q-01, Q-02). The dotted edge is the abbreviated OPENFIL block at <code>CardDemo.ca7:529-532</code>, which lists CLOSEFIL under SCHID=031 (the PRTCATBL network) whereas the full OPENFIL block says <code>N -- COMP TRIGGERS OTHER JOBS</code> (<code>:138</code>) (Q-04).</div>
+
+<h2 id="inventory">3. Job / screen inventory</h2>
+<table>
+  <tr><th>Order</th><th>Job / Tranid</th><th>Program(s)</th><th>Function</th><th>Restart point / entry condition</th></tr>
+  <tr><td>1</td><td class="mono">CLOSEFIL</td><td class="mono">SDSF (step CLCIFIL)</td><td>Issues <code>/F CICSAWSA,'CEMT SET FIL(x) CLO'</code> for TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC (<code>app/jcl/CLOSEFIL.jcl:22-30</code>). CUSTDAT is <em>not</em> closed although CBSTM03A reads it (Q-11).</td><td>Entry: head of the CA-7 SCHID=030 network (<code>CardDemo.ca7:465-468</code>); no predecessor requirement in repo. Restart: rerun from top; idempotent (closing a closed file is a CEMT no-op).</td></tr>
+  <tr><td>2</td><td class="mono">CREASTMT</td><td class="mono">IDCAMS, SORT, IDCAMS, IEFBR14, CBSTM03A (+CBSTM03B)</td><td>DELDEF01 deletes/redefines TRXFL work files (<code>CREASTMT.JCL:22-40</code>); STEP010 sorts TRANSACT into card-keyed TRXFL.SEQ (<code>:44-55</code>); STEP020 REPROs into TRXFL KSDS (<code>:56-62</code>); STEP030 deletes last run's STATEMNT.HTML/.PS (<code>:66-75</code>); STEP040 writes STATEMNT.PS and STATEMNT.HTML (<code>:79-96</code>).</td><td>Entry: triggered by CLOSEFIL (<code>CardDemo.ca7:468</code>). Restart: from DELDEF01 only &mdash; every step is a full rebuild/overwrite (delete-then-define, <code>DISP=(NEW,CATLG,DELETE)</code>); a restart at STEP040 after a failed STEP040 would fail on the already-cataloged outputs unless STEP030 is rerun.</td></tr>
+  <tr><td>3</td><td class="mono">TXT2PDF1</td><td class="mono">IKJEFT1B (TSO) running <code>%TXT2PDF</code> REXX/load module</td><td>Converts <code>AWS.M2.CARDDEMO.STATEMNT.PS</code> (DD INDD) to <code>AWS.M2.CARDDEMO.STATEMNT.PS.PDF</code> (<code>app/jcl/TXT2PDF1.JCL:24-39</code>). Utility libraries <code>AWS.M2.LBD.TXT2PDF.LOAD/EXEC</code> are not in the repo &mdash; boundary (<code>:28-31</code>).</td><td>Entry: triggered by CREASTMT (<code>CardDemo.ca7:495</code>); needs STATEMNT.PS cataloged. Restart: rerun whole job; output disposition is inside the utility (not in repo, Q-13).</td></tr>
+  <tr><td>4</td><td class="mono">WAITSTEP</td><td class="mono">COBSWAIT &rarr; MVSWAIT (assembler)</td><td>Reads <code>00003600</code> centiseconds from SYSIN and waits 36 s via STIMER (<code>app/jcl/WAITSTEP.jcl:22-26</code>; <code>app/cbl/COBSWAIT.cbl:36-38</code>; <code>app/asm/MVSWAIT.asm:23</code>).</td><td>Entry: triggered by TXT2PDF1 (<code>CardDemo.ca7:522</code>). Restart: rerun; stateless.</td></tr>
+  <tr><td>5</td><td class="mono">OPENFIL</td><td class="mono">SDSF (step OPCIFIL)</td><td>Issues <code>CEMT SET FIL(x) OPE</code> for the same five files (<code>app/jcl/OPENFIL.jcl:22-30</code>). Ends the network: <code>N -- COMP TRIGGERS OTHER JOBS</code> (<code>CardDemo.ca7:138</code>).</td><td>Entry: triggered by WAITSTEP (<code>CardDemo.ca7:527</code>). Restart: rerun; idempotent. Must run even if CREASTMT/TXT2PDF1 failed, otherwise CICS files stay closed (Q-05).</td></tr>
+</table>
+
+<h2 id="dependencies">4. Dependencies</h2>
+<h3>4.1 DB2 tables</h3>
+<table>
+  <tr><th>Table</th><th>Access</th><th>Used by</th><th>Notes</th></tr>
+  <tr><td class="mono">&mdash;</td><td>&mdash;</td><td class="mono">&mdash;</td><td>None. No step in the chain uses DB2: CREASTMT runs IDCAMS/SORT/IEFBR14/CBSTM03A (<code>CREASTMT.JCL:22, 44, 56, 66, 79</code>); CBSTM03A/CBSTM03B contain no EXEC SQL (<code>CBSTM03A.CBL:36-47</code>, <code>CBSTM03B.CBL:28-53</code>).</td></tr>
+</table>
+<h3>4.2 VSAM files &amp; datasets</h3>
+<table>
+  <tr><th>Dataset</th><th>Type</th><th>Access</th><th>Used by</th><th>Notes</th></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</td><td>KSDS</td><td>R</td><td class="mono">CREASTMT STEP010 (SORT)</td><td><code>DISP=SHR</code> (<code>CREASTMT.JCL:45</code>). 350-byte CVTRA05Y records (<code>app/cpy/CVTRA05Y.cpy:4-18</code>). CICS file TRANSACT, closed by CLOSEFIL (<code>CLOSEFIL.jcl:26</code>; <code>app/csd/CARDDEMO.CSD:76-77</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRXFL.SEQ</td><td>PS (FB 350/3500)</td><td>W then R</td><td class="mono">STEP010 (write), STEP020 (read)</td><td>Deleted in DELDEF01 (<code>CREASTMT.JCL:25</code>), created <code>DISP=(NEW,CATLG,DELETE)</code>, <code>SPACE=(CYL,(1,1),RLSE)</code> (<code>:48-51</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRXFL.VSAM.KSDS</td><td>KSDS, KEYS(32 0), RECORDSIZE(350 350)</td><td>W then R</td><td class="mono">DELDEF01 (define), STEP020 (REPRO), CBSTM03B TRNXFILE (read)</td><td>Defined every run with <code>VOLUMES(TSU023)</code>, <code>SHAREOPTIONS(2 3)</code>, <code>CYL(1 5)</code>, CISZ 4096 (<code>CREASTMT.JCL:29-39</code>); read sequentially as <code>TRNXFILE</code> (<code>CREASTMT.JCL:83</code>; <code>CBSTM03B.CBL:31-35</code>). Hard-coded volume (Q-08).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</td><td>KSDS (key X(16) card)</td><td>R</td><td class="mono">CBSTM03B XREFFILE</td><td><code>DISP=SHR</code> (<code>CREASTMT.JCL:84</code>); sequential driver of the statement loop (<code>CBSTM03B.CBL:37-41</code>). CICS file CCXREF closed by CLOSEFIL (<code>CLOSEFIL.jcl:27</code>; <code>CARDDEMO.CSD:37-39</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS</td><td>KSDS (key 9(11) account)</td><td>R</td><td class="mono">CBSTM03B ACCTFILE</td><td><code>DISP=SHR</code> (<code>CREASTMT.JCL:85</code>); random read by XREF-ACCT-ID (<code>CBSTM03B.CBL:49-53, 213-218</code>). CICS file ACCTDAT closed by CLOSEFIL (<code>CLOSEFIL.jcl:28</code>; <code>CARDDEMO.CSD:1-2</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.CUSTDATA.VSAM.KSDS</td><td>KSDS (key X(9) customer)</td><td>R</td><td class="mono">CBSTM03B CUSTFILE</td><td><code>DISP=SHR</code> (<code>CREASTMT.JCL:86</code>); random read by XREF-CUST-ID (<code>CBSTM03B.CBL:43-47, 188-193</code>). CICS file CUSTDAT (<code>CARDDEMO.CSD:50-52</code>) is <em>not</em> in CLOSEFIL's list (<code>CLOSEFIL.jcl:26-30</code>) (Q-11).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.STATEMNT.PS</td><td>PS (FB 80/8000)</td><td>W (CREASTMT), R (TXT2PDF1)</td><td class="mono">STEP030 (delete), CBSTM03A STMTFILE (write), TXT2PDF1 INDD (read)</td><td>Deleted <code>DISP=(MOD,DELETE,DELETE)</code> (<code>CREASTMT.JCL:72-75</code>), recreated <code>DISP=(NEW,CATLG,DELETE)</code> (<code>:87-91</code>), read by TXT2PDF1 (<code>TXT2PDF1.JCL:33</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.STATEMNT.HTML</td><td>PS (FB 100/800)</td><td>W</td><td class="mono">STEP030 (delete), CBSTM03A HTMLFILE (write)</td><td>STEP030 declares <code>LRECL=80,BLKSIZE=3200</code> (<code>CREASTMT.JCL:69</code>) but STEP040 creates it with <code>LRECL=100,BLKSIZE=800</code> (<code>:94</code>) &mdash; DCB mismatch, inert for IEFBR14 delete (Q-09). No consumer in the repo (Q-14).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.STATEMNT.PS.PDF</td><td>PS / utility-defined</td><td>W</td><td class="mono">TXT2PDF1</td><td>Named only in the TSO command (<code>TXT2PDF1.JCL:39</code>); attributes and disposition are inside the utility, not in the repo (Q-13).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.LOADLIB</td><td>PDS (load)</td><td>R</td><td class="mono">CREASTMT STEP040, WAITSTEP</td><td>STEPLIB for CBSTM03A/CBSTM03B and COBSWAIT/MVSWAIT (<code>CREASTMT.JCL:80</code>; <code>WAITSTEP.jcl:23</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.LBD.TXT2PDF.LOAD / .EXEC</td><td>PDS (load / REXX)</td><td>R</td><td class="mono">TXT2PDF1</td><td>STEPLIB and SYSEXEC for the TXT2PDF utility (<code>TXT2PDF1.JCL:28-31</code>); not in the repo &mdash; boundary.</td></tr>
+  <tr><td class="mono">CICS files USRSEC, CXACAIX</td><td>KSDS / AIX path</td><td>closed/opened only</td><td class="mono">CLOSEFIL, OPENFIL</td><td>Closed and re-opened although the statement job does not read them (<code>CLOSEFIL.jcl:29-30</code>; <code>OPENFIL.jcl:29-30</code>; <code>CARDDEMO.CSD:63-65, 88-89</code>). CLOSEFIL/OPENFIL are shared by every CA-7 network.</td></tr>
+</table>
+<h3>4.3 Shared utilities &amp; copybooks</h3>
+<table>
+  <tr><th>Asset</th><th>Kind</th><th>Role</th></tr>
+  <tr><td class="mono">CBSTM03B</td><td>Subroutine (static CALL)</td><td>All VSAM I/O for CBSTM03A: OPEN / READ / READ-by-key / CLOSE on TRNXFILE, XREFFILE, CUSTFILE, ACCTFILE, dispatched on DD name and returning the COBOL FILE STATUS (<code>app/cbl/CBSTM03B.CBL:114-131, 151-152</code>).</td></tr>
+  <tr><td class="mono">COSTM01.CPY</td><td>Copybook</td><td>"Transaction altered layout" &mdash; TRANSACT with card number first; the TRXFL work record and the in-memory table row (<code>app/cpy/COSTM01.CPY:20-36</code>; <code>CBSTM03A.CBL:51</code>).</td></tr>
+  <tr><td class="mono">CVACT03Y.cpy</td><td>Copybook</td><td>CARD-XREF-RECORD: XREF-CARD-NUM X(16), XREF-CUST-ID 9(9), XREF-ACCT-ID 9(11) (<code>app/cpy/CVACT03Y.cpy:4-7</code>; <code>CBSTM03A.CBL:53</code>).</td></tr>
+  <tr><td class="mono">CUSTREC.cpy</td><td>Copybook</td><td>CUSTOMER-RECORD (500 bytes): names, address lines, state/country/zip, FICO score (<code>app/cpy/CUSTREC.cpy:4-23</code>; <code>CBSTM03A.CBL:55</code>). Note CBSTM03A copies <code>CUSTREC</code>, not <code>CVCUS01Y</code>.</td></tr>
+  <tr><td class="mono">CVACT01Y.cpy</td><td>Copybook</td><td>ACCOUNT-RECORD (300 bytes): ACCT-ID 9(11), ACCT-CURR-BAL S9(10)V99 (<code>app/cpy/CVACT01Y.cpy:4-7</code>; <code>CBSTM03A.CBL:57</code>).</td></tr>
+  <tr><td class="mono">CVTRA05Y.cpy</td><td>Copybook</td><td>TRAN-RECORD (350 bytes) &mdash; the SORT input layout; defines the byte positions used by <code>SORT FIELDS</code>/<code>OUTREC</code> (<code>app/cpy/CVTRA05Y.cpy:4-18</code>; <code>CREASTMT.JCL:53-54</code>).</td></tr>
+  <tr><td class="mono">COBSWAIT / MVSWAIT</td><td>Program + assembler subroutine</td><td>Timed wait: COBSWAIT accepts an 8-digit centisecond value from SYSIN and calls MVSWAIT, which issues STIMER (<code>app/cbl/COBSWAIT.cbl:30-38</code>; <code>app/asm/MVSWAIT.asm:17-23</code>).</td></tr>
+  <tr><td class="mono">IDCAMS, SORT, IEFBR14, IKJEFT1B, SDSF</td><td>System utilities</td><td>Delete/define/REPRO (<code>CREASTMT.JCL:22, 56</code>), sort (<code>:44</code>), dataset delete (<code>:66</code>), TSO batch (<code>TXT2PDF1.JCL:24</code>), console modify commands (<code>CLOSEFIL.jcl:22</code>, <code>OPENFIL.jcl:22</code>).</td></tr>
+  <tr><td class="mono">CEE3ABD</td><td>LE callable service</td><td>Abend path of CBSTM03A (<code>CBSTM03A.CBL:921-923</code>).</td></tr>
+</table>
+<h3>4.4 Other applications &amp; external events</h3>
+<table>
+  <tr><th>Dependency</th><th>Direction</th><th>Mechanism</th><th>Notes</th></tr>
+  <tr><td>CICS region CICSAWSA</td><td>Downstream of CLOSEFIL / upstream of OPENFIL</td><td>MVS MODIFY (<code>/F CICSAWSA,'CEMT ...'</code>) via SDSF batch</td><td>Region name is hard-coded (<code>CLOSEFIL.jcl:26-30</code>, <code>OPENFIL.jcl:26-30</code>). Online transactions using TRANSACT/CCXREF/ACCTDAT/CXACAIX/USRSEC are unavailable while the chain runs.</td></tr>
+  <tr><td>Transaction posting (POSTTRAN / online CT02) populating TRANSACT</td><td>Upstream</td><td>Shared VSAM file</td><td>The chain reads whatever is in TRANSACT at run time (<code>CREASTMT.JCL:45</code>); no scheduler condition in the repo orders CREASTMT after POSTTRAN (Q-03).</td></tr>
+  <tr><td>Reference loads of CARDXREF, ACCTDATA, CUSTDATA</td><td>Upstream</td><td>Shared VSAM files</td><td>Missing customer/account for a cross-reference row abends the statement job (<code>CBSTM03A.CBL:379-386, 403-410</code>).</td></tr>
+  <tr><td>TXT2PDF TSO utility (licensed, <code>AWS.M2.LBD.TXT2PDF.*</code>)</td><td>Downstream</td><td>IKJEFT1B / SYSTSIN command</td><td>Not in the repo (<code>TXT2PDF1.JCL:28-31, 38-39</code>). Boundary B-13 in the migration plan.</td></tr>
+  <tr><td>Statement consumers (print, archive, customer portal)</td><td>Downstream</td><td>File feed (STATEMNT.PS / .HTML / .PS.PDF)</td><td>Not defined in repo &mdash; no job reads STATEMNT.HTML or the PDF (Q-14).</td></tr>
+  <tr><td>CA-7 SCHID=031 network (PRTCATBL)</td><td>Downstream</td><td>CA-7 trigger from OPENFIL</td><td>Listed only in the abbreviated OPENFIL block (<code>CardDemo.ca7:529-532</code>); contradicts <code>:138</code> (Q-04).</td></tr>
+</table>
+
+<h2 id="requirements">5. Functional requirements</h2>
+<table>
+  <tr><th>ID</th><th>Requirement</th><th>Source</th><th>Acceptance criteria</th></tr>
+  <tr><td>FR-01</td><td>Before each run the card-keyed work store is rebuilt from scratch: <code>TRXFL.SEQ</code> and the <code>TRXFL.VSAM.KSDS</code> cluster are deleted, the condition code is reset (<code>SET MAXCC = 0</code>) so a first run with nothing to delete still succeeds, and the KSDS is redefined with a 32-byte key at offset 0 and fixed 350-byte records.</td><td class="mono">app/jcl/CREASTMT.JCL:22-39</td><td>Running the job twice in succession, or on an estate where the work store does not exist, ends DELDEF01 with RC 0 and leaves a work store whose only content is the current TRANSACT data.</td></tr>
+  <tr><td>FR-02</td><td>The work copy is TRANSACT sorted by card number ascending then transaction id ascending, with each record re-laid out as COSTM01: card number (TRANSACT bytes 263-278) at 1-16, TRANSACT bytes 1-262 (tran id &hellip; merchant zip) at 17-278, TRANSACT bytes 279-328 at 279-328.</td><td class="mono">app/jcl/CREASTMT.JCL:53-54; app/cpy/CVTRA05Y.cpy:4-18; app/cpy/COSTM01.CPY:20-36</td><td>For every TRANSACT record there is exactly one work record whose key is <code>TRAN-CARD-NUM</code> + <code>TRAN-ID</code> and whose bytes 17-278 equal the source bytes 1-262; records are ordered by (card, tran id).</td></tr>
+  <tr><td>FR-03</td><td>Legacy quirk, reproduced: the third OUTREC field copies 50 bytes from position 279 although ORIG-TS + PROC-TS are 52 bytes, so <code>TRNX-PROC-TS</code> holds only the first 24 characters of <code>TRAN-PROC-TS</code> and work-record bytes 329-350 are blank. CBSTM03A never reads the timestamps, so no statement output depends on them.</td><td class="mono">app/jcl/CREASTMT.JCL:54; app/cpy/CVTRA05Y.cpy:16-18; app/cpy/COSTM01.CPY:34-36</td><td>Given a TRANSACT record with a 26-character PROC-TS, the work record's PROC-TS field contains its first 24 characters followed by blanks, and the statement output is identical whether or not the timestamp fields are populated.</td></tr>
+  <tr><td>FR-04</td><td>STEP020 loads every <code>TRXFL.SEQ</code> record into the keyed work store with IDCAMS REPRO; STEP020, STEP030 and STEP040 each carry <code>COND=(0,NE)</code>, so the first non-zero step return code stops all later steps.</td><td class="mono">app/jcl/CREASTMT.JCL:56-62, 66, 79</td><td>Record count of the KSDS equals the sequential file's. Forcing STEP010 to end non-zero results in STEP020/030/040 being flushed (not executed) and the job ending non-zero.</td></tr>
+  <tr><td>FR-05</td><td>STEP030 deletes the previous run's <code>STATEMNT.HTML</code> and <code>STATEMNT.PS</code> with <code>DISP=(MOD,DELETE,DELETE)</code> and succeeds whether or not they exist.</td><td class="mono">app/jcl/CREASTMT.JCL:66-75</td><td>After STEP030 neither dataset is cataloged; STEP030 ends RC 0 on a first run and on a rerun.</td></tr>
+  <tr><td>FR-06</td><td>STEP040 writes two new outputs per run: the text statement as fixed 80-byte records (<code>STMTFILE</code>, FB 80/8000) and the HTML statement as fixed 100-byte records (<code>HTMLFILE</code>, FB 100/800); both are opened OUTPUT once at program start and closed once at the end.</td><td class="mono">app/jcl/CREASTMT.JCL:87-96; app/cbl/CBSTM03A.CBL:39-47, 293, 339</td><td>Every record of STATEMNT.PS is exactly 80 bytes and every record of STATEMNT.HTML exactly 100 bytes (blank-padded, truncated at the record length); the files contain only the current run's statements.</td></tr>
+  <tr><td>FR-07</td><td>The four VSAM inputs are opened INPUT through CBSTM03B in the order TRNXFILE, XREFFILE, CUSTFILE, ACCTFILE: TRNXFILE and XREFFILE with sequential access, CUSTFILE and ACCTFILE with random (keyed) access. An OPEN status other than <code>00</code> or <code>04</code> displays <code>ERROR OPENING &lt;DD&gt;</code> and <code>RETURN CODE: &lt;status&gt;</code> and abends.</td><td class="mono">app/cbl/CBSTM03A.CBL:296-314, 730-742, 765-777, 783-795, 801-813; app/cbl/CBSTM03B.CBL:31-53, 135-138, 159-162, 183-186, 208-211</td><td>Removing any one of the four DDs (status 35) produces the two DISPLAY lines for that DD followed by <code>ABENDING PROGRAM</code> and a step abend; no statement output is written.</td></tr>
+  <tr><td>FR-08</td><td>Legacy quirk, reproduced: immediately after opening TRNXFILE a priming sequential read is issued and only status <code>00</code>/<code>04</code> is accepted; an empty work store (status <code>10</code>) is therefore an error (<code>ERROR READING TRNXFILE</code> / <code>RETURN CODE: 10</code>) and abends rather than producing statements with no transactions.</td><td class="mono">app/cbl/CBSTM03A.CBL:744-761</td><td>Running with an empty TRANSACT (hence empty TRXFL) ends STEP040 with an abend and the displayed return code 10; no statement file content is produced.</td></tr>
+  <tr><td>FR-09</td><td>The whole work store is loaded into memory before any statement is written: consecutive records with the same card number are grouped, counting transactions per card (<code>WS-TRCT</code>), into a table of 51 cards &times; 10 transactions &times; (16 + 318 bytes); end of file (status 10) stops loading, any other status abends. Legacy quirk: there is no bounds check, so more than 51 cards or more than 10 transactions for one card overruns the table (undefined behaviour).</td><td class="mono">app/cbl/CBSTM03A.CBL:225-233, 818-853</td><td>For input within the limits, the table holds every (card, tran) pair with the per-card counts equal to the number of work records for that card. The migrated system must document and test its chosen behaviour at &gt;51 cards or &gt;10 transactions per card (see Q-10); it must not silently corrupt other cards' data.</td></tr>
+  <tr><td>FR-10</td><td>One statement is produced per CARDXREF record, in ascending card-number order (sequential read of the KSDS). XREF read status <code>10</code> ends the run normally; any status other than <code>00</code>/<code>10</code> displays <code>ERROR READING XREFFILE</code> and abends.</td><td class="mono">app/cbl/CBSTM03A.CBL:316-329, 345-366; app/cbl/CBSTM03B.CBL:37-41, 164-168</td><td>Number of <code>START OF STATEMENT</code> lines in STATEMNT.PS equals the number of CARDXREF records; statements appear in card-number order; a CARDXREF with N records yields N statements and RC 0.</td></tr>
+  <tr><td>FR-11</td><td>For each CARDXREF record the customer is read by key <code>XREF-CUST-ID</code> (9 bytes) and the account by key <code>XREF-ACCT-ID</code> (11 bytes). Any status other than <code>00</code> (e.g. <code>23</code> not found) displays <code>ERROR READING CUSTFILE</code> / <code>ERROR READING ACCTFILE</code> and abends &mdash; there is no skip-and-continue.</td><td class="mono">app/cbl/CBSTM03A.CBL:368-414; app/cbl/CBSTM03B.CBL:188-193, 213-218</td><td>A CARDXREF row pointing at a non-existent customer or account abends STEP040 with the corresponding DISPLAY lines and <code>RETURN CODE: 23</code>; statements for earlier cards already written remain in the (uncataloged, DISP DELETE) output.</td></tr>
+  <tr><td>FR-12</td><td>The statement's transactions are those table entries whose card number equals the CARDXREF card, scanned from the first table entry until the entry's card number exceeds the CARDXREF card; each is written in table (transaction-id) order and its <code>TRNX-AMT</code> is added to a per-statement total <code>WS-TOTAL-AMT</code> (S9(9)V99) that is reset to zero for every statement. A card with no transactions still gets a complete statement with a zero total; work records whose card has no CARDXREF row are never reported.</td><td class="mono">app/cbl/CBSTM03A.CBL:65, 324-326, 416-434</td><td>Given card A with transactions 10.00 and -2.50 and card B with none: A's statement lists both lines and <code>Total EXP: ... $        7.50 </code>; B's statement has no detail line and total <code>$         .00 </code>. A work record for a card absent from CARDXREF appears on no statement. Legacy quirk: totals above 999,999,999.99 lose high-order digits (no diagnostic).</td></tr>
+  <tr><td>FR-13</td><td>Text statement structure: lines are written in the order L0, L1, L2, L3, L4, L5, L6, L5, L7, L8, L9, L10, L11, L12, L13, L12, one L14 per transaction, L12, L14A, L15. Fixed lines: L0 = 31 <code>*</code> + <code>START OF STATEMENT</code> + 31 <code>*</code>; L5/L10/L12 = 80 <code>-</code>; L6 = 33 blanks + <code>Basic Details</code> + 34 blanks; L11 = 30 blanks + <code>TRANSACTION SUMMARY </code> + 30 blanks; L13 = <code>Tran ID</code> padded to 16 + <code>Tran Details</code> padded to 51 + <code>  Tran Amount</code>; L15 = 32 <code>*</code> + <code>END OF STATEMENT</code> + 32 <code>*</code>.</td><td class="mono">app/cbl/CBSTM03A.CBL:85-146, 435-437, 458-504, 679</td><td>Byte-for-byte comparison of STATEMNT.PS against a golden file produced from a known fixture matches, including the duplicated L5 and L12 separator lines and the position of every fixed literal.</td></tr>
+  <tr><td>FR-14</td><td>Name and address composition: L1 = first name, blank, middle name, blank, last name, blank &mdash; each component cut at its first embedded blank (<code>STRING ... DELIMITED BY ' '</code>) &mdash; in X(75) + 5 blanks. L2/L3 = address line 1/2 in X(50) + 30 blanks. L4 = address line 3, state code, country code, zip, each cut at its first blank and separated by single blanks, in X(80).</td><td class="mono">app/cbl/CBSTM03A.CBL:90-100, 462-481; app/cpy/CUSTREC.cpy:6-14</td><td>Customer <code>Mary Ann</code>/<code>Lee</code>/<code>Smith</code> renders L1 as <code>Mary Lee Smith </code> padded to 80 (the second word of a multi-word first name is dropped); L4 for line3 <code>Apt 4</code>, state <code>WA</code>, country <code>USA</code>, zip <code>98101</code> is <code>Apt WA USA 98101 </code> padded to 80.</td></tr>
+  <tr><td>FR-15</td><td>Basic-details lines: L7 = <code>Account ID         :</code> + the 11-digit account id left-justified in X(20) + 40 blanks; L8 = <code>Current Balance    :</code> + <code>ACCT-CURR-BAL</code> edited as <code>9(9).99-</code> (zero-padded 9 integer digits, decimal point, 2 decimals, <code>-</code> or blank) + 47 blanks; L9 = <code>FICO Score         :</code> + the 3-digit score left-justified in X(20) + 40 blanks. Legacy quirk: balances &ge; 1,000,000,000.00 lose their high-order digit(s) because the source field is S9(10)V99.</td><td class="mono">app/cbl/CBSTM03A.CBL:107-119, 483-485; app/cpy/CVACT01Y.cpy:5-7; app/cpy/CUSTREC.cpy:22</td><td>Balance -1234.5 renders L8 as <code>Current Balance    :000001234.50-</code> padded to 80; balance 1000000000.00 renders <code>000000000.00 </code>; account 00000000011 renders L7 as <code>Account ID         :00000000011</code> padded to 80.</td></tr>
+  <tr><td>FR-16</td><td>Transaction detail line L14 = transaction id X(16) + one blank + description truncated to X(49) + <code>$</code> + amount edited as <code>Z(9).99-</code> (leading zeros suppressed, <code>-</code> or blank sign). Total line L14A = <code>Total EXP:</code> + 56 blanks + <code>$</code> + the statement total edited as <code>Z(9).99-</code>.</td><td class="mono">app/cbl/CBSTM03A.CBL:132-142, 433-436, 676-679; app/cpy/COSTM01.CPY:28-29</td><td>Transaction <code>TR0000000000001</code>, description of 60 characters, amount 25.00 renders id, blank, first 49 characters of the description, <code>$</code>, <code>       25.00 </code>; a 100-character description never widens the line beyond 80 bytes.</td></tr>
+  <tr><td>FR-17</td><td>HTML statement structure: for each statement a complete HTML document is emitted (<code>&lt;!DOCTYPE html&gt;</code> &hellip; <code>&lt;table&gt;</code> header, account banner row, <code>Bank of XYZ</code> / <code>410 Terry Ave N</code> / <code>Seattle WA 99999</code> row, name/address row, <code>Basic Details</code> row, account/balance/FICO row, <code>Transaction Summary</code> row, <code>Tran ID</code> / <code>Tran Details</code> / <code>Amount</code> heading row, one 3-cell row per transaction, <code>End of Statement</code> footer, <code>&lt;/table&gt;&lt;/body&gt;&lt;/html&gt;</code>). All fixed lines, including inline styles and colours (<code>#1d1d96b3</code>, <code>#FFAF33</code>, <code>#f2f2f2</code>, <code>#33FFD1</code>, <code>#33FF5E</code>; cell widths 25%/55%/20%), are reproduced verbatim.</td><td class="mono">app/cbl/CBSTM03A.CBL:148-223, 439-454, 506-555, 594-611, 634-669, 675-721</td><td>Byte-for-byte comparison of STATEMNT.HTML against a golden file matches; the file contains one <code>&lt;!DOCTYPE html&gt;</code> record per CARDXREF record and eleven 100-byte records per transaction.</td></tr>
+  <tr><td>FR-18</td><td>HTML name/address lines: banner = <code>&lt;h3&gt;Statement for Account Number: </code> + account id in X(20) + <code>&lt;/h3&gt;</code>; name = <code>&lt;p style="font-size:16px"&gt;</code> + the first 50 characters of the text name (L23-NAME X(50)) up to its first double blank + two blanks + <code>&lt;/p&gt;</code>; each address line = <code>&lt;p&gt;</code> + the value up to its first double blank + two blanks + <code>&lt;/p&gt;</code>. Legacy quirk: an address containing an embedded double blank is cut there in HTML only.</td><td class="mono">app/cbl/CBSTM03A.CBL:212-220, 529-530, 558-592</td><td>Address line 1 <code>12 High  Street</code> renders as <code>&lt;p&gt;12 High  &lt;/p&gt;</code> in HTML while the text L2 keeps the full value; a 60-character text name is cut at 50 in the HTML <code>&lt;p&gt;</code>.</td></tr>
+  <tr><td>FR-19</td><td>HTML basic-details and transaction cells keep the fixed-width trailing blanks of their fields: <code>&lt;p&gt;Account ID         : </code> + X(20) + <code>&lt;/p&gt;</code>, <code>&lt;p&gt;Current Balance    : </code> + <code>9(9).99-</code> + <code>&lt;/p&gt;</code>, <code>&lt;p&gt;FICO Score         : </code> + X(20) + <code>&lt;/p&gt;</code>; per transaction <code>&lt;p&gt;</code> + X(16) id + <code>&lt;/p&gt;</code>, <code>&lt;p&gt;</code> + X(49) description + <code>&lt;/p&gt;</code>, <code>&lt;p&gt;</code> + <code>Z(9).99-</code> amount + <code>&lt;/p&gt;</code>.</td><td class="mono">app/cbl/CBSTM03A.CBL:613-633, 686-716</td><td>For account 00000000011 the record is <code>&lt;p&gt;Account ID         : 00000000011         &lt;/p&gt;</code> padded to 100; a 10-character description yields <code>&lt;p&gt;</code> + 10 chars + 39 blanks + <code>&lt;/p&gt;</code>.</td></tr>
+  <tr><td>FR-20</td><td>At end of input the files are closed in the order TRNXFILE, XREFFILE, CUSTFILE, ACCTFILE (each CLOSE status other than <code>00</code>/<code>04</code> displays <code>ERROR CLOSING &lt;DD&gt;</code> and abends), then STMTFILE and HTMLFILE, and the program ends with GOBACK (RC 0).</td><td class="mono">app/cbl/CBSTM03A.CBL:331-342, 856-919</td><td>A normal run ends STEP040 with RC 0 and both output datasets cataloged; the SYSOUT shows no <code>ERROR CLOSING</code> line.</td></tr>
+  <tr><td>FR-21</td><td>Every error path displays <code>ABENDING PROGRAM</code> and calls <code>CEE3ABD</code> (no parameters), abending the step; because STEP040 is the last step of CREASTMT, the job ends abnormally and <code>STATEMNT.PS</code>/<code>.HTML</code> are deleted (DISP abnormal = DELETE).</td><td class="mono">app/cbl/CBSTM03A.CBL:921-923; app/jcl/CREASTMT.JCL:87, 92</td><td>Any FR-07/08/10/11/20 failure leaves no cataloged STATEMNT.PS/.HTML and a non-zero job completion; the target must surface the failure as a failed job (the migration README maps this to exit code 12).</td></tr>
+  <tr><td>FR-22</td><td>TXT2PDF1 renders <code>AWS.M2.CARDDEMO.STATEMNT.PS</code> (DD INDD) to <code>AWS.M2.CARDDEMO.STATEMNT.PS.PDF</code> by running the TSO command <code>%TXT2PDF BROWSE Y IN DD:INDD OUT 'AWS.M2.CARDDEMO.STATEMNT.PS.PDF'</code> under IKJEFT1B with <code>DYNAMNBR=50</code>, STEPLIB <code>AWS.M2.LBD.TXT2PDF.LOAD</code> and SYSEXEC <code>AWS.M2.LBD.TXT2PDF.EXEC</code>. The utility is outside the repo (boundary).</td><td class="mono">app/jcl/TXT2PDF1.JCL:24-39</td><td>After a successful CREASTMT, TXT2PDF1 produces a PDF whose text content equals the 80-column statement lines of STATEMNT.PS in order. PDF layout fidelity cannot be specified from the repo (Q-13).</td></tr>
+  <tr><td>FR-23</td><td>CLOSEFIL closes, and OPENFIL re-opens, exactly the CICS files TRANSACT, CCXREF, ACCTDAT, CXACAIX and USRSEC in region CICSAWSA via SDSF <code>/F CICSAWSA,'CEMT SET FIL(x) CLO|OPE'</code>; CUSTDAT is not touched.</td><td class="mono">app/jcl/CLOSEFIL.jcl:22-30; app/jcl/OPENFIL.jcl:22-30; app/csd/CARDDEMO.CSD:1-2, 37-39, 50-52, 63-65, 76-77, 88-89</td><td>After CLOSEFIL, <code>CEMT INQ FIL</code> shows the five files CLOSED and CUSTDAT unchanged; after OPENFIL all five are OPEN. In the target, where no CICS exists, the equivalent is that no file-open/close job exists and online access is not interrupted (see section 10).</td></tr>
+  <tr><td>FR-24</td><td>WAITSTEP delays the chain by the centisecond value on its SYSIN card: COBSWAIT accepts the 8-character value (<code>00003600</code> = 36 s), moves it to a binary field and calls MVSWAIT, which issues the interval timer wait.</td><td class="mono">app/jcl/WAITSTEP.jcl:20-26; app/cbl/COBSWAIT.cbl:30-38; app/asm/MVSWAIT.asm:17-23</td><td>OPENFIL starts no earlier than 36 s after TXT2PDF1 completes; changing the SYSIN value changes the delay proportionally; a non-numeric value fails the step.</td></tr>
+  <tr><td>FR-25</td><td>At start-up CBSTM03A writes a diagnostic to SYSOUT &mdash; <code>Running JCL : &lt;jobname&gt; Step &lt;stepname&gt;</code>, then <code>DD Names from TIOT:</code> and one <code>: &lt;ddname&gt; -- valid UCB | null UCB</code> line per TIOT entry &mdash; by addressing PSA&rarr;TCB&rarr;TIOT control blocks. This is operational trace, not statement content.</td><td class="mono">app/cbl/CBSTM03A.CBL:235-260, 266-291</td><td>Legacy SYSOUT contains the job/step line and the DD list. The target may log the equivalent job/step identity; it must not reproduce control-block addressing (no equivalent exists) &mdash; recorded as a conscious deviation.</td></tr>
+</table>
+
+<h2 id="restart">6. Restart, recovery &amp; error handling</h2>
+<h3>6.1 Return-code conventions</h3>
+<table>
+  <tr><th>RC</th><th>Meaning</th><th>Downstream effect</th></tr>
+  <tr><td class="mono">0 (all steps)</td><td>Normal completion. CBSTM03A ends by GOBACK with no RETURN-CODE set (<code>CBSTM03A.CBL:341-342</code>).</td><td>Next step runs; CA-7 trigger releases the next job (<code>CardDemo.ca7:468, 495, 522, 527</code>).</td></tr>
+  <tr><td class="mono">DELDEF01: DELETE RC 8 &rarr; MAXCC 0</td><td>IDCAMS DELETE of a missing <code>TRXFL.SEQ</code>/KSDS sets LASTCC 8; <code>SET MAXCC = 0</code> clears it before DEFINE (<code>CREASTMT.JCL:25-28</code>). A DEFINE failure after the SET leaves RC 8/12.</td><td>STEP010 has no COND and runs regardless; STEP020 (<code>COND=(0,NE)</code>) is bypassed if DELDEF01 or STEP010 ended &ne; 0 (<code>CREASTMT.JCL:56</code>).</td></tr>
+  <tr><td class="mono">STEP010: SORT RC 16</td><td>Sort failure (e.g. TRANSACT not found, DCB conflict).</td><td>STEP020/030/040 bypassed via <code>COND=(0,NE)</code> (<code>CREASTMT.JCL:56, 66, 79</code>); job ends non-zero; previous run's STATEMNT.* remain cataloged because STEP030 did not run.</td></tr>
+  <tr><td class="mono">CBSTM03B RC '00' / '04'</td><td>COBOL FILE STATUS of the last OPEN/READ/CLOSE, passed back in <code>LK-M03B-RC</code> (<code>CBSTM03B.CBL:151-152, 175-176, 200-201, 225-226</code>). <code>00</code>/<code>04</code> accepted on OPEN and CLOSE (<code>CBSTM03A.CBL:736, 862</code>).</td><td>Processing continues.</td></tr>
+  <tr><td class="mono">CBSTM03B RC '10'</td><td>End of file on sequential READ.</td><td>XREFFILE: ends the statement loop normally (<code>CBSTM03A.CBL:356-357</code>). TRNXFILE during table load: ends loading (<code>:841-842</code>). TRNXFILE on the priming read: abend (<code>:748-754</code>, FR-08).</td></tr>
+  <tr><td class="mono">CBSTM03B RC '23'</td><td>Record not found on keyed READ of CUSTFILE/ACCTFILE.</td><td>Abend (<code>CBSTM03A.CBL:379-386, 403-410</code>); no skip path.</td></tr>
+  <tr><td class="mono">CBSTM03B RC '35', '39', other</td><td>File not found / DCB conflict on OPEN, or any other I/O status.</td><td>Abend with <code>ERROR OPENING|READING|CLOSING &lt;DD&gt;</code> + <code>RETURN CODE: nn</code> (<code>CBSTM03A.CBL:736-742, 843-847, 862-868</code>).</td></tr>
+  <tr><td class="mono">CBSTM03B RC unchanged</td><td>An unknown DD name falls through to GOBACK without touching <code>LK-M03B-RC</code> (<code>CBSTM03B.CBL:127-131</code>). Not reachable from CBSTM03A, which only passes the four known names.</td><td>None in practice; relevant only if the subroutine is reused.</td></tr>
+  <tr><td class="mono">TXT2PDF1: IKJEFT1B RC</td><td>Return code of the TSO command processor; the TXT2PDF utility's codes are not in the repo (<code>TXT2PDF1.JCL:24-39</code>).</td><td>Not determinable from repo (Q-13). CA-7 triggers WAITSTEP on completion (<code>CardDemo.ca7:522</code>).</td></tr>
+  <tr><td class="mono">WAITSTEP / CLOSEFIL / OPENFIL RC</td><td>COBSWAIT ends by STOP RUN (RC 0) (<code>COBSWAIT.cbl:40</code>); SDSF batch returns its own RC, and a CEMT failure inside CICS is reported only in CMDOUT, not as a step RC (<code>CLOSEFIL.jcl:22-24</code>).</td><td>A failed CEMT does not stop the chain &mdash; the following jobs run against files that may still be open (Q-12).</td></tr>
+</table>
+<h3>6.2 Abends</h3>
+<table>
+  <tr><th>Abend</th><th>Job / Program</th><th>Meaning</th><th>Recovery</th></tr>
+  <tr><td class="mono">LE abend via CEE3ABD (code not in source)</td><td class="mono">CREASTMT STEP040 / CBSTM03A</td><td>Any OPEN/READ/CLOSE status outside the accepted set, including empty work store (RC 10 on priming read) and missing customer/account (RC 23). <code>CALL 'CEE3ABD'</code> is issued without the abend-code/clean-up parameters, so the user abend code is not determinable from source (<code>CBSTM03A.CBL:921-923</code>) (Q-15).</td><td>Fix the data (load the missing customer/account, ensure TRANSACT is non-empty) and rerun CREASTMT from DELDEF01. Outputs were <code>DISP=(NEW,CATLG,DELETE)</code> so no clean-up of STATEMNT.* is needed (<code>CREASTMT.JCL:87, 92</code>).</td></tr>
+  <tr><td class="mono">Storage overlay (no explicit abend)</td><td class="mono">CREASTMT STEP040 / CBSTM03A</td><td>More than 51 distinct cards or more than 10 transactions for one card in TRXFL overruns <code>WS-TRNX-TABLE</code> / <code>WS-TRN-TBL-CNTR</code>; no bounds check (<code>CBSTM03A.CBL:225-233, 819-830</code>). Effect ranges from silent corruption to a protection exception; not determinable from source (Q-10).</td><td>Legacy: reduce input volume. Target: enforce and test an explicit capacity rule.</td></tr>
+  <tr><td class="mono">Sx13 / JCL error on output allocation</td><td class="mono">CREASTMT STEP040</td><td>STATEMNT.PS/.HTML already cataloged when STEP040 tries <code>DISP=(NEW,CATLG,DELETE)</code> &mdash; only possible if STEP030 was skipped (manual restart at STEP040) (<code>CREASTMT.JCL:66-75, 87-96</code>).</td><td>Restart from STEP030 or DELDEF01.</td></tr>
+  <tr><td class="mono">TXT2PDF utility failure</td><td class="mono">TXT2PDF1</td><td>Missing <code>AWS.M2.LBD.TXT2PDF.*</code> libraries or STATEMNT.PS not cataloged (CREASTMT failed) (<code>TXT2PDF1.JCL:28-33</code>).</td><td>Rerun after CREASTMT has completed; utility behaviour not in repo (Q-13).</td></tr>
+  <tr><td class="mono">CEMT command failure</td><td class="mono">CLOSEFIL / OPENFIL</td><td>Region CICSAWSA down or file name unknown; surfaced in CMDOUT only (<code>CLOSEFIL.jcl:22-30</code>).</td><td>Operator re-issues CEMT; rerun the job (idempotent).</td></tr>
+</table>
+<h3>6.3 Restart / checkpoint semantics</h3>
+<p>There are no checkpoints, commits or restart keys anywhere in the chain. <code>CREASTMT</code> is a pure rebuild: DELDEF01 deletes and redefines the work store (<code>CREASTMT.JCL:22-39</code>), STEP010/STEP020 recreate it in full (<code>:44-62</code>), STEP030 deletes the previous outputs (<code>:66-75</code>) and STEP040 creates them anew with <code>DISP=(NEW,CATLG,DELETE)</code>, so an abend leaves no partial statement files (<code>:87-96</code>). The only valid restart point is therefore the top of CREASTMT (cold rerun); restarting inside the job at STEP040 requires STEP030 to be rerun first (section 6.2). CBSTM03A holds the entire transaction set in working storage and writes statements only after it is loaded (<code>CBSTM03A.CBL:730-761, 818-853, 316-329</code>), so there is no in-flight state to recover. All four VSAM inputs are read-only (<code>OPEN INPUT</code>, <code>CBSTM03B.CBL:136, 160, 184, 209</code>); no backout job exists or is needed. <code>CLOSEFIL</code>, <code>WAITSTEP</code> and <code>OPENFIL</code> are stateless and idempotent. Rerun protection: the repo defines no "already run today" guard; a second run on the same day simply regenerates the same statements. In the target, rerun identity is carried by the job parameters (business run date), per <code>docs/migration/CardDemo_target_state.md:98</code>.</p>
+
+<h2 id="nfr">7. Non-functional requirements</h2>
+<table>
+  <tr><th>ID</th><th>Category</th><th>Requirement</th></tr>
+  <tr><td>NFR-01</td><td>Volume (legacy capacity)</td><td>The legacy program is dimensioned for at most 51 distinct cards with transactions and 10 transactions per card per run (<code>CBSTM03A.CBL:226-233</code>); CARDXREF count is unbounded (sequential loop, <code>:316-329</code>). The target must state its capacity and must not degrade to undefined behaviour beyond it (Q-10).</td></tr>
+  <tr><td>NFR-02</td><td>Volume (space)</td><td>Work KSDS <code>CYL(1 5)</code> on volume TSU023, CISZ 4096; TRXFL.SEQ and both statement files <code>SPACE=(CYL,(1,1),RLSE)</code> (<code>CREASTMT.JCL:29-39, 48-51, 87-96</code>). No record-count volumes are defined in the repo.</td></tr>
+  <tr><td>NFR-03</td><td>Window</td><td>Not defined in repo. CA-7 lists only <code>DONT SCHEDULE BEFORE 03237 AT 0000</code> and boilerplate <code>CPUTM=00023, ELAPTM=2359</code> identical for every job (<code>CardDemo.ca7:489-491, 516-518</code>) (Q-06). CREASTMT's JOB card sets <code>TIME=1440</code> (no CPU-time limit) (<code>CREASTMT.JCL:1-2</code>).</td></tr>
+  <tr><td>NFR-04</td><td>Availability (online impact)</td><td>Online access to TRANSACT, CCXREF, ACCTDAT, CXACAIX and USRSEC is suspended from CLOSEFIL until OPENFIL, i.e. for the duration of CREASTMT + TXT2PDF1 + 36 s (<code>CLOSEFIL.jcl:26-30</code>, <code>WAITSTEP.jcl:26</code>, <code>OPENFIL.jcl:26-30</code>). The target must achieve statement generation without an online outage (section 10).</td></tr>
+  <tr><td>NFR-05</td><td>Throughput / sequencing</td><td>Jobs run strictly serially (CA-7 trigger chain, <code>QTM=0100 LEADTM=0000</code>, <code>CardDemo.ca7:468, 495, 522, 527</code>); no parallelism inside the chain.</td></tr>
+  <tr><td>NFR-06</td><td>Output fidelity</td><td>Statement text and HTML files are fixed-length (80 / 100 bytes) and must remain byte-comparable with the legacy layout for regression testing (<code>CBSTM03A.CBL:44-47</code>; <code>docs/migration/CardDemo_target_state.md:101</code>).</td></tr>
+  <tr><td>NFR-07</td><td>Re-runnability</td><td>The whole chain must be safely re-runnable on the same day with no manual clean-up (delete-then-define and MOD,DELETE patterns, <code>CREASTMT.JCL:22-39, 66-75</code>).</td></tr>
+  <tr><td>NFR-08</td><td>Resources</td><td>CA-7 records <code>REGION=4096K</code>, <code>MSGCLASS=A</code>, <code>PRTY=000</code> for CREASTMT and TXT2PDF1 (<code>CardDemo.ca7:489, 516</code>); JCL uses <code>CLASS=A</code> (<code>CREASTMT.JCL:1</code>, <code>TXT2PDF1.JCL:1</code>).</td></tr>
+  <tr><td>NFR-09</td><td>Observability</td><td>Legacy diagnostics are DISPLAY lines to SYSOUT (job/step/DD trace at start, <code>ERROR ...</code>/<code>RETURN CODE:</code>/<code>ABENDING PROGRAM</code> on failure) (<code>CBSTM03A.CBL:270-291, 739-741, 922</code>). The target must log equivalent failure diagnostics identifying the file and status.</td></tr>
+</table>
+
+<h2 id="interfaces">8. Interfaces &amp; data layouts</h2>
+<table>
+  <tr><th>Interface</th><th>Layout (copybook)</th><th>Producer</th><th>Consumer</th></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS (350 B)</td><td class="mono">app/cpy/CVTRA05Y.cpy:4-18 (TRAN-RECORD)</td><td>Transaction posting (POSTTRAN / online add) &mdash; outside this chain</td><td>CREASTMT STEP010 SORT (<code>CREASTMT.JCL:45</code>)</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRXFL.SEQ / TRXFL.VSAM.KSDS (350 B, key 1-32)</td><td class="mono">app/cpy/COSTM01.CPY:20-36 (TRNX-RECORD); FD app/cbl/CBSTM03B.CBL:58-63</td><td>STEP010 SORT OUTREC (<code>CREASTMT.JCL:54</code>), STEP020 REPRO (<code>:61</code>)</td><td>CBSTM03B TRNXFILE sequential read (<code>CBSTM03B.CBL:140-144</code>) &rarr; CBSTM03A table (<code>CBSTM03A.CBL:818-830</code>)</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS (50 B, key X(16))</td><td class="mono">app/cpy/CVACT03Y.cpy:4-7 (CARD-XREF-RECORD); FD app/cbl/CBSTM03B.CBL:65-68</td><td>Reference load (XREFFILE job) &mdash; outside this chain</td><td>CBSTM03B XREFFILE sequential read (<code>CBSTM03A.CBL:345-364</code>)</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS (300 B, key 9(11))</td><td class="mono">app/cpy/CVACT01Y.cpy:4-7 (ACCOUNT-RECORD); FD app/cbl/CBSTM03B.CBL:75-78</td><td>Account load / posting &mdash; outside this chain</td><td>CBSTM03B ACCTFILE keyed read (<code>CBSTM03A.CBL:392-412</code>)</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.CUSTDATA.VSAM.KSDS (500 B, key X(9))</td><td class="mono">app/cpy/CUSTREC.cpy:4-23 (CUSTOMER-RECORD); FD app/cbl/CBSTM03B.CBL:70-73</td><td>Customer load &mdash; outside this chain</td><td>CBSTM03B CUSTFILE keyed read (<code>CBSTM03A.CBL:368-388</code>)</td></tr>
+  <tr><td class="mono">WS-M03B-AREA / LK-M03B-AREA (call interface)</td><td class="mono">app/cbl/CBSTM03A.CBL:71-83; app/cbl/CBSTM03B.CBL:100-112 &mdash; DD X(8), OPER X(1) O/C/R/K/W/Z, RC X(2), KEY X(25), KEY-LN S9(4), FLDT X(1000)</td><td>CBSTM03A (sets DD, OPER, KEY, KEY-LN)</td><td>CBSTM03B (performs the I/O, returns RC and FLDT) (<code>CBSTM03B.CBL:114-131</code>). W and Z are declared but not implemented (<code>CBSTM03B.CBL:107-108, 133-229</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.STATEMNT.PS (FB 80)</td><td class="mono">app/cbl/CBSTM03A.CBL:85-146 (STATEMENT-LINES ST-LINE0 &hellip; ST-LINE15)</td><td>CBSTM03A STMTFILE (<code>CREASTMT.JCL:87-91</code>)</td><td>TXT2PDF1 DD INDD (<code>TXT2PDF1.JCL:33, 38</code>)</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.STATEMNT.HTML (FB 100)</td><td class="mono">app/cbl/CBSTM03A.CBL:148-223 (HTML-LINES: HTML-FIXED-LN 88-levels, HTML-L11, HTML-L23, HTML-ADDR/BSIC/TRAN-LN)</td><td>CBSTM03A HTMLFILE (<code>CREASTMT.JCL:92-96</code>)</td><td>Not defined in repo (Q-14)</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.STATEMNT.PS.PDF</td><td class="mono">Utility-defined (not in repo)</td><td>TXT2PDF1 (<code>TXT2PDF1.JCL:39</code>)</td><td>Not defined in repo (Q-14)</td></tr>
+  <tr><td class="mono">WAITSTEP SYSIN control card</td><td class="mono">app/jcl/WAITSTEP.jcl:25-26 &mdash; 8-digit centiseconds in columns 1-8 (<code>00003600</code>); app/cbl/COBSWAIT.cbl:31, 36 (PARM-VALUE X(8))</td><td>JCL in-stream data</td><td>COBSWAIT &rarr; MVSWAIT (<code>COBSWAIT.cbl:37-38</code>)</td></tr>
+  <tr><td class="mono">SDSF ISFIN command stream</td><td class="mono">app/jcl/CLOSEFIL.jcl:25-30; app/jcl/OPENFIL.jcl:25-30 &mdash; <code>/F CICSAWSA,'CEMT SET FIL(name ) CLO|OPE'</code></td><td>JCL in-stream data</td><td>SDSF &rarr; MVS console &rarr; CICS region CICSAWSA</td></tr>
+  <tr><td class="mono">TSO SYSTSIN command</td><td class="mono">app/jcl/TXT2PDF1.JCL:37-39 &mdash; <code>%TXT2PDF BROWSE Y IN DD:INDD OUT '&lt;dsn&gt;'</code></td><td>JCL in-stream data</td><td>IKJEFT1B &rarr; TXT2PDF REXX (<code>TXT2PDF1.JCL:24-31</code>)</td></tr>
+</table>
+
+<h2 id="security">9. Security &amp; access</h2>
+<table>
+  <tr><th>Item</th><th>Value</th></tr>
+  <tr><td>Job owner / RACF identity</td><td class="mono">*NONE* in CA-7 (<code>OWNER= *NONE*</code>, <code>CardDemo.ca7:487, 514</code>); JOB cards use <code>NOTIFY=&amp;SYSUID</code> with no USER= (<code>CREASTMT.JCL:1-2</code>, <code>TXT2PDF1.JCL:1</code>, <code>CLOSEFIL.jcl:1-2</code>, <code>OPENFIL.jcl:1-2</code>, <code>WAITSTEP.jcl:1-2</code>). The RACF identity is therefore not defined in repo (Q-07). Control-M's <code>RUN_AS="xuemingh"</code> applies only to folders that do not contain this chain (<code>CardDemo.controlm:4</code>).</td></tr>
+  <tr><td>Sensitive data handled</td><td>PAN (16-digit card number, in TRANSACT, CARDXREF and as the work-store key, <code>COSTM01.CPY:22</code>); customer PII read from CUSTDATA &mdash; names, address, phone numbers, SSN, government id, date of birth, FICO score (<code>CUSTREC.cpy:6-22</code>); account balances (<code>CVACT01Y.cpy:7</code>). The statements themselves print name, address, account id, balance, FICO score, transaction descriptions and amounts (<code>CBSTM03A.CBL:462-485, 676-678</code>), but not the card number or SSN. The HTML carries a fixed "Bank of XYZ, 410 Terry Ave N, Seattle" branding block (<code>CBSTM03A.CBL:167-172</code>).</td></tr>
+  <tr><td>Dataset access</td><td>All VSAM inputs opened <code>DISP=SHR</code> for read (<code>CREASTMT.JCL:45, 83-86</code>); work store and statement files created/deleted under the submitting user's authority. Console authority is required for the SDSF <code>/F</code> commands in CLOSEFIL/OPENFIL (<code>CLOSEFIL.jcl:22-30</code>).</td></tr>
+  <tr><td>Regulatory obligations</td><td>Not defined in repo. Customer statements with FICO score and PII are produced to datasets with no retention, encryption or distribution controls in the JCL (Q-14).</td></tr>
+</table>
+
+<h2 id="target">10. Target-state mapping</h2>
+<table>
+  <tr><th>Legacy asset</th><th>Disposition</th><th>Target component</th><th>Test evidence</th></tr>
+  <tr><td class="mono">CREASTMT (job)</td><td>Rewrite</td><td>Spring Batch job <code>CREASTMT</code> with steps <code>DELDEF01</code>, <code>STEP010</code>, <code>STEP020</code>, <code>STEP030</code>, <code>STEP040</code> &mdash; <code>migration/carddemo/backend/src/main/java/com/carddemo/batch/statement/CreateStatementJobConfiguration.java:111-115, 131, 149, 178, 202, 225</code></td><td class="mono">migration/carddemo/backend/src/test/java/com/carddemo/batch/statement/CreateStatementJobTest.java (runsTheFiveCreastmtStepsAndWritesBothReports, rebuildsTheWorkStoreFromScratchOnEveryRun, abendsWhenAnXrefPointsAtAMissingCustomer)</td></tr>
+  <tr><td class="mono">DELDEF01 / STEP020 &mdash; TRXFL.VSAM.KSDS work store</td><td>Rewrite</td><td>Table <code>statement_work_transactions</code> (Flyway <code>migration/carddemo/backend/src/main/resources/db/migration/V1300__statement_work_transactions.sql</code>), <code>StatementWorkTransaction</code>, <code>StatementWorkTransactionKey</code>, <code>StatementWorkTransactionRepository</code> in <code>com.carddemo.batch.statement</code></td><td class="mono">CreateStatementJobTest.rebuildsTheWorkStoreFromScratchOnEveryRun; TrnxLayoutTest.java</td></tr>
+  <tr><td class="mono">STEP010 SORT OUTREC (CVTRA05Y &rarr; COSTM01)</td><td>Rewrite</td><td><code>TrnxLayout.java</code>, <code>TransactLayout.java</code>, sort step in <code>CreateStatementJobConfiguration.java:141-149</code></td><td class="mono">TrnxLayoutTest.java</td></tr>
+  <tr><td class="mono">CBSTM03A (statement program)</td><td>Rewrite</td><td><code>StatementItemReader.java</code>, <code>TransactionIndex.java</code> (51&times;10 table), <code>Statement.java</code>, <code>StatementRenderer.java</code> (text + HTML), <code>StatementFormat.java</code> (edited pictures), <code>StatementAbend.java</code></td><td class="mono">StatementItemReaderTest.java, TransactionIndexTest.java, StatementRendererTest.java, StatementFormatTest.java (same test directory)</td></tr>
+  <tr><td class="mono">CBSTM03B (I/O subroutine)</td><td>Rewrite</td><td><code>StatementFileAccess.java</code>, <code>StatementFileArea.java</code> (the M03B area), <code>XrefLayout.java</code>, <code>CustomerLayout.java</code>, <code>AccountLayout.java</code></td><td class="mono">StatementFileAccessTest.java, StatementFileAccessStub.java</td></tr>
+  <tr><td class="mono">STATEMNT.PS / STATEMNT.HTML</td><td>Rewrite</td><td>80-/100-byte fixed-record files written to the batch run directory, byte-comparable with the COBOL layout (<code>docs/migration/CardDemo_target_state.md:100-101</code>)</td><td class="mono">StatementRendererTest.java (record-length and legacy-order tests); CreateStatementJobTest.runsTheFiveCreastmtStepsAndWritesBothReports</td></tr>
+  <tr><td class="mono">TXT2PDF1 (PDF rendering)</td><td>Not yet migrated</td><td>Boundary B-13: no PDF renderer in <code>migration/carddemo</code>; noted in <code>CreateStatementJobConfiguration.java:58</code>. Only the trigger edge is modelled (next row).</td><td>&mdash;</td></tr>
+  <tr><td class="mono">CA-7 SCHID=030 network CLOSEFIL&rarr;CREASTMT&rarr;TXT2PDF1&rarr;WAITSTEP&rarr;OPENFIL</td><td>Rewrite (as a contract, not an executor)</td><td><code>migration/carddemo/backend/src/main/java/com/carddemo/batch/operations/OperationsChainSchedule.java:77-80</code> ("Statements" triggers); scheduler execution is out of scope per <code>docs/migration/CardDemo_target_state.md:99</code></td><td class="mono">migration/carddemo/backend/src/test/java/com/carddemo/batch/operations/OperationsChainScheduleTest.java (ca7GraphMatchesTheLjobListing, contractDocumentListsEveryTrigger)</td></tr>
+  <tr><td class="mono">CLOSEFIL / OPENFIL (CEMT SET FIL CLO/OPE)</td><td>Retire</td><td>No CICS file open/close in the target; online and batch share the database without an outage</td><td class="mono">migration/carddemo/backend/src/test/java/com/carddemo/batch/operations/FileControlJobsRemovedTest.java:28-31 (noFileOpenOrCloseJobExistsInTheTarget)</td></tr>
+  <tr><td class="mono">WAITSTEP / COBSWAIT / MVSWAIT</td><td>Rewrite</td><td><code>migration/carddemo/backend/src/main/java/com/carddemo/batch/operations/WaitStepJobConfiguration.java</code>, <code>WaitControlCard.java</code></td><td class="mono">migration/carddemo/backend/src/test/java/com/carddemo/batch/operations/WaitStepJobTest.java, WaitControlCardTest.java</td></tr>
+  <tr><td class="mono">COSTM01.CPY, CVACT03Y.cpy, CUSTREC.cpy, CVACT01Y.cpy, CVTRA05Y.cpy</td><td>Rewrite</td><td><code>TrnxLayout.java</code>, <code>XrefLayout.java</code>, <code>CustomerLayout.java</code>, <code>AccountLayout.java</code>, <code>TransactLayout.java</code> in <code>com.carddemo.batch.statement</code></td><td class="mono">TrnxLayoutTest.java; StatementFixtures.java (fixtures)</td></tr>
+  <tr><td class="mono">CEE3ABD abend path</td><td>Rewrite</td><td><code>StatementAbend.java</code>; failed step &rarr; launcher exit code 12 (<code>migration/carddemo/README.md:168</code>)</td><td class="mono">StatementItemReaderTest.java (abend tests); CreateStatementJobTest.abendsWhenAnXrefPointsAtAMissingCustomer</td></tr>
+  <tr><td class="mono">CARDXREF / ACCTDATA / CUSTDATA / TRANSACT VSAM</td><td>Rewrite (owned by other streams)</td><td>Tables owned by CardManagement / AccountManagement / DailyTransactionPosting streams (<code>docs/migration/CardDemo_target_state.md:100</code>); read here via the layout classes above</td><td class="mono">StatementFileAccessTest.java</td></tr>
+</table>
+
+<h2 id="open">11. Assumptions, technical debt &amp; open questions</h2>
+<table>
+  <tr><th>ID</th><th>Type</th><th>Description</th><th>Owner</th><th>Status</th></tr>
+  <tr><td>Q-01</td><td>Question</td><td><strong>Scheduler sources disagree.</strong> CA-7 (<code>app/scheduler/CardDemo.ca7</code>) and Control-M (<code>app/scheduler/CardDemo.controlm</code>) define different daily chains: CA-7 SCHID=030 is CLOSEFIL&rarr;CBPAUP0J&rarr;POSTTRAN&rarr;WAITSTEP&rarr;OPENFIL (<code>CardDemo.ca7:18-147</code>, no TRANBKP); Control-M DAILY-TransactionBackup is CLOSEFIL&rarr;TRANBKP&rarr;WAITSTEP&rarr;OPENFIL (<code>CardDemo.controlm:3-25</code>, no POSTTRAN). This FRD does not assert a single combined daily chain. Which scheduler is authoritative for production?</td><td>Scheduling / app owner</td><td>Open</td></tr>
+  <tr><td>Q-02</td><td>Question</td><td>StatementGeneration exists only in CA-7 (<code>CardDemo.ca7:465-529</code>). <code>CardDemo.controlm</code> has no CREASTMT or TXT2PDF1 job and therefore no INCOND/OUTCOND for this chain. Is statement generation scheduled at all under Control-M, or run manually (README "Running Batch Jobs", <code>README.md:207-233</code>)?</td><td>Scheduling</td><td>Open</td></tr>
+  <tr><td>Q-03</td><td>Question</td><td>No scheduler condition orders CREASTMT after POSTTRAN or INTCALC/COMBTRAN; the README sequence places CREASTMT after them (<code>README.md:225-229</code>) but the CA-7 statement network starts from its own CLOSEFIL (<code>CardDemo.ca7:465-468</code>). What is the required business cut-off (all postings of the cycle present) before statements run?</td><td>Business / scheduling</td><td>Open</td></tr>
+  <tr><td>Q-04</td><td>Question</td><td>The abbreviated OPENFIL block in the statement network lists a trigger of CLOSEFIL under SCHID=031 (<code>CardDemo.ca7:529-532</code>, the PRTCATBL network), whereas the full OPENFIL block states <code>N -- COMP TRIGGERS OTHER JOBS</code> (<code>:138</code>). Does OPENFIL end the statement network or chain into category-balance printing? (The CA-7 names CLOSEFIL1/CLOSEFIL2 at <code>:216-217</code>, which have no JCL member in <code>app/jcl</code>, belong to the SCHID 031/032 reference-data networks and are <em>not</em> touched by this chain.)</td><td>Scheduling</td><td>Open</td></tr>
+  <tr><td>Q-05</td><td>Question</td><td>CA-7 triggers on job completion and the listing shows no RC requirement. If CREASTMT or TXT2PDF1 ends non-zero, do WAITSTEP and OPENFIL still run (re-opening the CICS files), or does the network stall with the five files closed? Not determinable from the repo; the operational consequence of stalling is an online outage.</td><td>Operations</td><td>Open</td></tr>
+  <tr><td>Q-06</td><td>Assumption</td><td>The CA-7 LJOB statistics are boilerplate: every job shows <code>CPUTM=00023, ELAPTM=2359</code>, last run <code>06198/0700</code>, 1058 runs and 8 late (<code>CardDemo.ca7:476, 489-492, 503, 516-519</code>). They are treated as non-informative; run window, duration and criticality are "Not defined in repo".</td><td>Devin (author)</td><td>Open</td></tr>
+  <tr><td>Q-07</td><td>Question</td><td>Owner / RACF identity: CA-7 <code>OWNER= *NONE*</code> (<code>CardDemo.ca7:487, 514</code>), JOB cards carry no USER= (<code>CREASTMT.JCL:1-2</code>). Under which identity do the jobs run and which identity has console authority for the CEMT commands (<code>CLOSEFIL.jcl:26-30</code>)?</td><td>Security</td><td>Open</td></tr>
+  <tr><td>Q-08</td><td>Debt</td><td>Hard-coded volume <code>VOLUMES(TSU023)</code> and CICS region name <code>CICSAWSA</code> (<code>CREASTMT.JCL:31</code>; <code>CLOSEFIL.jcl:26-30</code>; <code>OPENFIL.jcl:26-30</code>). Environment-specific values embedded in JCL.</td><td>App owner</td><td>Open</td></tr>
+  <tr><td>Q-09</td><td>Debt</td><td>HTMLFILE DCB mismatch: STEP030 declares <code>LRECL=80,BLKSIZE=3200</code> (<code>CREASTMT.JCL:69</code>) while STEP040 creates the dataset with <code>LRECL=100,BLKSIZE=800</code> (<code>:94</code>) and the FD is X(100) (<code>CBSTM03A.CBL:47</code>). Inert because IEFBR14 only deletes, but misleading. Also, <code>CREASTMT.JCL:90</code> contains stray text after the trailing comma (<code>00,RECFM=FB), ATA.VSAM.KSDS</code>) that the JCL reader treats as a comment; should be cleaned.</td><td>App owner</td><td>Open</td></tr>
+  <tr><td>Q-10</td><td>Debt</td><td>CBSTM03A's in-memory table is fixed at 51 cards &times; 10 transactions with no bounds check (<code>CBSTM03A.CBL:225-233, 819-830</code>); exceeding it is undefined behaviour. The target must choose and test an explicit rule (abend, or cap and log) &mdash; a documented deviation from legacy, since legacy behaviour is not reproducible.</td><td>Migration team</td><td>Open</td></tr>
+  <tr><td>Q-11</td><td>Debt / Question</td><td>CLOSEFIL closes TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC but not CUSTDAT (<code>CLOSEFIL.jcl:26-30</code>; <code>CARDDEMO.CSD:50-52</code>), yet CBSTM03A reads CUSTDATA (<code>CREASTMT.JCL:86</code>). Is the concurrent CICS/batch read of CUSTDATA intentional (read-only is safe under SHAREOPTIONS), and why are USRSEC/CXACAIX closed when the chain does not use them?</td><td>App owner</td><td>Open</td></tr>
+  <tr><td>Q-12</td><td>Debt</td><td>CEMT failures in CLOSEFIL/OPENFIL are reported only in CMDOUT, not as a step return code (<code>CLOSEFIL.jcl:22-24</code>); the chain proceeds even if the files did not close/open.</td><td>Operations</td><td>Open</td></tr>
+  <tr><td>Q-13</td><td>Question</td><td>TXT2PDF1 depends on the licensed TSO/REXX utility <code>AWS.M2.LBD.TXT2PDF.LOAD/EXEC</code>, which is not in the repo (<code>TXT2PDF1.JCL:28-31</code>). Its return codes, output dataset attributes/disposition and PDF layout are unknown. Is PDF output a business requirement for the target, and is a sample PDF available as a reference?</td><td>Business</td><td>Open</td></tr>
+  <tr><td>Q-14</td><td>Question</td><td>No consumer of STATEMNT.HTML or STATEMNT.PS.PDF exists in the repo, and no retention/distribution controls are defined for statement datasets containing PII and FICO scores. Who consumes the statements and under which retention/encryption policy?</td><td>Business / Security</td><td>Open</td></tr>
+  <tr><td>Q-15</td><td>Question</td><td><code>CALL 'CEE3ABD'</code> is issued without abend-code and clean-up parameters (<code>CBSTM03A.CBL:923</code>), so the user abend code seen by operations is not determinable from source. What abend code do the production run books expect?</td><td>Operations</td><td>Open</td></tr>
+  <tr><td>Q-16</td><td>Assumption</td><td>Legacy quirks are reproduced, not fixed, in the target unless stated otherwise: PROC-TS truncated to 24 characters in the work store (FR-03), empty work store abends (FR-08), S9(9)V99 statement total and 9(9).99- balance truncation (FR-12, FR-15), description cut to 49 characters (FR-16), HTML name/address cut at double blank and at column 50 (FR-18). Confirm with the business that these are acceptable to carry forward.</td><td>Business</td><td>Open</td></tr>
+  <tr><td>Q-17</td><td>Debt</td><td>CBSTM03A relies on <code>ALTER ... TO PROCEED TO</code> and <code>GO TO</code> dispatch (<code>CBSTM03A.CBL:296-314, 726-728</code>) and on PSA/TCB/TIOT control-block addressing (<code>:235-260, 266-291</code>); CBSTM03B declares WRITE/REWRITE operations it does not implement (<code>CBSTM03B.CBL:107-108</code>). None of this has a target equivalent; FR-25 records the trace display as a conscious deviation.</td><td>Migration team</td><td>Open</td></tr>
+</table>
+
+<footer>
+  <div class="legal">
+    Functional Requirement Document &mdash; aws-mainframe-modernization-carddemo.<br>
+    Classification: INTERNAL. &copy; HSBC Holdings plc. For internal use only.
+  </div>
+  <div class="brand">
+    <svg viewBox="0 0 400 200" role="img" aria-label="HSBC">
+      <polygon points="0,100 100,0 100,200" fill="#db0011"/>
+      <polygon points="400,100 300,0 300,200" fill="#db0011"/>
+      <polygon points="100,0 300,0 200,100" fill="#db0011"/>
+      <polygon points="100,200 300,200 200,100" fill="#db0011"/>
+      <polygon points="100,0 200,100 100,200" fill="#ffffff"/>
+      <polygon points="300,0 200,100 300,200" fill="#ffffff"/>
+    </svg>
+    <span class="wordmark">HSBC</span>
+  </div>
+</footer>
+
+</div>
+</body>
+</html>
