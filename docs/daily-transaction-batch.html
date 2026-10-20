@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CardDemo – DAILY-TransactionBackup batch chain</title>
+<style>
+  :root {
+    --ink: #1d2433; --muted: #5b6577; --line: #d9dee7; --bg: #f6f7fa; --card: #ffffff;
+    --accent: #1f5fae; --accent-soft: #e8f0fb; --warn: #9a5b00; --warn-soft: #fff4e0;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.6 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink); background: var(--bg); }
+  header { background: #13294b; color: #fff; padding: 28px 0 24px; }
+  header .wrap, main, footer .wrap { max-width: 1040px; margin: 0 auto; padding: 0 28px; }
+  header h1 { margin: 0 0 6px; font-size: 26px; font-weight: 600; }
+  header p { margin: 0; color: #c9d5ea; }
+  header .tags { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+  header .tags span { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22); border-radius: 999px; padding: 2px 12px; font-size: 13px; }
+  main { padding-top: 24px; padding-bottom: 40px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 22px 26px; margin: 0 0 20px; }
+  h2 { margin: 0 0 12px; font-size: 20px; color: #13294b; border-bottom: 2px solid var(--accent-soft); padding-bottom: 6px; }
+  h3 { margin: 20px 0 8px; font-size: 16px; }
+  code, .mono { font-family: var(--mono); font-size: 13px; }
+  :not(pre) > code { background: #eef1f6; border: 1px solid #e1e5ec; border-radius: 4px; padding: 0 4px; overflow-wrap: break-word; }
+  pre { font-family: var(--mono); font-size: 12.5px; line-height: 1.5; background: #0f1b2d; color: #dbe6f7; border-radius: 6px; padding: 12px 14px; overflow-x: auto; margin: 8px 0 14px; }
+  pre .c { color: #7f93b2; }
+  pre .k { color: #ffd479; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; border: 1px solid var(--line); padding: 7px 10px; }
+  th { background: #f0f3f8; font-weight: 600; }
+  td code { overflow-wrap: break-word; }
+  .tbl { overflow-x: auto; margin: 8px 0 14px; }
+  .tbl table { margin: 0; }
+  .toc ol { margin: 0; padding-left: 20px; columns: 2; column-gap: 32px; }
+  .toc li { margin: 2px 0; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .kv { display: grid; grid-template-columns: 190px 1fr; gap: 4px 16px; margin: 6px 0 12px; }
+  .kv dt { color: var(--muted); }
+  .kv dd { margin: 0; }
+  .note { border-left: 4px solid var(--warn); background: var(--warn-soft); padding: 10px 14px; border-radius: 0 6px 6px 0; margin: 12px 0; }
+  .note strong { color: var(--warn); }
+  .info { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 10px 14px; border-radius: 0 6px 6px 0; margin: 12px 0; }
+  .job-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .job-head h2 { flex: 1; }
+  .badge { font-family: var(--mono); font-size: 12px; background: var(--accent-soft); color: var(--accent); border-radius: 4px; padding: 1px 8px; }
+  .diagram { overflow-x: auto; }
+  .diagram svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+  .cond-add { color: #1a7f37; font-weight: 600; }
+  .cond-del { color: #b42318; font-weight: 600; }
+  footer { border-top: 1px solid var(--line); background: #fff; padding: 18px 0; color: var(--muted); font-size: 13px; }
+  footer ul { margin: 6px 0 0; padding-left: 20px; }
+  @media (max-width: 720px) { .toc ol { columns: 1; } .kv { grid-template-columns: 1fr; } }
+  @media print { header { background: #fff; color: #000; } header p, header .tags span { color: #000; } section { break-inside: avoid; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>CardDemo daily transaction batch: <span class="mono">DAILY-TransactionBackup</span></h1>
+    <p>The Control-M folder that closes the CICS files, backs up and resets the transaction master, waits, then reopens the files.</p>
+    <div class="tags">
+      <span>Application <span class="mono">CARD-DEMO</span></span>
+      <span>Scheduler: Control-M (cross-checked with CA-7)</span>
+      <span><span class="mono">DAYS="ALL"</span> · <span class="mono">TIMETO="23:00"</span></span>
+      <span>4 jobs</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section class="toc" id="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#flow">Flow diagram</a></li>
+    <li><a href="#schedule">Schedule and folder settings</a></li>
+    <li><a href="#job-closefil">Job: <code>CLOSEFIL</code></a></li>
+    <li><a href="#job-tranbkp">Job: <code>TRANBKP</code></a></li>
+    <li><a href="#job-waitstep">Job: <code>WAITSTEP</code></a></li>
+    <li><a href="#job-openfil">Job: <code>OPENFIL</code></a></li>
+    <li><a href="#mapping">Job → JCL → scheduler mapping</a></li>
+    <li><a href="#datasets">Datasets touched</a></li>
+    <li><a href="#ca7">CA-7 cross-reference</a></li>
+    <li><a href="#observations">Observations</a></li>
+  </ol>
+</section>
+
+<section id="overview">
+  <h2>1. Overview</h2>
+  <p>The <code>DAILY-TransactionBackup</code> folder in <code>app/scheduler/CardDemo.controlm</code> (line 3) holds four jobs that run once a day, one after the other. Together they take a backup of the transaction master file while CICS is not using it.</p>
+  <ol>
+    <li><strong><code>CLOSEFIL</code>: take the CICS files offline.</strong> Sends <code>CEMT SET FIL(...) CLO</code> to the CICS region <code>CICSAWSA</code> for the five CardDemo files (<code>TRANSACT</code>, <code>CCXREF</code>, <code>ACCTDAT</code>, <code>CXACAIX</code>, <code>USRSEC</code>). After this, batch jobs can take exclusive control of the VSAM clusters.</li>
+    <li><strong><code>TRANBKP</code>: back up the transactions.</strong> Copies <code>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</code> into a new generation of the GDG <code>AWS.M2.CARDDEMO.TRANSACT.BKUP(+1)</code>. It then deletes the KSDS and its alternate index and defines a new, empty KSDS (<code>app/jcl/TRANBKP.jcl</code>).</li>
+    <li><strong><code>WAITSTEP</code>: pace the chain.</strong> Runs <code>COBSWAIT</code> with <code>00003600</code> centiseconds (36 seconds) so the catalog changes settle before CICS reopens the files.</li>
+    <li><strong><code>OPENFIL</code>: reopen the files.</strong> Sends <code>CEMT SET FIL(...) OPE</code> for the same five files, so online users can get to them again.</li>
+  </ol>
+  <p>The jobs are not triggered directly. Each one adds a Control-M condition (<code>OUTCOND SIGN="+"</code>) that the next job waits for (<code>INCOND</code>). The next job then deletes that condition (<code>OUTCOND SIGN="-"</code>) so it cannot fire twice. Every condition is named <code>DAILY-TransactionBackup-&lt;JOB&gt;</code> and dated <code>ODATE="ODAT"</code>, which scopes it to the current order date.</p>
+</section>
+
+<section id="flow">
+  <h2>2. Flow diagram</h2>
+  <p>Control-M order of execution. Each arrow is a prerequisite condition: the job above adds it (<span class="cond-add">+</span>) and the job below needs it and then deletes it (<span class="cond-del">−</span>).</p>
+  <div class="diagram">
+  <svg viewBox="0 0 820 640" width="820" role="img" aria-labelledby="flowTitle flowDesc" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+    <title id="flowTitle">DAILY-TransactionBackup job flow</title>
+    <desc id="flowDesc">CLOSEFIL, then TRANBKP, then WAITSTEP, then OPENFIL, linked by the conditions DAILY-TransactionBackup-CLOSEFIL, -TRANBKP and -WAITSTEP.</desc>
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#1f5fae"/>
+      </marker>
+      <style>
+        .box { fill: #ffffff; stroke: #1f5fae; stroke-width: 2; }
+        .box-alt { fill: #fff4e0; stroke: #9a5b00; stroke-width: 2; }
+        .term { fill: #13294b; }
+        .jn { font-family: Consolas, Menlo, monospace; font-size: 18px; font-weight: 700; fill: #13294b; }
+        .jd { font-size: 13px; fill: #5b6577; }
+        .tt { font-size: 13px; fill: #ffffff; }
+        .edge { stroke: #1f5fae; stroke-width: 2; fill: none; }
+        .cn { font-family: Consolas, Menlo, monospace; font-size: 13px; fill: #1d2433; }
+        .add { font-family: Consolas, Menlo, monospace; font-size: 12px; fill: #1a7f37; }
+        .del { font-family: Consolas, Menlo, monospace; font-size: 12px; fill: #b42318; }
+        .pill { fill: #e8f0fb; stroke: #c4d6f0; }
+      </style>
+    </defs>
+
+    <!-- start -->
+    <rect class="term" x="70" y="10" width="300" height="44" rx="22"/>
+    <text class="tt" x="220" y="30" text-anchor="middle">Folder ordered daily (DAYS="ALL")</text>
+    <text class="tt" x="220" y="46" text-anchor="middle">submit window ends TIMETO="23:00"</text>
+    <line class="edge" x1="220" y1="54" x2="220" y2="86" marker-end="url(#arrow)"/>
+    <text class="jd" x="234" y="76">no INCOND: free to start</text>
+
+    <!-- CLOSEFIL -->
+    <rect class="box" x="40" y="88" width="350" height="70" rx="8"/>
+    <text class="jn" x="60" y="116">CLOSEFIL</text>
+    <text class="jd" x="60" y="138">SDSF → CEMT SET FIL(...) CLO on CICSAWSA</text>
+
+    <line class="edge" x1="220" y1="158" x2="220" y2="236" marker-end="url(#arrow)"/>
+    <rect class="pill" x="415" y="170" width="390" height="56" rx="6"/>
+    <text class="cn" x="429" y="192">DAILY-TransactionBackup-CLOSEFIL</text>
+    <text class="add" x="429" y="214">+ CLOSEFIL</text>
+    <text class="del" x="535" y="214">needed, then − by TRANBKP</text>
+    <line x1="220" y1="198" x2="415" y2="198" stroke="#c4d6f0" stroke-dasharray="4 3"/>
+
+    <!-- TRANBKP -->
+    <rect class="box" x="40" y="238" width="350" height="70" rx="8"/>
+    <text class="jn" x="60" y="266">TRANBKP</text>
+    <text class="jd" x="60" y="288">IDCAMS REPRO → BKUP(+1), DELETE, DEFINE</text>
+
+    <line class="edge" x1="220" y1="308" x2="220" y2="386" marker-end="url(#arrow)"/>
+    <rect class="pill" x="415" y="320" width="390" height="56" rx="6"/>
+    <text class="cn" x="429" y="342">DAILY-TransactionBackup-TRANBKP</text>
+    <text class="add" x="429" y="364">+ TRANBKP</text>
+    <text class="del" x="535" y="364">needed, then − by WAITSTEP</text>
+    <line x1="220" y1="348" x2="415" y2="348" stroke="#c4d6f0" stroke-dasharray="4 3"/>
+
+    <!-- WAITSTEP -->
+    <rect class="box" x="40" y="388" width="350" height="70" rx="8"/>
+    <text class="jn" x="60" y="416">WAITSTEP</text>
+    <text class="jd" x="60" y="438">COBSWAIT 00003600 cs (36 s)</text>
+
+    <line class="edge" x1="220" y1="458" x2="220" y2="536" marker-end="url(#arrow)"/>
+    <rect class="pill" x="415" y="470" width="390" height="56" rx="6"/>
+    <text class="cn" x="429" y="492">DAILY-TransactionBackup-WAITSTEP</text>
+    <text class="add" x="429" y="514">+ WAITSTEP</text>
+    <text class="del" x="535" y="514">needed, then − by OPENFIL</text>
+    <line x1="220" y1="498" x2="415" y2="498" stroke="#c4d6f0" stroke-dasharray="4 3"/>
+
+    <!-- OPENFIL -->
+    <rect class="box" x="40" y="538" width="350" height="70" rx="8"/>
+    <text class="jn" x="60" y="566">OPENFIL</text>
+    <text class="jd" x="60" y="588">SDSF → CEMT SET FIL(...) OPE on CICSAWSA</text>
+    <text class="jd" x="415" y="572">end of chain: no "+" OUTCOND,</text>
+    <text class="jd" x="415" y="590">nothing downstream waits on OPENFIL</text>
+  </svg>
+  </div>
+  <p class="info">The same sequence as text: <code>CLOSEFIL</code> —[<code>DAILY-TransactionBackup-CLOSEFIL</code>]→ <code>TRANBKP</code> —[<code>DAILY-TransactionBackup-TRANBKP</code>]→ <code>WAITSTEP</code> —[<code>DAILY-TransactionBackup-WAITSTEP</code>]→ <code>OPENFIL</code></p>
+</section>
+
+<section id="schedule">
+  <h2>3. Schedule and folder settings</h2>
+  <p>All four jobs have the same scheduling attributes (<code>app/scheduler/CardDemo.controlm</code> lines 4, 8, 14, 20):</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Attribute</th><th>Value</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><code>FOLDER_NAME</code></td><td><code>DAILY-TransactionBackup</code></td><td>Regular folder (<code>TYPE="1"</code>, <code>REAL_FOLDER_ID="1"</code>)</td></tr>
+      <tr><td><code>APPLICATION</code> / <code>SUB_APPLICATION</code></td><td><code>CARD-DEMO</code> / <code>CTRLM</code></td><td></td></tr>
+      <tr><td><code>DAYS</code></td><td><code>ALL</code></td><td>Ordered every day; <code>JAN</code>…<code>DEC</code> all <code>="1"</code></td></tr>
+      <tr><td><code>TIMETO</code></td><td><code>23:00</code></td><td>Latest submission time. There is no <code>TIMEFROM</code>, so a job can be submitted as soon as its conditions are met, up to 23:00.</td></tr>
+      <tr><td><code>MAXWAIT</code></td><td><code>7</code></td><td>Days a job that has not run stays in the Active Jobs file</td></tr>
+      <tr><td><code>MAXRERUN</code></td><td><code>5</code></td><td>Maximum reruns</td></tr>
+      <tr><td><code>CYCLIC</code> / <code>CONFIRM</code> / <code>CRITICAL</code></td><td><code>0</code> / <code>0</code> / <code>0</code></td><td>Runs once per order, needs no manual confirmation, not on the critical path</td></tr>
+      <tr><td><code>TASKTYPE</code> / <code>APPL_TYPE</code></td><td><code>Job</code> / <code>OS</code></td><td>z/OS JCL member submitted by <code>MEMNAME</code></td></tr>
+      <tr><td><code>RUN_AS</code></td><td><code>xuemingh</code></td><td></td></tr>
+      <tr><td>Conditions <code>ODATE</code></td><td><code>ODAT</code></td><td>Each condition belongs to the current order date</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="job-closefil">
+  <div class="job-head"><h2>4. Job: <code>CLOSEFIL</code></h2><span class="badge">JOBISN 1</span></div>
+  <dl class="kv">
+    <dt>Description</dt><dd><code>DAILY CLOSEFIL</code> (JCL job card: <code>'Close files in CICS'</code>)</dd>
+    <dt>JCL member</dt><dd><code>app/jcl/CLOSEFIL.jcl</code></dd>
+    <dt>Schedule</dt><dd><code>DAYS="ALL"</code>, <code>TIMETO="23:00"</code></dd>
+    <dt>Input condition</dt><dd>None. This is the head of the chain.</dd>
+    <dt>Output conditions</dt><dd><span class="cond-add">+</span> <code>DAILY-TransactionBackup-CLOSEFIL</code> (controlm line 5)</dd>
+  </dl>
+  <h3>What the JCL does</h3>
+  <p>A single step, <code>CLCIFIL</code>, runs <code>PGM=SDSF</code> in batch. The <code>ISFIN</code> in-stream data holds MVS <code>/F</code> (MODIFY) commands addressed to the CICS region <code>CICSAWSA</code>. Each one issues a CEMT close for one file. Output goes to <code>ISFOUT</code> and <code>CMDOUT</code> (<code>SYSOUT=*</code>).</p>
+<pre><span class="c">//* CLOSEFIL.jcl lines 22-31</span>
+<span class="k">//CLCIFIL EXEC PGM=SDSF</span>
+//ISFOUT DD SYSOUT=*
+//CMDOUT DD SYSOUT=*
+//ISFIN  DD *
+ /F CICSAWSA,'CEMT SET FIL(TRANSACT ) CLO'
+ /F CICSAWSA,'CEMT SET FIL(CCXREF ) CLO'
+ /F CICSAWSA,'CEMT SET FIL(ACCTDAT ) CLO'
+ /F CICSAWSA,'CEMT SET FIL(CXACAIX ) CLO'
+ /F CICSAWSA,'CEMT SET FIL(USRSEC ) CLO'
+/*</pre>
+  <div class="tbl"><table>
+    <thead><tr><th>Step</th><th>Program</th><th>Resources</th></tr></thead>
+    <tbody><tr><td><code>CLCIFIL</code></td><td><code>SDSF</code></td><td>CICS files <code>TRANSACT</code>, <code>CCXREF</code>, <code>ACCTDAT</code>, <code>CXACAIX</code>, <code>USRSEC</code> in region <code>CICSAWSA</code>. The dataset names are in <a href="#datasets">section 9</a>. No datasets are opened by the job itself.</td></tr></tbody>
+  </table></div>
+</section>
+
+<section id="job-tranbkp">
+  <div class="job-head"><h2>5. Job: <code>TRANBKP</code></h2><span class="badge">JOBISN 2</span></div>
+  <dl class="kv">
+    <dt>Description</dt><dd><code>DAILY TRANBKP</code> (JCL job card: <code>'REPRO and Delete Transaction Master'</code>)</dd>
+    <dt>JCL member</dt><dd><code>app/jcl/TRANBKP.jcl</code>, procedure <code>app/proc/REPROC.prc</code>, control card <code>app/ctl/REPROCT.ctl</code></dd>
+    <dt>Schedule</dt><dd><code>DAYS="ALL"</code>, <code>TIMETO="23:00"</code></dd>
+    <dt>Input condition</dt><dd><code>DAILY-TransactionBackup-CLOSEFIL</code> (<code>AND_OR="A"</code>, controlm line 9)</dd>
+    <dt>Output conditions</dt><dd><span class="cond-del">−</span> <code>DAILY-TransactionBackup-CLOSEFIL</code> (line 10)<br><span class="cond-add">+</span> <code>DAILY-TransactionBackup-TRANBKP</code> (line 11)</dd>
+  </dl>
+  <h3>What the JCL does</h3>
+  <p><code>JOBLIB JCLLIB ORDER=('AWS.M2.CARDDEMO.PROC')</code> points the job at the procedure library. The job has three steps:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Step</th><th>Program</th><th>Action</th><th>Datasets</th></tr></thead>
+    <tbody>
+      <tr><td><code>STEP05R</code><br><span class="mono">PROC=REPROC</span></td><td><code>IDCAMS</code> (proc step <code>PRC001</code>)</td><td><code>REPRO INFILE(FILEIN) OUTFILE(FILEOUT)</code>, read from <code>AWS.<wbr>M2.<wbr>CARDDEMO.<wbr>CNTL(REPROCT)</code>. This unloads the transaction KSDS to a sequential backup.</td><td>In: <code>AWS.<wbr>M2.<wbr>CARDDEMO.<wbr>TRANSACT.<wbr>VSAM.<wbr>KSDS</code> (<code>DISP=SHR</code>)<br>Out: <code>AWS.<wbr>M2.<wbr>CARDDEMO.<wbr>TRANSACT.<wbr>BKUP(+1)</code> (<code>NEW,CATLG,DELETE</code>, <code>LRECL=350</code>, <code>RECFM=FB</code>, <code>SPACE=(CYL,(1,1),RLSE)</code>)</td></tr>
+      <tr><td><code>STEP05</code></td><td><code>IDCAMS</code></td><td><code>DELETE ... CLUSTER</code> and <code>DELETE ... ALTERNATEINDEX</code>, each followed by <code>IF MAXCC LE 08 THEN SET MAXCC = 0</code> so that "not found" does not fail the job</td><td><code>AWS.<wbr>M2.<wbr>CARDDEMO.<wbr>TRANSACT.<wbr>VSAM.<wbr>KSDS</code><br><code>AWS.<wbr>M2.<wbr>CARDDEMO.<wbr>TRANSACT.<wbr>VSAM.<wbr>AIX</code></td></tr>
+      <tr><td><code>STEP10</code><br><span class="mono">COND=(4,LT)</span></td><td><code>IDCAMS</code></td><td><code>DEFINE CLUSTER</code> for a new, empty KSDS: <code>KEYS(16 0)</code>, <code>RECORDSIZE(350 350)</code>, <code>SHAREOPTIONS(2 3)</code>, <code>CYLINDERS(1 5)</code>, <code>VOLUMES(AWSHJ1)</code>, <code>ERASE</code>, <code>INDEXED</code>. The step is skipped if an earlier step ended with a return code above 4.</td><td><code>AWS.<wbr>M2.<wbr>CARDDEMO.<wbr>TRANSACT.<wbr>VSAM.<wbr>KSDS</code> (<code>.DATA</code>, <code>.INDEX</code>)</td></tr>
+    </tbody>
+  </table></div>
+<pre><span class="c">//* TRANBKP.jcl lines 23-33 (backup)</span>
+<span class="k">//STEP05R EXEC PROC=REPROC,</span>
+// CNTLLIB=AWS.M2.CARDDEMO.CNTL
+//PRC001.FILEIN  DD DISP=SHR,
+//        DSN=AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS
+//PRC001.FILEOUT DD DISP=(NEW,CATLG,DELETE),
+//        UNIT=SYSDA,
+//        DCB=(LRECL=350,RECFM=FB,BLKSIZE=0),
+//        SPACE=(CYL,(1,1),RLSE),
+//        DSN=AWS.M2.CARDDEMO.TRANSACT.BKUP(+1)
+<span class="c">//* TRANBKP.jcl lines 37-45 (delete)</span>
+<span class="k">//STEP05 EXEC PGM=IDCAMS</span>
+   DELETE AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS -
+          CLUSTER
+   IF MAXCC LE 08 THEN SET MAXCC = 0
+   DELETE AWS.M2.CARDDEMO.TRANSACT.VSAM.AIX -
+          ALTERNATEINDEX
+   IF MAXCC LE 08 THEN SET MAXCC = 0
+<span class="c">//* TRANBKP.jcl lines 51-67 (redefine)</span>
+<span class="k">//STEP10 EXEC PGM=IDCAMS,COND=(4,LT)</span>
+   DEFINE CLUSTER (NAME(AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS) -
+          CYLINDERS(1 5) VOLUMES(AWSHJ1) KEYS(16 0) -
+          RECORDSIZE(350 350) SHAREOPTIONS(2 3) ERASE INDEXED) -
+          DATA (NAME(AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS.DATA)) -
+          INDEX (NAME(AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS.INDEX))</pre>
+  <p class="info">At the end of <code>TRANBKP</code> the day's transactions exist only in the newest <code>TRANSACT.BKUP</code> generation. <code>TRANSACT.VSAM.KSDS</code> is empty, and the alternate index <code>TRANSACT.VSAM.AIX</code> (and its path) is gone. This job does not rebuild them. <code>app/jcl/TRANIDX.jcl</code> does that, and it is not part of this folder.</p>
+</section>
+
+<section id="job-waitstep">
+  <div class="job-head"><h2>6. Job: <code>WAITSTEP</code></h2><span class="badge">JOBISN 3</span></div>
+  <dl class="kv">
+    <dt>Description</dt><dd><code>DAILY WAITSTEP</code> (JCL job card: <code>'WAIT STEP'</code>)</dd>
+    <dt>JCL member</dt><dd><code>app/jcl/WAITSTEP.jcl</code>, program <code>app/cbl/COBSWAIT.cbl</code></dd>
+    <dt>Schedule</dt><dd><code>DAYS="ALL"</code>, <code>TIMETO="23:00"</code></dd>
+    <dt>Input condition</dt><dd><code>DAILY-TransactionBackup-TRANBKP</code> (<code>AND_OR="A"</code>, controlm line 15)</dd>
+    <dt>Output conditions</dt><dd><span class="cond-del">−</span> <code>DAILY-TransactionBackup-TRANBKP</code> (line 16)<br><span class="cond-add">+</span> <code>DAILY-TransactionBackup-WAITSTEP</code> (line 17)</dd>
+  </dl>
+  <h3>What the JCL does</h3>
+  <p>Step <code>WAIT</code> runs <code>PGM=COBSWAIT</code> from <code>STEPLIB AWS.M2.CARDDEMO.LOADLIB</code>. <code>COBSWAIT</code> reads the wait time from <code>SYSIN</code> with <code>ACCEPT PARM-VALUE FROM SYSIN</code>, moves it to <code>MVSWAIT-TIME</code> and does <code>CALL 'MVSWAIT'</code>. The value is in centiseconds: <code>00003600</code> is 36 seconds.</p>
+<pre><span class="c">//* WAITSTEP.jcl lines 22-27</span>
+<span class="k">//WAIT     EXEC PGM=COBSWAIT</span>
+//STEPLIB  DD DSN=AWS.M2.CARDDEMO.LOADLIB,DISP=SHR
+//SYSOUT DD SYSOUT=*
+//SYSIN    DD *
+00003600      VALUE IN CENTISECONDS
+/*</pre>
+  <div class="tbl"><table>
+    <thead><tr><th>Step</th><th>Program</th><th>Datasets</th></tr></thead>
+    <tbody><tr><td><code>WAIT</code></td><td><code>COBSWAIT</code> → <code>MVSWAIT</code></td><td><code>AWS.M2.CARDDEMO.LOADLIB</code> (STEPLIB, <code>SHR</code>); <code>SYSIN</code> in-stream</td></tr></tbody>
+  </table></div>
+</section>
+
+<section id="job-openfil">
+  <div class="job-head"><h2>7. Job: <code>OPENFIL</code></h2><span class="badge">JOBISN 4</span></div>
+  <dl class="kv">
+    <dt>Description</dt><dd><code>DAILY OPENFIL</code> (JCL job card: <code>'Open files in CICS'</code>)</dd>
+    <dt>JCL member</dt><dd><code>app/jcl/OPENFIL.jcl</code></dd>
+    <dt>Schedule</dt><dd><code>DAYS="ALL"</code>, <code>TIMETO="23:00"</code></dd>
+    <dt>Input condition</dt><dd><code>DAILY-TransactionBackup-WAITSTEP</code> (<code>AND_OR="A"</code>, controlm line 21)</dd>
+    <dt>Output conditions</dt><dd><span class="cond-del">−</span> <code>DAILY-TransactionBackup-WAITSTEP</code> (line 22). It adds no condition, so the chain ends here.</dd>
+  </dl>
+  <h3>What the JCL does</h3>
+  <p>This is the reverse of <code>CLOSEFIL</code>. Step <code>OPCIFIL</code> runs <code>PGM=SDSF</code> and sends <code>CEMT SET FIL(...) OPE</code> to <code>CICSAWSA</code> for the same five files.</p>
+<pre><span class="c">//* OPENFIL.jcl lines 22-31</span>
+<span class="k">//OPCIFIL EXEC PGM=SDSF</span>
+//ISFOUT DD SYSOUT=*
+//CMDOUT DD SYSOUT=*
+//ISFIN  DD *
+ /F CICSAWSA,'CEMT SET FIL(TRANSACT ) OPE'
+ /F CICSAWSA,'CEMT SET FIL(CCXREF ) OPE'
+ /F CICSAWSA,'CEMT SET FIL(ACCTDAT ) OPE'
+ /F CICSAWSA,'CEMT SET FIL(CXACAIX ) OPE'
+ /F CICSAWSA,'CEMT SET FIL(USRSEC ) OPE'
+/*</pre>
+  <div class="tbl"><table>
+    <thead><tr><th>Step</th><th>Program</th><th>Resources</th></tr></thead>
+    <tbody><tr><td><code>OPCIFIL</code></td><td><code>SDSF</code></td><td>CICS files <code>TRANSACT</code>, <code>CCXREF</code>, <code>ACCTDAT</code>, <code>CXACAIX</code>, <code>USRSEC</code> in region <code>CICSAWSA</code></td></tr></tbody>
+  </table></div>
+</section>
+
+<section id="mapping">
+  <h2>8. Job → JCL → scheduler mapping</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th><code>JOBNAME</code></th><th><code>MEMNAME</code></th><th>JCL member path</th><th><code>DESCRIPTION</code></th><th><code>INCOND</code></th><th><code>OUTCOND</code></th><th>Programs</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><code>CLOSEFIL</code></td><td><code>CLOSEFIL</code></td><td><code>app/jcl/CLOSEFIL.jcl</code></td><td>DAILY CLOSEFIL</td><td>none</td><td><span class="cond-add">+</span> <code>DAILY-<wbr>TransactionBackup-<wbr>CLOSEFIL</code></td><td><code>SDSF</code></td></tr>
+      <tr><td>2</td><td><code>TRANBKP</code></td><td><code>TRANBKP</code></td><td><code>app/jcl/TRANBKP.jcl</code></td><td>DAILY TRANBKP</td><td><code>DAILY-<wbr>TransactionBackup-<wbr>CLOSEFIL</code></td><td><span class="cond-del">−</span> <code>DAILY-<wbr>TransactionBackup-<wbr>CLOSEFIL</code><br><span class="cond-add">+</span> <code>DAILY-<wbr>TransactionBackup-<wbr>TRANBKP</code></td><td><code>IDCAMS</code> ×3 (via <code>REPROC</code>)</td></tr>
+      <tr><td>3</td><td><code>WAITSTEP</code></td><td><code>WAITSTEP</code></td><td><code>app/jcl/WAITSTEP.jcl</code></td><td>DAILY WAITSTEP</td><td><code>DAILY-<wbr>TransactionBackup-<wbr>TRANBKP</code></td><td><span class="cond-del">−</span> <code>DAILY-<wbr>TransactionBackup-<wbr>TRANBKP</code><br><span class="cond-add">+</span> <code>DAILY-<wbr>TransactionBackup-<wbr>WAITSTEP</code></td><td><code>COBSWAIT</code></td></tr>
+      <tr><td>4</td><td><code>OPENFIL</code></td><td><code>OPENFIL</code></td><td><code>app/jcl/OPENFIL.jcl</code></td><td>DAILY OPENFIL</td><td><code>DAILY-<wbr>TransactionBackup-<wbr>WAITSTEP</code></td><td><span class="cond-del">−</span> <code>DAILY-<wbr>TransactionBackup-<wbr>WAITSTEP</code></td><td><code>SDSF</code></td></tr>
+    </tbody>
+  </table></div>
+  <p>Every job has <code>DAYS="ALL"</code>, <code>TIMETO="23:00"</code>, <code>MAXWAIT="7"</code>, <code>MAXRERUN="5"</code>. Every condition uses <code>ODATE="ODAT"</code>. Every <code>INCOND</code> uses <code>AND_OR="A"</code>.</p>
+</section>
+
+<section id="datasets">
+  <h2>9. Datasets touched</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Dataset</th><th>Kind</th><th>Used by</th><th>How</th></tr></thead>
+    <tbody>
+      <tr><td><code>AWS.<wbr>M2.<wbr>CARDDEMO.<wbr>TRANSACT.<wbr>VSAM.<wbr>KSDS</code></td><td>VSAM KSDS, key 16 at 0, 350-byte records; CICS file <code>TRANSACT</code></td><td><code>CLOSEFIL</code>, <code>TRANBKP</code>, <code>OPENFIL</code></td><td>Closed in CICS, then read (REPRO), deleted and redefined empty, then reopened</td></tr>
+      <tr><td><code>AWS.<wbr>M2.<wbr>CARDDEMO.<wbr>TRANSACT.<wbr>VSAM.<wbr>AIX</code></td><td>VSAM alternate index</td><td><code>TRANBKP</code></td><td>Deleted (STEP05) and not rebuilt</td></tr>
+      <tr><td><code>AWS.<wbr>M2.<wbr>CARDDEMO.<wbr>TRANSACT.<wbr>BKUP(+1)</code></td><td>GDG generation, FB 350</td><td><code>TRANBKP</code></td><td>Created and catalogued by STEP05R</td></tr>
+      <tr><td><code>AWS.<wbr>M2.<wbr>CARDDEMO.<wbr>CNTL(REPROCT)</code></td><td>Control card PDS member</td><td><code>TRANBKP</code></td><td><code>SYSIN</code> for <code>REPROC</code>: <code>REPRO INFILE(FILEIN) OUTFILE(FILEOUT)</code></td></tr>
+      <tr><td><code>AWS.M2.CARDDEMO.PROC</code></td><td>Procedure library</td><td><code>TRANBKP</code></td><td><code>JCLLIB</code> for <code>REPROC</code></td></tr>
+      <tr><td><code>AWS.M2.CARDDEMO.LOADLIB</code></td><td>Load library</td><td><code>WAITSTEP</code></td><td><code>STEPLIB</code> for <code>COBSWAIT</code></td></tr>
+      <tr><td><code>AWS.<wbr>M2.<wbr>CARDDEMO.<wbr>CARDXREF.<wbr>VSAM.<wbr>KSDS</code></td><td>CICS file <code>CCXREF</code></td><td><code>CLOSEFIL</code>, <code>OPENFIL</code></td><td>Closed and reopened only</td></tr>
+      <tr><td><code>AWS.<wbr>M2.<wbr>CARDDEMO.<wbr>ACCTDATA.<wbr>VSAM.<wbr>KSDS</code></td><td>CICS file <code>ACCTDAT</code></td><td><code>CLOSEFIL</code>, <code>OPENFIL</code></td><td>Closed and reopened only</td></tr>
+      <tr><td><code>AWS.<wbr>M2.<wbr>CARDDEMO.<wbr>CARDXREF.<wbr>VSAM.<wbr>AIX.<wbr>PATH</code></td><td>CICS file <code>CXACAIX</code></td><td><code>CLOSEFIL</code>, <code>OPENFIL</code></td><td>Closed and reopened only</td></tr>
+      <tr><td><code>AWS.<wbr>M2.<wbr>CARDDEMO.<wbr>USRSEC.<wbr>VSAM.<wbr>KSDS</code></td><td>CICS file <code>USRSEC</code></td><td><code>CLOSEFIL</code>, <code>OPENFIL</code></td><td>Closed and reopened only</td></tr>
+    </tbody>
+  </table></div>
+  <p>The CICS file → dataset mapping comes from the <code>DEFINE FILE</code> entries in <code>app/csd/CARDDEMO.CSD</code>.</p>
+</section>
+
+<section id="ca7">
+  <h2>10. CA-7 cross-reference</h2>
+  <p><code>app/scheduler/CardDemo.ca7</code> is a CA-7 <code>LJOB,LIST=ALL</code> listing. Jobs are linked by <em>TRIGGERED JOBS</em> entries under a schedule ID (<code>SCHID</code>), not by named conditions. All jobs belong to system <code>CARDDEMO</code> and use <code>JCLLIB=&amp;CARDDEMOPRODJCL</code>.</p>
+  <p><strong><code>TRANBKP</code> does not appear anywhere in the CA-7 listing.</strong> The four jobs in this folder do appear, but CA-7 uses <code>CLOSEFIL</code>/<code>WAITSTEP</code>/<code>OPENFIL</code> as bracket jobs around other work:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Job</th><th>Control-M <code>DAILY-TransactionBackup</code></th><th>CA-7 triggers (<code>CardDemo.ca7</code>)</th></tr></thead>
+    <tbody>
+      <tr><td><code>CLOSEFIL</code></td><td>Head; its successor is <code>TRANBKP</code></td><td>Triggers <code>CBPAUP0J</code> SCHID=030 (line 43). In other segments it triggers <code>TRANTYPE</code> (162), <code>READACCT</code> (340), <code>CREASTMT</code> (468) and <code>PRTCATBL</code> SCHID=031 (537).</td></tr>
+      <tr><td><code>TRANBKP</code></td><td>Second job</td><td><em>Not defined.</em></td></tr>
+      <tr><td><code>WAITSTEP</code></td><td>Third job</td><td>Triggers <code>OPENFIL</code> SCHID=030 (line 124) and SCHID=031 (569). It also triggers <code>CLOSEFIL1</code>/<code>CLOSEFIL2</code> (216-217) and <code>CLOSEFIL</code> (303, 335) in the category/balance segments.</td></tr>
+      <tr><td><code>OPENFIL</code></td><td>Tail</td><td>Triggered by <code>WAITSTEP</code>. Triggers <code>CLOSEFIL</code> SCHID=031 (line 532).</td></tr>
+    </tbody>
+  </table></div>
+  <p>The CA-7 network nearest to this folder is the SCHID=030 posting segment at the top of the listing (lines 18-132):</p>
+<pre><span class="k">CA-7 SCHID=030</span>   CLOSEFIL → CBPAUP0J → POSTTRAN → WAITSTEP → OPENFIL
+<span class="k">Control-M</span>        CLOSEFIL → <span class="k">TRANBKP</span>  →            WAITSTEP → OPENFIL   (DAILY-TransactionBackup)</pre>
+  <p class="note"><strong>Scheduler mismatch.</strong> The two scheduler sources describe different daily work. Control-M backs up and resets the transaction master between the close and open bracket. CA-7 purges expired authorizations and posts transactions (<code>CBPAUP0J</code>, <code>POSTTRAN</code>) in the same position, and never runs <code>TRANBKP</code>. Neither file shows the two chains running together. Check with the scheduling owners before assuming a combined order such as <code>POSTTRAN</code> then <code>TRANBKP</code>. Note that README's "Running Batch Jobs" list puts <code>TRANBKP</code> after <code>POSTTRAN</code>/<code>INTCALC</code>, but that is a manual run order and not either scheduler.</p>
+</section>
+
+<section id="observations">
+  <h2>11. Observations</h2>
+  <ul>
+    <li><strong>A failed backup can still delete the master.</strong> <code>STEP05</code> (DELETE) has no <code>COND</code> parameter, so it still runs if <code>STEP05R</code> (REPRO) ends with a non-zero return code without abending. In that case <code>TRANSACT.VSAM.KSDS</code> is deleted even though <code>BKUP(+1)</code> was not written cleanly. Only <code>STEP10</code> is protected (<code>COND=(4,LT)</code>), and <code>STEP05</code> sets <code>MAXCC</code> back to 0 when its result is 8 or less.</li>
+    <li><strong>The transaction file goes back online empty and without its AIX.</strong> <code>OPENFIL</code> reopens <code>TRANSACT</code> right after it is redefined. <code>TRANSACT.VSAM.AIX</code> is deleted but no job in this folder runs <code>TRANIDX</code>. Anything that reads the transaction AIX/path will find it missing until <code>TRANIDX</code> runs.</li>
+    <li><strong>More files are closed than are changed.</strong> <code>CLOSEFIL</code>/<code>OPENFIL</code> close and reopen five files, but <code>TRANBKP</code> only changes <code>TRANSACT</code>. <code>CCXREF</code>, <code>ACCTDAT</code>, <code>CXACAIX</code> and <code>USRSEC</code> (including sign-on security) are unavailable to CICS for the whole chain anyway.</li>
+    <li><strong>README says something different about the programs.</strong> The README application table lists <code>CLOSEFIL</code>/<code>OPENFIL</code> as <code>IEFBR14</code>. The JCL actually runs <code>PGM=SDSF</code> and sends CEMT commands.</li>
+    <li><strong>The pacing is fixed.</strong> <code>WAITSTEP</code> always waits 36 seconds. It does not check that the catalog or the CICS region is in any particular state.</li>
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Generated 2026-10-20 from the following sources in <span class="mono">choikh0423/aws-mainframe-modernization-carddemo</span>:
+    <ul>
+      <li><code>app/scheduler/CardDemo.controlm</code>: folder <code>DAILY-TransactionBackup</code>, lines 3-25</li>
+      <li><code>app/scheduler/CardDemo.ca7</code>: CA-7 <code>LJOB</code> trigger listing</li>
+      <li><code>app/jcl/*.jcl</code>: <code>CLOSEFIL.jcl</code>, <code>TRANBKP.jcl</code>, <code>WAITSTEP.jcl</code>, <code>OPENFIL.jcl</code> (and <code>TRANIDX.jcl</code> for comparison)</li>
+      <li>Supporting files: <code>app/proc/REPROC.prc</code>, <code>app/ctl/REPROCT.ctl</code>, <code>app/cbl/COBSWAIT.cbl</code>, <code>app/csd/CARDDEMO.CSD</code></li>
+    </ul>
+  </div>
+</footer>
+
+</body>
+</html>
