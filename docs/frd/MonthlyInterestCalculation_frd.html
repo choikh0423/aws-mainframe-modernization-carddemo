@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HSBC — FRD — MonthlyInterestCalculation</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    if (window.mermaid) {
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "base",
+        themeVariables: {
+          primaryColor: "#ffffff", primaryBorderColor: "#db0011", primaryTextColor: "#000000",
+          lineColor: "#333333", fontFamily: "Univers Next for HSBC, Arial, Helvetica, sans-serif"
+        }
+      });
+    }
+  });
+</script>
+<style>
+  :root {
+    --hsbc-red: #db0011; --hsbc-red-dark: #af000d; --black: #000000;
+    --ink: #333333; --muted: #767676; --line: #d7d8d6; --bg: #ffffff;
+    --panel: #f3f3f3; --panel-2: #ededed;
+    --warn-bg: #fbe9ea; --warn-line: #db0011;
+    --tag-batch: #000000; --tag-online: #00847f;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Univers Next for HSBC", "Univers", Arial, Helvetica, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.5; }
+  a { color: var(--hsbc-red); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Brand bar */
+  .brand-bar { background: var(--bg); border-bottom: 1px solid var(--line); }
+  .brand-bar .inner { max-width: 1080px; margin: 0 auto; padding: 14px 40px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand svg { height: 28px; width: auto; display: block; }
+  .brand .wordmark { font-weight: 700; font-size: 1.35em; letter-spacing: 0.02em; color: var(--black); line-height: 1; }
+  .brand .division { border-left: 1px solid var(--line); padding-left: 12px; margin-left: 4px; font-size: 0.82em; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .classification { font-size: 0.72em; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--hsbc-red); border: 1px solid var(--hsbc-red); padding: 3px 10px; }
+  .red-rule { height: 4px; background: var(--hsbc-red); }
+
+  .page { max-width: 1080px; margin: 0 auto; padding: 32px 40px 80px; }
+
+  header.doc-head { padding-bottom: 20px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
+  .doc-kicker { font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.12em; color: var(--hsbc-red); font-weight: 700; margin-bottom: 8px; }
+  h1 { font-size: 2em; font-weight: 300; margin: 0 0 6px; color: var(--black); letter-spacing: -0.01em; }
+  h1 strong { font-weight: 700; }
+  h2 { font-size: 1.25em; font-weight: 700; margin: 44px 0 12px; padding: 0 0 6px 14px; border-left: 4px solid var(--hsbc-red); border-bottom: 1px solid var(--line); color: var(--black); }
+  h3 { font-size: 1.02em; font-weight: 700; margin: 24px 0 8px; color: var(--black); }
+  .subtitle { color: var(--muted); font-size: 0.98em; }
+
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 0; color: #fff; font-size: 0.5em; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; vertical-align: middle; position: relative; top: -4px; }
+  .tag.batch { background: var(--tag-batch); }
+  .tag.online { background: var(--tag-online); }
+
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.92em; }
+  th, td { border: 0; border-bottom: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--black); color: #fff; font-weight: 700; font-size: 0.85em; letter-spacing: 0.04em; text-transform: uppercase; border-bottom: 2px solid var(--hsbc-red); }
+  tr:nth-child(even) td { background: var(--panel); }
+  code, .mono { font-family: "Consolas", "Menlo", monospace; font-size: 0.93em; background: var(--panel-2); padding: 1px 4px; border-radius: 0; color: var(--black); }
+
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin: 16px 0; }
+  .meta-grid .cell { background: var(--panel); border-top: 3px solid var(--hsbc-red); padding: 10px 12px; }
+  .meta-grid .cell .k { font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .meta-grid .cell .v { font-weight: 700; color: var(--black); }
+
+  .note { background: var(--warn-bg); border-left: 4px solid var(--warn-line); padding: 10px 14px; margin: 14px 0; font-size: 0.92em; color: var(--black); }
+  .guidance { color: var(--muted); font-style: italic; font-size: 0.9em; }
+  .diagram { background: var(--bg); border: 1px solid var(--line); border-top: 3px solid var(--hsbc-red); padding: 16px; overflow-x: auto; }
+
+  nav.toc { background: var(--panel); border-left: 4px solid var(--black); padding: 12px 20px; font-size: 0.92em; }
+  nav.toc strong { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.85em; color: var(--black); }
+  nav.toc ol { margin: 6px 0; padding-left: 20px; columns: 2; column-gap: 32px; }
+  nav.toc li { break-inside: avoid; }
+  nav.toc a { color: var(--ink); }
+  nav.toc a:hover { color: var(--hsbc-red); }
+
+  footer { margin-top: 60px; border-top: 1px solid var(--line); padding-top: 14px; color: var(--muted); font-size: 0.82em; display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+  footer .legal { max-width: 70%; }
+  footer .brand svg { height: 18px; }
+  footer .brand .wordmark { font-size: 0.95em; }
+
+  @media print {
+    .page { padding: 0 0 40px; }
+    h2 { break-after: avoid; }
+    table, .diagram, .note { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="brand-bar">
+  <div class="inner">
+    <div class="brand">
+      <svg viewBox="0 0 400 200" role="img" aria-label="HSBC">
+        <polygon points="0,100 100,0 100,200" fill="#db0011"/>
+        <polygon points="400,100 300,0 300,200" fill="#db0011"/>
+        <polygon points="100,0 300,0 200,100" fill="#db0011"/>
+        <polygon points="100,200 300,200 200,100" fill="#db0011"/>
+        <polygon points="100,0 200,100 100,200" fill="#ffffff"/>
+        <polygon points="300,0 200,100 300,200" fill="#ffffff"/>
+      </svg>
+      <span class="wordmark">HSBC</span>
+      <span class="division">Technology &mdash; Mainframe Modernisation</span>
+    </div>
+    <span class="classification">Internal</span>
+  </div>
+</div>
+<div class="red-rule"></div>
+
+<div class="page">
+
+<header class="doc-head">
+  <div class="doc-kicker">Functional Requirement Document</div>
+  <h1><strong>MonthlyInterestCalculation</strong> <span class="tag batch">Batch</span></h1>
+  <div class="subtitle">Month-end interest posting: CBACT04C prices every transaction-category balance with its disclosure-group rate, writes the interest as system transactions to the SYSTRAN generation, and COMBTRAN sorts them back into the TRANSACT master while the CICS files are quiesced.</div>
+</header>
+
+<div class="meta-grid">
+  <div class="cell"><div class="k">Stream type</div><div class="v">Batch cycle</div></div>
+  <div class="cell"><div class="k">Application</div><div class="v">CARDDEMO</div></div>
+  <div class="cell"><div class="k">Scheduler table / CICS group</div><div class="v">Control-M folder MONTHLY-InterestCalculation (APPLICATION CARD-DEMO, SUB_APPLICATION CTRLM) &mdash; no CA-7 SCHID; CICS group CARDDEMO</div></div>
+  <div class="cell"><div class="k">Owner</div><div class="v">xuemingh (Control-M RUN_AS)</div></div>
+  <div class="cell"><div class="k">Run window / availability</div><div class="v">Not defined in repo &mdash; only TIMETO 23:00 (latest submission) is set</div></div>
+  <div class="cell"><div class="k">Calendar / frequency</div><div class="v">Monthly, JAN&ndash;DEC all =1, RULE_BASED_CALENDARS "*"; day-of-month not defined in repo</div></div>
+  <div class="cell"><div class="k">Criticality</div><div class="v">Not critical in Control-M (CRITICAL="0"); MAXWAIT 7, MAXRERUN 5</div></div>
+  <div class="cell"><div class="k">Doc status</div><div class="v">DRAFT</div></div>
+</div>
+
+<table>
+  <tr><th>Version</th><th>Date</th><th>Author</th><th>Change</th></tr>
+  <tr><td>0.1</td><td>2026-10-20</td><td>Devin</td><td>Initial draft</td></tr>
+</table>
+
+<nav class="toc">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#purpose">Business purpose</a></li>
+    <li><a href="#flow">Flow diagram</a></li>
+    <li><a href="#inventory">Job / screen inventory</a></li>
+    <li><a href="#dependencies">Dependencies</a></li>
+    <li><a href="#requirements">Functional requirements</a></li>
+    <li><a href="#restart">Restart, recovery &amp; error handling</a></li>
+    <li><a href="#nfr">Non-functional requirements</a></li>
+    <li><a href="#interfaces">Interfaces &amp; data layouts</a></li>
+    <li><a href="#security">Security &amp; access</a></li>
+    <li><a href="#target">Target-state mapping</a></li>
+    <li><a href="#open">Assumptions, debt &amp; open questions</a></li>
+  </ol>
+</nav>
+
+<h2 id="purpose">1. Business purpose</h2>
+<p>The MonthlyInterestCalculation chain is CardDemo's month-end interest run. Once the CICS region has released the shared VSAM files (<code>CLOSEFIL</code>), <code>INTCALC</code> runs <code>CBACT04C</code>, which browses every transaction-category balance (<code>TCATBALF</code>) in account order, looks up the account's disclosure group and the matching interest rate (<code>DISCGRP</code>, falling back to the <code>DEFAULT</code> group), computes <em>balance &times; rate &divide; 1200</em> per category, writes one <code>System</code>-sourced interest transaction per priced category to a new <code>SYSTRAN</code> generation, and adds the account's total interest to its current balance while zeroing the current-cycle credit/debit totals. <code>COMBTRAN</code> then sorts the interest transactions together with the latest transaction-master backup by transaction id and loads the combined file back into the <code>TRANSACT</code> KSDS. <code>WAITSTEP</code> gives the catalog/VSAM activity time to settle and <code>OPENFIL</code> hands the files back to CICS.</p>
+<p>If the chain does not run, cardholder accounts carry no interest charge for the month, the cycle credit/debit accumulators are not reset for the next cycle, and the interest transactions that the statement job (<code>CREASTMT</code>) and the online transaction screens read from <code>TRANSACT</code> are missing. If it runs twice, interest is charged twice (there is no "already posted" check &mdash; see FR-15, Q-06).</p>
+<table>
+  <tr><th>Business capability</th><th>How this stream serves it</th></tr>
+  <tr><td>Revolving-credit interest billing</td><td>Prices each account's category balances with the disclosure-group rate and posts the total to the account balance (<code>app/cbl/CBACT04C.cbl:462-470, 350-356</code>).</td></tr>
+  <tr><td>Transaction history / statements</td><td>Each interest amount becomes a <code>CVTRA05Y</code> transaction (type <code>01</code>, category <code>05</code>, source <code>System</code>) merged into the <code>TRANSACT</code> master that <code>CREASTMT</code> and the <code>CT00</code>/<code>CT01</code> screens read (<code>CBACT04C.cbl:482-500</code>; <code>app/jcl/COMBTRAN.jcl:22-48</code>).</td></tr>
+  <tr><td>Billing-cycle reset</td><td>Sets <code>ACCT-CURR-CYC-CREDIT</code> and <code>ACCT-CURR-CYC-DEBIT</code> to zero at each account change (<code>CBACT04C.cbl:353-354</code>).</td></tr>
+  <tr><td>Pricing governance</td><td>Rates are external data (<code>DISCGRP</code> keyed by account group, transaction type and category) with a mandatory <code>DEFAULT</code> group, so products can be re-priced without a code change (<code>CBACT04C.cbl:415-460</code>; <code>app/cpy/CVTRA02Y.cpy:5-9</code>).</td></tr>
+  <tr><td>Online availability</td><td>CICS files are closed before and reopened after the batch update so the batch programs get exclusive VSAM access (<code>app/jcl/CLOSEFIL.jcl:26-30</code>, <code>app/jcl/OPENFIL.jcl:26-30</code>).</td></tr>
+</table>
+
+<h2 id="flow">2. Flow diagram</h2>
+<div class="diagram">
+<pre class="mermaid">
+flowchart TD
+    A["CLOSEFIL<br/>SDSF: CEMT SET FIL(...) CLO"] -->|"OUTCOND MONTHLY-InterestCalculation-CLOSEFIL +"| B["INTCALC<br/>STEP15 PGM=CBACT04C PARM='2022071800'"]
+    B -->|"OUTCOND MONTHLY-InterestCalculation-INTCALC +"| C["COMBTRAN<br/>STEP05R PGM=SORT, STEP10 PGM=IDCAMS REPRO"]
+    C -->|"OUTCOND MONTHLY-InterestCalculation-COMBTRAN +"| D["WAITSTEP<br/>PGM=COBSWAIT 36 s"]
+    D -->|"OUTCOND MONTHLY-InterestCalculation-WAITSTEP +"| E["OPENFIL<br/>SDSF: CEMT SET FIL(...) OPE"]
+
+    T1["TCATBALF KSDS (read)"] -.-> B
+    T2["CARDXREF KSDS + AIX PATH (read by acct id)"] -.-> B
+    T3["DISCGRP KSDS (read, DEFAULT fallback)"] -.-> B
+    T4["ACCTDATA KSDS (read + rewrite)"] <-.-> B
+    B -.->|"writes"| S["SYSTRAN(+1) GDG, F/350"]
+    S -.->|"SYSTRAN(0)"| C
+    K["TRANSACT.BKUP(0) GDG<br/>(produced by TRANBKP - not in this folder)"] -.-> C
+    C -.->|"SORTOUT"| M["TRANSACT.COMBINED(+1) GDG"]
+    M -.->|"REPRO"| V["TRANSACT VSAM KSDS (master)"]
+
+    classDef ext stroke-dasharray: 5 5,color:#767676;
+    class K ext;
+</pre>
+</div>
+<div class="note"><strong>Gating conditions:</strong> The chain is defined only in Control-M (<code>app/scheduler/CardDemo.controlm:64-92</code>). Each job's single <code>INCOND</code> is the predecessor's <code>OUTCOND</code> for the same <code>ODATE</code> (<code>AND_OR="A"</code>), and each job deletes the condition it consumed (<code>SIGN="-"</code>) and adds its own (<code>SIGN="+"</code>): CLOSEFIL&rarr;INTCALC (<code>:66,70-72</code>), INTCALC&rarr;COMBTRAN (<code>:76-78</code>), COMBTRAN&rarr;WAITSTEP (<code>:82-84</code>), WAITSTEP&rarr;OPENFIL (<code>:88-89</code>). OPENFIL emits no OUTCOND, so the network ends there. Control-M only posts an OUTCOND when the job ends OK, so a failed INTCALC (user abend U0999, FR-20) or a COMBTRAN step RC &gt; 0 holds the chain; there is no explicit <code>MAXRC</code>/ON-DO statement in the XML. Inside the JCL there are <strong>no <code>COND=</code> parameters</strong> on any step (<code>app/jcl/INTCALC.jcl:22</code>, <code>app/jcl/COMBTRAN.jcl:22,41</code>), so in COMBTRAN the IDCAMS <code>STEP10</code> runs even when the SORT step ends with a non-zero RC (only an abend would skip it). Rerun policy: <code>MAXRERUN="5"</code>, <code>MAXWAIT="7"</code> days, latest submission <code>TIMETO="23:00"</code> on every job (<code>:65,69,75,81,87</code>). <strong>Estate gotcha:</strong> CA-7 (<code>app/scheduler/CardDemo.ca7</code>) does not know INTCALC or COMBTRAN at all; it only lists CLOSEFIL, WAITSTEP and OPENFIL as members of other networks (SCHID 030 posting network CLOSEFIL&rarr;CBPAUP0J&rarr;POSTTRAN&rarr;WAITSTEP&rarr;OPENFIL). The two schedulers also disagree on the daily chain (Control-M <code>DAILY-TransactionBackup</code> runs TRANBKP, CA-7 SCHID 030 runs POSTTRAN); this document does not assert a combined daily chain. The dashed <code>TRANBKP</code> node is shown because COMBTRAN's SORTIN depends on its output, not because the folder schedules it.</div>
+
+<h2 id="inventory">3. Job / screen inventory</h2>
+<table>
+  <tr><th>Order</th><th>Job / Tranid</th><th>Program(s)</th><th>Function</th><th>Restart point / entry condition</th></tr>
+  <tr><td>1</td><td class="mono">CLOSEFIL</td><td class="mono">SDSF (step CLCIFIL)</td><td>Issues <code>/F CICSAWSA,'CEMT SET FIL(x) CLO'</code> for TRANSACT, CCXREF, ACCTDAT, CXACAIX and USRSEC so batch can open the datasets (<code>app/jcl/CLOSEFIL.jcl:22-30</code>). Note DISCGRP and TCATBALF are not CICS files and are not closed.</td><td>Control-M ODATE order start of folder; no INCOND (<code>app/scheduler/CardDemo.controlm:65-68</code>). Idempotent &mdash; rerun from top.</td></tr>
+  <tr><td>2</td><td class="mono">INTCALC</td><td class="mono">CBACT04C (step STEP15)</td><td>Interest calculator: reads TCATBALF sequentially, ACCTFILE/XREFFILE/DISCGRP randomly, writes interest transactions to <code>SYSTRAN(+1)</code>, rewrites ACCTFILE balances (<code>app/jcl/INTCALC.jcl:22-41</code>; <code>app/cbl/CBACT04C.cbl:180-232</code>).</td><td>INCOND <code>MONTHLY-InterestCalculation-CLOSEFIL</code> (<code>CardDemo.controlm:70</code>). PARM = 10-char run date (<code>INTCALC.jcl:22</code>). No checkpoint: a rerun re-reads all balances and re-adds interest to already-updated accounts (FR-15, Q-06).</td></tr>
+  <tr><td>3</td><td class="mono">COMBTRAN</td><td class="mono">SORT (STEP05R), IDCAMS (STEP10)</td><td>Sorts <code>TRANSACT.BKUP(0)</code> + <code>SYSTRAN(0)</code> on TRAN-ID ascending into <code>TRANSACT.COMBINED(+1)</code>, then <code>REPRO</code> loads it into the TRANSACT KSDS (<code>app/jcl/COMBTRAN.jcl:22-48</code>).</td><td>INCOND <code>MONTHLY-InterestCalculation-INTCALC</code> (<code>CardDemo.controlm:76</code>). Requires SYSTRAN(0) = INTCALC's output and a current BKUP(0). Rerun creates a new COMBINED generation; REPRO into a non-empty master would hit duplicate keys (Q-05).</td></tr>
+  <tr><td>4</td><td class="mono">WAITSTEP</td><td class="mono">COBSWAIT &rarr; MVSWAIT (step WAIT)</td><td>Waits the SYSIN value in centiseconds: <code>00003600</code> = 36 s (<code>app/jcl/WAITSTEP.jcl:22-26</code>; <code>app/cbl/COBSWAIT.cbl:36-38</code>; <code>app/asm/MVSWAIT.asm:17-23</code>).</td><td>INCOND <code>MONTHLY-InterestCalculation-COMBTRAN</code> (<code>CardDemo.controlm:82</code>). Stateless; rerun freely.</td></tr>
+  <tr><td>5</td><td class="mono">OPENFIL</td><td class="mono">SDSF (step OPCIFIL)</td><td>Issues <code>/F CICSAWSA,'CEMT SET FIL(x) OPE'</code> for the same five CICS files (<code>app/jcl/OPENFIL.jcl:22-30</code>).</td><td>INCOND <code>MONTHLY-InterestCalculation-WAITSTEP</code>; no OUTCOND, ends the network (<code>CardDemo.controlm:88-91</code>). Idempotent.</td></tr>
+</table>
+
+<h2 id="dependencies">4. Dependencies</h2>
+<h3>4.1 DB2 tables</h3>
+<table>
+  <tr><th>Table</th><th>Access</th><th>Used by</th><th>Notes</th></tr>
+  <tr><td class="mono">&mdash;</td><td>&mdash;</td><td class="mono">&mdash;</td><td>None. The chain is VSAM/GDG only; <code>CBACT04C</code> has no SQL (no <code>EXEC SQL</code> in <code>app/cbl/CBACT04C.cbl</code>) and the only "DB2" artefact is the DB2-style timestamp string built in <code>Z-GET-DB2-FORMAT-TIMESTAMP</code> (<code>CBACT04C.cbl:613-626</code>).</td></tr>
+</table>
+<h3>4.2 VSAM files &amp; datasets</h3>
+<table>
+  <tr><th>Dataset</th><th>Type</th><th>Access</th><th>Used by</th><th>Notes</th></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS</td><td>KSDS, key 17 (acct 11 + type 2 + cat 4)</td><td>R (sequential browse)</td><td class="mono">CBACT04C / INTCALC DD TCATBALF</td><td><code>app/jcl/INTCALC.jcl:27-28</code>; <code>CBACT04C.cbl:28-32,63-67</code>; layout CVTRA01Y. Not a CICS file (not in <code>app/csd/CARDDEMO.CSD</code>), so not touched by CLOSEFIL.</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</td><td>KSDS, key 16 (card num)</td><td>R (random, via alternate key)</td><td class="mono">CBACT04C / INTCALC DD XREFFILE</td><td><code>INTCALC.jcl:29-30</code>; <code>CBACT04C.cbl:34-39</code>. Read is <code>KEY IS FD-XREF-ACCT-ID</code> (<code>:394-395</code>). CICS file CCXREF (<code>CARDDEMO.CSD:37-39</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.CARDXREF.VSAM.AIX.PATH</td><td>AIX path on acct id</td><td>R</td><td class="mono">INTCALC DD XREFFIL1</td><td><code>INTCALC.jcl:31-32</code>; the ddname = base ddname + "1" convention for the COBOL ALTERNATE RECORD KEY (<code>CBACT04C.cbl:38</code>). CICS file CXACAIX (<code>CARDDEMO.CSD:63-65</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS</td><td>KSDS, key 11 (acct id)</td><td>R+W (random read, REWRITE)</td><td class="mono">CBACT04C / INTCALC DD ACCTFILE</td><td><code>INTCALC.jcl:33-34</code>; <code>CBACT04C.cbl:41-45,291,356</code>. CICS file ACCTDAT (<code>CARDDEMO.CSD:1-2</code>). Layout CVACT01Y.</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.DISCGRP.VSAM.KSDS</td><td>KSDS, key 16 (group 10 + type 2 + cat 4)</td><td>R (random)</td><td class="mono">CBACT04C / INTCALC DD DISCGRP</td><td><code>INTCALC.jcl:35-36</code>; <code>CBACT04C.cbl:47-51,78-82</code>. Must contain a <code>DEFAULT</code> group row for every type/category in use (FR-07). Not a CICS file.</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.SYSTRAN(+1) / (0)</td><td>GDG, LIMIT(5) SCRATCH; PS RECFM=F LRECL=350</td><td>W by INTCALC, R by COMBTRAN</td><td class="mono">CBACT04C DD TRANSACT; SORT SORTIN</td><td><code>INTCALC.jcl:37-41</code> (<code>DISP=(NEW,CATLG,DELETE)</code>); <code>COMBTRAN.jcl:25-26</code>; base defined in <code>app/jcl/DEFGDGB.jcl:48-52</code>. The INTCALC DD is named TRANSACT but is <em>not</em> the master.</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANSACT.BKUP(0)</td><td>GDG, LIMIT(5) SCRATCH; FB/350</td><td>R</td><td class="mono">SORT SORTIN (COMBTRAN STEP05R)</td><td><code>COMBTRAN.jcl:23-24</code>; base <code>DEFGDGB.jcl:24-28</code>; produced by <code>TRANBKP</code> STEP05R (<code>app/jcl/TRANBKP.jcl:23-33</code>), which is <strong>not</strong> in this Control-M folder (Q-04).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANSACT.COMBINED(+1)</td><td>GDG, LIMIT(5) SCRATCH; DCB copied from SORTIN</td><td>W by SORT, R by IDCAMS</td><td class="mono">COMBTRAN STEP05R SORTOUT / STEP10 DD TRANSACT</td><td><code>COMBTRAN.jcl:33-37,43-44</code>; base <code>DEFGDGB.jcl:54-58</code>.</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</td><td>KSDS, KEYS(16 0), RECORDSIZE(350 350)</td><td>W (REPRO load)</td><td class="mono">IDCAMS (COMBTRAN STEP10 DD TRANVSAM)</td><td><code>COMBTRAN.jcl:45-48</code>; cluster defined by <code>TRANBKP.jcl:54-67</code>. CICS file TRANSACT (<code>CARDDEMO.CSD:76-77</code>). REPRO has no <code>REPLACE</code>, so keys already present are duplicate-record errors (Q-05).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.USRSEC.VSAM.KSDS</td><td>KSDS</td><td>none (closed/opened only)</td><td class="mono">CLOSEFIL / OPENFIL</td><td>Closed and reopened by the CEMT commands (<code>CLOSEFIL.jcl:30</code>, <code>OPENFIL.jcl:30</code>) although no job in the chain reads it; sign-on (<code>CC00</code>) is unavailable for the whole window.</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.LOADLIB</td><td>PDS (load library)</td><td>R</td><td class="mono">INTCALC STEPLIB, WAITSTEP STEPLIB</td><td><code>INTCALC.jcl:23-24</code>; <code>WAITSTEP.jcl:23</code>.</td></tr>
+</table>
+<h3>4.3 Shared utilities &amp; copybooks</h3>
+<table>
+  <tr><th>Asset</th><th>Kind</th><th>Role</th></tr>
+  <tr><td class="mono">CVTRA01Y</td><td>Copybook</td><td><code>TRAN-CAT-BAL-RECORD</code>: TCATBALF layout, key acct/type/cat, <code>TRAN-CAT-BAL PIC S9(09)V99</code> (<code>app/cpy/CVTRA01Y.cpy:4-10</code>; copied at <code>CBACT04C.cbl:97</code>).</td></tr>
+  <tr><td class="mono">CVACT01Y</td><td>Copybook</td><td><code>ACCOUNT-RECORD</code>: ACCTDATA layout incl. <code>ACCT-CURR-BAL</code>, <code>ACCT-CURR-CYC-CREDIT/DEBIT</code>, <code>ACCT-GROUP-ID</code> (<code>app/cpy/CVACT01Y.cpy:4-17</code>; <code>CBACT04C.cbl:112</code>).</td></tr>
+  <tr><td class="mono">CVACT03Y</td><td>Copybook</td><td><code>CARD-XREF-RECORD</code>: card &rarr; customer &rarr; account (<code>app/cpy/CVACT03Y.cpy:4-8</code>; <code>CBACT04C.cbl:102</code>).</td></tr>
+  <tr><td class="mono">CVTRA02Y</td><td>Copybook</td><td><code>DIS-GROUP-RECORD</code>: disclosure group key + <code>DIS-INT-RATE PIC S9(04)V99</code> (<code>app/cpy/CVTRA02Y.cpy:4-10</code>; <code>CBACT04C.cbl:107</code>).</td></tr>
+  <tr><td class="mono">CVTRA05Y</td><td>Copybook</td><td><code>TRAN-RECORD</code> 350 bytes: the interest transaction written to SYSTRAN and loaded into TRANSACT (<code>app/cpy/CVTRA05Y.cpy:4-18</code>; <code>CBACT04C.cbl:117</code>).</td></tr>
+  <tr><td class="mono">CEE3ABD</td><td>LE callable service</td><td>Abend with user code 999, TIMING 0 (<code>CBACT04C.cbl:628-632</code>).</td></tr>
+  <tr><td class="mono">COBSWAIT / MVSWAIT</td><td>COBOL utility / Assembler subroutine</td><td>Timed wait, SYSIN in centiseconds (<code>app/cbl/COBSWAIT.cbl:36-38</code>; <code>app/asm/MVSWAIT.asm:17-23</code>).</td></tr>
+  <tr><td class="mono">SDSF</td><td>System utility</td><td>Issues MVS <code>/F CICSAWSA</code> modify commands carrying CEMT (<code>CLOSEFIL.jcl:22-30</code>, <code>OPENFIL.jcl:22-30</code>).</td></tr>
+  <tr><td class="mono">DFSORT (PGM=SORT), IDCAMS</td><td>System utilities</td><td>Merge/sort on <code>TRAN-ID,1,16,CH</code> and <code>REPRO</code> load (<code>COMBTRAN.jcl:22-31,41-48</code>).</td></tr>
+  <tr><td class="mono">DEFGDGB</td><td>One-off JCL</td><td>Defines the SYSTRAN, TRANSACT.BKUP and TRANSACT.COMBINED GDG bases (<code>app/jcl/DEFGDGB.jcl:24-58</code>).</td></tr>
+</table>
+<h3>4.4 Other applications &amp; external events</h3>
+<table>
+  <tr><th>Dependency</th><th>Direction</th><th>Mechanism</th><th>Notes</th></tr>
+  <tr><td>CICS region CICSAWSA (online CardDemo, CSD group CARDDEMO)</td><td>Both</td><td>MVS modify + CEMT via SDSF</td><td>Files TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC are closed for the chain's duration (<code>CLOSEFIL.jcl:26-30</code>; <code>app/csd/CARDDEMO.CSD:1,37,63,76,88</code>). Online users cannot sign on or view accounts/transactions until OPENFIL.</td></tr>
+  <tr><td>TRANBKP (Control-M DAILY-TransactionBackup / README order)</td><td>Upstream</td><td>GDG <code>TRANSACT.BKUP(0)</code></td><td>COMBTRAN merges the <em>latest</em> backup generation, and TRANBKP also deletes/redefines the empty TRANSACT master (<code>TRANBKP.jcl:23-33,37-67</code>). README lists TRANBKP between INTCALC and COMBTRAN (<code>README.md:225-228</code>); the Control-M folder does not (Q-04).</td></tr>
+  <tr><td>POSTTRAN (CBTRN02C) / TCATBALF load</td><td>Upstream</td><td>VSAM TCATBALF, ACCTDATA</td><td>INTCALC prices whatever category balances exist in TCATBALF; the repo defines no "TCATBALF is current for this cycle" condition (Q-07).</td></tr>
+  <tr><td>DISCGRP reference data (WEEKLY-DisclosureGroupsRefresh)</td><td>Upstream</td><td>VSAM DISCGRP</td><td>Rates and the DEFAULT group must exist before INTCALC (FR-06/07). No Control-M condition links the weekly folder to the monthly one.</td></tr>
+  <tr><td>CREASTMT / TRANREPT / online CT00-CT02</td><td>Downstream</td><td>TRANSACT KSDS</td><td>Consume the interest transactions after COMBTRAN. No scheduler condition is emitted by OPENFIL (<code>CardDemo.controlm:87-91</code>).</td></tr>
+  <tr><td>Control-M (EM) on host MY-HOST</td><td>Upstream</td><td>INCOND/OUTCOND for ODATE</td><td>Folder <code>MONTHLY-InterestCalculation</code>, <code>LAST_UPLOAD="20250909"</code> (<code>CardDemo.controlm:64</code>). CA-7 has no definition of INTCALC/COMBTRAN.</td></tr>
+</table>
+
+<h2 id="requirements">5. Functional requirements</h2>
+<table>
+  <tr><th>ID</th><th>Requirement</th><th>Source</th><th>Acceptance criteria</th></tr>
+  <tr><td>FR-01</td><td>Before any batch update the five CICS files TRANSACT, CCXREF, ACCTDAT, CXACAIX and USRSEC are closed in region CICSAWSA, and after the chain they are reopened; INTCALC is released only after the close completes and OPENFIL only after WAITSTEP.</td><td class="mono">app/jcl/CLOSEFIL.jcl:26-30; app/jcl/OPENFIL.jcl:26-30; app/scheduler/CardDemo.controlm:66-70,88-89</td><td>During the INTCALC/COMBTRAN window the online screens that use those files are unavailable (or, in the target, the equivalent exclusive-access guarantee is documented as not needed); after the chain all five files are open/enabled again.</td></tr>
+  <tr><td>FR-02</td><td>INTCALC is a single step <code>STEP15</code> running <code>CBACT04C</code> with a 10-character run-date PARM (<code>'2022071800'</code> in the JCL). The PARM is not parsed or validated as a date and is used only as the prefix of generated transaction ids.</td><td class="mono">app/jcl/INTCALC.jcl:22; app/cbl/CBACT04C.cbl:176-178,476-480</td><td>Running with PARM <code>2022071800</code> yields transaction ids <code>2022071800000001</code>, <code>2022071800000002</code>, &hellip;; a run with a non-10-character parameter is rejected or documented as undefined.</td></tr>
+  <tr><td>FR-03</td><td>File open modes: TCATBALF, XREFFILE and DISCGRP are opened INPUT, ACCTFILE is opened I-O, TRANSACT (SYSTRAN) is opened OUTPUT. Any open status other than <code>00</code> abends the program before any record is processed.</td><td class="mono">app/cbl/CBACT04C.cbl:236,254,272,291,309; :237-248</td><td>With a missing/unavailable input dataset the job ends with the user abend (FR-20), logs <code>ERROR OPENING &hellip;</code> plus <code>FILE STATUS IS: NNNN</code>, and no SYSTRAN record or account change is produced.</td></tr>
+  <tr><td>FR-04</td><td>Balances are processed in TCATBALF key order (account id, transaction type code, transaction category code) by sequential read; read status <code>10</code> ends the run normally, any other non-<code>00</code> status abends.</td><td class="mono">app/cbl/CBACT04C.cbl:28-32,63-66,325-348</td><td>Given balances for accounts 00000000011 and 00000000010, account 10's transactions are generated before account 11's; an I/O error on TCATBALF produces <code>ERROR READING TRANSACTION CATEGORY FILE</code> and the abend.</td></tr>
+  <tr><td>FR-05</td><td>On each change of account id the account record (by <code>ACCT-ID</code>) and the card cross-reference record (by alternate key <code>XREF-ACCT-ID</code>) are read once and reused for all that account's categories; the per-account interest total is reset to zero.</td><td class="mono">app/cbl/CBACT04C.cbl:194-205,372-376,393-398</td><td>An account with three category balances causes exactly one ACCTFILE read and one XREFFILE read; all three generated transactions carry the same <code>TRAN-CARD-NUM</code>.</td></tr>
+  <tr><td>FR-06</td><td>The interest rate for a balance is the DISCGRP record keyed by (<code>ACCT-GROUP-ID</code>, balance type code, balance category code).</td><td class="mono">app/cbl/CBACT04C.cbl:210-213,415-420; app/cpy/CVTRA02Y.cpy:5-9</td><td>Account group <code>GOLD</code>, type <code>01</code>, category <code>0001</code> uses the rate stored under key <code>GOLD      010001</code> and not the DEFAULT rate when that row exists.</td></tr>
+  <tr><td>FR-07</td><td>If the group-specific DISCGRP record is missing (status <code>23</code>), the lookup is retried once with group id <code>DEFAULT</code> and the same type/category, logging <code>DISCLOSURE GROUP RECORD MISSING</code> and <code>TRY WITH DEFAULT GROUP CODE</code>. If the DEFAULT record is also missing the run abends with <code>ERROR READING DEFAULT DISCLOSURE GROUP</code>.</td><td class="mono">app/cbl/CBACT04C.cbl:416-439,443-460</td><td>Remove the <code>GOLD 01 0001</code> rate: interest uses the <code>DEFAULT 01 0001</code> rate. Remove both: the job abends and no account is partially updated after that point.</td></tr>
+  <tr><td>FR-08</td><td>A rate of zero produces no interest transaction and does not change the account total; fees are never computed (<code>1400-COMPUTE-FEES</code> is a stub).</td><td class="mono">app/cbl/CBACT04C.cbl:214-217,518-520</td><td>A balance whose resolved rate is <code>0.00</code> yields no SYSTRAN record; the migrated job produces no fee transactions of any kind.</td></tr>
+  <tr><td>FR-09</td><td>Monthly interest per category = <code>TRAN-CAT-BAL &times; DIS-INT-RATE &divide; 1200</code>, stored in <code>PIC S9(09)V99</code> without <code>ROUNDED</code>, i.e. truncated toward zero to two decimals; a non-zero rate on a zero balance still writes a <code>0.00</code> transaction.</td><td class="mono">app/cbl/CBACT04C.cbl:168,214,462-468</td><td>Balance 1000.00 at rate 18.50 &rArr; 15.41 (not 15.42); balance -1000.00 at 18.50 &rArr; -15.41; balance 0.00 at 18.50 &rArr; one transaction with amount 0.00.</td></tr>
+  <tr><td>FR-10</td><td>The account's total interest is the sum of the already-truncated per-category amounts.</td><td class="mono">app/cbl/CBACT04C.cbl:467</td><td>Three categories each computing 0.333&hellip; produce three 0.33 transactions and a balance increase of 0.99, not 1.00.</td></tr>
+  <tr><td>FR-11</td><td>Each computed interest amount produces one <code>CVTRA05Y</code> transaction: <code>TRAN-ID</code> = run-date PARM + 6-digit sequence (starting 000001, incremented once per transaction across the whole run), type <code>01</code>, category <code>05</code>, source <code>System</code>, description <code>Int. for a/c </code> + 11-digit account id, amount = the truncated interest, merchant id 0, merchant name/city/zip spaces, card number = the account's XREF card number.</td><td class="mono">app/cbl/CBACT04C.cbl:173,473-495; app/cpy/CVTRA05Y.cpy:5-15</td><td>The second generated transaction of the run (whatever its account) has id <code>&lt;PARM&gt;000002</code>; a record for account 00000000010 has <code>TRAN-DESC</code> starting <code>Int. for a/c 00000000010</code>.</td></tr>
+  <tr><td>FR-12</td><td>Both <code>TRAN-ORIG-TS</code> and <code>TRAN-PROC-TS</code> are set to the same current-clock timestamp in DB2 format <code>YYYY-MM-DD-HH.MM.SS.hh0000</code> (26 characters).</td><td class="mono">app/cbl/CBACT04C.cbl:496-498,613-626</td><td>Generated records have 26-character timestamps matching <code>^\d{4}-\d{2}-\d{2}-\d{2}\.\d{2}\.\d{2}\.\d{2}0000$</code> and ORIG = PROC.</td></tr>
+  <tr><td>FR-13</td><td>Interest transactions are written to the sequential <code>TRANSACT</code> DD of INTCALC, i.e. a new <code>SYSTRAN(+1)</code> GDG generation, fixed 350-byte records, in generation order; INTCALC never writes the TRANSACT master. A write status other than <code>00</code> abends.</td><td class="mono">app/jcl/INTCALC.jcl:37-41; app/cbl/CBACT04C.cbl:53-56,500-513</td><td>After INTCALC the master KSDS record count is unchanged; the new SYSTRAN generation contains exactly the number of priced categories, LRECL 350.</td></tr>
+  <tr><td>FR-14</td><td>When the account id changes (and it is not the first account), the <em>previous</em> account is updated: <code>ACCT-CURR-BAL</code> += total interest, <code>ACCT-CURR-CYC-CREDIT</code> = 0, <code>ACCT-CURR-CYC-DEBIT</code> = 0, via REWRITE; a non-<code>00</code> rewrite status abends.</td><td class="mono">app/cbl/CBACT04C.cbl:194-199,350-369</td><td>Account with balance 500.00, cycle credit 120.00, cycle debit 80.00 and total interest 7.70 reads back as 507.70 / 0.00 / 0.00 once the next account is reached.</td></tr>
+  <tr><td>FR-15</td><td><strong>Preserved quirk:</strong> the last account in TCATBALF key order is never updated (its transactions are still generated) because the end-of-file update branch at <code>:219-220</code> is unreachable &mdash; the inner <code>IF END-OF-FILE = 'N'</code> is always true when evaluated. Also, nothing marks a balance as "already charged", so a rerun charges interest again.</td><td class="mono">app/cbl/CBACT04C.cbl:188-191,219-221</td><td>Parity test: with two accounts, only the first has its balance/cycle totals changed; the second has SYSTRAN records but an unchanged ACCTDATA record. Running INTCALC twice doubles the balance increase of the first account. (Whether to keep this in the target is Q-06.)</td></tr>
+  <tr><td>FR-16</td><td>A missing account record or missing XREF record for a balance abends the run after logging <code>ACCOUNT NOT FOUND: </code> + id and <code>ERROR READING ACCOUNT FILE</code> / <code>ERROR READING XREF FILE</code>. There is no reject file and no skip.</td><td class="mono">app/cbl/CBACT04C.cbl:372-390,393-412</td><td>A TCATBALF row for an account absent from ACCTDATA stops the job; earlier accounts already REWRITTEN stay updated (no backout).</td></tr>
+  <tr><td>FR-17</td><td>COMBTRAN <code>STEP05R</code> sorts the concatenation of <code>TRANSACT.BKUP(0)</code> followed by <code>SYSTRAN(0)</code> ascending on the 16-byte character field at position 1 (<code>TRAN-ID</code>) into a new <code>TRANSACT.COMBINED(+1)</code> generation with the SORTIN DCB; duplicates are kept (SORT, not merge/SUM).</td><td class="mono">app/jcl/COMBTRAN.jcl:22-37</td><td>Output record count = BKUP count + SYSTRAN count; records are in ascending TRAN-ID order; LRECL 350.</td></tr>
+  <tr><td>FR-18</td><td>COMBTRAN <code>STEP10</code> loads every record of <code>TRANSACT.COMBINED(+1)</code> into the TRANSACT KSDS with <code>REPRO INFILE(TRANSACT) OUTFILE(TRANVSAM)</code>; no <code>REPLACE</code>, no <code>COND=</code>, so the load runs even if the sort step ended non-zero.</td><td class="mono">app/jcl/COMBTRAN.jcl:41-48</td><td>Starting from an empty master, after STEP10 the master contains exactly the COMBINED records keyed by TRAN-ID. Loading into a master that already holds a key is reported as a duplicate-record error (see Q-05 for the required target behaviour).</td></tr>
+  <tr><td>FR-19</td><td>GDG handling: INTCALC allocates <code>SYSTRAN(+1)</code> with <code>DISP=(NEW,CATLG,DELETE)</code>; COMBTRAN reads it as <code>(0)</code> in the next job and allocates <code>COMBINED(+1)</code>. Bases are LIMIT(5) SCRATCH, so the sixth generation rolls the oldest off.</td><td class="mono">app/jcl/INTCALC.jcl:37-41; app/jcl/COMBTRAN.jcl:24-26,33-37; app/jcl/DEFGDGB.jcl:24-58</td><td>A failed INTCALC leaves no new SYSTRAN generation (DELETE on abnormal end); a COMBTRAN rerun after a successful INTCALC reads the same SYSTRAN generation; only five SYSTRAN/COMBINED generations are retained.</td></tr>
+  <tr><td>FR-20</td><td>Every detected error in CBACT04C ends in <code>9999-ABEND-PROGRAM</code>: it logs <code>ABENDING PROGRAM</code>, the file status as <code>FILE STATUS IS: NNNN</code>, and calls <code>CEE3ABD</code> with code 999 and TIMING 0 (user abend U0999, no dump). Normal completion logs <code>END OF EXECUTION OF PROGRAM CBACT04C</code> and returns RC 0; there are no RC 4/8 paths.</td><td class="mono">app/cbl/CBACT04C.cbl:181,230-232,628-648</td><td>The migrated job exits 0 on success and a non-zero failure code (12 in <code>BatchJobLauncher</code>) on any of the error paths above; the log carries the start/end banners.</td></tr>
+  <tr><td>FR-21</td><td>WAITSTEP pauses for the SYSIN value in centiseconds (<code>00003600</code> = 36 s) between COMBTRAN and OPENFIL, with no other side effect.</td><td class="mono">app/jcl/WAITSTEP.jcl:22-26; app/cbl/COBSWAIT.cbl:36-38</td><td>Elapsed time between COMBTRAN end and OPENFIL start &ge; 36 s; a non-numeric card fails the step.</td></tr>
+  <tr><td>FR-22</td><td>Ordering: INTCALC runs only after CLOSEFIL, COMBTRAN only after INTCALC, WAITSTEP only after COMBTRAN, OPENFIL only after WAITSTEP, for the same order date; a failed predecessor holds the chain, with up to 5 reruns and a 7-day wait.</td><td class="mono">app/scheduler/CardDemo.controlm:65-91</td><td>Orchestration test re-derives the four edges from the Control-M XML; no job of the chain can be started by the orchestrator while its predecessor's condition is absent.</td></tr>
+</table>
+
+<h2 id="restart">6. Restart, recovery &amp; error handling</h2>
+<h3>6.1 Return-code conventions</h3>
+<table>
+  <tr><th>RC</th><th>Meaning</th><th>Downstream effect</th></tr>
+  <tr><td class="mono">INTCALC STEP15 RC 0</td><td><code>CBACT04C</code> reached <code>GOBACK</code>; all files closed with status 00 (<code>app/cbl/CBACT04C.cbl:224-232</code>).</td><td>Control-M posts <code>MONTHLY-InterestCalculation-INTCALC</code>; COMBTRAN released (<code>CardDemo.controlm:72,76</code>).</td></tr>
+  <tr><td class="mono">INTCALC U0999</td><td>Any open/read/write/rewrite/close error, missing account/XREF, missing DEFAULT disclosure group (<code>CBACT04C.cbl:628-632</code>). No RC 4/8/12 is ever set as a step code; <code>APPL-RESULT</code> 0/8/12/16 (<code>:133-135</code>) is internal only.</td><td>Job NOTOK; chain held; SYSTRAN(+1) deleted by <code>DISP=(NEW,CATLG,DELETE)</code> (<code>INTCALC.jcl:37</code>); accounts REWRITTEN before the failure remain updated.</td></tr>
+  <tr><td class="mono">COMBTRAN STEP05R RC 0 / 16</td><td>DFSORT success / failure (e.g. SORTIN allocation of a missing <code>SYSTRAN(0)</code> fails at JCL level before the step runs) (<code>COMBTRAN.jcl:22-31</code>).</td><td>No <code>COND=</code> on STEP10 (<code>:41</code>), so IDCAMS runs even after a SORT RC 16 if the step did execute; a JCL allocation error fails the whole job.</td></tr>
+  <tr><td class="mono">COMBTRAN STEP10 MAXCC 0 / 4 / 8 / 12</td><td>IDCAMS REPRO: 0 all records loaded; 4/8 warnings or recoverable errors (e.g. duplicate records up to the default error limit); 12 REPRO terminated (<code>COMBTRAN.jcl:47-48</code>).</td><td>Control-M considers the job OK only on a zero completion code unless an ON-DO statement says otherwise &mdash; none is defined in the XML (Q-05).</td></tr>
+  <tr><td class="mono">WAITSTEP RC 0</td><td>Wait elapsed (<code>WAITSTEP.jcl:22-26</code>).</td><td>OPENFIL released (<code>CardDemo.controlm:84,88</code>).</td></tr>
+  <tr><td class="mono">CLOSEFIL / OPENFIL RC 0</td><td>SDSF accepted the five modify commands; CEMT outcome is only visible in CICS (<code>CLOSEFIL.jcl:22-30</code>, <code>OPENFIL.jcl:22-30</code>).</td><td>A file that CICS could not close is <em>not</em> detected by the job RC; INTCALC's <code>OPEN I-O ACCOUNT-FILE</code> would then fail on the VSAM share (FR-03).</td></tr>
+</table>
+<h3>6.2 Abends</h3>
+<table>
+  <tr><th>Abend</th><th>Job / Program</th><th>Meaning</th><th>Recovery</th></tr>
+  <tr><td class="mono">U0999 after 'ERROR OPENING TRANSACTION CATEGORY BALANCE' / 'CROSS REF FILE' / 'DALY REJECTS FILE' (sic, DISCGRP) / 'ACCOUNT MASTER FILE' / 'TRANSACTION FILE'</td><td class="mono">INTCALC / CBACT04C</td><td>A dataset could not be opened &mdash; typically still open in CICS (CLOSEFIL ineffective) or missing (<code>app/cbl/CBACT04C.cbl:245,263,281,300,318</code>).</td><td>Fix allocation / confirm CEMT CLO took effect, rerun INTCALC from the top; nothing was updated yet.</td></tr>
+  <tr><td class="mono">U0999 after 'ACCOUNT NOT FOUND: ' + 'ERROR READING ACCOUNT FILE' / 'ERROR READING XREF FILE'</td><td class="mono">INTCALC / CBACT04C</td><td>TCATBALF holds a balance for an account that has no ACCTDATA or CARDXREF record (<code>CBACT04C.cbl:375,386,397,408</code>).</td><td>Data fix (add the account/xref or remove the orphan balance). <strong>Rerun is not safe</strong>: accounts before the failure were already REWRITTEN and would be charged again (FR-15). Restore ACCTDATA from the pre-run copy first &mdash; none is taken by this chain (Q-06).</td></tr>
+  <tr><td class="mono">U0999 after 'DISCLOSURE GROUP RECORD MISSING' + 'ERROR READING DEFAULT DISCLOSURE GROUP'</td><td class="mono">INTCALC / CBACT04C</td><td>No rate for the account group and no <code>DEFAULT</code> row for that type/category (<code>CBACT04C.cbl:418-419,455</code>).</td><td>Load the missing DEFAULT rate (WEEKLY-DisclosureGroupsRefresh / DISCGRP job), then as above.</td></tr>
+  <tr><td class="mono">U0999 after 'ERROR RE-WRITING ACCOUNT FILE' / 'ERROR WRITING TRANSACTION RECORD'</td><td class="mono">INTCALC / CBACT04C</td><td>VSAM rewrite failure or SYSTRAN write failure (space) (<code>CBACT04C.cbl:365,510</code>).</td><td>Resolve the I/O cause; same rerun caveat.</td></tr>
+  <tr><td class="mono">JCL error / SORT RC 16 / IDCAMS MAXCC 12</td><td class="mono">COMBTRAN</td><td><code>SYSTRAN(0)</code> or <code>TRANSACT.BKUP(0)</code> absent, or REPRO terminated on duplicate keys (<code>COMBTRAN.jcl:23-26,48</code>).</td><td>Make sure INTCALC produced the generation and that TRANSACT is empty/redefined (TRANBKP STEP05/STEP10, <code>TRANBKP.jcl:37-67</code>), then rerun COMBTRAN; a rerun writes a fresh COMBINED(+1).</td></tr>
+  <tr><td class="mono">Non-numeric SYSIN</td><td class="mono">WAITSTEP / COBSWAIT</td><td>ACCEPT of a non-numeric card into <code>MVSWAIT-TIME PIC 9(8) COMP</code> (<code>app/cbl/COBSWAIT.cbl:30,36-37</code>).</td><td>Correct the card; rerun.</td></tr>
+</table>
+<h3>6.3 Restart / checkpoint semantics</h3>
+<p>There is no checkpoint or commit interval anywhere in the chain. <code>CBACT04C</code> REWRITEs each account as soon as the next account is reached (<code>app/cbl/CBACT04C.cbl:194-196</code>), so VSAM updates are permanent immediately and a failed run leaves accounts 1&hellip;<em>n</em>-1 charged and the rest not. The SYSTRAN generation is the only output that is rolled back on failure (<code>DISP=(NEW,CATLG,DELETE)</code>, <code>app/jcl/INTCALC.jcl:37</code>). The program has no restart key, no "already processed" marker and no backout job in <code>app/jcl</code>; a cold rerun of INTCALC re-charges interest on every account that was already updated (FR-15). The transaction-id sequence restarts at <code>000001</code> on every run (<code>WS-TRANID-SUFFIX VALUE 0</code>, <code>CBACT04C.cbl:173</code>), so a second run with the same PARM produces duplicate keys that COMBTRAN's REPRO will reject. Safe recovery therefore means: restore ACCTDATA to its pre-run state (not provided by this chain &mdash; Q-06), delete the partial SYSTRAN generation if it was catalogued, and rerun from CLOSEFIL. COMBTRAN is restartable from STEP05R provided the TRANSACT master is in the state TRANBKP leaves it (empty, <code>app/jcl/TRANBKP.jcl:37-67</code>). WAITSTEP, CLOSEFIL and OPENFIL are stateless and rerunnable.</p>
+
+<h2 id="nfr">7. Non-functional requirements</h2>
+<table>
+  <tr><th>ID</th><th>Category</th><th>Requirement</th></tr>
+  <tr><td>NFR-01</td><td>Window</td><td>Latest submission 23:00 on every job of the folder (<code>TIMETO="23:00"</code>, <code>app/scheduler/CardDemo.controlm:65-87</code>). Earliest start and elapsed-time budget: not defined in repo (Q-02).</td></tr>
+  <tr><td>NFR-02</td><td>Frequency</td><td>Monthly &mdash; folder is active in all twelve months, rule-based calendar <code>*</code>; the day of month on which it runs is not defined in repo (Q-01).</td></tr>
+  <tr><td>NFR-03</td><td>Availability</td><td>The CICS files TRANSACT, CCXREF, ACCTDAT, CXACAIX and USRSEC are offline for the whole chain plus the 36-second WAITSTEP (<code>app/jcl/CLOSEFIL.jcl:26-30</code>, <code>app/jcl/WAITSTEP.jcl:26</code>); online sign-on, account and transaction functions are unavailable during that window.</td></tr>
+  <tr><td>NFR-04</td><td>Volume</td><td>One SYSTRAN record per non-zero-rate category balance; TCATBALF, ACCTDATA and DISCGRP volumes are not defined in repo (sample data only). Transaction-id capacity is 999,999 generated transactions per run (<code>WS-TRANID-SUFFIX PIC 9(06)</code>, <code>app/cbl/CBACT04C.cbl:173</code>); overflow wraps silently (Q-08).</td></tr>
+  <tr><td>NFR-05</td><td>Retention</td><td>SYSTRAN, TRANSACT.BKUP and TRANSACT.COMBINED keep five generations each (<code>LIMIT(5) SCRATCH</code>, <code>app/jcl/DEFGDGB.jcl:24-58</code>).</td></tr>
+  <tr><td>NFR-06</td><td>Rerun / wait tolerance</td><td><code>MAXRERUN="5"</code>, <code>MAXWAIT="7"</code> days before the job is removed from the active environment (<code>CardDemo.controlm:65-87</code>).</td></tr>
+  <tr><td>NFR-07</td><td>Precision</td><td>Amounts are signed two-decimal fixed point: interest <code>S9(09)V99</code>, balance <code>S9(10)V99</code>, rate <code>S9(04)V99</code>; truncation, not rounding (<code>app/cbl/CBACT04C.cbl:168,464-465</code>; <code>app/cpy/CVACT01Y.cpy:7</code>; <code>app/cpy/CVTRA02Y.cpy:9</code>).</td></tr>
+  <tr><td>NFR-08</td><td>Observability</td><td>Every TCATBALF record is <code>DISPLAY</code>ed to SYSOUT (<code>CBACT04C.cbl:193</code>) plus start/end banners (<code>:181,230</code>); no record counts are printed although <code>WS-RECORD-COUNT</code> is maintained (<code>:172,192</code>).</td></tr>
+</table>
+
+<h2 id="interfaces">8. Interfaces &amp; data layouts</h2>
+<table>
+  <tr><th>Interface</th><th>Layout (copybook)</th><th>Producer</th><th>Consumer</th></tr>
+  <tr><td class="mono">TCATBALF (AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS), RECLN 50</td><td class="mono">CVTRA01Y TRAN-CAT-BAL-RECORD (app/cpy/CVTRA01Y.cpy:4-10)</td><td>POSTTRAN (CBTRN02C) / TCATBALF load job</td><td>INTCALC CBACT04C (<code>app/cbl/CBACT04C.cbl:28-32,326</code>)</td></tr>
+  <tr><td class="mono">ACCTDATA (AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS), RECLN 300</td><td class="mono">CVACT01Y ACCOUNT-RECORD (app/cpy/CVACT01Y.cpy:4-17)</td><td>ACCTFILE load / online CA* screens / POSTTRAN</td><td>INTCALC CBACT04C read + rewrite (<code>CBACT04C.cbl:373,356</code>)</td></tr>
+  <tr><td class="mono">CARDXREF + AIX PATH (AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS / .AIX.PATH), RECLN 50</td><td class="mono">CVACT03Y CARD-XREF-RECORD (app/cpy/CVACT03Y.cpy:4-8)</td><td>XREFFILE load job</td><td>INTCALC CBACT04C by acct id (<code>CBACT04C.cbl:394-395</code>)</td></tr>
+  <tr><td class="mono">DISCGRP (AWS.M2.CARDDEMO.DISCGRP.VSAM.KSDS), RECLN 50</td><td class="mono">CVTRA02Y DIS-GROUP-RECORD (app/cpy/CVTRA02Y.cpy:4-10)</td><td>DISCGRP load job (WEEKLY-DisclosureGroupsRefresh)</td><td>INTCALC CBACT04C (<code>CBACT04C.cbl:416,444</code>)</td></tr>
+  <tr><td class="mono">SYSTRAN(+1) (AWS.M2.CARDDEMO.SYSTRAN), PS RECFM=F LRECL=350</td><td class="mono">CVTRA05Y TRAN-RECORD (app/cpy/CVTRA05Y.cpy:4-18)</td><td>INTCALC CBACT04C (<code>app/jcl/INTCALC.jcl:37-41</code>; <code>CBACT04C.cbl:500</code>)</td><td>COMBTRAN STEP05R SORTIN (<code>app/jcl/COMBTRAN.jcl:25-26</code>)</td></tr>
+  <tr><td class="mono">TRANSACT.BKUP(0), FB/350</td><td class="mono">CVTRA05Y TRAN-RECORD</td><td>TRANBKP STEP05R REPRO (<code>app/jcl/TRANBKP.jcl:23-33</code>)</td><td>COMBTRAN STEP05R SORTIN (<code>COMBTRAN.jcl:23-24</code>)</td></tr>
+  <tr><td class="mono">TRANSACT.COMBINED(+1), DCB=(*.SORTIN)</td><td class="mono">CVTRA05Y TRAN-RECORD, sorted on bytes 1-16</td><td>COMBTRAN STEP05R SORTOUT (<code>COMBTRAN.jcl:33-37</code>)</td><td>COMBTRAN STEP10 REPRO INFILE (<code>COMBTRAN.jcl:43-44,48</code>)</td></tr>
+  <tr><td class="mono">TRANSACT (AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS), KEYS(16 0) RECORDSIZE(350 350)</td><td class="mono">CVTRA05Y TRAN-RECORD</td><td>COMBTRAN STEP10 REPRO OUTFILE (<code>COMBTRAN.jcl:45-48</code>)</td><td>CICS file TRANSACT (<code>app/csd/CARDDEMO.CSD:76-77</code>), CREASTMT, TRANREPT, TRANBKP</td></tr>
+  <tr><td class="mono">INTCALC PARM</td><td class="mono">EXTERNAL-PARMS: PARM-LENGTH S9(04) COMP + PARM-DATE X(10) (CBACT04C.cbl:176-178)</td><td>JCL <code>PARM='2022071800'</code> (<code>app/jcl/INTCALC.jcl:22</code>)</td><td>CBACT04C transaction-id prefix (<code>CBACT04C.cbl:476-480</code>)</td></tr>
+  <tr><td class="mono">WAITSTEP SYSIN</td><td class="mono">8-digit centiseconds card (app/jcl/WAITSTEP.jcl:26)</td><td>JCL in-stream</td><td>COBSWAIT <code>ACCEPT &hellip; FROM SYSIN</code> (<code>app/cbl/COBSWAIT.cbl:36</code>)</td></tr>
+  <tr><td class="mono">CLOSEFIL / OPENFIL ISFIN</td><td class="mono">SDSF command cards: /F CICSAWSA,'CEMT SET FIL(name) CLO|OPE'</td><td>JCL in-stream (<code>app/jcl/CLOSEFIL.jcl:25-31</code>, <code>app/jcl/OPENFIL.jcl:25-31</code>)</td><td>CICS region CICSAWSA</td></tr>
+</table>
+
+<h2 id="security">9. Security &amp; access</h2>
+<table>
+  <tr><th>Item</th><th>Value</th></tr>
+  <tr><td>Job owner / RACF identity</td><td class="mono">Control-M RUN_AS="xuemingh" (CREATED_BY XUEMINGH) on all five jobs (app/scheduler/CardDemo.controlm:65-87). JCL cards carry only NOTIFY=&amp;SYSUID, no USER= (app/jcl/INTCALC.jcl:1-2, app/jcl/COMBTRAN.jcl:1-2). CA-7 shows OWNER= *NONE* for CLOSEFIL/WAITSTEP/OPENFIL (app/scheduler/CardDemo.ca7:35). RACF profile for the datasets: not defined in repo (Q-03).</td></tr>
+  <tr><td>Sensitive data handled</td><td>Full 16-digit card numbers (<code>XREF-CARD-NUM</code> &rarr; <code>TRAN-CARD-NUM</code>, <code>app/cbl/CBACT04C.cbl:495</code>), account ids and financial balances; every TCATBALF record incl. account id and balance is written to SYSOUT (<code>CBACT04C.cbl:193</code>). Customer ids pass through CVACT03Y but are not used.</td></tr>
+  <tr><td>Regulatory obligations</td><td>Not defined in repo. The computation implements a disclosure-group (Truth-in-Lending style) rate table, but no regulatory text, rounding rule or statement obligation is referenced in the source.</td></tr>
+  <tr><td>Operator authority</td><td>CLOSEFIL/OPENFIL issue MVS modify commands to the CICS region through SDSF (<code>app/jcl/CLOSEFIL.jcl:22-30</code>); the submitting identity needs SDSF/operator command authority &mdash; profile not defined in repo.</td></tr>
+</table>
+
+<h2 id="target">10. Target-state mapping</h2>
+<table>
+  <tr><th>Legacy asset</th><th>Disposition</th><th>Target component</th><th>Test evidence</th></tr>
+  <tr><td class="mono">INTCALC.jcl STEP15 / CBACT04C</td><td>Rewrite</td><td>Spring Batch job <code>INTCALC</code>, step <code>STEP15</code>: <code>migration/<wbr>carddemo/<wbr>backend/<wbr>src/<wbr>main/<wbr>java/<wbr>com/<wbr>carddemo/<wbr>batch/<wbr>intcalc/<wbr>InterestCalculationJobConfiguration.java</code> (job parameter <code>run.date</code> = PARM), <code>AccountBalanceGroupReader</code>, <code>InterestCalculator</code> (<code>RoundingMode.DOWN</code>, DEFAULT fallback), <code>InterestPostingWriter</code>, <code>TranIdSequence</code>, <code>Db2Timestamp</code></td><td><code>migration/<wbr>carddemo/<wbr>backend/<wbr>src/<wbr>test/<wbr>java/<wbr>com/<wbr>carddemo/<wbr>batch/<wbr>intcalc/<wbr>InterestCalculationJobIntegrationTest.java</code>, <code>InterestCalculatorTest.java</code>, <code>AccountBalanceGroupReaderTest.java</code>, <code>TranIdSequenceTest.java</code>, <code>Db2TimestampTest.java</code>, <code>InterestCalculationJobFailureTest.java</code></td></tr>
+  <tr><td class="mono">COMBTRAN.jcl STEP05R (SORT) + STEP10 (IDCAMS REPRO)</td><td>Rewrite</td><td>Spring Batch job <code>COMBTRAN</code>, steps <code>STEP05R</code>/<code>STEP10</code>: <code>com/<wbr>carddemo/<wbr>batch/<wbr>intcalc/<wbr>CombineTransactionsJobConfiguration.java</code>, <code>CombineTransactionsTasklet.java</code> (sort of master rows + SYSTRAN file on the 16-byte id), <code>TransactionRecordLine.java</code></td><td><code>migration/<wbr>carddemo/<wbr>backend/<wbr>src/<wbr>test/<wbr>java/<wbr>com/<wbr>carddemo/<wbr>batch/<wbr>intcalc/<wbr>CombineTransactionsJobIntegrationTest.java</code>, <code>TransactionRecordLineTest.java</code></td></tr>
+  <tr><td class="mono">SYSTRAN / TRANSACT.COMBINED GDGs</td><td>Rewrite</td><td>Flat files <code>SYSTRAN.&lt;run.date&gt;.txt</code> and <code>TRANSACT.COMBINED.&lt;run.date&gt;.txt</code> in the batch work directory (<code>com/<wbr>carddemo/<wbr>batch/<wbr>intcalc/<wbr>SystranFiles.java</code>); one file per run date instead of relative generations</td><td><code>InterestCalculationJobIntegrationTest.writesTheSystranGeneration</code>, <code>CombineTransactionsJobIntegrationTest.failsWhenTheSystranGenerationIsMissing</code></td></tr>
+  <tr><td class="mono">TRANSACT.BKUP(0) as SORTIN</td><td>Rewrite</td><td>Replaced by reading the live <code>transactions</code> table ordered by id inside <code>CombineTransactionsTasklet</code> (no backup generation in the target)</td><td><code>CombineTransactionsJobIntegrationTest.combinesTheMasterWithSystranAndReprosItBack</code></td></tr>
+  <tr><td class="mono">TCATBALF KSDS (CVTRA01Y)</td><td>Rewrite</td><td>Table <code>transaction_<wbr>category_<wbr>balances</code> (<code>migration/<wbr>carddemo/<wbr>backend/<wbr>src/<wbr>main/<wbr>resources/<wbr>db/<wbr>migration/<wbr>V1_<wbr>_<wbr>baseline_<wbr>carddemo_<wbr>estate.sql:118-125</code>)</td><td><code>migration/<wbr>carddemo/<wbr>backend/<wbr>src/<wbr>test/<wbr>java/<wbr>com/<wbr>carddemo/<wbr>common/<wbr>SchemaAndSeedTest.java</code></td></tr>
+  <tr><td class="mono">DISCGRP KSDS (CVTRA02Y)</td><td>Rewrite</td><td>Table <code>disclosure_<wbr>groups</code> (<code>V1_<wbr>_<wbr>baseline_<wbr>carddemo_<wbr>estate.sql:127-134</code>)</td><td><code>SchemaAndSeedTest.java</code>; <code>InterestCalculatorTest.fallsBackToTheDefaultDisclosureGroup</code></td></tr>
+  <tr><td class="mono">ACCTDATA KSDS (CVACT01Y)</td><td>Rewrite</td><td>Table <code>accounts</code> (<code>V1_<wbr>_<wbr>baseline_<wbr>carddemo_<wbr>estate.sql:17-31</code>)</td><td><code>InterestCalculatorTest.postsTotalInterestAndResetsTheCycleTotals</code></td></tr>
+  <tr><td class="mono">CARDXREF KSDS + AIX PATH (CVACT03Y)</td><td>Rewrite</td><td>Table <code>card_<wbr>xref</code> + index <code>idx_<wbr>card_<wbr>xref_<wbr>acct</code> (<code>V1_<wbr>_<wbr>baseline_<wbr>carddemo_<wbr>estate.sql:70-78</code>)</td><td><code>InterestCalculatorTest.abendsWhenTheCardXrefIsMissing</code></td></tr>
+  <tr><td class="mono">TRANSACT KSDS (CVTRA05Y)</td><td>Rewrite</td><td>Table <code>transactions</code> (<code>V1_<wbr>_<wbr>baseline_<wbr>carddemo_<wbr>estate.sql:80-96</code>)</td><td><code>CombineTransactionsJobIntegrationTest.loadsTheInterestTransactionsInterestCalculationJustGenerated</code></td></tr>
+  <tr><td class="mono">WAITSTEP.jcl / COBSWAIT / MVSWAIT</td><td>Rewrite</td><td>Spring Batch job <code>WAITSTEP</code>: <code>com/<wbr>carddemo/<wbr>batch/<wbr>operations/<wbr>WaitStepJobConfiguration.java</code>, <code>WaitControlCard.java</code> (SYSIN centiseconds)</td><td><code>migration/<wbr>carddemo/<wbr>backend/<wbr>src/<wbr>test/<wbr>java/<wbr>com/<wbr>carddemo/<wbr>batch/<wbr>operations/<wbr>WaitStepJobTest.java</code>, <code>WaitControlCardTest.java</code></td></tr>
+  <tr><td class="mono">CLOSEFIL.jcl / OPENFIL.jcl (SDSF + CEMT)</td><td>Retire</td><td>No equivalent: decision B-15 &mdash; one shared PostgreSQL database, no CICS file quiescing (<code>docs/<wbr>migration/<wbr>streams/<wbr>OperationsChain/<wbr>OperationsChain_<wbr>functional_<wbr>requirement.md</code> FR-OC-20)</td><td><code>migration/<wbr>carddemo/<wbr>backend/<wbr>src/<wbr>test/<wbr>java/<wbr>com/<wbr>carddemo/<wbr>batch/<wbr>operations/<wbr>FileControlJobsRemovedTest.java</code></td></tr>
+  <tr><td class="mono">Control-M folder MONTHLY-InterestCalculation</td><td>Rewrite (contract only)</td><td>No scheduler is migrated; the four edges are recorded in <code>com/<wbr>carddemo/<wbr>batch/<wbr>operations/<wbr>OperationsChainSchedule.java:47-54</code> and jobs expose exit codes 0 / 12 via <code>com/<wbr>carddemo/<wbr>batch/<wbr>BatchJobLauncher.java</code></td><td><code>migration/<wbr>carddemo/<wbr>backend/<wbr>src/<wbr>test/<wbr>java/<wbr>com/<wbr>carddemo/<wbr>batch/<wbr>operations/<wbr>OperationsChainScheduleTest.java</code></td></tr>
+  <tr><td class="mono">CEE3ABD U0999</td><td>Rewrite</td><td>Step failure &rarr; process exit code 12 (<code>com/<wbr>carddemo/<wbr>common/<wbr>batch/<wbr>AbendService.java</code>, <code>BatchJobLauncher.EXIT_<wbr>CODE_<wbr>FAILED</code>)</td><td><code>InterestCalculationJobFailureTest.abendsAndPostsNothingWhenACardXrefIsMissing</code></td></tr>
+  <tr><td class="mono">Frontend (React)</td><td>n/a</td><td>No screen belongs to this chain; interest transactions surface through the existing transaction list/view pages</td><td>&mdash;</td></tr>
+</table>
+
+<h2 id="open">11. Assumptions, technical debt &amp; open questions</h2>
+<table>
+  <tr><th>ID</th><th>Type</th><th>Description</th><th>Owner</th><th>Status</th></tr>
+  <tr><td>Q-01</td><td>Question</td><td>The Control-M folder has every month flagged (JAN..DEC="1") and <code>RULE_BASED_CALENDARS NAME="*"</code> but no day-of-month / DAYS attribute (<code>app/scheduler/CardDemo.controlm:65-91</code>). On which calendar day does the month-end run execute, and is it a business-day calendar?</td><td>Scheduling / xuemingh</td><td>Open</td></tr>
+  <tr><td>Q-02</td><td>Question</td><td>Run window: only <code>TIMETO="23:00"</code> is defined; no earliest start, no elapsed-time SLA, no volumes. Needed to size the target batch and the online outage (NFR-01/03).</td><td>Operations</td><td>Open</td></tr>
+  <tr><td>Q-03</td><td>Question</td><td>RACF: the JCL has no <code>USER=</code>; Control-M RUN_AS is <code>xuemingh</code> (a personal id), CA-7 shows <code>OWNER= *NONE*</code>. Which production identity owns the datasets and holds SDSF/CICS modify authority?</td><td>Security</td><td>Open</td></tr>
+  <tr><td>Q-04</td><td>Assumption</td><td>COMBTRAN merges <code>TRANSACT.BKUP(0)</code>, produced by TRANBKP, which also deletes and redefines the (then empty) TRANSACT master (<code>app/jcl/TRANBKP.jcl:23-67</code>). README runs TRANBKP between INTCALC and COMBTRAN (<code>README.md:225-228</code>), but the Control-M folder has no TRANBKP and no condition from DAILY-TransactionBackup. Assumed: TRANBKP must run after CLOSEFIL and before COMBTRAN on the same day; confirm.</td><td>Operations</td><td>Open</td></tr>
+  <tr><td>Q-05</td><td>Debt</td><td><code>REPRO INFILE(TRANSACT) OUTFILE(TRANVSAM)</code> has no <code>REPLACE</code> and STEP10 has no <code>COND=</code> (<code>app/jcl/COMBTRAN.jcl:41-48</code>). If the master is not empty, every existing key is a duplicate-record error and REPRO stops at the IDCAMS error limit; if SORT fails, the load still runs. Target decision needed: fail fast on any duplicate, or upsert.</td><td>S-12 stream</td><td>Open</td></tr>
+  <tr><td>Q-06</td><td>Debt</td><td><code>CBACT04C</code> never updates the last account in key order (unreachable branch at <code>app/cbl/CBACT04C.cbl:219-220</code>), has no idempotency marker, no checkpoint and no backout (section 6.3). The target currently preserves the last-account quirk for parity (<code>InterestCalculatorTest.lastAccountOfTheRunIsNeverUpdated</code>). Business must confirm whether the quirk is a defect to fix at cut-over and how reruns are protected.</td><td>Business owner</td><td>Open</td></tr>
+  <tr><td>Q-07</td><td>Question</td><td>Nothing in the repo ties INTCALC to a POSTTRAN cut-off (TCATBALF currency) or to the statement run; the daily chain itself is ambiguous (CA-7 SCHID 030 CLOSEFIL&rarr;CBPAUP0J&rarr;POSTTRAN&rarr;WAITSTEP&rarr;OPENFIL vs Control-M DAILY-TransactionBackup CLOSEFIL&rarr;TRANBKP&rarr;WAITSTEP&rarr;OPENFIL). What is the required ordering between the daily posting, this monthly chain and CREASTMT?</td><td>Operations</td><td>Open</td></tr>
+  <tr><td>Q-08</td><td>Debt</td><td>Transaction-id sequence is <code>PIC 9(06)</code> and the ADD has no <code>ON SIZE ERROR</code> (<code>app/cbl/CBACT04C.cbl:173,474</code>): more than 999,999 priced balances in one run would wrap to duplicate ids. Also <code>WS-RECORD-COUNT</code> is never reported (<code>:172,192</code>).</td><td>S-12 stream</td><td>Open</td></tr>
+  <tr><td>Q-09</td><td>Debt</td><td>Scheduler sources disagree about this estate: CA-7 (<code>app/scheduler/CardDemo.ca7</code>) has no INTCALC/COMBTRAN at all; CLOSEFIL/WAITSTEP/OPENFIL exist there only inside other networks, and CA-7 names CLOSEFIL1/CLOSEFIL2 (<code>CardDemo.ca7:216-252</code>) that have no member in <code>app/jcl</code>. This chain does not use CLOSEFIL1/2, but the shared CLOSEFIL/OPENFIL jobs are referenced by both schedulers. Which scheduler is authoritative?</td><td>Scheduling</td><td>Open</td></tr>
+  <tr><td>Q-10</td><td>Debt</td><td>Control-M XML gives WAITSTEP and OPENFIL the same <code>JOBISN="4"</code> (<code>CardDemo.controlm:81,87</code>); harmless for ordering (conditions drive it) but suggests a hand-edited export.</td><td>Scheduling</td><td>Open</td></tr>
+  <tr><td>Q-11</td><td>Debt</td><td>The DISCGRP open-failure message reads <code>ERROR OPENING DALY REJECTS FILE</code> (<code>app/cbl/CBACT04C.cbl:281</code>) &mdash; copy/paste from CBTRN02C; operations runbooks should not search for that text.</td><td>S-12 stream</td><td>Open</td></tr>
+  <tr><td>Q-12</td><td>Assumption</td><td>CLOSEFIL also closes USRSEC although no job here uses it (<code>app/jcl/CLOSEFIL.jcl:30</code>); assumed intentional (shared job across chains). <code>migration/carddemo/README.md:32</code> names the S-12 package <code>com.carddemo.batch.interest</code> while the code lives in <code>com.carddemo.batch.intcalc</code>; documentation drift only.</td><td>S-17 / S-12 streams</td><td>Open</td></tr>
+</table>
+
+<footer>
+  <div class="legal">
+    Functional Requirement Document &mdash; aws-mainframe-modernization-carddemo.<br>
+    Classification: INTERNAL. &copy; HSBC Holdings plc. For internal use only.
+  </div>
+  <div class="brand">
+    <svg viewBox="0 0 400 200" role="img" aria-label="HSBC">
+      <polygon points="0,100 100,0 100,200" fill="#db0011"/>
+      <polygon points="400,100 300,0 300,200" fill="#db0011"/>
+      <polygon points="100,0 300,0 200,100" fill="#db0011"/>
+      <polygon points="100,200 300,200 200,100" fill="#db0011"/>
+      <polygon points="100,0 200,100 100,200" fill="#ffffff"/>
+      <polygon points="300,0 200,100 300,200" fill="#ffffff"/>
+    </svg>
+    <span class="wordmark">HSBC</span>
+  </div>
+</footer>
+
+</div>
+</body>
+</html>
