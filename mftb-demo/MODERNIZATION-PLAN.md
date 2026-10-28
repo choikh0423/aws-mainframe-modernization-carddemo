@@ -129,7 +129,7 @@ Proposed waves **[recommendation]**, ordered so that nothing migrates before wha
 | Parsed COBOL/JCL/PROC/CSD/scheduler; built calls, datasets, lineage, traces; filed every unresolved item as a finding | Wrote 71 descriptions + 7 business summaries from source, each cited (`descriptions.json`, `--check --strict` passes) |
 | Detected/defaulted 29 profile fields, flagged defaults as ASSUMED | Kept every default as an evidence request — did not answer for the customer |
 | Traced 24 dynamic-call sites (3 resolved) | Narrowed menu-table sites with cited reasoning (`annotations.json`); left run-time ones partial |
-| Built the two chains and the online closure, filed asks | Closed 5 chain asks with cited facts, added the `DALYTRAN` producer ask and 4 notes (`chainnotes.json`); wrote `CAUP` screen-flow and atomicity notes (`onlinenotes.json`) |
+| Built the two chains and the online closure, filed asks | Closed 5 chain asks across the two chains (3 + 2) with cited facts, added the `DALYTRAN` producer ask and 4 notes (`chainnotes.json`); wrote `CAUP` screen-flow and atomicity notes (`onlinenotes.json`) |
 | Rendered all HTML reports | Wrote this plan: every target is a labelled recommendation |
 
 ## 8. Evidence requests the customer must answer

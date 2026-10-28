@@ -1,11 +1,10 @@
 {
   "meta": {
     "module": "CARDDEMO",
-    "generated_at": "2026-10-28T13:50:53Z",
+    "generated_at": "2026-10-28T14:04:36Z",
     "tool": "mftb 0.2.3",
     "inputs": {
       "selectors": [
-        "CARDDEMO",
         "MONTHLY-InterestCalculation"
       ]
     }
@@ -15,7 +14,7 @@
       "table": "CARDDEMO",
       "requested_as": "CARDDEMO",
       "selection_basis": "CARDDEMO is a table in app/scheduler/CardDemo.ca7",
-      "generated_at": "2026-10-28T13:50:53Z",
+      "generated_at": "2026-10-28T14:04:36Z",
       "jobs": [
         {
           "job": "CLOSEFIL",
@@ -2076,7 +2075,7 @@
       "table": "MONTHLY-InterestCalculation",
       "requested_as": "MONTHLY-InterestCalculation",
       "selection_basis": "MONTHLY-INTERESTCALCULATION is a table in app/scheduler/CardDemo.controlm",
-      "generated_at": "2026-10-28T13:50:53Z",
+      "generated_at": "2026-10-28T14:04:36Z",
       "jobs": [
         {
           "job": "CLOSEFIL",

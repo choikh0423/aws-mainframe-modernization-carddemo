@@ -45,18 +45,23 @@ python3 -m mftb scan-profile     --module CARDDEMO --store $S
 python3 -m mftb scan-dyncalls    --module CARDDEMO --store $S   # reads annotations.json
 python3 -m mftb scan-connections --module CARDDEMO --store $S
 python3 -m mftb descriptions     --module CARDDEMO --store $S --check --strict
-python3 -m mftb report           --module CARDDEMO --store $S
+python3 -m mftb report           --module CARDDEMO --store $S --findings
 
 # 3. Batch chains (entry point: batch-chain-analysis; reads chainnotes.json)
-python3 -m mftb scan-chains --module CARDDEMO --store $S CARDDEMO MONTHLY-InterestCalculation
+python3 -m mftb scan-chains --module CARDDEMO --store $S --findings CARDDEMO
+python3 -m mftb scan-chains --module CARDDEMO --store $S --findings MONTHLY-InterestCalculation
 
 # 4. Online transaction (entry point: online-transaction-analysis; reads onlinenotes.json)
-python3 -m mftb scan-online --module CARDDEMO --store $S --transaction CAUP
+python3 -m mftb scan-online --module CARDDEMO --store $S --transaction CAUP --findings
 
 # 5. Final re-render
-python3 -m mftb report --module CARDDEMO --store $S
+python3 -m mftb report --module CARDDEMO --store $S --findings
 python3 -m mftb report-estate --store $S
 ```
+
+`--findings` renders the findings / evidence-request ledger on the module, chain and transaction pages (the toolbox suspends it by default; `findings.json` is written either way).
+
+Screenshots: `google-chrome --headless=new --no-sandbox --window-size=1440,1000 --screenshot=mftb-demo/screenshots/<name>.png file://$PWD/mftb-demo/store/reports/<page>.html`.
 
 Checks that must pass: `modules --check` → `4 module(s), 8 shared, 0 unplaced - 203 of 203 catalogued artifact(s) placed`; `descriptions --check --strict` → `71 of 71 subject(s) written, 7 of 7 business-logic summary/summaries written` and exit 0.
 

@@ -69,7 +69,7 @@ ol li,ul li{margin:4px 0}.flow{display:flex;gap:8px;flex-wrap:wrap;align-items:c
 <h2>Batch chain: CA 7 table CARDDEMO <span class="tag scan">scan</span> <span class="tag agent">agent</span></h2>
 <p class="lead">Chosen because it runs <code>POSTTRAN</code> (<code>app/scheduler/CardDemo.ca7:70</code>), whose program <code>CBTRN02C</code> is the only code that validates and posts customer transactions to accounts and balances.</p>
 <div class="flow"><div>CLOSEFIL</div><div>CBPAUP0J</div><div>POSTTRAN / CBTRN02C</div><div>OPENFIL</div><div>TRANTYPE, TRANCATG, TCATBALF</div><div>READ*</div><div>CREASTMT / CBSTM03A</div><div>TXT2PDF1</div><div>PRTCATBL</div></div>
-<ul><li>17 jobs, 29 steps; 5 chain asks closed by Devin with cited facts (SDSF CEMT steps, CBPAUP0J lives in CDAUTHFR); 28 open.</li>
+<ul><li>17 jobs, 29 steps; 3 chain asks closed by Devin with cited facts (SDSF CEMT steps, CBPAUP0J lives in CDAUTHFR); 28 open.</li>
 <li>New evidence request: nothing in the estate produces <code>DALYTRAN.PS</code>, the posting cycle's main input.</li>
 <li>Secondary chain <code>MONTHLY-InterestCalculation</code>: INTCALC/CBACT04C interest = balance x rate / 1200; fees are a stub (<code>CBACT04C.cbl:518</code>); run date is hard-coded.</li></ul>
 <div class="btns"><a class="btn p" href="store/reports/CARDDEMO/chains/chain-CARDDEMO.html" target="_blank" rel="noopener">Open chain report</a><a class="btn" href="store/reports/CARDDEMO/chains/chain-MONTHLY-InterestCalculation.html" target="_blank" rel="noopener">Monthly interest chain</a><button class="btn" data-f="f4">Show inline</button></div>
