@@ -1,0 +1,110 @@
+{
+  "meta": {
+    "module": "CARDDEMO",
+    "written_by": "batch-chain-analysis skill"
+  },
+  "tables": {
+    "CARDDEMO": {
+      "directions": [],
+      "closures": [
+        {
+          "kind": "chain-step-opaque",
+          "job": "CLOSEFIL",
+          "match": "(utility SDSF) cannot be traversed",
+          "how": "the SDSF step only issues 5 operator commands /F CICSAWSA,'CEMT SET FIL(...) CLO' to the CICS region; it allocates no dataset, so there is no lineage to traverse",
+          "evidence": [
+            "app/jcl/CLOSEFIL.jcl:22-30"
+          ]
+        },
+        {
+          "kind": "chain-step-opaque",
+          "job": "OPENFIL",
+          "match": "(utility SDSF) cannot be traversed",
+          "how": "the SDSF step only issues 5 operator commands /F CICSAWSA,'CEMT SET FIL(...) OPE' to the CICS region; it allocates no dataset, so there is no lineage to traverse",
+          "evidence": [
+            "app/jcl/OPENFIL.jcl:22-30"
+          ]
+        },
+        {
+          "kind": "chain-step-opaque",
+          "job": "CBPAUP0J",
+          "match": "no JCL member was scanned",
+          "how": "the member exists as app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl and is scanned in module CDAUTHFR (store/modules.json cross_module CARDDEMO->CDAUTHFR); it runs the expired-authorization purge there, outside this module's store",
+          "evidence": [
+            "app/scheduler/CardDemo.ca7:43",
+            "app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl:1"
+          ]
+        }
+      ],
+      "asks": [
+        {
+          "kind": "chain-input-unproduced",
+          "severity": "medium",
+          "job": "POSTTRAN",
+          "message": "POSTTRAN reads the day's transaction feed AWS.M2.CARDDEMO.DALYTRAN.PS but no scanned job, scheduler table or CICS program writes it: the producer of the posting cycle's main input is outside the estate",
+          "evidence": [
+            "app/jcl/POSTTRAN.jcl:23-30",
+            "app/cbl/CBTRN02C.cbl:28-33"
+          ],
+          "request": "Customer: name the system/job/file transfer that delivers DALYTRAN.PS each day, its arrival time and what happens when it is late or empty"
+        }
+      ],
+      "notes": [
+        {
+          "text": "Every update job in the table is bracketed by CLOSEFIL / OPENFIL, which close and reopen the CICS files (TRANSACT, CCXREF, ACCTDAT, ...) in region CICSAWSA: online and batch never update the VSAM masters at the same time; a target design must keep or replace that serialisation.",
+          "evidence": [
+            "app/jcl/CLOSEFIL.jcl:26-30",
+            "app/jcl/OPENFIL.jcl:26-30",
+            "app/scheduler/CardDemo.ca7:18",
+            "app/scheduler/CardDemo.ca7:124"
+          ]
+        },
+        {
+          "text": "POSTTRAN (CBTRN02C) is the cycle's business core: it validates each daily transaction (reject codes 100-103), writes TRANSACT, rewrites ACCTDAT and updates TCATBALF, which INTCALC later reads.",
+          "evidence": [
+            "app/cbl/CBTRN02C.cbl:370-420",
+            "app/cbl/CBTRN02C.cbl:424-580"
+          ]
+        }
+      ]
+    },
+    "MONTHLY-InterestCalculation": {
+      "directions": [],
+      "closures": [
+        {
+          "kind": "chain-step-opaque",
+          "job": "CLOSEFIL",
+          "match": "(utility SDSF) cannot be traversed",
+          "how": "the SDSF step only issues 5 operator commands /F CICSAWSA,'CEMT SET FIL(...) CLO' to the CICS region; it allocates no dataset, so there is no lineage to traverse",
+          "evidence": [
+            "app/jcl/CLOSEFIL.jcl:22-30"
+          ]
+        },
+        {
+          "kind": "chain-step-opaque",
+          "job": "OPENFIL",
+          "match": "(utility SDSF) cannot be traversed",
+          "how": "the SDSF step only issues 5 operator commands /F CICSAWSA,'CEMT SET FIL(...) OPE' to the CICS region; it allocates no dataset, so there is no lineage to traverse",
+          "evidence": [
+            "app/jcl/OPENFIL.jcl:22-30"
+          ]
+        }
+      ],
+      "asks": [],
+      "notes": [
+        {
+          "text": "INTCALC runs CBACT04C with a hard-coded run date PARM='2022071800'; a migrated job needs the business date from the scheduler instead.",
+          "evidence": [
+            "app/jcl/INTCALC.jcl:22"
+          ]
+        },
+        {
+          "text": "CBACT04C fee computation (1400-COMPUTE-FEES) is an unimplemented stub, so only interest is charged.",
+          "evidence": [
+            "app/cbl/CBACT04C.cbl:518-520"
+          ]
+        }
+      ]
+    }
+  }
+}

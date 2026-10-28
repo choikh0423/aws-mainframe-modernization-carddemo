@@ -1,0 +1,1065 @@
+{
+  "meta": {
+    "module": "CARDDEMO",
+    "generated_at": "2026-10-28T14:04:37Z",
+    "tool": "mftb 0.2.3",
+    "inputs": [
+      "programs.json",
+      "jobs.json",
+      "schedule.json"
+    ]
+  },
+  "author": "agent",
+  "summary": {
+    "subjects": 71,
+    "written": 71,
+    "unknown": 0,
+    "by_kind": {
+      "program": 31,
+      "jcl": 38,
+      "proc": 2
+    },
+    "with_key_points": 71,
+    "overviews": 7,
+    "overviews_written": 7
+  },
+  "overviews": [
+    {
+      "kind": "module",
+      "name": "CARDDEMO",
+      "key_points": [
+        "Runs a credit-card back office: CICS screens for sign-on, accounts, cards, transactions, bill payment, users and reports over VSAM masters.",
+        "Batch posts the daily transactions (POSTTRAN/CBTRN02C), computes monthly interest (INTCALC/CBACT04C) and prints statements (CREASTMT/CBSTM03A).",
+        "The VSAM files are shared with CICS: batch jobs close and reopen them in the region (CLOSEFIL/OPENFIL) around every update."
+      ],
+      "basis": [
+        "app/cbl/COSGN00C.cbl:1-261",
+        "app/cbl/CBTRN02C.cbl:1-732",
+        "app/cbl/CBACT04C.cbl:1-653",
+        "app/jcl/CLOSEFIL.jcl:1-35",
+        "app/csd/CARDDEMO.CSD:306-479"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "chain",
+      "name": "CARDDEMO",
+      "key_points": [
+        "CA 7 table that runs the batch cycle: close CICS files, purge expired authorizations (CBPAUP0J), post the day's transactions (POSTTRAN), reopen files.",
+        "Then refreshes reference files (TRANTYPE, TRANCATG, TCATBALF), prints the masters (READ*), creates statements (CREASTMT, TXT2PDF1) and the category-balance report (PRTCATBL)."
+      ],
+      "basis": [
+        "app/scheduler/CardDemo.ca7:18-537",
+        "app/jcl/POSTTRAN.jcl:1-46",
+        "app/jcl/CREASTMT.JCL:1-98"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "chain",
+      "name": "DAILY-TransactionBackup",
+      "key_points": [
+        "Daily Control-M folder that backs up the processed transaction file (TRANBKP) between a CICS file close and reopen."
+      ],
+      "basis": [
+        "app/scheduler/CardDemo.controlm:4-24",
+        "app/jcl/TRANBKP.jcl:1-72"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "chain",
+      "name": "WEEKLY-TransactionTypesDBRefresh",
+      "key_points": [
+        "Weekly Control-M job MNTTRDB2 that maintains the DB2 transaction-type tables (module CDTRNTYP)."
+      ],
+      "basis": [
+        "app/scheduler/CardDemo.controlm:27-31"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "chain",
+      "name": "DisclosureGroupsRefresh",
+      "key_points": [
+        "Control-M folder that reloads the disclosure group (interest rate) file (DISCGRP) between a CICS file close and reopen."
+      ],
+      "basis": [
+        "app/scheduler/CardDemo.controlm:33-54",
+        "app/jcl/DISCGRP.jcl:1-66"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "chain",
+      "name": "TransactionTypesDBRefresh",
+      "key_points": [
+        "Control-M job TRANEXTR that extracts the DB2 transaction-type tables back to the files the core uses (module CDTRNTYP); it waits on MNTTRDB2's condition."
+      ],
+      "basis": [
+        "app/scheduler/CardDemo.controlm:58-62"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "chain",
+      "name": "MONTHLY-InterestCalculation",
+      "key_points": [
+        "Monthly Control-M folder: close CICS files, compute interest (INTCALC/CBACT04C), merge the interest transactions into the master (COMBTRAN), reopen files."
+      ],
+      "basis": [
+        "app/scheduler/CardDemo.controlm:65-91",
+        "app/jcl/INTCALC.jcl:1-45",
+        "app/jcl/COMBTRAN.jcl:1-53"
+      ],
+      "written_by": "agent"
+    }
+  ],
+  "descriptions": [
+    {
+      "kind": "program",
+      "name": "CBACT01C",
+      "path": "app/cbl/CBACT01C.cbl",
+      "description": "Reads the account master file sequentially and writes each account to three output files in fixed, array and variable-length layouts.",
+      "key_points": [
+        "Reads ACCTFILE to end of file and displays each record (1000-ACCTFILE-GET-NEXT, 1100-DISPLAY-ACCT-RECORD).",
+        "Writes OUTFILE, ARRYFILE and VBRCFILE (two variable-length record shapes) from each account.",
+        "Calls the assembler routine COBDATFT to reformat a date (CBACT01C.cbl:231)."
+      ],
+      "basis": [
+        "app/cbl/CBACT01C.cbl:1-430"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CBACT02C",
+      "path": "app/cbl/CBACT02C.cbl",
+      "description": "Reads the card master file sequentially and prints every card record.",
+      "key_points": [
+        "Opens CARDFILE, reads to end of file and DISPLAYs each record."
+      ],
+      "basis": [
+        "app/cbl/CBACT02C.cbl:1-178"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CBACT03C",
+      "path": "app/cbl/CBACT03C.cbl",
+      "description": "Reads the card-to-account cross-reference file sequentially and prints every record.",
+      "key_points": [
+        "Opens XREFFILE, reads to end of file and DISPLAYs each record."
+      ],
+      "basis": [
+        "app/cbl/CBACT03C.cbl:1-178"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CBACT04C",
+      "path": "app/cbl/CBACT04C.cbl",
+      "description": "Calculates monthly interest per account from the transaction category balances and writes interest transactions.",
+      "key_points": [
+        "Reads TCATBALF and, per account, the XREF and ACCTFILE records; the rate comes from DISCGRP, falling back to group DEFAULT.",
+        "Monthly interest = TRAN-CAT-BAL * DIS-INT-RATE / 1200; each charge is written to TRANSACT and the account is rewritten.",
+        "1400-COMPUTE-FEES is a stub ('To be implemented'); the run date comes from the step PARM."
+      ],
+      "basis": [
+        "app/cbl/CBACT04C.cbl:1-652"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CBCUS01C",
+      "path": "app/cbl/CBCUS01C.cbl",
+      "description": "Reads the customer master file sequentially and prints every customer record.",
+      "key_points": [
+        "Opens CUSTFILE, reads to end of file and DISPLAYs each record."
+      ],
+      "basis": [
+        "app/cbl/CBCUS01C.cbl:1-178"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CBEXPORT",
+      "path": "app/cbl/CBEXPORT.cbl",
+      "description": "Runs the customer-data export: defines the export file and runs CBEXPORT over the VSAM masters.",
+      "key_points": [
+        "STEP01 IDCAMS defines the export dataset; STEP02 runs CBEXPORT."
+      ],
+      "basis": [
+        "app/cbl/CBEXPORT.cbl:1-582"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CBIMPORT",
+      "path": "app/cbl/CBIMPORT.cbl",
+      "description": "Runs the customer-data import: CBIMPORT splits the export file into normalized output files.",
+      "key_points": [
+        "Single step STEP01 EXEC PGM=CBIMPORT."
+      ],
+      "basis": [
+        "app/cbl/CBIMPORT.cbl:1-487"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CBSTM03A",
+      "path": "app/cbl/CBSTM03A.CBL",
+      "description": "Prints account statements from transaction data in plain-text and HTML formats.",
+      "key_points": [
+        "Writes STMTFILE (text) and HTMLFILE (HTML) statements per card in the cross-reference.",
+        "Delegates all file I/O to the subroutine CBSTM03B.",
+        "Deliberately uses control-block addressing, ALTER/GO TO, COMP/COMP-3 and a 2-D table (header comment)."
+      ],
+      "basis": [
+        "app/cbl/CBSTM03A.CBL:1-923"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CBSTM03B",
+      "path": "app/cbl/CBSTM03B.CBL",
+      "description": "Subroutine that performs the file I/O for the statement program CBSTM03A.",
+      "key_points": [
+        "Opens, reads and closes TRNXFILE, XREFFILE, CUSTFILE and ACCTFILE on request from the caller."
+      ],
+      "basis": [
+        "app/cbl/CBSTM03B.CBL:1-229"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CBTRN01C",
+      "path": "app/cbl/CBTRN01C.cbl",
+      "description": "Reads the daily transaction file and verifies each card against the cross-reference and account files.",
+      "key_points": [
+        "Reads DALYTRAN; for each record looks up XREFFILE by card number and ACCTFILE by account id.",
+        "Only DISPLAYs the result (account not found / card number); it writes no file."
+      ],
+      "basis": [
+        "app/cbl/CBTRN01C.cbl:1-494"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CBTRN02C",
+      "path": "app/cbl/CBTRN02C.cbl",
+      "description": "Posts the daily transaction file: validates each transaction, writes it to the transaction master and updates balances.",
+      "key_points": [
+        "Rejects with codes 100-103 (invalid card, account not found, overlimit, after account expiry) to DALYREJS.",
+        "Writes valid transactions to TRANFILE, rewrites the account and creates or updates the TCATBALF category balance."
+      ],
+      "basis": [
+        "app/cbl/CBTRN02C.cbl:1-731"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CBTRN03C",
+      "path": "app/cbl/CBTRN03C.cbl",
+      "description": "Prints the transaction detail report for a date range with page, account and grand totals.",
+      "key_points": [
+        "Reads the date range from DATEPARM and TRANFILE sequentially.",
+        "Enriches each line via CARDXREF, TRANTYPE and TRANCATG lookups and writes TRANREPT."
+      ],
+      "basis": [
+        "app/cbl/CBTRN03C.cbl:1-649"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COACTUPC",
+      "path": "app/cbl/COACTUPC.cbl",
+      "description": "CICS account update screen: shows an account with its customer and validates and applies edits.",
+      "key_points": [
+        "Reads ACCTDAT, CUSTDAT and the CXACAIX account path; rewrites account and customer records after edit checks.",
+        "Returns to the calling program or main menu by XCTL (dynamic, COACTUPC.cbl:956)."
+      ],
+      "basis": [
+        "app/cbl/COACTUPC.cbl:1-4236"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COACTVWC",
+      "path": "app/cbl/COACTVWC.cbl",
+      "description": "CICS account view screen: displays an account with its customer details.",
+      "key_points": [
+        "Reads the card cross-reference by account path, then ACCTDAT and CUSTDAT.",
+        "Returns to the caller or main menu by XCTL (COACTVWC.cbl:349)."
+      ],
+      "basis": [
+        "app/cbl/COACTVWC.cbl:1-941"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COADM01C",
+      "path": "app/cbl/COADM01C.cbl",
+      "description": "CICS admin menu for admin users: lists the admin options and transfers to the chosen program.",
+      "key_points": [
+        "Options come from the COADM02Y table (6 active); the chosen program is XCTLed with the CardDemo COMMAREA.",
+        "Options include user list/add/update/delete and the DB2 transaction-type screens of module CDTRNTYP."
+      ],
+      "basis": [
+        "app/cbl/COADM01C.cbl:1-288"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COBIL00C",
+      "path": "app/cbl/COBIL00C.cbl",
+      "description": "CICS bill payment: pays an account's current balance in full and records the payment as a transaction.",
+      "key_points": [
+        "Reads ACCTDAT and CXACAIX, writes a payment record to TRANSACT and rewrites the account balance.",
+        "Uses ASKTIME/FORMATTIME for the transaction timestamp."
+      ],
+      "basis": [
+        "app/cbl/COBIL00C.cbl:1-572"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COBSWAIT",
+      "path": "app/cbl/COBSWAIT.cbl",
+      "description": "Batch utility that waits for the number of centiseconds passed in the PARM.",
+      "key_points": [
+        "Calls the assembler routine MVSWAIT with the PARM value (COBSWAIT.cbl:38)."
+      ],
+      "basis": [
+        "app/cbl/COBSWAIT.cbl:1-40"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COCRDLIC",
+      "path": "app/cbl/COCRDLIC.cbl",
+      "description": "CICS credit-card list: shows all cards for an admin, or only the cards of the account in the COMMAREA.",
+      "key_points": [
+        "Browses CARDDAT; selecting a row transfers to card detail COCRDSLC or card update COCRDUPC.",
+        "PF3 returns to the main menu COMEN01C."
+      ],
+      "basis": [
+        "app/cbl/COCRDLIC.cbl:1-1459"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COCRDSLC",
+      "path": "app/cbl/COCRDSLC.cbl",
+      "description": "CICS card detail screen: shows one credit card selected by account and card number.",
+      "key_points": [
+        "Reads CARDDAT by card number or through the account path CARDAIX.",
+        "Returns to the caller or main menu by XCTL (COCRDSLC.cbl:331)."
+      ],
+      "basis": [
+        "app/cbl/COCRDSLC.cbl:1-887"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COCRDUPC",
+      "path": "app/cbl/COCRDUPC.cbl",
+      "description": "CICS card update screen: edits a credit card's details and rewrites the card record.",
+      "key_points": [
+        "Reads CARDDAT for update and REWRITEs it after validation.",
+        "Returns to the caller or main menu by XCTL (COCRDUPC.cbl:473)."
+      ],
+      "basis": [
+        "app/cbl/COCRDUPC.cbl:1-1560"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COMEN01C",
+      "path": "app/cbl/COMEN01C.cbl",
+      "description": "CICS main menu for regular users: lists the menu options and transfers to the chosen program.",
+      "key_points": [
+        "Options come from the COMEN02Y table (11 active); admin-only options are refused for regular users.",
+        "Option COPAUS0C (pending authorizations, module CDAUTHFR) is only XCTLed after CICS INQUIRE PROGRAM succeeds."
+      ],
+      "basis": [
+        "app/cbl/COMEN01C.cbl:1-308"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CORPT00C",
+      "path": "app/cbl/CORPT00C.cbl",
+      "description": "CICS report request: submits the transaction report batch job from online through an extra-partition TDQ.",
+      "key_points": [
+        "Builds in-line JCL that runs PROC TRANREPT for the chosen date range (CORPT00C.cbl:94).",
+        "Writes the job to a TD queue (WRITEQ TD, CORPT00C.cbl:517) for the internal reader."
+      ],
+      "basis": [
+        "app/cbl/CORPT00C.cbl:1-649"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COSGN00C",
+      "path": "app/cbl/COSGN00C.cbl",
+      "description": "CICS sign-on screen: validates user id and password against the user security file and routes by user type.",
+      "key_points": [
+        "Reads USRSEC by user id and compares the password.",
+        "Admin users go to COADM01C, regular users to COMEN01C (COSGN00C.cbl:232-237)."
+      ],
+      "basis": [
+        "app/cbl/COSGN00C.cbl:1-260"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COTRN00C",
+      "path": "app/cbl/COTRN00C.cbl",
+      "description": "CICS transaction list: pages through the TRANSACT file and lets the user select one transaction.",
+      "key_points": [
+        "Browses TRANSACT forwards and backwards (PF7/PF8), ten rows per page.",
+        "Selecting a row with S transfers to the transaction view COTRN01C; PF3 returns to COMEN01C."
+      ],
+      "basis": [
+        "app/cbl/COTRN00C.cbl:1-699"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COTRN01C",
+      "path": "app/cbl/COTRN01C.cbl",
+      "description": "CICS transaction view: reads and displays one transaction from the TRANSACT file.",
+      "key_points": [
+        "Reads TRANSACT by transaction id and shows its fields; PF3 returns to the caller."
+      ],
+      "basis": [
+        "app/cbl/COTRN01C.cbl:1-330"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COTRN02C",
+      "path": "app/cbl/COTRN02C.cbl",
+      "description": "CICS add transaction: validates a new transaction against card and account and writes it to TRANSACT.",
+      "key_points": [
+        "Resolves the account through CXACAIX or the card through CCXREF before writing.",
+        "Writes the new record to TRANSACT with the next transaction id."
+      ],
+      "basis": [
+        "app/cbl/COTRN02C.cbl:1-783"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COUSR00C",
+      "path": "app/cbl/COUSR00C.cbl",
+      "description": "CICS user list: pages through the user security file and selects a user to update or delete.",
+      "key_points": [
+        "Browses USRSEC; selection U goes to COUSR02C and D to COUSR03C."
+      ],
+      "basis": [
+        "app/cbl/COUSR00C.cbl:1-695"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COUSR01C",
+      "path": "app/cbl/COUSR01C.cbl",
+      "description": "CICS add user: writes a new regular or admin user to the user security file.",
+      "key_points": [
+        "Validates the entry fields and WRITEs the record to USRSEC."
+      ],
+      "basis": [
+        "app/cbl/COUSR01C.cbl:1-299"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COUSR02C",
+      "path": "app/cbl/COUSR02C.cbl",
+      "description": "CICS update user: reads a user from the security file and rewrites the changed fields.",
+      "key_points": [
+        "READ UPDATE on USRSEC followed by REWRITE (COUSR02C.cbl:322, :360)."
+      ],
+      "basis": [
+        "app/cbl/COUSR02C.cbl:1-414"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COUSR03C",
+      "path": "app/cbl/COUSR03C.cbl",
+      "description": "CICS delete user: reads a user from the security file and deletes it on confirmation.",
+      "key_points": [
+        "READ on USRSEC followed by DELETE (COUSR03C.cbl:269, :307)."
+      ],
+      "basis": [
+        "app/cbl/COUSR03C.cbl:1-359"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "CSUTLDTC",
+      "path": "app/cbl/CSUTLDTC.cbl",
+      "description": "Date-validation subroutine that calls the Language Environment CEEDAYS API and returns its feedback as a message.",
+      "key_points": [
+        "Passes the date and its format to CEEDAYS and returns the Lilian date result and feedback code."
+      ],
+      "basis": [
+        "app/cbl/CSUTLDTC.cbl:1-157"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "ACCTFILE",
+      "path": "app/jcl/ACCTFILE.jcl",
+      "description": "Rebuilds the account master VSAM KSDS: delete, define and load it from the flat account file.",
+      "key_points": [
+        "Three IDCAMS steps: DELETE, DEFINE CLUSTER, REPRO."
+      ],
+      "basis": [
+        "app/jcl/ACCTFILE.jcl:1-65"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "CARDFILE",
+      "path": "app/jcl/CARDFILE.jcl",
+      "description": "Rebuilds the card master VSAM file and its account alternate index, closing and reopening the CICS files around it.",
+      "key_points": [
+        "SDSF step closes the CICS files; IDCAMS steps delete, define, load and build the AIX and path."
+      ],
+      "basis": [
+        "app/jcl/CARDFILE.jcl:1-128"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "CBADMCDJ",
+      "path": "app/jcl/CBADMCDJ.jcl",
+      "description": "Defines the CardDemo CICS resources (groups, programs, mapsets, transactions, files) with DFHCSDUP.",
+      "key_points": [
+        "One DFHCSDUP step with in-stream DEFINE statements."
+      ],
+      "basis": [
+        "app/jcl/CBADMCDJ.jcl:1-167"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "CBEXPORT",
+      "path": "app/jcl/CBEXPORT.jcl",
+      "description": "Runs the customer-data export: defines the export file and runs CBEXPORT over the VSAM masters.",
+      "key_points": [
+        "STEP01 IDCAMS defines the export dataset; STEP02 runs CBEXPORT."
+      ],
+      "basis": [
+        "app/jcl/CBEXPORT.jcl:1-72"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "CBIMPORT",
+      "path": "app/jcl/CBIMPORT.jcl",
+      "description": "Runs the customer-data import: CBIMPORT splits the export file into normalized output files.",
+      "key_points": [
+        "Single step STEP01 EXEC PGM=CBIMPORT."
+      ],
+      "basis": [
+        "app/jcl/CBIMPORT.jcl:1-68"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "CLOSEFIL",
+      "path": "app/jcl/CLOSEFIL.jcl",
+      "description": "Closes the CardDemo files in the CICS region through an SDSF console command so batch can update them.",
+      "key_points": [
+        "Single SDSF step issuing CEMT SET FILE CLOSE commands."
+      ],
+      "basis": [
+        "app/jcl/CLOSEFIL.jcl:1-34"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "COMBTRAN",
+      "path": "app/jcl/COMBTRAN.jcl",
+      "description": "Sorts the current transaction file together with system-generated transactions and reloads the transaction master.",
+      "key_points": [
+        "STEP05R SORT merges the inputs; STEP10 IDCAMS REPROs the result to the VSAM master."
+      ],
+      "basis": [
+        "app/jcl/COMBTRAN.jcl:1-52"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "CREASTMT",
+      "path": "app/jcl/CREASTMT.JCL",
+      "description": "Creates a statement for every card in the cross-reference: sorts transactions, loads a work KSDS and runs CBSTM03A.",
+      "key_points": [
+        "DELDEF01 and STEP020 IDCAMS manage the work cluster; STEP010 SORTs the transactions.",
+        "STEP040 runs CBSTM03A to write the text and HTML statements."
+      ],
+      "basis": [
+        "app/jcl/CREASTMT.JCL:1-97"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "CUSTFILE",
+      "path": "app/jcl/CUSTFILE.jcl",
+      "description": "Rebuilds the customer master VSAM file with the CICS files closed and reopened around it.",
+      "key_points": [
+        "SDSF close, IDCAMS delete/define/load, SDSF open."
+      ],
+      "basis": [
+        "app/jcl/CUSTFILE.jcl:1-84"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "DALYREJS",
+      "path": "app/jcl/DALYREJS.jcl",
+      "description": "Defines the generation data group base for the daily transaction reject file.",
+      "key_points": [
+        "Single IDCAMS step."
+      ],
+      "basis": [
+        "app/jcl/DALYREJS.jcl:1-32"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "DEFCUST",
+      "path": "app/jcl/DEFCUST.jcl",
+      "description": "Deletes and redefines the customer VSAM cluster.",
+      "key_points": [
+        "Two IDCAMS steps (both named STEP05)."
+      ],
+      "basis": [
+        "app/jcl/DEFCUST.jcl:1-47"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "DEFGDGB",
+      "path": "app/jcl/DEFGDGB.jcl",
+      "description": "Defines the generation data group bases the CardDemo batch jobs need.",
+      "key_points": [
+        "Single IDCAMS DEFINE GDG step."
+      ],
+      "basis": [
+        "app/jcl/DEFGDGB.jcl:1-63"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "DEFGDGD",
+      "path": "app/jcl/DEFGDGD.jcl",
+      "description": "Defines the TRANTYPE, TRANCATG and DISCGRP backup GDG bases and copies each flat file into a new (+1) generation.",
+      "key_points": [
+        "Alternating IDCAMS DEFINE GENERATIONDATAGROUP and IEBGENER copy steps (STEP10-STEP60)."
+      ],
+      "basis": [
+        "app/jcl/DEFGDGD.jcl:1-94"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "DISCGRP",
+      "path": "app/jcl/DISCGRP.jcl",
+      "description": "Rebuilds the disclosure group (interest rate) VSAM file from its flat file.",
+      "key_points": [
+        "Three IDCAMS steps: DELETE, DEFINE, REPRO."
+      ],
+      "basis": [
+        "app/jcl/DISCGRP.jcl:1-65"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "DUSRSECJ",
+      "path": "app/jcl/DUSRSECJ.jcl",
+      "description": "Creates and loads the user security VSAM file from in-stream user records.",
+      "key_points": [
+        "IEFBR14 pre-delete, IEBGENER to a flat file, IDCAMS define and REPRO."
+      ],
+      "basis": [
+        "app/jcl/DUSRSECJ.jcl:1-92"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "ESDSRRDS",
+      "path": "app/jcl/ESDSRRDS.jcl",
+      "description": "Creates and loads ESDS and RRDS copies of the user security data, exercising other VSAM organisations.",
+      "key_points": [
+        "IEFBR14 pre-delete, IEBGENER, then IDCAMS define/REPRO steps."
+      ],
+      "basis": [
+        "app/jcl/ESDSRRDS.jcl:1-124"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "FTPJCLS",
+      "path": "app/jcl/FTPJCL.JCL",
+      "description": "FTP job that receives a file onto the mainframe.",
+      "key_points": [
+        "Single PGM=FTP step with in-stream FTP commands."
+      ],
+      "basis": [
+        "app/jcl/FTPJCL.JCL:1-42"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "INTCALC",
+      "path": "app/jcl/INTCALC.jcl",
+      "description": "Runs the interest calculator CBACT04C over the transaction category balances.",
+      "key_points": [
+        "Single step STEP15 PGM=CBACT04C with PARM='2022071800' (run date)."
+      ],
+      "basis": [
+        "app/jcl/INTCALC.jcl:1-44"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "INTRDRJ1",
+      "path": "app/jcl/INTRDRJ1.JCL",
+      "description": "Backs up AWS.M2.CARDEMO.FTP.TEST with IDCAMS REPRO, then submits member INTRDRJ2 to the internal reader.",
+      "key_points": [
+        "IDCAMS REPRO IN -> OUT, then IEBGENER copies AWS.M2.CARDDEMO.JCL(INTRDRJ2) to SYSOUT=(A,INTRDR)."
+      ],
+      "basis": [
+        "app/jcl/INTRDRJ1.JCL:1-19"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "INTRDRJ2",
+      "path": "app/jcl/INTRDRJ2.JCL",
+      "description": "Defines the physical VSAM files for the IMS database DEMODB and its index DEMODX.",
+      "key_points": [
+        "Single IDCAMS step."
+      ],
+      "basis": [
+        "app/jcl/INTRDRJ2.JCL:1-14"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "OPENFIL",
+      "path": "app/jcl/OPENFIL.jcl",
+      "description": "Opens the CardDemo files in the CICS region through an SDSF console command after batch has finished.",
+      "key_points": [
+        "Single SDSF step issuing CEMT SET FILE OPEN commands."
+      ],
+      "basis": [
+        "app/jcl/OPENFIL.jcl:1-34"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "POSTTRAN",
+      "path": "app/jcl/POSTTRAN.jcl",
+      "description": "Posts the daily transaction file through CBTRN02C, updating the transaction master, accounts and category balances.",
+      "key_points": [
+        "Single step STEP15 PGM=CBTRN02C; rejects go to a new DALYREJS generation."
+      ],
+      "basis": [
+        "app/jcl/POSTTRAN.jcl:1-45"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "PRTCATBL",
+      "path": "app/jcl/PRTCATBL.jcl",
+      "description": "Unloads the transaction category balance file and sorts it into a printable report.",
+      "key_points": [
+        "IEFBR14 pre-delete, REPROC unload, SORT to the report."
+      ],
+      "basis": [
+        "app/jcl/PRTCATBL.jcl:1-66"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "READACCT",
+      "path": "app/jcl/READACCT.jcl",
+      "description": "Runs CBACT01C to read the account master and write its fixed, array and variable-length extracts.",
+      "key_points": [
+        "IEFBR14 pre-delete then STEP05 PGM=CBACT01C."
+      ],
+      "basis": [
+        "app/jcl/READACCT.jcl:1-50"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "READCARD",
+      "path": "app/jcl/READCARD.jcl",
+      "description": "Runs CBACT02C to print the card master file.",
+      "key_points": [
+        "Single step STEP05 PGM=CBACT02C."
+      ],
+      "basis": [
+        "app/jcl/READCARD.jcl:1-31"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "READCUST",
+      "path": "app/jcl/READCUST.jcl",
+      "description": "Runs CBCUS01C to print the customer master file.",
+      "key_points": [
+        "Single step STEP05 PGM=CBCUS01C."
+      ],
+      "basis": [
+        "app/jcl/READCUST.jcl:1-30"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "READXREF",
+      "path": "app/jcl/READXREF.jcl",
+      "description": "Runs CBACT03C to print the card cross-reference file.",
+      "key_points": [
+        "Single step STEP05 PGM=CBACT03C."
+      ],
+      "basis": [
+        "app/jcl/READXREF.jcl:1-31"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "REPTFILE",
+      "path": "app/jcl/REPTFILE.jcl",
+      "description": "Defines the generation data group base for the transaction report file.",
+      "key_points": [
+        "Single IDCAMS step."
+      ],
+      "basis": [
+        "app/jcl/REPTFILE.jcl:1-32"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "TCATBALF",
+      "path": "app/jcl/TCATBALF.jcl",
+      "description": "Rebuilds the transaction category balance VSAM file from its flat file.",
+      "key_points": [
+        "Three IDCAMS steps: DELETE, DEFINE, REPRO."
+      ],
+      "basis": [
+        "app/jcl/TCATBALF.jcl:1-65"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "TRANBKP",
+      "path": "app/jcl/TRANBKP.jcl",
+      "description": "Backs up the processed transaction file to a new generation and redefines the transaction VSAM master.",
+      "key_points": [
+        "REPROC unload, then IDCAMS delete and define (STEP10 runs only if COND=(4,LT) allows)."
+      ],
+      "basis": [
+        "app/jcl/TRANBKP.jcl:1-71"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "TRANCATG",
+      "path": "app/jcl/TRANCATG.jcl",
+      "description": "Rebuilds the transaction category type VSAM file from its flat file.",
+      "key_points": [
+        "Three IDCAMS steps: DELETE, DEFINE, REPRO."
+      ],
+      "basis": [
+        "app/jcl/TRANCATG.jcl:1-65"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "TRANFILE",
+      "path": "app/jcl/TRANFILE.jcl",
+      "description": "Rebuilds the transaction master VSAM file and its processed-timestamp alternate index with the CICS files closed.",
+      "key_points": [
+        "SDSF close, then IDCAMS delete/define/load/AIX steps."
+      ],
+      "basis": [
+        "app/jcl/TRANFILE.jcl:1-125"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "TRANIDX",
+      "path": "app/jcl/TRANIDX.jcl",
+      "description": "Creates the alternate index on processed timestamp for the transaction master and builds it.",
+      "key_points": [
+        "IDCAMS define AIX, define PATH, BLDINDEX."
+      ],
+      "basis": [
+        "app/jcl/TRANIDX.jcl:1-58"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "TRANREPT",
+      "path": "app/jcl/TRANREPT.jcl",
+      "description": "Produces the transaction report: unloads and sorts the transactions for a date range and runs CBTRN03C.",
+      "key_points": [
+        "REPROC unload, SORT by date filter, STEP10R PGM=CBTRN03C."
+      ],
+      "basis": [
+        "app/jcl/TRANREPT.jcl:1-84"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "TRANTYPE",
+      "path": "app/jcl/TRANTYPE.jcl",
+      "description": "Rebuilds the transaction type VSAM file from its flat file.",
+      "key_points": [
+        "Three IDCAMS steps: DELETE, DEFINE, REPRO."
+      ],
+      "basis": [
+        "app/jcl/TRANTYPE.jcl:1-65"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "TXT2PDF1",
+      "path": "app/jcl/TXT2PDF1.JCL",
+      "description": "Converts a text report file to PDF with the TXT2PDF REXX exec under TSO batch.",
+      "key_points": [
+        "IKJEFT1B step with SYSEXEC AWS.M2.LBD.TXT2PDF.EXEC."
+      ],
+      "basis": [
+        "app/jcl/TXT2PDF1.JCL:1-41"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "WAITSTEP",
+      "path": "app/jcl/WAITSTEP.jcl",
+      "description": "Waits for the number of centiseconds in the PARM by running COBSWAIT.",
+      "key_points": [
+        "Single step WAIT PGM=COBSWAIT."
+      ],
+      "basis": [
+        "app/jcl/WAITSTEP.jcl:1-27"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "XREFFILE",
+      "path": "app/jcl/XREFFILE.jcl",
+      "description": "Rebuilds the card cross-reference VSAM file and its account alternate index.",
+      "key_points": [
+        "IDCAMS delete, define, load, AIX define, path and BLDINDEX."
+      ],
+      "basis": [
+        "app/jcl/XREFFILE.jcl:1-106"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "proc",
+      "name": "REPROC",
+      "path": "app/proc/REPROC.prc",
+      "description": "PROC that runs IDCAMS REPRO to load or unload a VSAM file.",
+      "key_points": [
+        "Single step PRC001 PGM=IDCAMS."
+      ],
+      "basis": [
+        "app/proc/REPROC.prc:1-32"
+      ],
+      "written_by": "agent"
+    },
+    {
+      "kind": "proc",
+      "name": "TRANREPT",
+      "path": "app/proc/TRANREPT.prc",
+      "description": "PROC form of the transaction report: REPROC unload, SORT for the date range, then CBTRN03C.",
+      "key_points": [
+        "STEP01R REPROC, STEP05R SORT, STEP10R PGM=CBTRN03C."
+      ],
+      "basis": [
+        "app/proc/TRANREPT.prc:1-82"
+      ],
+      "written_by": "agent"
+    }
+  ]
+}

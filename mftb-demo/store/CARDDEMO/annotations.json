@@ -1,0 +1,1119 @@
+{
+  "meta": {
+    "module": "CARDDEMO",
+    "skill": "dynamic-call-resolution",
+    "updated_at": "2026-10-28T13:48:09Z"
+  },
+  "dynamic_calls": [
+    {
+      "site": "app/cbl/COACTUPC.cbl:956",
+      "program": "COACTUPC",
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-TO-PROGRAM",
+      "targets": [
+        {
+          "name": "COACTUPC",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COACTUPC.cbl:533"
+          ],
+          "reasoning": "tracer candidate: VALUE clause of LIT-THISPGM"
+        },
+        {
+          "name": "COMEN01C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COACTUPC.cbl:557"
+          ],
+          "reasoning": "tracer candidate: VALUE clause of LIT-MENUPGM"
+        }
+      ],
+      "traversal": [
+        "app/cpy/COCOM01Y.cpy:24 10 CDEMO-TO-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of CARDDEMO-COMMAREA",
+        "app/cbl/COACTUPC.cbl:888 MOVE DFHCOMMAREA(1:LENGTH OF CARDDEMO-COMMAREA) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-TO-PROGRAM)",
+        "app/cbl/COACTUPC.cbl:854 CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COACTUPC.cbl:939 MOVE LIT-MENUPGM TO CDEMO-TO-PROGRAM",
+        "app/cbl/COACTUPC.cbl:557 05 LIT-MENUPGM PIC X(8) \u2014 WORKING-STORAGE, bytes 80..88 of WS-LITERALS",
+        "app/cbl/COACTUPC.cbl:557 VALUE 'COMEN01C'",
+        "app/cbl/COACTUPC.cbl:941 MOVE CDEMO-FROM-PROGRAM TO CDEMO-TO-PROGRAM",
+        "app/cpy/COCOM01Y.cpy:22 10 CDEMO-FROM-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 4..12 of CARDDEMO-COMMAREA",
+        "app/cbl/COACTUPC.cbl:888 MOVE DFHCOMMAREA(1:LENGTH OF CARDDEMO-COMMAREA) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-FROM-PROGRAM)",
+        "app/cbl/COACTUPC.cbl:854 CDEMO-FROM-PROGRAM occupies bytes 4..12 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COACTUPC.cbl:945 MOVE LIT-THISPGM TO CDEMO-FROM-PROGRAM",
+        "app/cbl/COACTUPC.cbl:533 05 LIT-THISPGM PIC X(8) \u2014 WORKING-STORAGE, bytes 0..8 of WS-LITERALS"
+      ],
+      "status": "partial",
+      "open_ends": [
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 16..24 of DFHCOMMAREA to the field(s) that produce CDEMO-TO-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        },
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 4..12 of DFHCOMMAREA to the field(s) that produce CDEMO-FROM-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        }
+      ]
+    },
+    {
+      "site": "app/cbl/COACTVWC.cbl:349",
+      "program": "COACTVWC",
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-TO-PROGRAM",
+      "targets": [
+        {
+          "name": "COACTVWC",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COACTVWC.cbl:143"
+          ],
+          "reasoning": "tracer candidate: VALUE clause of LIT-THISPGM"
+        },
+        {
+          "name": "COMEN01C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COACTVWC.cbl:167"
+          ],
+          "reasoning": "tracer candidate: VALUE clause of LIT-MENUPGM"
+        }
+      ],
+      "traversal": [
+        "app/cpy/COCOM01Y.cpy:24 10 CDEMO-TO-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of CARDDEMO-COMMAREA",
+        "app/cbl/COACTVWC.cbl:288 MOVE DFHCOMMAREA(1:LENGTH OF CARDDEMO-COMMAREA) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-TO-PROGRAM)",
+        "app/cbl/COACTVWC.cbl:257 CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COACTVWC.cbl:336 MOVE LIT-MENUPGM TO CDEMO-TO-PROGRAM",
+        "app/cbl/COACTVWC.cbl:167 05 LIT-MENUPGM PIC X(8) \u2014 WORKING-STORAGE, bytes 80..88 of WS-LITERALS",
+        "app/cbl/COACTVWC.cbl:167 VALUE 'COMEN01C'",
+        "app/cbl/COACTVWC.cbl:338 MOVE CDEMO-FROM-PROGRAM TO CDEMO-TO-PROGRAM",
+        "app/cpy/COCOM01Y.cpy:22 10 CDEMO-FROM-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 4..12 of CARDDEMO-COMMAREA",
+        "app/cbl/COACTVWC.cbl:288 MOVE DFHCOMMAREA(1:LENGTH OF CARDDEMO-COMMAREA) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-FROM-PROGRAM)",
+        "app/cbl/COACTVWC.cbl:257 CDEMO-FROM-PROGRAM occupies bytes 4..12 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COACTVWC.cbl:342 MOVE LIT-THISPGM TO CDEMO-FROM-PROGRAM",
+        "app/cbl/COACTVWC.cbl:143 05 LIT-THISPGM PIC X(8) \u2014 WORKING-STORAGE, bytes 0..8 of WS-LITERALS"
+      ],
+      "status": "partial",
+      "open_ends": [
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 16..24 of DFHCOMMAREA to the field(s) that produce CDEMO-TO-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        },
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 4..12 of DFHCOMMAREA to the field(s) that produce CDEMO-FROM-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        }
+      ]
+    },
+    {
+      "site": "app/cbl/COADM01C.cbl:145",
+      "program": "COADM01C",
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-ADMIN-OPT-PGMNAME",
+      "targets": [
+        {
+          "name": "COUSR00C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cpy/COADM02Y.cpy:24"
+          ],
+          "reasoning": "tracer candidate: occurrence of CDEMO-ADMIN-OPT-PGMNAME in CDEMO-ADMIN-OPTIONS-DATA"
+        },
+        {
+          "name": "COUSR01C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cpy/COADM02Y.cpy:24"
+          ],
+          "reasoning": "tracer candidate: occurrence of CDEMO-ADMIN-OPT-PGMNAME in CDEMO-ADMIN-OPTIONS-DATA"
+        },
+        {
+          "name": "COUSR02C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cpy/COADM02Y.cpy:24"
+          ],
+          "reasoning": "tracer candidate: occurrence of CDEMO-ADMIN-OPT-PGMNAME in CDEMO-ADMIN-OPTIONS-DATA"
+        },
+        {
+          "name": "COUSR03C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cpy/COADM02Y.cpy:24"
+          ],
+          "reasoning": "tracer candidate: occurrence of CDEMO-ADMIN-OPT-PGMNAME in CDEMO-ADMIN-OPTIONS-DATA"
+        }
+      ],
+      "traversal": [
+        "app/cpy/COADM02Y.cpy:59 15 CDEMO-ADMIN-OPT-PGMNAME PIC X(08) \u2014 WORKING-STORAGE, bytes 39..47 of CARDDEMO-ADMIN-MENU-OPTIONS",
+        "app/cpy/COADM02Y.cpy:56 CDEMO-ADMIN-OPT-PGMNAME is an element of CDEMO-ADMIN-OPT OCCURS 9",
+        "app/cpy/COADM02Y.cpy:24 CDEMO-ADMIN-OPT OCCURS 9 but CDEMO-ADMIN-OPTIONS-DATA only initialises 6 occurrence(s)",
+        "app/cpy/COADM02Y.cpy:24 CDEMO-ADMIN-OPTIONS REDEFINES CDEMO-ADMIN-OPTIONS-DATA (18 VALUE entries) \u2192 CDEMO-ADMIN-OPT-PGMNAME(1..9) = 'COUSR00C', 'COUSR01C', 'COUSR02C', 'COUSR03C', 'COT"
+      ],
+      "status": "resolved",
+      "closed_by_reasoning": [
+        {
+          "kinds": [
+            "table-values-partial"
+          ],
+          "tracer_open_end": "CDEMO-ADMIN-OPT OCCURS 9 but CDEMO-ADMIN-OPTIONS-DATA only initialises 6 occurrence(s)",
+          "evidence": [
+            "app/cbl/COADM01C.cbl:131-133",
+            "app/cpy/COADM02Y.cpy:22",
+            "app/cpy/COADM02Y.cpy:56"
+          ],
+          "reasoning": "WS-OPTION is rejected when > CDEMO-ADMIN-OPT-COUNT (COADM01C.cbl:131-133), which is PIC 9(02) VALUE 6 (COADM02Y.cpy:22; the VALUE 4 line 21 is commented out) with no other writer, so only occurrences 1..6 of CDEMO-ADMIN-OPT OCCURS 9 can be selected; the uninitialised occurrences 7..9 are unreachable. Selectable names (COADM02Y.cpy option table): COUSR00C, COUSR01C, COUSR02C, COUSR03C (this module) and COTRTLIC, COTRTUPC (module CDTRNTYP; listed here, not as targets, because of toolbox bug external.py:554).",
+          "residual": "option names starting DUMMY are skipped at COADM01C.cbl:141"
+        }
+      ],
+      "open_ends": []
+    },
+    {
+      "site": "app/cbl/COADM01C.cbl:168",
+      "program": "COADM01C",
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-TO-PROGRAM",
+      "targets": [
+        {
+          "name": "COSGN00C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COADM01C.cbl:101",
+            "app/cbl/COADM01C.cbl:166"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        }
+      ],
+      "traversal": [
+        "app/cpy/COCOM01Y.cpy:24 10 CDEMO-TO-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of CARDDEMO-COMMAREA",
+        "app/cbl/COADM01C.cbl:90 MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-TO-PROGRAM)",
+        "app/cbl/COADM01C.cbl:67 CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COADM01C.cbl:101 MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COADM01C.cbl:166 MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM"
+      ],
+      "status": "partial",
+      "open_ends": [
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 16..24 of DFHCOMMAREA to the field(s) that produce CDEMO-TO-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        }
+      ]
+    },
+    {
+      "site": "app/cbl/COBIL00C.cbl:281",
+      "program": "COBIL00C",
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-TO-PROGRAM",
+      "targets": [
+        {
+          "name": "COBIL00C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COBIL00C.cbl:37"
+          ],
+          "reasoning": "tracer candidate: VALUE clause of WS-PGMNAME"
+        },
+        {
+          "name": "COMEN01C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COBIL00C.cbl:130"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COSGN00C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COBIL00C.cbl:108",
+            "app/cbl/COBIL00C.cbl:276"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        }
+      ],
+      "traversal": [
+        "app/cpy/COCOM01Y.cpy:24 10 CDEMO-TO-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of CARDDEMO-COMMAREA",
+        "app/cbl/COBIL00C.cbl:108 MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COBIL00C.cbl:111 MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-TO-PROGRAM)",
+        "app/cbl/COBIL00C.cbl:91 CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COBIL00C.cbl:130 MOVE 'COMEN01C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COBIL00C.cbl:132 MOVE CDEMO-FROM-PROGRAM TO CDEMO-TO-PROGRAM",
+        "app/cpy/COCOM01Y.cpy:22 10 CDEMO-FROM-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 4..12 of CARDDEMO-COMMAREA",
+        "app/cbl/COBIL00C.cbl:111 MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-FROM-PROGRAM)",
+        "app/cbl/COBIL00C.cbl:91 CDEMO-FROM-PROGRAM occupies bytes 4..12 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COBIL00C.cbl:279 MOVE WS-PGMNAME TO CDEMO-FROM-PROGRAM",
+        "app/cbl/COBIL00C.cbl:37 05 WS-PGMNAME PIC X(08) \u2014 WORKING-STORAGE, bytes 0..8 of WS-VARIABLES",
+        "app/cbl/COBIL00C.cbl:37 VALUE 'COBIL00C'"
+      ],
+      "status": "partial",
+      "open_ends": [
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 16..24 of DFHCOMMAREA to the field(s) that produce CDEMO-TO-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        },
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 4..12 of DFHCOMMAREA to the field(s) that produce CDEMO-FROM-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        }
+      ]
+    },
+    {
+      "site": "app/cbl/COCRDSLC.cbl:331",
+      "program": "COCRDSLC",
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-TO-PROGRAM",
+      "targets": [
+        {
+          "name": "COCRDSLC",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COCRDSLC.cbl:163"
+          ],
+          "reasoning": "tracer candidate: VALUE clause of LIT-THISPGM"
+        },
+        {
+          "name": "COMEN01C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COCRDSLC.cbl:179"
+          ],
+          "reasoning": "tracer candidate: VALUE clause of LIT-MENUPGM"
+        }
+      ],
+      "traversal": [
+        "app/cpy/COCOM01Y.cpy:24 10 CDEMO-TO-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of CARDDEMO-COMMAREA",
+        "app/cbl/COCRDSLC.cbl:274 MOVE DFHCOMMAREA(1:LENGTH OF CARDDEMO-COMMAREA) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-TO-PROGRAM)",
+        "app/cbl/COCRDSLC.cbl:243 CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COCRDSLC.cbl:318 MOVE LIT-MENUPGM TO CDEMO-TO-PROGRAM",
+        "app/cbl/COCRDSLC.cbl:179 05 LIT-MENUPGM PIC X(8) \u2014 WORKING-STORAGE, bytes 53..61 of WS-LITERALS",
+        "app/cbl/COCRDSLC.cbl:179 VALUE 'COMEN01C'",
+        "app/cbl/COCRDSLC.cbl:320 MOVE CDEMO-FROM-PROGRAM TO CDEMO-TO-PROGRAM",
+        "app/cpy/COCOM01Y.cpy:22 10 CDEMO-FROM-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 4..12 of CARDDEMO-COMMAREA",
+        "app/cbl/COCRDSLC.cbl:274 MOVE DFHCOMMAREA(1:LENGTH OF CARDDEMO-COMMAREA) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-FROM-PROGRAM)",
+        "app/cbl/COCRDSLC.cbl:243 CDEMO-FROM-PROGRAM occupies bytes 4..12 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COCRDSLC.cbl:324 MOVE LIT-THISPGM TO CDEMO-FROM-PROGRAM",
+        "app/cbl/COCRDSLC.cbl:163 05 LIT-THISPGM PIC X(8) \u2014 WORKING-STORAGE, bytes 0..8 of WS-LITERALS"
+      ],
+      "status": "partial",
+      "open_ends": [
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 16..24 of DFHCOMMAREA to the field(s) that produce CDEMO-TO-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        },
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 4..12 of DFHCOMMAREA to the field(s) that produce CDEMO-FROM-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        }
+      ]
+    },
+    {
+      "site": "app/cbl/COCRDUPC.cbl:473",
+      "program": "COCRDUPC",
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-TO-PROGRAM",
+      "targets": [
+        {
+          "name": "COCRDUPC",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COCRDUPC.cbl:219"
+          ],
+          "reasoning": "tracer candidate: VALUE clause of LIT-THISPGM"
+        },
+        {
+          "name": "COMEN01C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COCRDUPC.cbl:235"
+          ],
+          "reasoning": "tracer candidate: VALUE clause of LIT-MENUPGM"
+        }
+      ],
+      "traversal": [
+        "app/cpy/COCOM01Y.cpy:24 10 CDEMO-TO-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of CARDDEMO-COMMAREA",
+        "app/cbl/COCRDUPC.cbl:396 MOVE DFHCOMMAREA(1:LENGTH OF CARDDEMO-COMMAREA) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-TO-PROGRAM)",
+        "app/cbl/COCRDUPC.cbl:362 CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COCRDUPC.cbl:451 MOVE LIT-MENUPGM TO CDEMO-TO-PROGRAM",
+        "app/cbl/COCRDUPC.cbl:235 05 LIT-MENUPGM PIC X(8) \u2014 WORKING-STORAGE, bytes 53..61 of WS-LITERALS",
+        "app/cbl/COCRDUPC.cbl:235 VALUE 'COMEN01C'",
+        "app/cbl/COCRDUPC.cbl:453 MOVE CDEMO-FROM-PROGRAM TO CDEMO-TO-PROGRAM",
+        "app/cpy/COCOM01Y.cpy:22 10 CDEMO-FROM-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 4..12 of CARDDEMO-COMMAREA",
+        "app/cbl/COCRDUPC.cbl:396 MOVE DFHCOMMAREA(1:LENGTH OF CARDDEMO-COMMAREA) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-FROM-PROGRAM)",
+        "app/cbl/COCRDUPC.cbl:362 CDEMO-FROM-PROGRAM occupies bytes 4..12 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COCRDUPC.cbl:457 MOVE LIT-THISPGM TO CDEMO-FROM-PROGRAM",
+        "app/cbl/COCRDUPC.cbl:219 05 LIT-THISPGM PIC X(8) \u2014 WORKING-STORAGE, bytes 0..8 of WS-LITERALS"
+      ],
+      "status": "partial",
+      "open_ends": [
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 16..24 of DFHCOMMAREA to the field(s) that produce CDEMO-TO-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        },
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 4..12 of DFHCOMMAREA to the field(s) that produce CDEMO-FROM-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        }
+      ]
+    },
+    {
+      "site": "app/cbl/COMEN01C.cbl:156",
+      "program": "COMEN01C",
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-MENU-OPT-PGMNAME",
+      "traversal": [
+        "app/cpy/COMEN02Y.cpy:97 15 CDEMO-MENU-OPT-PGMNAME PIC X(08) \u2014 WORKING-STORAGE, bytes 39..47 of CARDDEMO-MAIN-MENU-OPTIONS",
+        "app/cpy/COMEN02Y.cpy:94 CDEMO-MENU-OPT-PGMNAME is an element of CDEMO-MENU-OPT OCCURS 12",
+        "app/cpy/COMEN02Y.cpy:22 CDEMO-MENU-OPT OCCURS 12 but CDEMO-MENU-OPTIONS-DATA only initialises 11 occurrence(s)",
+        "app/cpy/COMEN02Y.cpy:22 CDEMO-MENU-OPTIONS REDEFINES CDEMO-MENU-OPTIONS-DATA (44 VALUE entries) \u2192 CDEMO-MENU-OPT-PGMNAME(1..12) = 'COACTVWC', 'COACTUPC', 'COCRDLIC', 'COCRDSLC', 'COCRD"
+      ],
+      "status": "resolved",
+      "closed_by_reasoning": [
+        {
+          "kinds": [
+            "table-values-partial"
+          ],
+          "tracer_open_end": "CDEMO-MENU-OPT OCCURS 12 but CDEMO-MENU-OPTIONS-DATA only initialises 11 occurrence(s)",
+          "evidence": [
+            "app/cbl/COMEN01C.cbl:127-129",
+            "app/cpy/COMEN02Y.cpy:21",
+            "app/cpy/COMEN02Y.cpy:94"
+          ],
+          "reasoning": "WS-OPTION is rejected when > CDEMO-MENU-OPT-COUNT (COMEN01C.cbl:127-129), which is PIC 9(02) VALUE 11 (COMEN02Y.cpy:21) with no other writer, so CDEMO-MENU-OPT-PGMNAME(WS-OPTION) only ever indexes occurrences 1..11 - the 11 initialised by CDEMO-MENU-OPTIONS-DATA; occurrence 12 can never be selected. Selectable names (tracer candidates, COMEN02Y.cpy option table): COACTUPC, COACTVWC, COBIL00C, COCRDLIC, COCRDSLC, COCRDUPC, COPAUS0C, CORPT00C, COTRN00C, COTRN01C, COTRN02C; COPAUS0C lives in module CDAUTHFR.",
+          "residual": "none for the program-name set; whether each option program is installed is checked at run time only for COPAUS0C (CICS INQUIRE, COMEN01C.cbl:148-150)"
+        }
+      ],
+      "open_ends": []
+    },
+    {
+      "site": "app/cbl/COMEN01C.cbl:184",
+      "program": "COMEN01C",
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-MENU-OPT-PGMNAME",
+      "traversal": [
+        "app/cpy/COMEN02Y.cpy:97 15 CDEMO-MENU-OPT-PGMNAME PIC X(08) \u2014 WORKING-STORAGE, bytes 39..47 of CARDDEMO-MAIN-MENU-OPTIONS",
+        "app/cpy/COMEN02Y.cpy:94 CDEMO-MENU-OPT-PGMNAME is an element of CDEMO-MENU-OPT OCCURS 12",
+        "app/cpy/COMEN02Y.cpy:22 CDEMO-MENU-OPT OCCURS 12 but CDEMO-MENU-OPTIONS-DATA only initialises 11 occurrence(s)",
+        "app/cpy/COMEN02Y.cpy:22 CDEMO-MENU-OPTIONS REDEFINES CDEMO-MENU-OPTIONS-DATA (44 VALUE entries) \u2192 CDEMO-MENU-OPT-PGMNAME(1..12) = 'COACTVWC', 'COACTUPC', 'COCRDLIC', 'COCRDSLC', 'COCRD"
+      ],
+      "status": "resolved",
+      "closed_by_reasoning": [
+        {
+          "kinds": [
+            "table-values-partial"
+          ],
+          "tracer_open_end": "CDEMO-MENU-OPT OCCURS 12 but CDEMO-MENU-OPTIONS-DATA only initialises 11 occurrence(s)",
+          "evidence": [
+            "app/cbl/COMEN01C.cbl:127-129",
+            "app/cpy/COMEN02Y.cpy:21",
+            "app/cpy/COMEN02Y.cpy:94"
+          ],
+          "reasoning": "WS-OPTION is rejected when > CDEMO-MENU-OPT-COUNT (COMEN01C.cbl:127-129), which is PIC 9(02) VALUE 11 (COMEN02Y.cpy:21) with no other writer, so CDEMO-MENU-OPT-PGMNAME(WS-OPTION) only ever indexes occurrences 1..11 - the 11 initialised by CDEMO-MENU-OPTIONS-DATA; occurrence 12 can never be selected. Selectable names (tracer candidates, COMEN02Y.cpy option table): COACTUPC, COACTVWC, COBIL00C, COCRDLIC, COCRDSLC, COCRDUPC, COPAUS0C, CORPT00C, COTRN00C, COTRN01C, COTRN02C; COPAUS0C lives in module CDAUTHFR.",
+          "residual": "none for the program-name set; whether each option program is installed is checked at run time only for COPAUS0C (CICS INQUIRE, COMEN01C.cbl:148-150)"
+        }
+      ],
+      "open_ends": []
+    },
+    {
+      "site": "app/cbl/COMEN01C.cbl:201",
+      "program": "COMEN01C",
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-TO-PROGRAM",
+      "targets": [
+        {
+          "name": "COSGN00C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COMEN01C.cbl:97",
+            "app/cbl/COMEN01C.cbl:199"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        }
+      ],
+      "traversal": [
+        "app/cpy/COCOM01Y.cpy:24 10 CDEMO-TO-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of CARDDEMO-COMMAREA",
+        "app/cbl/COMEN01C.cbl:86 MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-TO-PROGRAM)",
+        "app/cbl/COMEN01C.cbl:67 CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COMEN01C.cbl:97 MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COMEN01C.cbl:199 MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM"
+      ],
+      "status": "partial",
+      "open_ends": [
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 16..24 of DFHCOMMAREA to the field(s) that produce CDEMO-TO-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        }
+      ]
+    },
+    {
+      "site": "app/cbl/CORPT00C.cbl:548",
+      "program": "CORPT00C",
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-TO-PROGRAM",
+      "targets": [
+        {
+          "name": "COMEN01C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/CORPT00C.cbl:188"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COSGN00C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/CORPT00C.cbl:173",
+            "app/cbl/CORPT00C.cbl:543"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        }
+      ],
+      "traversal": [
+        "app/cpy/COCOM01Y.cpy:24 10 CDEMO-TO-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of CARDDEMO-COMMAREA",
+        "app/cbl/CORPT00C.cbl:173 MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/CORPT00C.cbl:176 MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-TO-PROGRAM)",
+        "app/cbl/CORPT00C.cbl:155 CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/CORPT00C.cbl:188 MOVE 'COMEN01C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/CORPT00C.cbl:543 MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM"
+      ],
+      "status": "partial",
+      "open_ends": [
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 16..24 of DFHCOMMAREA to the field(s) that produce CDEMO-TO-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        }
+      ]
+    },
+    {
+      "site": "app/cbl/COTRN00C.cbl:192",
+      "program": "COTRN00C",
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-TO-PROGRAM",
+      "targets": [
+        {
+          "name": "COMEN01C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COTRN00C.cbl:123"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COSGN00C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COTRN00C.cbl:108",
+            "app/cbl/COTRN00C.cbl:513"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COTRN01C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COTRN00C.cbl:188"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        }
+      ],
+      "traversal": [
+        "app/cpy/COCOM01Y.cpy:24 10 CDEMO-TO-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of CARDDEMO-COMMAREA",
+        "app/cbl/COTRN00C.cbl:108 MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COTRN00C.cbl:111 MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-TO-PROGRAM)",
+        "app/cbl/COTRN00C.cbl:87 CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COTRN00C.cbl:123 MOVE 'COMEN01C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COTRN00C.cbl:188 MOVE 'COTRN01C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COTRN00C.cbl:513 MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM"
+      ],
+      "status": "partial",
+      "open_ends": [
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 16..24 of DFHCOMMAREA to the field(s) that produce CDEMO-TO-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        }
+      ]
+    },
+    {
+      "site": "app/cbl/COTRN00C.cbl:518",
+      "program": "COTRN00C",
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-TO-PROGRAM",
+      "targets": [
+        {
+          "name": "COMEN01C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COTRN00C.cbl:123"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COSGN00C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COTRN00C.cbl:108",
+            "app/cbl/COTRN00C.cbl:513"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COTRN01C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COTRN00C.cbl:188"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        }
+      ],
+      "traversal": [
+        "app/cpy/COCOM01Y.cpy:24 10 CDEMO-TO-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of CARDDEMO-COMMAREA",
+        "app/cbl/COTRN00C.cbl:108 MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COTRN00C.cbl:111 MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-TO-PROGRAM)",
+        "app/cbl/COTRN00C.cbl:87 CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COTRN00C.cbl:123 MOVE 'COMEN01C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COTRN00C.cbl:188 MOVE 'COTRN01C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COTRN00C.cbl:513 MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM"
+      ],
+      "status": "partial",
+      "open_ends": [
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 16..24 of DFHCOMMAREA to the field(s) that produce CDEMO-TO-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        }
+      ]
+    },
+    {
+      "site": "app/cbl/COTRN01C.cbl:205",
+      "program": "COTRN01C",
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-TO-PROGRAM",
+      "targets": [
+        {
+          "name": "COMEN01C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COTRN01C.cbl:117"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COSGN00C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COTRN01C.cbl:95",
+            "app/cbl/COTRN01C.cbl:200"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COTRN00C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COTRN01C.cbl:126"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COTRN01C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COTRN01C.cbl:36"
+          ],
+          "reasoning": "tracer candidate: VALUE clause of WS-PGMNAME"
+        }
+      ],
+      "traversal": [
+        "app/cpy/COCOM01Y.cpy:24 10 CDEMO-TO-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of CARDDEMO-COMMAREA",
+        "app/cbl/COTRN01C.cbl:95 MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COTRN01C.cbl:98 MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-TO-PROGRAM)",
+        "app/cbl/COTRN01C.cbl:78 CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COTRN01C.cbl:117 MOVE 'COMEN01C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COTRN01C.cbl:119 MOVE CDEMO-FROM-PROGRAM TO CDEMO-TO-PROGRAM",
+        "app/cpy/COCOM01Y.cpy:22 10 CDEMO-FROM-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 4..12 of CARDDEMO-COMMAREA",
+        "app/cbl/COTRN01C.cbl:98 MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-FROM-PROGRAM)",
+        "app/cbl/COTRN01C.cbl:78 CDEMO-FROM-PROGRAM occupies bytes 4..12 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COTRN01C.cbl:203 MOVE WS-PGMNAME TO CDEMO-FROM-PROGRAM",
+        "app/cbl/COTRN01C.cbl:36 05 WS-PGMNAME PIC X(08) \u2014 WORKING-STORAGE, bytes 0..8 of WS-VARIABLES",
+        "app/cbl/COTRN01C.cbl:36 VALUE 'COTRN01C'"
+      ],
+      "status": "partial",
+      "open_ends": [
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 16..24 of DFHCOMMAREA to the field(s) that produce CDEMO-TO-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        },
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 4..12 of DFHCOMMAREA to the field(s) that produce CDEMO-FROM-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        }
+      ]
+    },
+    {
+      "site": "app/cbl/COTRN02C.cbl:508",
+      "program": "COTRN02C",
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-TO-PROGRAM",
+      "targets": [
+        {
+          "name": "COMEN01C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COTRN02C.cbl:138"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COSGN00C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COTRN02C.cbl:116",
+            "app/cbl/COTRN02C.cbl:503"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COTRN02C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COTRN02C.cbl:36"
+          ],
+          "reasoning": "tracer candidate: VALUE clause of WS-PGMNAME"
+        }
+      ],
+      "traversal": [
+        "app/cpy/COCOM01Y.cpy:24 10 CDEMO-TO-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of CARDDEMO-COMMAREA",
+        "app/cbl/COTRN02C.cbl:116 MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COTRN02C.cbl:119 MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-TO-PROGRAM)",
+        "app/cbl/COTRN02C.cbl:99 CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COTRN02C.cbl:138 MOVE 'COMEN01C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COTRN02C.cbl:140 MOVE CDEMO-FROM-PROGRAM TO CDEMO-TO-PROGRAM",
+        "app/cpy/COCOM01Y.cpy:22 10 CDEMO-FROM-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 4..12 of CARDDEMO-COMMAREA",
+        "app/cbl/COTRN02C.cbl:119 MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-FROM-PROGRAM)",
+        "app/cbl/COTRN02C.cbl:99 CDEMO-FROM-PROGRAM occupies bytes 4..12 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COTRN02C.cbl:506 MOVE WS-PGMNAME TO CDEMO-FROM-PROGRAM",
+        "app/cbl/COTRN02C.cbl:36 05 WS-PGMNAME PIC X(08) \u2014 WORKING-STORAGE, bytes 0..8 of WS-VARIABLES",
+        "app/cbl/COTRN02C.cbl:36 VALUE 'COTRN02C'"
+      ],
+      "status": "partial",
+      "open_ends": [
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 16..24 of DFHCOMMAREA to the field(s) that produce CDEMO-TO-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        },
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 4..12 of DFHCOMMAREA to the field(s) that produce CDEMO-FROM-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        }
+      ]
+    },
+    {
+      "site": "app/cbl/COUSR00C.cbl:196",
+      "program": "COUSR00C",
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-TO-PROGRAM",
+      "targets": [
+        {
+          "name": "COADM01C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COUSR00C.cbl:126"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COSGN00C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COUSR00C.cbl:111",
+            "app/cbl/COUSR00C.cbl:509"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COUSR02C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COUSR00C.cbl:192"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COUSR03C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COUSR00C.cbl:202"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        }
+      ],
+      "traversal": [
+        "app/cpy/COCOM01Y.cpy:24 10 CDEMO-TO-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of CARDDEMO-COMMAREA",
+        "app/cbl/COUSR00C.cbl:111 MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COUSR00C.cbl:114 MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-TO-PROGRAM)",
+        "app/cbl/COUSR00C.cbl:90 CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COUSR00C.cbl:126 MOVE 'COADM01C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COUSR00C.cbl:192 MOVE 'COUSR02C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COUSR00C.cbl:202 MOVE 'COUSR03C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COUSR00C.cbl:509 MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM"
+      ],
+      "status": "partial",
+      "open_ends": [
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 16..24 of DFHCOMMAREA to the field(s) that produce CDEMO-TO-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        }
+      ]
+    },
+    {
+      "site": "app/cbl/COUSR00C.cbl:206",
+      "program": "COUSR00C",
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-TO-PROGRAM",
+      "targets": [
+        {
+          "name": "COADM01C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COUSR00C.cbl:126"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COSGN00C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COUSR00C.cbl:111",
+            "app/cbl/COUSR00C.cbl:509"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COUSR02C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COUSR00C.cbl:192"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COUSR03C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COUSR00C.cbl:202"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        }
+      ],
+      "traversal": [
+        "app/cpy/COCOM01Y.cpy:24 10 CDEMO-TO-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of CARDDEMO-COMMAREA",
+        "app/cbl/COUSR00C.cbl:111 MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COUSR00C.cbl:114 MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-TO-PROGRAM)",
+        "app/cbl/COUSR00C.cbl:90 CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COUSR00C.cbl:126 MOVE 'COADM01C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COUSR00C.cbl:192 MOVE 'COUSR02C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COUSR00C.cbl:202 MOVE 'COUSR03C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COUSR00C.cbl:509 MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM"
+      ],
+      "status": "partial",
+      "open_ends": [
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 16..24 of DFHCOMMAREA to the field(s) that produce CDEMO-TO-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        }
+      ]
+    },
+    {
+      "site": "app/cbl/COUSR00C.cbl:514",
+      "program": "COUSR00C",
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-TO-PROGRAM",
+      "targets": [
+        {
+          "name": "COADM01C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COUSR00C.cbl:126"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COSGN00C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COUSR00C.cbl:111",
+            "app/cbl/COUSR00C.cbl:509"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COUSR02C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COUSR00C.cbl:192"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COUSR03C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COUSR00C.cbl:202"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        }
+      ],
+      "traversal": [
+        "app/cpy/COCOM01Y.cpy:24 10 CDEMO-TO-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of CARDDEMO-COMMAREA",
+        "app/cbl/COUSR00C.cbl:111 MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COUSR00C.cbl:114 MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-TO-PROGRAM)",
+        "app/cbl/COUSR00C.cbl:90 CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COUSR00C.cbl:126 MOVE 'COADM01C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COUSR00C.cbl:192 MOVE 'COUSR02C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COUSR00C.cbl:202 MOVE 'COUSR03C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COUSR00C.cbl:509 MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM"
+      ],
+      "status": "partial",
+      "open_ends": [
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 16..24 of DFHCOMMAREA to the field(s) that produce CDEMO-TO-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        }
+      ]
+    },
+    {
+      "site": "app/cbl/COUSR01C.cbl:175",
+      "program": "COUSR01C",
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-TO-PROGRAM",
+      "targets": [
+        {
+          "name": "COADM01C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COUSR01C.cbl:94"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COSGN00C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COUSR01C.cbl:79",
+            "app/cbl/COUSR01C.cbl:168"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        }
+      ],
+      "traversal": [
+        "app/cpy/COCOM01Y.cpy:24 10 CDEMO-TO-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of CARDDEMO-COMMAREA",
+        "app/cbl/COUSR01C.cbl:79 MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COUSR01C.cbl:82 MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-TO-PROGRAM)",
+        "app/cbl/COUSR01C.cbl:63 CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COUSR01C.cbl:94 MOVE 'COADM01C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COUSR01C.cbl:168 MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM"
+      ],
+      "status": "partial",
+      "open_ends": [
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 16..24 of DFHCOMMAREA to the field(s) that produce CDEMO-TO-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        }
+      ]
+    },
+    {
+      "site": "app/cbl/COUSR02C.cbl:258",
+      "program": "COUSR02C",
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-TO-PROGRAM",
+      "targets": [
+        {
+          "name": "COADM01C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COUSR02C.cbl:114",
+            "app/cbl/COUSR02C.cbl:125"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COSGN00C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COUSR02C.cbl:91",
+            "app/cbl/COUSR02C.cbl:253"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COUSR02C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COUSR02C.cbl:36"
+          ],
+          "reasoning": "tracer candidate: VALUE clause of WS-PGMNAME"
+        }
+      ],
+      "traversal": [
+        "app/cpy/COCOM01Y.cpy:24 10 CDEMO-TO-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of CARDDEMO-COMMAREA",
+        "app/cbl/COUSR02C.cbl:91 MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COUSR02C.cbl:94 MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-TO-PROGRAM)",
+        "app/cbl/COUSR02C.cbl:74 CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COUSR02C.cbl:114 MOVE 'COADM01C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COUSR02C.cbl:116 MOVE CDEMO-FROM-PROGRAM TO CDEMO-TO-PROGRAM",
+        "app/cpy/COCOM01Y.cpy:22 10 CDEMO-FROM-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 4..12 of CARDDEMO-COMMAREA",
+        "app/cbl/COUSR02C.cbl:94 MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-FROM-PROGRAM)",
+        "app/cbl/COUSR02C.cbl:74 CDEMO-FROM-PROGRAM occupies bytes 4..12 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COUSR02C.cbl:256 MOVE WS-PGMNAME TO CDEMO-FROM-PROGRAM",
+        "app/cbl/COUSR02C.cbl:36 05 WS-PGMNAME PIC X(08) \u2014 WORKING-STORAGE, bytes 0..8 of WS-VARIABLES",
+        "app/cbl/COUSR02C.cbl:36 VALUE 'COUSR02C'"
+      ],
+      "status": "partial",
+      "open_ends": [
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 16..24 of DFHCOMMAREA to the field(s) that produce CDEMO-TO-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        },
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 4..12 of DFHCOMMAREA to the field(s) that produce CDEMO-FROM-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        }
+      ]
+    },
+    {
+      "site": "app/cbl/COUSR03C.cbl:205",
+      "program": "COUSR03C",
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-TO-PROGRAM",
+      "targets": [
+        {
+          "name": "COADM01C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COUSR03C.cbl:113",
+            "app/cbl/COUSR03C.cbl:124"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COSGN00C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COUSR03C.cbl:91",
+            "app/cbl/COUSR03C.cbl:200"
+          ],
+          "reasoning": "tracer candidate: MOVE literal to CDEMO-TO-PROGRAM"
+        },
+        {
+          "name": "COUSR03C",
+          "basis": "deterministic",
+          "in_inventory": true,
+          "evidence": [
+            "app/cbl/COUSR03C.cbl:36"
+          ],
+          "reasoning": "tracer candidate: VALUE clause of WS-PGMNAME"
+        }
+      ],
+      "traversal": [
+        "app/cpy/COCOM01Y.cpy:24 10 CDEMO-TO-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of CARDDEMO-COMMAREA",
+        "app/cbl/COUSR03C.cbl:91 MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COUSR03C.cbl:94 MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-TO-PROGRAM)",
+        "app/cbl/COUSR03C.cbl:74 CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COUSR03C.cbl:113 MOVE 'COADM01C' TO CDEMO-TO-PROGRAM",
+        "app/cbl/COUSR03C.cbl:115 MOVE CDEMO-FROM-PROGRAM TO CDEMO-TO-PROGRAM",
+        "app/cpy/COCOM01Y.cpy:22 10 CDEMO-FROM-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 4..12 of CARDDEMO-COMMAREA",
+        "app/cbl/COUSR03C.cbl:94 MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-FROM-PROGRAM)",
+        "app/cbl/COUSR03C.cbl:74 CDEMO-FROM-PROGRAM occupies bytes 4..12 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+        "app/cbl/COUSR03C.cbl:203 MOVE WS-PGMNAME TO CDEMO-FROM-PROGRAM",
+        "app/cbl/COUSR03C.cbl:36 05 WS-PGMNAME PIC X(08) \u2014 WORKING-STORAGE, bytes 0..8 of WS-VARIABLES",
+        "app/cbl/COUSR03C.cbl:36 VALUE 'COUSR03C'"
+      ],
+      "status": "partial",
+      "open_ends": [
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 16..24 of DFHCOMMAREA to the field(s) that produce CDEMO-TO-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        },
+        {
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "request": "Map bytes 4..12 of DFHCOMMAREA to the field(s) that produce CDEMO-FROM-PROGRAM. Worked so far (derived, not closed): DFHCOMMAREA is an unstructured byte array (LINKAGE 05 ... PIC X(01) OCCURS 1 TO 32767 DEPENDING ON EIBCALEN), so its bytes are whatever CARDDEMO-COMMAREA (COCOM01Y) the XCTLing caller passed; every writer of CDEMO-FROM-PROGRAM in the module writes its own program name (WS-PGMNAME / LIT-THISPGM VALUE clauses, e.g. app/cbl/COADM01C.cbl:36, app/cbl/COMEN01C.cbl:36, app/cbl/COTRN00C.cbl:36, app/cbl/COUSR00C.cbl:36, app/cbl/COACTUPC.cbl:533) or the literal COSGN00C. Closing needs the full online XCTL caller set per program (online.json), not yet enumerated for this site."
+        }
+      ]
+    }
+  ]
+}

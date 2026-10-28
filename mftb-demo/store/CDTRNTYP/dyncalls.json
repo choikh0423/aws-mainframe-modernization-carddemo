@@ -1,0 +1,487 @@
+{
+  "meta": {
+    "module": "CDTRNTYP",
+    "generated_at": "2026-10-28T13:46:00Z",
+    "tool": "mftb 0.2.3",
+    "inputs": {}
+  },
+  "summary": {
+    "sites": 3,
+    "resolved": 2,
+    "partial": 1
+  },
+  "sites": [
+    {
+      "program": "COTRTLIC",
+      "path": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl",
+      "line": 620,
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-TO-PROGRAM",
+      "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:620",
+      "status": "resolved",
+      "candidates": [
+        {
+          "name": "COADM01C",
+          "in_inventory": false,
+          "evidence": [
+            {
+              "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:47",
+              "how": "VALUE clause of LIT-ADMINPGM"
+            }
+          ]
+        },
+        {
+          "name": "COTRTLIC",
+          "in_inventory": true,
+          "evidence": [
+            {
+              "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:43",
+              "how": "VALUE clause of LIT-THISPGM"
+            }
+          ]
+        },
+        {
+          "name": "COTRTUPC",
+          "in_inventory": true,
+          "evidence": [
+            {
+              "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:50",
+              "how": "VALUE clause of LIT-ADDTPGM"
+            }
+          ]
+        }
+      ],
+      "open_ends": [],
+      "trace": [
+        {
+          "depth": 0,
+          "program": "COTRTLIC",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "definition",
+          "class": "DET",
+          "detail": "10 CDEMO-TO-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 70..78 of DCLTRANSACTION-TYPE",
+          "source": "app/cpy/COCOM01Y.cpy:24"
+        },
+        {
+          "depth": 1,
+          "program": "COTRTLIC",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE LIT-ADMINPGM TO CDEMO-TO-PROGRAM",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:603"
+        },
+        {
+          "depth": 2,
+          "program": "COTRTLIC",
+          "item": "LIT-ADMINPGM",
+          "kind": "definition",
+          "class": "DET",
+          "detail": "05 LIT-ADMINPGM PIC X(8) \u2014 WORKING-STORAGE, bytes 26..34 of WS-CONSTANTS",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:47"
+        },
+        {
+          "depth": 3,
+          "program": "COTRTLIC",
+          "item": "LIT-ADMINPGM",
+          "kind": "value-clause",
+          "class": "DET",
+          "detail": "VALUE 'COADM01C'",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:47"
+        },
+        {
+          "depth": 1,
+          "program": "COTRTLIC",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE CDEMO-FROM-PROGRAM TO CDEMO-TO-PROGRAM",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:605"
+        },
+        {
+          "depth": 2,
+          "program": "COTRTLIC",
+          "item": "CDEMO-FROM-PROGRAM",
+          "kind": "definition",
+          "class": "DET",
+          "detail": "10 CDEMO-FROM-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 58..66 of DCLTRANSACTION-TYPE",
+          "source": "app/cpy/COCOM01Y.cpy:22"
+        },
+        {
+          "depth": 3,
+          "program": "COTRTLIC",
+          "item": "CDEMO-FROM-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE LIT-THISPGM TO CDEMO-FROM-PROGRAM",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:519"
+        },
+        {
+          "depth": 4,
+          "program": "COTRTLIC",
+          "item": "LIT-THISPGM",
+          "kind": "definition",
+          "class": "DET",
+          "detail": "05 LIT-THISPGM PIC X(8) \u2014 WORKING-STORAGE, bytes 0..8 of WS-CONSTANTS",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:43"
+        },
+        {
+          "depth": 5,
+          "program": "COTRTLIC",
+          "item": "LIT-THISPGM",
+          "kind": "value-clause",
+          "class": "DET",
+          "detail": "VALUE 'COTRTLIC'",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:43"
+        },
+        {
+          "depth": 3,
+          "program": "COTRTLIC",
+          "item": "CDEMO-FROM-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE LIT-THISPGM TO CDEMO-FROM-PROGRAM",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:609"
+        },
+        {
+          "depth": 4,
+          "program": "COTRTLIC",
+          "item": "LIT-THISPGM",
+          "kind": "cycle",
+          "class": "DET",
+          "detail": "LIT-THISPGM already traced above",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:43"
+        },
+        {
+          "depth": 3,
+          "program": "COTRTLIC",
+          "item": "CDEMO-FROM-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE LIT-THISPGM TO CDEMO-FROM-PROGRAM",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:633"
+        },
+        {
+          "depth": 4,
+          "program": "COTRTLIC",
+          "item": "LIT-THISPGM",
+          "kind": "cycle",
+          "class": "DET",
+          "detail": "LIT-THISPGM already traced above",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:43"
+        },
+        {
+          "depth": 3,
+          "program": "COTRTLIC",
+          "item": "CDEMO-FROM-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE LIT-THISPGM TO CDEMO-FROM-PROGRAM",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:704"
+        },
+        {
+          "depth": 4,
+          "program": "COTRTLIC",
+          "item": "LIT-THISPGM",
+          "kind": "cycle",
+          "class": "DET",
+          "detail": "LIT-THISPGM already traced above",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:43"
+        },
+        {
+          "depth": 3,
+          "program": "COTRTLIC",
+          "item": "CDEMO-FROM-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE LIT-THISPGM TO CDEMO-FROM-PROGRAM",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:747"
+        },
+        {
+          "depth": 4,
+          "program": "COTRTLIC",
+          "item": "LIT-THISPGM",
+          "kind": "cycle",
+          "class": "DET",
+          "detail": "LIT-THISPGM already traced above",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:43"
+        },
+        {
+          "depth": 3,
+          "program": "COTRTLIC",
+          "item": "CDEMO-FROM-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE LIT-THISPGM TO CDEMO-FROM-PROGRAM",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:884"
+        },
+        {
+          "depth": 4,
+          "program": "COTRTLIC",
+          "item": "LIT-THISPGM",
+          "kind": "cycle",
+          "class": "DET",
+          "detail": "LIT-THISPGM already traced above",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:43"
+        },
+        {
+          "depth": 3,
+          "program": "COTRTLIC",
+          "item": "CDEMO-FROM-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE LIT-THISPGM TO CDEMO-FROM-PROGRAM",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:901"
+        },
+        {
+          "depth": 4,
+          "program": "COTRTLIC",
+          "item": "LIT-THISPGM",
+          "kind": "cycle",
+          "class": "DET",
+          "detail": "LIT-THISPGM already traced above",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:43"
+        },
+        {
+          "depth": 1,
+          "program": "COTRTLIC",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE LIT-ADDTPGM TO CDEMO-TO-PROGRAM",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:638"
+        },
+        {
+          "depth": 2,
+          "program": "COTRTLIC",
+          "item": "LIT-ADDTPGM",
+          "kind": "definition",
+          "class": "DET",
+          "detail": "05 LIT-ADDTPGM PIC X(8) \u2014 WORKING-STORAGE, bytes 45..53 of WS-CONSTANTS",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:50"
+        },
+        {
+          "depth": 3,
+          "program": "COTRTLIC",
+          "item": "LIT-ADDTPGM",
+          "kind": "value-clause",
+          "class": "DET",
+          "detail": "VALUE 'COTRTUPC'",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:50"
+        }
+      ]
+    },
+    {
+      "program": "COTRTLIC",
+      "path": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl",
+      "line": 648,
+      "construct": "CICS-XCTL",
+      "variable": "LIT-ADDTPGM",
+      "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:648",
+      "status": "resolved",
+      "candidates": [
+        {
+          "name": "COTRTUPC",
+          "in_inventory": true,
+          "evidence": [
+            {
+              "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:50",
+              "how": "VALUE clause of LIT-ADDTPGM"
+            }
+          ]
+        }
+      ],
+      "open_ends": [],
+      "trace": [
+        {
+          "depth": 0,
+          "program": "COTRTLIC",
+          "item": "LIT-ADDTPGM",
+          "kind": "definition",
+          "class": "DET",
+          "detail": "05 LIT-ADDTPGM PIC X(8) \u2014 WORKING-STORAGE, bytes 45..53 of WS-CONSTANTS",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:50"
+        },
+        {
+          "depth": 1,
+          "program": "COTRTLIC",
+          "item": "LIT-ADDTPGM",
+          "kind": "value-clause",
+          "class": "DET",
+          "detail": "VALUE 'COTRTUPC'",
+          "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:50"
+        }
+      ]
+    },
+    {
+      "program": "COTRTUPC",
+      "path": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl",
+      "line": 457,
+      "construct": "CICS-XCTL",
+      "variable": "CDEMO-TO-PROGRAM",
+      "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:457",
+      "status": "partial",
+      "candidates": [
+        {
+          "name": "COADM01C",
+          "in_inventory": false,
+          "evidence": [
+            {
+              "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:209",
+              "how": "VALUE clause of LIT-ADMINPGM"
+            }
+          ]
+        },
+        {
+          "name": "COTRTUPC",
+          "in_inventory": true,
+          "evidence": [
+            {
+              "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:201",
+              "how": "VALUE clause of LIT-THISPGM"
+            }
+          ]
+        }
+      ],
+      "open_ends": [
+        {
+          "program": "COTRTUPC",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "detail": "CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+          "request": "Map bytes 16..24 of DFHCOMMAREA to the field(s) that produce CDEMO-TO-PROGRAM",
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:340"
+        },
+        {
+          "program": "COTRTUPC",
+          "item": "CDEMO-FROM-PROGRAM",
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "detail": "CDEMO-FROM-PROGRAM occupies bytes 4..12 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+          "request": "Map bytes 4..12 of DFHCOMMAREA to the field(s) that produce CDEMO-FROM-PROGRAM",
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:340"
+        }
+      ],
+      "trace": [
+        {
+          "depth": 0,
+          "program": "COTRTUPC",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "definition",
+          "class": "DET",
+          "detail": "10 CDEMO-TO-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 16..24 of CARDDEMO-COMMAREA",
+          "source": "app/cpy/COCOM01Y.cpy:24"
+        },
+        {
+          "depth": 1,
+          "program": "COTRTUPC",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE DFHCOMMAREA(1:LENGTH OF CARDDEMO-COMMAREA) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-TO-PROGRAM)",
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:376"
+        },
+        {
+          "depth": 2,
+          "program": "COTRTUPC",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "detail": "CDEMO-TO-PROGRAM occupies bytes 16..24 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:340"
+        },
+        {
+          "depth": 1,
+          "program": "COTRTUPC",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE LIT-ADMINPGM TO CDEMO-TO-PROGRAM",
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:440"
+        },
+        {
+          "depth": 2,
+          "program": "COTRTUPC",
+          "item": "LIT-ADMINPGM",
+          "kind": "definition",
+          "class": "DET",
+          "detail": "05 LIT-ADMINPGM PIC X(8) \u2014 WORKING-STORAGE, bytes 27..35 of WS-LITERALS",
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:209"
+        },
+        {
+          "depth": 3,
+          "program": "COTRTUPC",
+          "item": "LIT-ADMINPGM",
+          "kind": "value-clause",
+          "class": "DET",
+          "detail": "VALUE 'COADM01C'",
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:209"
+        },
+        {
+          "depth": 1,
+          "program": "COTRTUPC",
+          "item": "CDEMO-TO-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE CDEMO-FROM-PROGRAM TO CDEMO-TO-PROGRAM",
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:442"
+        },
+        {
+          "depth": 2,
+          "program": "COTRTUPC",
+          "item": "CDEMO-FROM-PROGRAM",
+          "kind": "definition",
+          "class": "DET",
+          "detail": "10 CDEMO-FROM-PROGRAM PIC X(08) \u2014 WORKING-STORAGE, bytes 4..12 of CARDDEMO-COMMAREA",
+          "source": "app/cpy/COCOM01Y.cpy:22"
+        },
+        {
+          "depth": 3,
+          "program": "COTRTUPC",
+          "item": "CDEMO-FROM-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE DFHCOMMAREA(1:LENGTH OF CARDDEMO-COMMAREA) TO CARDDEMO-COMMAREA (CARDDEMO-COMMAREA encloses CDEMO-FROM-PROGRAM)",
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:376"
+        },
+        {
+          "depth": 4,
+          "program": "COTRTUPC",
+          "item": "CDEMO-FROM-PROGRAM",
+          "kind": "layout-mismatch",
+          "class": "GEN",
+          "detail": "CDEMO-FROM-PROGRAM occupies bytes 4..12 of CARDDEMO-COMMAREA but DFHCOMMAREA has no field on exactly those bytes",
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:340"
+        },
+        {
+          "depth": 3,
+          "program": "COTRTUPC",
+          "item": "CDEMO-FROM-PROGRAM",
+          "kind": "move-item",
+          "class": "DET",
+          "detail": "MOVE LIT-THISPGM TO CDEMO-FROM-PROGRAM",
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:446"
+        },
+        {
+          "depth": 4,
+          "program": "COTRTUPC",
+          "item": "LIT-THISPGM",
+          "kind": "definition",
+          "class": "DET",
+          "detail": "05 LIT-THISPGM PIC X(8) \u2014 WORKING-STORAGE, bytes 0..8 of WS-LITERALS",
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:201"
+        },
+        {
+          "depth": 5,
+          "program": "COTRTUPC",
+          "item": "LIT-THISPGM",
+          "kind": "value-clause",
+          "class": "DET",
+          "detail": "VALUE 'COTRTUPC'",
+          "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:201"
+        }
+      ]
+    }
+  ]
+}

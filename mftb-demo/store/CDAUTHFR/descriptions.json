@@ -1,0 +1,153 @@
+{
+  "meta": {
+    "module": "CDAUTHFR",
+    "generated_at": "2026-10-28T13:46:00Z",
+    "tool": "mftb 0.2.3",
+    "inputs": [
+      "programs.json",
+      "jobs.json"
+    ]
+  },
+  "author": "agent",
+  "summary": {
+    "subjects": 13,
+    "written": 0,
+    "unknown": 13,
+    "by_kind": {
+      "program": 8,
+      "jcl": 5,
+      "proc": 0
+    },
+    "with_key_points": 0,
+    "overviews": 1,
+    "overviews_written": 0
+  },
+  "overviews": [
+    {
+      "kind": "module",
+      "name": "CDAUTHFR",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    }
+  ],
+  "descriptions": [
+    {
+      "kind": "program",
+      "name": "CBPAUP0C",
+      "path": "app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COPAUA0C",
+      "path": "app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COPAUS0C",
+      "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COPAUS1C",
+      "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COPAUS2C",
+      "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "DBUNLDGS",
+      "path": "app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "PAUDBLOD",
+      "path": "app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "PAUDBUNL",
+      "path": "app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "CBPAUP0J",
+      "path": "app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "DBPAUTP0",
+      "path": "app/app-authorization-ims-db2-mq/jcl/DBPAUTP0.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "LOADPADB",
+      "path": "app/app-authorization-ims-db2-mq/jcl/LOADPADB.JCL",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "UNLDGSAM",
+      "path": "app/app-authorization-ims-db2-mq/jcl/UNLDGSAM.JCL",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "UNLDPADB",
+      "path": "app/app-authorization-ims-db2-mq/jcl/UNLDPADB.JCL",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    }
+  ]
+}
