@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DAILY-TransactionBackup 배치 체인 분석 (Control-M)</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #fff; --ink: #1f2933; --muted: #5f6b7a; --line: #d9dee5;
+    --accent: #1f5fbf; --accent-soft: #e8f0fc; --ok: #1d7a46; --ok-soft: #e5f4ec;
+    --warn: #a15c00; --warn-soft: #fff4e0; --neutral-soft: #f0f2f5;
+    --c1: #c0392b; --c2: #1f5fbf; --c3: #7a5af8; --c4: #1d7a46;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.65 "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", "Segoe UI", system-ui, sans-serif; }
+  main { max-width: 1120px; margin: 0 auto; padding: 32px 24px 64px; }
+  header { border-bottom: 3px solid var(--accent); padding-bottom: 16px; margin-bottom: 28px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { font-size: 20px; margin: 40px 0 12px; padding-left: 10px; border-left: 4px solid var(--accent); }
+  h3 { margin: 0; font-size: 17px; }
+  .job-head h3.mono { font-size: 17px; }
+  p { margin: 8px 0; }
+  .sub { color: var(--muted); margin: 0; }
+  code, .mono { font-family: "SFMono-Regular", Consolas, "D2Coding", "Liberation Mono", monospace; font-size: 13px; }
+  code { background: var(--neutral-soft); border-radius: 4px; padding: 1px 5px; overflow-wrap: anywhere; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .pill { background: var(--accent-soft); color: var(--accent); border-radius: 999px; padding: 2px 12px; font-size: 13px; font-weight: 600; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; }
+  .pattern { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+  .pattern div { border-radius: 8px; padding: 10px 12px; background: var(--neutral-soft); font-size: 14px; }
+  .pattern b { display: block; font-size: 15px; }
+  .diagram { overflow-x: auto; }
+  .diagram svg { display: block; min-width: 980px; width: 100%; height: auto; }
+  .legend { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .job { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .job-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px; color: #fff; }
+  .job-head .no { background: rgba(255,255,255,.25); border-radius: 50%; width: 26px; height: 26px;
+    display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+  .job-head small { margin-left: auto; opacity: .9; }
+  .job table { margin: 0; border: 0; border-radius: 0; }
+  .job td:first-child { width: 34%; color: var(--muted); white-space: nowrap; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+  th { background: var(--neutral-soft); font-size: 13px; color: var(--muted); font-weight: 700; }
+  tr:last-child td { border-bottom: 0; }
+  .plus { color: var(--ok); font-weight: 700; }
+  .minus { color: var(--c1); font-weight: 700; }
+  .none { color: var(--muted); }
+  .months { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px; }
+  .months span { text-align: center; border-radius: 6px; padding: 6px 0; background: var(--ok-soft); color: var(--ok); font-weight: 700; font-size: 13px; }
+  .attr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
+  .attr { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .attr .k { font-size: 12px; color: var(--muted); font-family: Consolas, monospace; }
+  .attr .v { font-size: 22px; font-weight: 700; margin: 2px 0; }
+  .attr .d { font-size: 13px; color: var(--muted); }
+  .note { border-left: 4px solid var(--warn); background: var(--warn-soft); border-radius: 6px; padding: 10px 14px; margin: 10px 0; font-size: 14px; }
+  .info { border-left: 4px solid var(--accent); background: var(--accent-soft); border-radius: 6px; padding: 10px 14px; margin: 10px 0; font-size: 14px; }
+  ul { margin: 6px 0; padding-left: 22px; }
+  footer { margin-top: 40px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 12px; }
+  @media (max-width: 820px) { .cards, .attr-grid, .pattern { grid-template-columns: 1fr; } }
+  @media print { body { background: #fff; } .job, .panel, table { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <h1>DAILY-TransactionBackup 배치 체인 분석</h1>
+  <p class="sub">Control-M 폴더 정의 기반 일일 거래 백업 배치 체인 — CardDemo 메인프레임 애플리케이션</p>
+  <div class="meta">
+    <span class="pill">FOLDER_NAME = DAILY-TransactionBackup</span>
+    <span class="pill">APPLICATION = CARD-DEMO</span>
+    <span class="pill">SUB_APPLICATION = CTRLM</span>
+    <span class="pill">작업 4개</span>
+  </div>
+  <p class="sub" style="margin-top:10px">출처: <code>app/scheduler/CardDemo.controlm</code> (3–25행), <code>app/jcl/CLOSEFIL.jcl</code>, <code>app/jcl/TRANBKP.jcl</code>, <code>app/jcl/WAITSTEP.jcl</code>, <code>app/jcl/OPENFIL.jcl</code>, <code>app/proc/REPROC.prc</code>, <code>app/cbl/COBSWAIT.cbl</code>, <code>README.md</code></p>
+</header>
+
+<section>
+  <h2>1. 체인 개요 — 처리 패턴</h2>
+  <div class="panel">
+    <p>이 체인은 <b>온라인(CICS)에서 사용 중인 파일을 닫고 → 거래 파일을 백업하고 → 잠시 대기한 뒤 → 다시 CICS에 파일을 열어주는</b> 전형적인 메인프레임 일일 백업 패턴입니다.
+       CICS 리전(<code>CICSAWSA</code>)이 VSAM 파일을 열어 둔 상태에서는 배치 작업이 해당 파일을 안전하게 복사·삭제·재정의할 수 없기 때문에, 백업 전후로 파일을 닫고 여는 단계가 반드시 필요합니다.</p>
+    <div class="pattern">
+      <div style="border-top:4px solid var(--c1)"><b>① CICS 파일 닫기</b>CLOSEFIL — 온라인 접근 차단</div>
+      <div style="border-top:4px solid var(--c2)"><b>② 거래 백업</b>TRANBKP — 거래 마스터를 GDG로 복사 후 재생성</div>
+      <div style="border-top:4px solid var(--c3)"><b>③ 대기</b>WAITSTEP — 지정 시간(36초) 대기</div>
+      <div style="border-top:4px solid var(--c4)"><b>④ CICS 파일 다시 열기</b>OPENFIL — 온라인 서비스 재개</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>2. 체인 흐름도</h2>
+  <div class="panel diagram">
+    <svg viewBox="0 0 1000 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CLOSEFIL에서 TRANBKP, WAITSTEP, OPENFIL 순서로 실행되는 흐름도">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#5f6b7a"/>
+        </marker>
+        <filter id="sh" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity=".15"/></filter>
+      </defs>
+      <style>
+        .t { font: 700 17px Consolas, "D2Coding", monospace; fill: #fff; }
+        .s { font: 13px "Malgun Gothic", "Noto Sans KR", sans-serif; fill: #fff; }
+        .c { font: 11.5px Consolas, monospace; fill: #1f2933; }
+        .k { font: 12px "Malgun Gothic", "Noto Sans KR", sans-serif; fill: #5f6b7a; }
+        .start { font: 700 12px "Malgun Gothic", "Noto Sans KR", sans-serif; fill: #5f6b7a; }
+      </style>
+
+      <!-- start -->
+      <text x="20" y="22" class="start">폴더 주문(ODATE) · 23:00까지 제출 가능</text>
+
+      <!-- boxes -->
+      <g filter="url(#sh)">
+        <rect x="20"  y="40" width="170" height="92" rx="10" fill="#c0392b"/>
+        <rect x="280" y="40" width="170" height="92" rx="10" fill="#1f5fbf"/>
+        <rect x="540" y="40" width="170" height="92" rx="10" fill="#7a5af8"/>
+        <rect x="800" y="40" width="170" height="92" rx="10" fill="#1d7a46"/>
+      </g>
+      <text x="105" y="70"  text-anchor="middle" class="t">① CLOSEFIL</text>
+      <text x="105" y="92"  text-anchor="middle" class="s">CICS 파일 닫기</text>
+      <text x="105" y="114" text-anchor="middle" class="s">PGM=SDSF (CEMT CLO)</text>
+
+      <text x="365" y="70"  text-anchor="middle" class="t">② TRANBKP</text>
+      <text x="365" y="92"  text-anchor="middle" class="s">거래 DB 백업</text>
+      <text x="365" y="114" text-anchor="middle" class="s">IDCAMS (REPRO/DEL/DEF)</text>
+
+      <text x="625" y="70"  text-anchor="middle" class="t">③ WAITSTEP</text>
+      <text x="625" y="92"  text-anchor="middle" class="s">지정 시간 대기</text>
+      <text x="625" y="114" text-anchor="middle" class="s">PGM=COBSWAIT</text>
+
+      <text x="885" y="70"  text-anchor="middle" class="t">④ OPENFIL</text>
+      <text x="885" y="92"  text-anchor="middle" class="s">CICS 파일 다시 열기</text>
+      <text x="885" y="114" text-anchor="middle" class="s">PGM=SDSF (CEMT OPE)</text>
+
+      <!-- arrows -->
+      <line x1="192" y1="86" x2="276" y2="86" stroke="#5f6b7a" stroke-width="2.5" marker-end="url(#arr)"/>
+      <line x1="452" y1="86" x2="536" y2="86" stroke="#5f6b7a" stroke-width="2.5" marker-end="url(#arr)"/>
+      <line x1="712" y1="86" x2="796" y2="86" stroke="#5f6b7a" stroke-width="2.5" marker-end="url(#arr)"/>
+
+      <!-- condition labels -->
+      <g>
+        <rect x="80"  y="152" width="310" height="44" rx="6" fill="#f0f2f5" stroke="#d9dee5"/>
+        <text x="235" y="170" text-anchor="middle" class="k">조건 (CLOSEFIL → TRANBKP)</text>
+        <text x="235" y="187" text-anchor="middle" class="c">DAILY-TransactionBackup-CLOSEFIL</text>
+        <line x1="234" y1="88" x2="234" y2="150" stroke="#c3cad3" stroke-dasharray="4 3"/>
+
+        <rect x="340" y="204" width="310" height="44" rx="6" fill="#f0f2f5" stroke="#d9dee5"/>
+        <text x="495" y="222" text-anchor="middle" class="k">조건 (TRANBKP → WAITSTEP)</text>
+        <text x="495" y="239" text-anchor="middle" class="c">DAILY-TransactionBackup-TRANBKP</text>
+        <line x1="494" y1="88" x2="494" y2="202" stroke="#c3cad3" stroke-dasharray="4 3"/>
+
+        <rect x="600" y="152" width="310" height="44" rx="6" fill="#f0f2f5" stroke="#d9dee5"/>
+        <text x="755" y="170" text-anchor="middle" class="k">조건 (WAITSTEP → OPENFIL)</text>
+        <text x="755" y="187" text-anchor="middle" class="c">DAILY-TransactionBackup-WAITSTEP</text>
+        <line x1="754" y1="88" x2="754" y2="150" stroke="#c3cad3" stroke-dasharray="4 3"/>
+      </g>
+    </svg>
+    <p class="legend">화살표 = 선행 작업이 정상 종료되면 OUTCOND(+)를 추가하고, 후속 작업은 해당 조건을 INCOND로 기다립니다. 모든 조건은 <code>ODATE="ODAT"</code>(같은 주문일) 기준입니다.</p>
+  </div>
+</section>
+
+<section>
+  <h2>3. 작업별 상세</h2>
+  <div class="cards">
+
+    <article class="job">
+      <div class="job-head" style="background:var(--c1)"><span class="no">1</span><h3 class="mono">CLOSEFIL</h3><small>JOBISN=1</small></div>
+      <table>
+        <tr><td>JOBNAME</td><td><code>CLOSEFIL</code></td></tr>
+        <tr><td>MEMNAME</td><td><code>CLOSEFIL</code></td></tr>
+        <tr><td>DESCRIPTION</td><td><code>DAILY CLOSEFIL</code></td></tr>
+        <tr><td>JCL 파일</td><td><code>app/jcl/CLOSEFIL.jcl</code><br><span class="none">JOB 카드: 'Close files in CICS'</span></td></tr>
+        <tr><td>목적 (README)</td><td>CICS가 열어 둔 파일을 닫음 (Closes files opened by CICS)</td></tr>
+        <tr><td>실행 프로그램</td><td>스텝 <code>CLCIFIL</code> · <code>PGM=SDSF</code> — COBOL 프로그램 없음<br>
+          SDSF 콘솔 명령으로 <code>/F CICSAWSA,'CEMT SET FIL(...) CLO'</code> 실행</td></tr>
+        <tr><td>대상 CICS 파일</td><td><code>TRANSACT</code> <code>CCXREF</code> <code>ACCTDAT</code> <code>CXACAIX</code> <code>USRSEC</code></td></tr>
+      </table>
+    </article>
+
+    <article class="job">
+      <div class="job-head" style="background:var(--c2)"><span class="no">2</span><h3 class="mono">TRANBKP</h3><small>JOBISN=2</small></div>
+      <table>
+        <tr><td>JOBNAME</td><td><code>TRANBKP</code></td></tr>
+        <tr><td>MEMNAME</td><td><code>TRANBKP</code></td></tr>
+        <tr><td>DESCRIPTION</td><td><code>DAILY TRANBKP</code></td></tr>
+        <tr><td>JCL 파일</td><td><code>app/jcl/TRANBKP.jcl</code><br><span class="none">JOB 카드: 'REPRO and Delete Transaction Master'</span></td></tr>
+        <tr><td>목적 (README)</td><td>거래(Transaction) 데이터베이스 백업 (Backup Transaction database)</td></tr>
+        <tr><td>실행 프로그램</td><td><code>IDCAMS</code> 유틸리티 — COBOL 프로그램 없음
+          <ul>
+            <li><code>STEP05R</code>: <code>PROC=REPROC</code> → <code>IDCAMS REPRO</code> (<code>CNTL(REPROCT)</code>)<br>
+              <code>TRANSACT.VSAM.KSDS</code> → <code>TRANSACT.BKUP(+1)</code> GDG 신규 세대</li>
+            <li><code>STEP05</code>: <code>IDCAMS DELETE</code> — KSDS 클러스터 및 AIX 삭제</li>
+            <li><code>STEP10</code>: <code>IDCAMS DEFINE CLUSTER</code> (<code>COND=(4,LT)</code>) — 빈 KSDS 재정의 (KEYS(16 0), RECORDSIZE(350 350))</li>
+          </ul></td></tr>
+      </table>
+    </article>
+
+    <article class="job">
+      <div class="job-head" style="background:var(--c3)"><span class="no">3</span><h3 class="mono">WAITSTEP</h3><small>JOBISN=3</small></div>
+      <table>
+        <tr><td>JOBNAME</td><td><code>WAITSTEP</code></td></tr>
+        <tr><td>MEMNAME</td><td><code>WAITSTEP</code></td></tr>
+        <tr><td>DESCRIPTION</td><td><code>DAILY WAITSTEP</code></td></tr>
+        <tr><td>JCL 파일</td><td><code>app/jcl/WAITSTEP.jcl</code><br><span class="none">JOB 카드: 'WAIT STEP'</span></td></tr>
+        <tr><td>목적 (README)</td><td>지정된 시간 동안 작업을 대기시킴 (Defines a step to wait job for given time)</td></tr>
+        <tr><td>실행 프로그램</td><td>스텝 <code>WAIT</code> · <code>PGM=COBSWAIT</code> — <b>COBOL 프로그램</b> <code>app/cbl/COBSWAIT.cbl</code><br>
+          SYSIN 값을 <code>ACCEPT</code> 후 <code>CALL 'MVSWAIT'</code> 호출<br>
+          SYSIN = <code>00003600</code> (센티초) → <b>36초</b> 대기</td></tr>
+        <tr><td>STEPLIB</td><td><code>AWS.M2.CARDDEMO.LOADLIB</code></td></tr>
+      </table>
+    </article>
+
+    <article class="job">
+      <div class="job-head" style="background:var(--c4)"><span class="no">4</span><h3 class="mono">OPENFIL</h3><small>JOBISN=4</small></div>
+      <table>
+        <tr><td>JOBNAME</td><td><code>OPENFIL</code></td></tr>
+        <tr><td>MEMNAME</td><td><code>OPENFIL</code></td></tr>
+        <tr><td>DESCRIPTION</td><td><code>DAILY OPENFIL</code></td></tr>
+        <tr><td>JCL 파일</td><td><code>app/jcl/OPENFIL.jcl</code><br><span class="none">JOB 카드: 'Open files in CICS'</span></td></tr>
+        <tr><td>목적 (README)</td><td>CICS에서 파일을 다시 사용할 수 있게 함 (Makes files available to CICS)</td></tr>
+        <tr><td>실행 프로그램</td><td>스텝 <code>OPCIFIL</code> · <code>PGM=SDSF</code> — COBOL 프로그램 없음<br>
+          SDSF 콘솔 명령으로 <code>/F CICSAWSA,'CEMT SET FIL(...) OPE'</code> 실행</td></tr>
+        <tr><td>대상 CICS 파일</td><td><code>TRANSACT</code> <code>CCXREF</code> <code>ACCTDAT</code> <code>CXACAIX</code> <code>USRSEC</code></td></tr>
+      </table>
+    </article>
+
+  </div>
+</section>
+
+<section>
+  <h2>4. 의존성 조건 (INCOND / OUTCOND)</h2>
+  <table>
+    <thead>
+      <tr><th>순서</th><th>작업</th><th>INCOND (선행 조건 대기)</th><th>OUTCOND (조건 추가 <span class="plus">+</span> / 삭제 <span class="minus">−</span>)</th><th>ODATE</th><th>AND_OR</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td><code>CLOSEFIL</code></td><td class="none">없음 — 체인의 시작 작업</td>
+          <td><span class="plus">+</span> <code>DAILY-TransactionBackup-CLOSEFIL</code></td><td><code>ODAT</code></td><td class="none">—</td></tr>
+      <tr><td>2</td><td><code>TRANBKP</code></td><td><code>DAILY-TransactionBackup-CLOSEFIL</code></td>
+          <td><span class="minus">−</span> <code>DAILY-TransactionBackup-CLOSEFIL</code><br><span class="plus">+</span> <code>DAILY-TransactionBackup-TRANBKP</code></td><td><code>ODAT</code></td><td><code>A</code></td></tr>
+      <tr><td>3</td><td><code>WAITSTEP</code></td><td><code>DAILY-TransactionBackup-TRANBKP</code></td>
+          <td><span class="minus">−</span> <code>DAILY-TransactionBackup-TRANBKP</code><br><span class="plus">+</span> <code>DAILY-TransactionBackup-WAITSTEP</code></td><td><code>ODAT</code></td><td><code>A</code></td></tr>
+      <tr><td>4</td><td><code>OPENFIL</code></td><td><code>DAILY-TransactionBackup-WAITSTEP</code></td>
+          <td><span class="minus">−</span> <code>DAILY-TransactionBackup-WAITSTEP</code><br><span class="none">(추가 조건 없음 — 체인 종료)</span></td><td><code>ODAT</code></td><td><code>A</code></td></tr>
+    </tbody>
+  </table>
+  <div class="info">
+    <ul>
+      <li><b>ODATE="ODAT"</b>: 조건은 작업이 주문된 날짜(Order Date)로 생성·확인됩니다. 따라서 같은 날 주문된 체인 안에서만 조건이 연결되며, 전날 남은 조건으로 오늘 작업이 실행되지 않습니다.</li>
+      <li><b>AND_OR="A"</b>: INCOND를 AND로 결합합니다. 각 작업의 INCOND가 하나뿐이므로 실질적으로 “선행 작업 조건이 존재해야 실행”을 의미합니다.</li>
+      <li><b>SIGN="+"/"−"</b>: 작업이 정상 종료되면 다음 작업용 조건을 <b>추가(+)</b>하고, 자신이 소비한 입력 조건은 <b>삭제(−)</b>해서 같은 조건으로 재실행되는 것을 막습니다. 마지막 OPENFIL은 입력 조건만 삭제하여 체인을 정리합니다.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>5. 스케줄 속성</h2>
+  <p>네 작업 모두 동일한 스케줄 속성을 가집니다.</p>
+  <div class="attr-grid">
+    <div class="attr"><div class="k">DAYS</div><div class="v">ALL</div><div class="d">매일 실행 (DAYS_AND_OR="O")</div></div>
+    <div class="attr"><div class="k">TIMETO</div><div class="v">23:00</div><div class="d">제출 가능 시간 상한 — 23:00 이후에는 제출되지 않음 (TIMEFROM 미지정)</div></div>
+    <div class="attr"><div class="k">APPLICATION</div><div class="v">CARD-DEMO</div><div class="d">SUB_APPLICATION="CTRLM"</div></div>
+    <div class="attr"><div class="k">MAXWAIT</div><div class="v">7</div><div class="d">조건 미충족 시 활성 작업 파일(AJF)에서 최대 7일 대기</div></div>
+    <div class="attr"><div class="k">MAXRERUN</div><div class="v">5</div><div class="d">최대 재실행 횟수 5회</div></div>
+    <div class="attr"><div class="k">TASKTYPE / APPL_TYPE</div><div class="v">Job / OS</div><div class="d">z/OS 배치 작업 (CYCLIC="0" — 반복 실행 아님)</div></div>
+  </div>
+  <div class="panel">
+    <p style="margin-top:0"><b>실행 월 (JAN–DEC = 1)</b> — 12개월 모두 활성화</p>
+    <div class="months">
+      <span>1월</span><span>2월</span><span>3월</span><span>4월</span><span>5월</span><span>6월</span>
+      <span>7월</span><span>8월</span><span>9월</span><span>10월</span><span>11월</span><span>12월</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>6. 분석 시 참고 사항</h2>
+  <div class="note"><b>README와 JCL의 차이</b> — README의 애플리케이션 상세 표는 CLOSEFIL/OPENFIL의 프로그램을 <code>IEFBR14</code>로 적고 있지만, 실제 JCL은 <code>PGM=SDSF</code>로 CEMT 명령을 CICS 리전 <code>CICSAWSA</code>에 보냅니다. 이 문서는 JCL을 기준으로 작성했습니다.</div>
+  <div class="note"><b>TRANBKP 삭제 단계에 COND 없음</b> — <code>STEP05</code>(DELETE)에는 COND가 없어, REPRO(<code>STEP05R</code>)가 비정상 종료(abend)가 아닌 오류 코드로 끝나도 거래 KSDS가 삭제됩니다. 또한 AIX(<code>TRANSACT.VSAM.AIX</code>)는 삭제되지만 이 작업에서 다시 만들지 않으며, AIX 재생성은 별도 <code>TRANIDX.jcl</code>에서만 수행됩니다.</div>
+  <div class="note"><b>CA-7 정의와의 차이</b> — <code>app/scheduler/CardDemo.ca7</code>의 일일 체인(SCHID=030)은 CLOSEFIL → CBPAUP0J → POSTTRAN → WAITSTEP → OPENFIL로, TRANBKP가 포함되어 있지 않습니다. 이 문서는 Control-M 정의(<code>CardDemo.controlm</code>)만 다룹니다.</div>
+</section>
+
+<footer>
+  CardDemo (choikh0423/aws-mainframe-modernization-carddemo) · Control-M 폴더 <code>DAILY-TransactionBackup</code> (LAST_UPLOAD=20250909, JOB_VERSION=01.00) 분석 문서 · 외부 의존성 없는 단일 HTML 파일
+</footer>
+
+</main>
+</body>
+</html>
