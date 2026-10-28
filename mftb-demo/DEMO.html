@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CardDemo modernization with the mftb mainframe toolbox</title>
+<style>
+:root{--fg:#1b1b1f;--mut:#5b5b66;--bd:#dcdce3;--bg:#fafafa;--card:#fff;--acc:#3b2fd6;--tint:#efeefe;--warn:#a4161a;--ok:#1b7f3b}
+@media (prefers-color-scheme:dark){:root{--fg:#ececf1;--mut:#a3a3b0;--bd:#33333d;--bg:#141418;--card:#1c1c22;--acc:#9d97ff;--tint:#25234a;--warn:#ff8a8a;--ok:#6fd38f}}
+*{box-sizing:border-box}body{margin:0;font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--fg);background:var(--bg)}
+header{padding:28px 40px 18px;border-bottom:1px solid var(--bd)}header h1{margin:0 0 4px;font-size:24px}header p{margin:0;color:var(--mut)}
+.wrap{display:flex;min-height:calc(100vh - 100px)}nav{width:250px;flex:none;border-right:1px solid var(--bd);padding:18px 12px;position:sticky;top:0;align-self:flex-start}
+nav button{display:block;width:100%;text-align:left;border:0;background:none;color:var(--fg);padding:8px 12px;border-radius:6px;font:inherit;cursor:pointer}
+nav button.on{background:var(--tint);color:var(--acc);font-weight:600}nav button:hover{background:var(--tint)}
+main{flex:1;padding:24px 40px 60px;max-width:1180px}section{display:none}section.on{display:block}
+h2{font-size:20px;margin:0 0 6px}h3{font-size:15px;margin:22px 0 8px}.lead{color:var(--mut);margin:0 0 18px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0}
+.stat{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:12px 14px}.stat b{display:block;font-size:24px}.stat span{color:var(--mut);font-size:13px}
+table{border-collapse:collapse;width:100%;background:var(--card);border:1px solid var(--bd);border-radius:8px;overflow:hidden;font-size:14px;margin:8px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd);vertical-align:top}th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut)}
+code{font:13px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--tint);padding:1px 4px;border-radius:4px}
+.shot{border:1px solid var(--bd);border-radius:8px;max-width:100%;display:block;margin:10px 0}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.btn{display:inline-block;border:1px solid var(--acc);color:var(--acc);background:none;border-radius:6px;padding:6px 12px;text-decoration:none;font:inherit;font-size:14px;cursor:pointer}
+.btn.p{background:var(--acc);color:var(--card)}
+iframe{width:100%;height:760px;border:1px solid var(--bd);border-radius:8px;background:#fff;display:none}iframe.on{display:block}
+.tag{font-size:11px;font-weight:700;padding:1px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em}
+.scan{background:#e3f1e7;color:#1b5e30}.agent{background:#ece9ff;color:#3b2fd6}.rec{background:#fff2d9;color:#7a4b00}
+.note{border-left:3px solid var(--acc);padding:6px 12px;background:var(--card);margin:12px 0}
+ol li,ul li{margin:4px 0}.flow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}.flow div{border:1px solid var(--bd);background:var(--card);border-radius:6px;padding:6px 10px;font-size:13px}
+</style></head><body>
+<header><h1>CardDemo modernization, driven by evidence</h1>
+<p>AWS CardDemo (<code>app/</code>, 240 files) analysed with the mftb mainframe toolbox @ <code>419573e</code>: deterministic scanners produce the inventory, Devin adds cited judgment, and the modernization plan is built only from that store.</p></header>
+<div class="wrap"><nav id="nav"></nav><main>
+
+<section id="s1" data-t="1. The problem">
+<h2>The problem</h2><p class="lead">A modernization plan is only as good as the inventory under it. Guessed call targets, unknown job order and assumed environment facts are where migrations slip.</p>
+<ul><li>CardDemo mixes CICS screens, nightly and monthly batch, VSAM, DB2, IMS and MQ across one core app and three optional extensions.</li>
+<li>Questions a customer asks first: what is in scope, what depends on what, what runs at night, which screens write which data, and what we do not know yet.</li>
+<li>Rule of this demo: every fact cites <code>path:line</code> or a store file; anything unproven stays an open finding or evidence request.</li></ul>
+<p><span class="tag scan">scan</span> deterministic scanner fact &nbsp; <span class="tag agent">agent</span> Devin's cited conclusion &nbsp; <span class="tag rec">recommendation</span> target-state proposal for the customer to decide</p>
+<div class="stats">
+<div class="stat"><b>44</b><span>COBOL programs (4 modules)</span></div><div class="stat"><b>46</b><span>JCL jobs</span></div>
+<div class="stat"><b>6</b><span>scheduler tables (CA 7 + Control-M)</span></div><div class="stat"><b>25</b><span>CICS transactions</span></div>
+<div class="stat"><b>16 / 258</b><span>open high / medium findings</span></div><div class="stat"><b>5</b><span>proposed migration waves (0-4)</span></div></div>
+</section>
+
+<section id="s2" data-t="2. Estate map">
+<h2>Estate map <span class="tag scan">scan</span> <span class="tag agent">agent</span></h2>
+<p class="lead">The sweep catalogued all 240 files; Devin proposed the module split, and <code>mftb modules --check</code> proved every one of the 203 placeable artifacts sits in exactly one module, the shared set, or unplaced.</p>
+<table><tr><th>Module</th><th>What it is</th><th>Programs</th><th>Jobs</th><th>TRANIDs</th><th>Data</th></tr>
+<tr><td><code>CARDDEMO</code></td><td>Core card back office</td><td>31</td><td>38</td><td>18</td><td>15 VSAM clusters</td></tr>
+<tr><td><code>CDAUTHFR</code></td><td>Pending authorizations</td><td>8</td><td>5</td><td>3</td><td>IMS, DB2, MQ</td></tr>
+<tr><td><code>CDTRNTYP</code></td><td>Transaction-type maintenance</td><td>3</td><td>3</td><td>2</td><td>DB2</td></tr>
+<tr><td><code>CDVSAMMQ</code></td><td>MQ account/date inquiry</td><td>2</td><td>0</td><td>2</td><td>MQ</td></tr></table>
+<p>8 copybooks are shared (account, card, customer, COMMAREA, date, user layouts); 24 proven cross-module connections; 45 open estate asks.</p>
+<div class="btns"><a class="btn p" href="store/reports/estate.html" target="_blank" rel="noopener">Open estate report</a><button class="btn" data-f="f2">Show inline</button></div>
+<img class="shot" src="screenshots/estate.png" alt="estate report"><iframe id="f2" data-src="store/reports/estate.html"></iframe>
+</section>
+
+<section id="s3" data-t="3. Module report">
+<h2>Module report: CARDDEMO <span class="tag scan">scan</span> <span class="tag agent">agent</span></h2>
+<p class="lead">31 programs, 38 jobs, 2 PROCs, 6 scheduler tables. Devin wrote all 71 descriptions and 7 business summaries from source, each with a cited basis; <code>mftb descriptions --check --strict</code> passes.</p>
+<ul><li>Environment profile: 29 fields - 10 detected, 9 defaulted (shown as ASSUMED), 10 unanswered. None answered on the customer's behalf.</li>
+<li>Dynamic calls: 24 XCTL sites - 3 resolved by literal; Devin's annotations narrow the 3 menu-table sites; 18 COMMAREA-driven sites stay partial.</li>
+<li>Findings: 4 high (CBIMPORT missing DD <code>CARDOUT</code>; environment topology, masking policy, test LPAR unknown), 174 medium.</li></ul>
+<div class="btns"><a class="btn p" href="store/reports/CARDDEMO/CARDDEMO-report.html" target="_blank" rel="noopener">Open module report</a><button class="btn" data-f="f3">Show inline</button></div>
+<img class="shot" src="screenshots/module-CARDDEMO.png" alt="module report"><iframe id="f3" data-src="store/reports/CARDDEMO/CARDDEMO-report.html"></iframe>
+</section>
+
+<section id="s4" data-t="4. Batch chain report">
+<h2>Batch chain: CA 7 table CARDDEMO <span class="tag scan">scan</span> <span class="tag agent">agent</span></h2>
+<p class="lead">Chosen because it runs <code>POSTTRAN</code> (<code>app/scheduler/CardDemo.ca7:70</code>), whose program <code>CBTRN02C</code> is the only code that validates and posts customer transactions to accounts and balances.</p>
+<div class="flow"><div>CLOSEFIL</div><div>CBPAUP0J</div><div>POSTTRAN / CBTRN02C</div><div>OPENFIL</div><div>TRANTYPE, TRANCATG, TCATBALF</div><div>READ*</div><div>CREASTMT / CBSTM03A</div><div>TXT2PDF1</div><div>PRTCATBL</div></div>
+<ul><li>17 jobs, 29 steps; 5 chain asks closed by Devin with cited facts (SDSF CEMT steps, CBPAUP0J lives in CDAUTHFR); 28 open.</li>
+<li>New evidence request: nothing in the estate produces <code>DALYTRAN.PS</code>, the posting cycle's main input.</li>
+<li>Secondary chain <code>MONTHLY-InterestCalculation</code>: INTCALC/CBACT04C interest = balance x rate / 1200; fees are a stub (<code>CBACT04C.cbl:518</code>); run date is hard-coded.</li></ul>
+<div class="btns"><a class="btn p" href="store/reports/CARDDEMO/chains/chain-CARDDEMO.html" target="_blank" rel="noopener">Open chain report</a><a class="btn" href="store/reports/CARDDEMO/chains/chain-MONTHLY-InterestCalculation.html" target="_blank" rel="noopener">Monthly interest chain</a><button class="btn" data-f="f4">Show inline</button></div>
+<img class="shot" src="screenshots/chain-CARDDEMO.png" alt="chain report"><iframe id="f4" data-src="store/reports/CARDDEMO/chains/chain-CARDDEMO.html"></iframe>
+</section>
+
+<section id="s5" data-t="5. Transaction report">
+<h2>Online transaction: CAUP account update <span class="tag scan">scan</span> <span class="tag agent">agent</span></h2>
+<p class="lead">Chosen because COACTUPC is the only core screen that rewrites two masters (account and customer) in one task, and both CICS files are <code>RECOVERY(NONE)</code>.</p>
+<div class="flow"><div>CC00 sign-on</div><div>CM00 main menu</div><div>CAUP / COACTUPC</div><div>read CXACAIX, ACCTDAT, CUSTDAT</div><div>rewrite ACCTDAT + CUSTDAT</div></div>
+<ul><li>Region-wide: 18 TRANIDs, 2 entry points, 2 menus, 14 screens, 7 datasets shared with batch, 1 job submitted from CICS (CR00 -> TRANREPT).</li>
+<li>CAUP asks: 4 variable XCTL targets (medium), 18 mapsets without BMS source, screen order data-driven - recorded by Devin as a cited note.</li></ul>
+<div class="btns"><a class="btn p" href="store/reports/CARDDEMO/online/online-CAUP.html" target="_blank" rel="noopener">Open transaction report</a><button class="btn" data-f="f5">Show inline</button></div>
+<img class="shot" src="screenshots/online-CAUP.png" alt="transaction report"><iframe id="f5" data-src="store/reports/CARDDEMO/online/online-CAUP.html"></iframe>
+</section>
+
+<section id="s6" data-t="6. Modernization plan">
+<h2>Modernization plan <span class="tag rec">recommendation</span></h2>
+<p class="lead">Waves are ordered so nothing moves before what it reads; the ordering comes from the call, job and data graphs in the store. Full plan with citations: <a href="MODERNIZATION-PLAN.md" target="_blank" rel="noopener">MODERNIZATION-PLAN.md</a>.</p>
+<table><tr><th>Wave</th><th>Content</th><th>Graph evidence for the order</th></tr>
+<tr><td>0</td><td>Answer evidence requests; freeze 8 shared copybooks as data contracts</td><td>Every cross-module edge goes through them</td></tr>
+<tr><td>1</td><td>15 VSAM clusters to a relational schema; merge type tables with CDTRNTYP DB2</td><td>Batch and online both read/write these</td></tr>
+<tr><td>2</td><td>Daily posting cycle + monthly interest as orchestrated jobs</td><td>POSTTRAN writes TCATBALF which INTCALC reads</td></tr>
+<tr><td>3</td><td>18 CICS screens to APIs + web screens, sign-on/menu first</td><td>CC00 -> CM00/CA00 dispatch every other screen</td></tr>
+<tr><td>4</td><td>Extensions: CDTRNTYP, then CDVSAMMQ, then CDAUTHFR (IMS + DB2 + MQ)</td><td>Each depends on core menus, sign-on and shared layouts</td></tr></table>
+<h3>Top evidence requests for the customer</h3>
+<ol><li>Environments, test LPAR and data masking policy (the 4 high profile findings).</li><li>Confirm the 9 ASSUMED profile fields (z/OS level, RACF, Endevor, DFSORT, compiler, ...).</li>
+<li>Who delivers <code>DALYTRAN.PS</code>, and when.</li><li>Missing source: HLASM COBDATFT/MVSWAIT, REPROCT control cards, TXT2PDF REXX, BMS, IMS DBDs.</li>
+<li>Keep the CICS file-close batch window, or allow concurrent online/batch?</li><li>Implement fees in INTCALC, or migrate as-is?</li></ol>
+</section>
+
+<section id="s7" data-t="7. Scanner vs Devin">
+<h2>What the scanner did vs what Devin did</h2>
+<table><tr><th><span class="tag scan">Deterministic scanner</span></th><th><span class="tag agent">Devin (skills)</span></th></tr>
+<tr><td>Catalogued and typed 240 files</td><td>Proposed the 4-module split; passed <code>modules --check</code></td></tr>
+<tr><td>Parsed COBOL, JCL, PROCs, CSD, CA 7 and Control-M; built calls, datasets, lineage</td><td>Wrote 71 descriptions + 7 business summaries from source; passed <code>descriptions --check --strict</code></td></tr>
+<tr><td>Detected or defaulted 29 profile fields; flagged defaults ASSUMED</td><td>Kept every default as an evidence request; answered none for the customer</td></tr>
+<tr><td>Traced 24 dynamic-call sites, 3 resolved</td><td>Narrowed menu-table sites with cited reasoning; left run-time ones partial</td></tr>
+<tr><td>Built chains and online closure; filed asks</td><td>Closed asks only with cited facts; added notes and new asks</td></tr>
+<tr><td>Rendered every HTML report</td><td>Wrote the modernization plan, labelling every target as a recommendation</td></tr></table>
+<div class="note">The scanners are deterministic: re-run the commands in <a href="README.md" target="_blank" rel="noopener">README.md</a> to regenerate the store. The agent's files (<code>modules.json</code>, <code>annotations.json</code>, <code>descriptions.json</code>, <code>chainnotes.json</code>, <code>onlinenotes.json</code>) are the only hand-written inputs.</div>
+</section>
+
+</main></div>
+<script>
+var secs=[].slice.call(document.querySelectorAll('section')),nav=document.getElementById('nav');
+function show(id){secs.forEach(function(s){s.classList.toggle('on',s.id===id)});[].forEach.call(nav.children,function(b){b.classList.toggle('on',b.dataset.id===id)});history.replaceState(null,'','#'+id);window.scrollTo(0,0)}
+secs.forEach(function(s){var b=document.createElement('button');b.textContent=s.dataset.t;b.dataset.id=s.id;b.onclick=function(){show(s.id)};nav.appendChild(b)});
+[].forEach.call(document.querySelectorAll('[data-f]'),function(b){b.onclick=function(){var f=document.getElementById(b.dataset.f);if(!f.src)f.src=f.dataset.src;var on=f.classList.toggle('on');b.textContent=on?'Hide inline':'Show inline';f.previousElementSibling.style.display=on?'none':'block'}});
+show((location.hash||'#s1').slice(1));
+</script></body></html>

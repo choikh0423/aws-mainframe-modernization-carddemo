@@ -1,0 +1,8 @@
+{
+  "notes": [
+    {"transid": "CAUP", "note": "Screen flow of COACTUPC: PF3 syncpoints and XCTLs back to the calling program (CDEMO-FROM-PROGRAM) or the main menu COMEN01C; first entry from the menu sends the empty search screen; after an update succeeds or fails the screen is reset to a new search; otherwise 1000-PROCESS-INPUTS, 2000-DECIDE-ACTION and 3000-SEND-MAP run. Which branch runs is data-driven (AID key and ACUP change state).", "evidence": ["app/cbl/COACTUPC.cbl:921-960", "app/cbl/COACTUPC.cbl:964-1004"]},
+    {"transid": "CAUP", "note": "The update path rewrites both ACCTDAT and CUSTDAT in one task (REWRITE at COACTUPC.cbl:4065 and :4085); both CSD files are RECOVERY(NONE), so a failure between the two rewrites is not backed out by CICS.", "evidence": ["app/cbl/COACTUPC.cbl:4065-4090", "app/csd/CARDDEMO.CSD:1", "app/csd/CARDDEMO.CSD:50"]}
+  ],
+  "closures": [],
+  "asks": []
+}

@@ -1,0 +1,2707 @@
+{
+  "meta": {
+    "estate": "app",
+    "skill": "module-classification",
+    "updated_at": "2026-10-28T13:45:49Z",
+    "note": "written by Devin running the mftb module-classification skill (Part 1) over store/catalog.json; module ids are proposed, not the customer's names"
+  },
+  "modules": [
+    {
+      "id": "CARDDEMO",
+      "name": "CardDemo core credit-card application",
+      "naming": "proposed",
+      "what_it_does": "runs the credit-card back office: CICS sign-on, account/card/transaction/user maintenance, bill payment and reports online, and the batch posting, interest, statement and file-maintenance cycle",
+      "confidence": "derived",
+      "confirmed": null,
+      "evidence": [
+        "app/cbl/",
+        "app/csd/CARDDEMO.CSD:1",
+        "app/scheduler/CardDemo.ca7:1",
+        "app/scheduler/CardDemo.controlm:1"
+      ],
+      "reasoning": "its own source, copybook, BMS, JCL, PROC, CSD and scheduler directories directly under app/, one CSD group set (CARDDEMO.CSD) and the two scheduler exports",
+      "roots": {
+        "asm": [
+          "app/asm",
+          "app/maclib"
+        ],
+        "bms": [
+          "app/bms"
+        ],
+        "sql": [
+          "app/catlg"
+        ],
+        "src": [
+          "app/cbl"
+        ],
+        "copybooks": [
+          "app/cpy",
+          "app/cpy-bms"
+        ],
+        "csd": [
+          "app/csd"
+        ],
+        "cntl": [
+          "app/ctl"
+        ],
+        "jcl": [
+          "app/jcl"
+        ],
+        "procs": [
+          "app/proc"
+        ],
+        "sched": [
+          "app/scheduler"
+        ]
+      },
+      "scan": "python3 -m mftb scan --module CARDDEMO --from-catalog",
+      "members": [
+        {
+          "name": "COBDATFT",
+          "artifact": "assembler-program",
+          "path": "app/asm/COBDATFT.asm",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBACT01C.cbl:231",
+            "app/asm/COBDATFT.asm:17"
+          ],
+          "reasoning": "CALL 'COBDATFT' from CBACT01C (app/cbl/CBACT01C.cbl:231) is its only caller; HLASM: only its names are known, mftb does not read assembler logic (catalog-assembler ask)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "MVSWAIT",
+          "artifact": "assembler-program",
+          "path": "app/asm/MVSWAIT.asm",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COBSWAIT.cbl:38",
+            "app/asm/MVSWAIT.asm:17"
+          ],
+          "reasoning": "CALL 'MVSWAIT' from COBSWAIT (app/cbl/COBSWAIT.cbl:38) is its only caller; HLASM: only its names are known (catalog-assembler ask)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COACTUP",
+          "artifact": "mapset",
+          "path": "app/bms/COACTUP.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COACTUP.bms:20"
+          ],
+          "reasoning": "in the core CardDemo application's own bms directory (app/bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COACTVW",
+          "artifact": "mapset",
+          "path": "app/bms/COACTVW.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COACTVW.bms:20"
+          ],
+          "reasoning": "in the core CardDemo application's own bms directory (app/bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COADM01",
+          "artifact": "mapset",
+          "path": "app/bms/COADM01.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COADM01.bms:19"
+          ],
+          "reasoning": "in the core CardDemo application's own bms directory (app/bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COBIL00",
+          "artifact": "mapset",
+          "path": "app/bms/COBIL00.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COBIL00.bms:19"
+          ],
+          "reasoning": "in the core CardDemo application's own bms directory (app/bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COCRDLI",
+          "artifact": "mapset",
+          "path": "app/bms/COCRDLI.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COCRDLI.bms:20"
+          ],
+          "reasoning": "in the core CardDemo application's own bms directory (app/bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COCRDSL",
+          "artifact": "mapset",
+          "path": "app/bms/COCRDSL.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COCRDSL.bms:20"
+          ],
+          "reasoning": "in the core CardDemo application's own bms directory (app/bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COCRDUP",
+          "artifact": "mapset",
+          "path": "app/bms/COCRDUP.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COCRDUP.bms:20"
+          ],
+          "reasoning": "in the core CardDemo application's own bms directory (app/bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COMEN01",
+          "artifact": "mapset",
+          "path": "app/bms/COMEN01.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COMEN01.bms:19"
+          ],
+          "reasoning": "in the core CardDemo application's own bms directory (app/bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CORPT00",
+          "artifact": "mapset",
+          "path": "app/bms/CORPT00.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/CORPT00.bms:19"
+          ],
+          "reasoning": "in the core CardDemo application's own bms directory (app/bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COSGN00",
+          "artifact": "mapset",
+          "path": "app/bms/COSGN00.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COSGN00.bms:19"
+          ],
+          "reasoning": "in the core CardDemo application's own bms directory (app/bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRN00",
+          "artifact": "mapset",
+          "path": "app/bms/COTRN00.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COTRN00.bms:19"
+          ],
+          "reasoning": "in the core CardDemo application's own bms directory (app/bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRN01",
+          "artifact": "mapset",
+          "path": "app/bms/COTRN01.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COTRN01.bms:19"
+          ],
+          "reasoning": "in the core CardDemo application's own bms directory (app/bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRN02",
+          "artifact": "mapset",
+          "path": "app/bms/COTRN02.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COTRN02.bms:19"
+          ],
+          "reasoning": "in the core CardDemo application's own bms directory (app/bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR00",
+          "artifact": "mapset",
+          "path": "app/bms/COUSR00.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COUSR00.bms:19"
+          ],
+          "reasoning": "in the core CardDemo application's own bms directory (app/bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR01",
+          "artifact": "mapset",
+          "path": "app/bms/COUSR01.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COUSR01.bms:19"
+          ],
+          "reasoning": "in the core CardDemo application's own bms directory (app/bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR02",
+          "artifact": "mapset",
+          "path": "app/bms/COUSR02.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COUSR02.bms:19"
+          ],
+          "reasoning": "in the core CardDemo application's own bms directory (app/bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR03",
+          "artifact": "mapset",
+          "path": "app/bms/COUSR03.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/bms/COUSR03.bms:19"
+          ],
+          "reasoning": "in the core CardDemo application's own bms directory (app/bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "LISTCAT",
+          "artifact": "sql-script",
+          "path": "app/catlg/LISTCAT.txt",
+          "confidence": "derived",
+          "evidence": [
+            "app/catlg/LISTCAT.txt:3"
+          ],
+          "reasoning": "IDCAMS LISTCAT LEVEL(AWS.M2.CARDDEMO) listing (app/catlg/LISTCAT.txt:3) - the catalog of the core application's datasets; the sweep types it sql-script",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBACT01C",
+          "artifact": "program",
+          "path": "app/cbl/CBACT01C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBACT01C.cbl:23"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBACT02C",
+          "artifact": "program",
+          "path": "app/cbl/CBACT02C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBACT02C.cbl:23"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBACT03C",
+          "artifact": "program",
+          "path": "app/cbl/CBACT03C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBACT03C.cbl:23"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBACT04C",
+          "artifact": "program",
+          "path": "app/cbl/CBACT04C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBACT04C.cbl:23"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBCUS01C",
+          "artifact": "program",
+          "path": "app/cbl/CBCUS01C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBCUS01C.cbl:23"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBEXPORT",
+          "artifact": "program",
+          "path": "app/cbl/CBEXPORT.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBEXPORT.cbl:2"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBIMPORT",
+          "artifact": "program",
+          "path": "app/cbl/CBIMPORT.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBIMPORT.cbl:2"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBSTM03A",
+          "artifact": "program",
+          "path": "app/cbl/CBSTM03A.CBL",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBSTM03A.CBL:2"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBSTM03B",
+          "artifact": "program",
+          "path": "app/cbl/CBSTM03B.CBL",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBSTM03B.CBL:2"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBTRN01C",
+          "artifact": "program",
+          "path": "app/cbl/CBTRN01C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBTRN01C.cbl:23"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBTRN02C",
+          "artifact": "program",
+          "path": "app/cbl/CBTRN02C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBTRN02C.cbl:23"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBTRN03C",
+          "artifact": "program",
+          "path": "app/cbl/CBTRN03C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CBTRN03C.cbl:23"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COACTUPC",
+          "artifact": "program",
+          "path": "app/cbl/COACTUPC.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COACTUPC.cbl:21"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COACTVWC",
+          "artifact": "program",
+          "path": "app/cbl/COACTVWC.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COACTVWC.cbl:21"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COADM01C",
+          "artifact": "program",
+          "path": "app/cbl/COADM01C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COADM01C.cbl:23"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COBIL00C",
+          "artifact": "program",
+          "path": "app/cbl/COBIL00C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COBIL00C.cbl:24"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COBSWAIT",
+          "artifact": "program",
+          "path": "app/cbl/COBSWAIT.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COBSWAIT.cbl:23"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COCRDLIC",
+          "artifact": "program",
+          "path": "app/cbl/COCRDLIC.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COCRDLIC.cbl:25"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COCRDSLC",
+          "artifact": "program",
+          "path": "app/cbl/COCRDSLC.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COCRDSLC.cbl:22"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COCRDUPC",
+          "artifact": "program",
+          "path": "app/cbl/COCRDUPC.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COCRDUPC.cbl:22"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COMEN01C",
+          "artifact": "program",
+          "path": "app/cbl/COMEN01C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COMEN01C.cbl:23"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CORPT00C",
+          "artifact": "program",
+          "path": "app/cbl/CORPT00C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CORPT00C.cbl:24"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COSGN00C",
+          "artifact": "program",
+          "path": "app/cbl/COSGN00C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COSGN00C.cbl:23"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRN00C",
+          "artifact": "program",
+          "path": "app/cbl/COTRN00C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COTRN00C.cbl:23"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRN01C",
+          "artifact": "program",
+          "path": "app/cbl/COTRN01C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COTRN01C.cbl:23"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRN02C",
+          "artifact": "program",
+          "path": "app/cbl/COTRN02C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COTRN02C.cbl:23"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR00C",
+          "artifact": "program",
+          "path": "app/cbl/COUSR00C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COUSR00C.cbl:23"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR01C",
+          "artifact": "program",
+          "path": "app/cbl/COUSR01C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COUSR01C.cbl:23"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR02C",
+          "artifact": "program",
+          "path": "app/cbl/COUSR02C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COUSR02C.cbl:23"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR03C",
+          "artifact": "program",
+          "path": "app/cbl/COUSR03C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/COUSR03C.cbl:23"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CSUTLDTC",
+          "artifact": "program",
+          "path": "app/cbl/CSUTLDTC.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/cbl/CSUTLDTC.cbl:20"
+          ],
+          "reasoning": "in the core CardDemo application's own cbl directory (app/cbl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COACTUP",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COACTUP.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COACTUP.CPY:17"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy-bms directory (app/cpy-bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COACTVW",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COACTVW.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COACTVW.CPY:17"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy-bms directory (app/cpy-bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COADM01",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COADM01.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COADM01.CPY:17"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy-bms directory (app/cpy-bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COBIL00",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COBIL00.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COBIL00.CPY:17"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy-bms directory (app/cpy-bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COCRDLI",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COCRDLI.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COCRDLI.CPY:17"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy-bms directory (app/cpy-bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COCRDSL",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COCRDSL.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COCRDSL.CPY:17"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy-bms directory (app/cpy-bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COCRDUP",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COCRDUP.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COCRDUP.CPY:17"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy-bms directory (app/cpy-bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COMEN01",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COMEN01.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COMEN01.CPY:17"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy-bms directory (app/cpy-bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CORPT00",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/CORPT00.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/CORPT00.CPY:17"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy-bms directory (app/cpy-bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COSGN00",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COSGN00.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COSGN00.CPY:17"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy-bms directory (app/cpy-bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRN00",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COTRN00.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COTRN00.CPY:17"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy-bms directory (app/cpy-bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRN01",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COTRN01.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COTRN01.CPY:17"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy-bms directory (app/cpy-bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRN02",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COTRN02.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COTRN02.CPY:17"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy-bms directory (app/cpy-bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR00",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COUSR00.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COUSR00.CPY:17"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy-bms directory (app/cpy-bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR01",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COUSR01.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COUSR01.CPY:17"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy-bms directory (app/cpy-bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR02",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COUSR02.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COUSR02.CPY:17"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy-bms directory (app/cpy-bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COUSR03",
+          "artifact": "copybook",
+          "path": "app/cpy-bms/COUSR03.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy-bms/COUSR03.CPY:17"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy-bms directory (app/cpy-bms), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COADM02Y",
+          "artifact": "copybook",
+          "path": "app/cpy/COADM02Y.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/COADM02Y.cpy:19"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy directory (app/cpy), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CODATECN",
+          "artifact": "copybook",
+          "path": "app/cpy/CODATECN.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CODATECN.cpy:17"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy directory (app/cpy), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COMEN02Y",
+          "artifact": "copybook",
+          "path": "app/cpy/COMEN02Y.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/COMEN02Y.cpy:19"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy directory (app/cpy), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COSTM01",
+          "artifact": "copybook",
+          "path": "app/cpy/COSTM01.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/COSTM01.CPY:20"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy directory (app/cpy), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CSSTRPFY",
+          "artifact": "copybook",
+          "path": "app/cpy/CSSTRPFY.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CSSTRPFY.cpy:21"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy directory (app/cpy), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CSUTLDPY",
+          "artifact": "copybook",
+          "path": "app/cpy/CSUTLDPY.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CSUTLDPY.cpy:19"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy directory (app/cpy), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CSUTLDWY",
+          "artifact": "copybook",
+          "path": "app/cpy/CSUTLDWY.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CSUTLDWY.cpy:4"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy directory (app/cpy), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CUSTREC",
+          "artifact": "copybook",
+          "path": "app/cpy/CUSTREC.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CUSTREC.cpy:4"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy directory (app/cpy), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CVEXPORT",
+          "artifact": "copybook",
+          "path": "app/cpy/CVEXPORT.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CVEXPORT.cpy:9"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy directory (app/cpy), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CVTRA01Y",
+          "artifact": "copybook",
+          "path": "app/cpy/CVTRA01Y.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CVTRA01Y.cpy:4"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy directory (app/cpy), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CVTRA02Y",
+          "artifact": "copybook",
+          "path": "app/cpy/CVTRA02Y.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CVTRA02Y.cpy:4"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy directory (app/cpy), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CVTRA03Y",
+          "artifact": "copybook",
+          "path": "app/cpy/CVTRA03Y.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CVTRA03Y.cpy:4"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy directory (app/cpy), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CVTRA04Y",
+          "artifact": "copybook",
+          "path": "app/cpy/CVTRA04Y.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CVTRA04Y.cpy:4"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy directory (app/cpy), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CVTRA05Y",
+          "artifact": "copybook",
+          "path": "app/cpy/CVTRA05Y.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CVTRA05Y.cpy:4"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy directory (app/cpy), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CVTRA06Y",
+          "artifact": "copybook",
+          "path": "app/cpy/CVTRA06Y.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CVTRA06Y.cpy:4"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy directory (app/cpy), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CVTRA07Y",
+          "artifact": "copybook",
+          "path": "app/cpy/CVTRA07Y.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/CVTRA07Y.cpy:4"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy directory (app/cpy), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "UNUSED1Y",
+          "artifact": "copybook",
+          "path": "app/cpy/UNUSED1Y.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/cpy/UNUSED1Y.cpy:1"
+          ],
+          "reasoning": "in the core CardDemo application's own cpy directory (app/cpy), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CARDDEMO",
+          "artifact": "csd",
+          "path": "app/csd/CARDDEMO.CSD",
+          "confidence": "derived",
+          "evidence": [
+            "app/csd/CARDDEMO.CSD:1"
+          ],
+          "reasoning": "in the core CardDemo application's own csd directory (app/csd), outside the three sub-application trees; COPYed only by CARDDEMO programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "REPROCT",
+          "artifact": "control-cards",
+          "path": "app/ctl/REPROCT.ctl",
+          "confidence": "derived",
+          "evidence": [
+            "app/ctl/REPROCT.ctl:15"
+          ],
+          "reasoning": "in the core CardDemo application's own ctl directory (app/ctl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "ACCTFILE",
+          "artifact": "job",
+          "path": "app/jcl/ACCTFILE.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/ACCTFILE.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CARDFILE",
+          "artifact": "job",
+          "path": "app/jcl/CARDFILE.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/CARDFILE.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBADMCDJ",
+          "artifact": "job",
+          "path": "app/jcl/CBADMCDJ.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/CBADMCDJ.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBEXPORT",
+          "artifact": "job",
+          "path": "app/jcl/CBEXPORT.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/CBEXPORT.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBIMPORT",
+          "artifact": "job",
+          "path": "app/jcl/CBIMPORT.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/CBIMPORT.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CLOSEFIL",
+          "artifact": "job",
+          "path": "app/jcl/CLOSEFIL.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/CLOSEFIL.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COMBTRAN",
+          "artifact": "job",
+          "path": "app/jcl/COMBTRAN.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/COMBTRAN.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CREASTMT",
+          "artifact": "job",
+          "path": "app/jcl/CREASTMT.JCL",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/CREASTMT.JCL:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CUSTFILE",
+          "artifact": "job",
+          "path": "app/jcl/CUSTFILE.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/CUSTFILE.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DALYREJS",
+          "artifact": "job",
+          "path": "app/jcl/DALYREJS.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/DALYREJS.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DEFCUST",
+          "artifact": "job",
+          "path": "app/jcl/DEFCUST.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/DEFCUST.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DEFGDGB",
+          "artifact": "job",
+          "path": "app/jcl/DEFGDGB.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/DEFGDGB.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DEFGDGD",
+          "artifact": "job",
+          "path": "app/jcl/DEFGDGD.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/DEFGDGD.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DISCGRP",
+          "artifact": "job",
+          "path": "app/jcl/DISCGRP.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/DISCGRP.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DUSRSECJ",
+          "artifact": "job",
+          "path": "app/jcl/DUSRSECJ.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/DUSRSECJ.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "ESDSRRDS",
+          "artifact": "job",
+          "path": "app/jcl/ESDSRRDS.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/ESDSRRDS.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "FTPJCL",
+          "artifact": "job",
+          "path": "app/jcl/FTPJCL.JCL",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/FTPJCL.JCL:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "INTCALC",
+          "artifact": "job",
+          "path": "app/jcl/INTCALC.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/INTCALC.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "INTRDRJ1",
+          "artifact": "job",
+          "path": "app/jcl/INTRDRJ1.JCL",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/INTRDRJ1.JCL:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "INTRDRJ2",
+          "artifact": "job",
+          "path": "app/jcl/INTRDRJ2.JCL",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/INTRDRJ2.JCL:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "OPENFIL",
+          "artifact": "job",
+          "path": "app/jcl/OPENFIL.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/OPENFIL.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "POSTTRAN",
+          "artifact": "job",
+          "path": "app/jcl/POSTTRAN.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/POSTTRAN.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "PRTCATBL",
+          "artifact": "job",
+          "path": "app/jcl/PRTCATBL.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/PRTCATBL.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "READACCT",
+          "artifact": "job",
+          "path": "app/jcl/READACCT.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/READACCT.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "READCARD",
+          "artifact": "job",
+          "path": "app/jcl/READCARD.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/READCARD.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "READCUST",
+          "artifact": "job",
+          "path": "app/jcl/READCUST.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/READCUST.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "READXREF",
+          "artifact": "job",
+          "path": "app/jcl/READXREF.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/READXREF.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "REPTFILE",
+          "artifact": "job",
+          "path": "app/jcl/REPTFILE.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/REPTFILE.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TCATBALF",
+          "artifact": "job",
+          "path": "app/jcl/TCATBALF.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/TCATBALF.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TRANBKP",
+          "artifact": "job",
+          "path": "app/jcl/TRANBKP.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/TRANBKP.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TRANCATG",
+          "artifact": "job",
+          "path": "app/jcl/TRANCATG.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/TRANCATG.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TRANFILE",
+          "artifact": "job",
+          "path": "app/jcl/TRANFILE.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/TRANFILE.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TRANIDX",
+          "artifact": "job",
+          "path": "app/jcl/TRANIDX.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/TRANIDX.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TRANREPT",
+          "artifact": "job",
+          "path": "app/jcl/TRANREPT.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/TRANREPT.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TRANTYPE",
+          "artifact": "job",
+          "path": "app/jcl/TRANTYPE.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/TRANTYPE.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TXT2PDF1",
+          "artifact": "job",
+          "path": "app/jcl/TXT2PDF1.JCL",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/TXT2PDF1.JCL:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "WAITSTEP",
+          "artifact": "job",
+          "path": "app/jcl/WAITSTEP.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/WAITSTEP.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "XREFFILE",
+          "artifact": "job",
+          "path": "app/jcl/XREFFILE.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/jcl/XREFFILE.jcl:1"
+          ],
+          "reasoning": "in the core CardDemo application's own jcl directory (app/jcl), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "ASMWAIT",
+          "artifact": "assembler-macro",
+          "path": "app/maclib/ASMWAIT.mac",
+          "confidence": "derived",
+          "evidence": [
+            "app/asm/MVSWAIT.asm:23",
+            "app/maclib/ASMWAIT.mac:18"
+          ],
+          "reasoning": "macro expanded by MVSWAIT (app/asm/MVSWAIT.asm:23), itself only called by CARDDEMO's COBSWAIT; HLASM, names only",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COCDATFT",
+          "artifact": "assembler-dsect",
+          "path": "app/maclib/COCDATFT.mac",
+          "confidence": "derived",
+          "evidence": [
+            "app/asm/COBDATFT.asm:66",
+            "app/maclib/COCDATFT.mac:17"
+          ],
+          "reasoning": "DSECT copied by COBDATFT (app/asm/COBDATFT.asm:66), itself only called by CARDDEMO's CBACT01C; HLASM, names only",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "REPROC",
+          "artifact": "proc",
+          "path": "app/proc/REPROC.prc",
+          "confidence": "derived",
+          "evidence": [
+            "app/proc/REPROC.prc:1"
+          ],
+          "reasoning": "in the core CardDemo application's own proc directory (app/proc), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TRANREPT",
+          "artifact": "proc",
+          "path": "app/proc/TRANREPT.prc",
+          "confidence": "derived",
+          "evidence": [
+            "app/proc/TRANREPT.prc:1"
+          ],
+          "reasoning": "in the core CardDemo application's own proc directory (app/proc), outside the three sub-application trees",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CARDDEMO",
+          "artifact": "scheduler-table",
+          "path": "app/scheduler/CardDemo.ca7",
+          "confidence": "derived",
+          "evidence": [
+            "app/scheduler/CardDemo.ca7:43"
+          ],
+          "reasoning": "the core application's CA 7 export (table CARDDEMO); it also schedules CDAUTHFR's CBPAUP0J (cross_module)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CARDDEMO",
+          "artifact": "scheduler-table",
+          "path": "app/scheduler/CardDemo.controlm",
+          "confidence": "derived",
+          "evidence": [
+            "app/scheduler/CardDemo.controlm:4",
+            "app/scheduler/CardDemo.controlm:27"
+          ],
+          "reasoning": "the core application's Control-M export; it also schedules CDTRNTYP's MNTTRDB2/TRANEXTR (cross_module)",
+          "confirmed": null,
+          "alternatives": []
+        }
+      ]
+    },
+    {
+      "id": "CDAUTHFR",
+      "name": "Pending authorization (IMS/DB2/MQ) sub-application",
+      "naming": "proposed",
+      "what_it_does": "receives card authorization requests over MQ, decides them against account data, stores pending authorizations in IMS and fraud flags in DB2, and lets operators review them online",
+      "confidence": "derived",
+      "confirmed": null,
+      "evidence": [
+        "app/app-authorization-ims-db2-mq/README.md:1",
+        "app/app-authorization-ims-db2-mq/csd/CRDDEMO2.csd:1"
+      ],
+      "reasoning": "self-contained sub-tree with its own cbl/cpy/bms/csd/ims/ddl/jcl directories and README",
+      "roots": {
+        "bms": [
+          "app/app-authorization-ims-db2-mq/bms"
+        ],
+        "src": [
+          "app/app-authorization-ims-db2-mq/cbl"
+        ],
+        "copybooks": [
+          "app/app-authorization-ims-db2-mq/cpy",
+          "app/app-authorization-ims-db2-mq/cpy-bms",
+          "app/app-authorization-ims-db2-mq/dcl"
+        ],
+        "csd": [
+          "app/app-authorization-ims-db2-mq/csd"
+        ],
+        "sql": [
+          "app/app-authorization-ims-db2-mq/ddl"
+        ],
+        "ims": [
+          "app/app-authorization-ims-db2-mq/ims"
+        ],
+        "jcl": [
+          "app/app-authorization-ims-db2-mq/jcl"
+        ]
+      },
+      "scan": "python3 -m mftb scan --module CDAUTHFR --from-catalog",
+      "members": [
+        {
+          "name": "COPAU00",
+          "artifact": "mapset",
+          "path": "app/app-authorization-ims-db2-mq/bms/COPAU00.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/bms/COPAU00.bms:19"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/bms); COPYed only by CDAUTHFR programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COPAU01",
+          "artifact": "mapset",
+          "path": "app/app-authorization-ims-db2-mq/bms/COPAU01.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/bms/COPAU01.bms:19"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/bms); COPYed only by CDAUTHFR programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBPAUP0C",
+          "artifact": "program",
+          "path": "app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl:23"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/cbl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COPAUA0C",
+          "artifact": "program",
+          "path": "app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl:23"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/cbl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COPAUS0C",
+          "artifact": "program",
+          "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:23"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/cbl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COPAUS1C",
+          "artifact": "program",
+          "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl:23"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/cbl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COPAUS2C",
+          "artifact": "program",
+          "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl:23"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/cbl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DBUNLDGS",
+          "artifact": "program",
+          "path": "app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL:18"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/cbl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "PAUDBLOD",
+          "artifact": "program",
+          "path": "app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL:18"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/cbl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "PAUDBUNL",
+          "artifact": "program",
+          "path": "app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL:18"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/cbl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COPAU00",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/cpy-bms/COPAU00.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cpy-bms/COPAU00.cpy:17"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/cpy-bms); COPYed only by CDAUTHFR programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COPAU01",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/cpy-bms/COPAU01.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cpy-bms/COPAU01.cpy:17"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/cpy-bms); COPYed only by CDAUTHFR programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CCPAUERY",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/cpy/CCPAUERY.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cpy/CCPAUERY.cpy:19"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/cpy); COPYed only by CDAUTHFR programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CCPAURLY",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/cpy/CCPAURLY.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cpy/CCPAURLY.cpy:19"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/cpy); COPYed only by CDAUTHFR programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CCPAURQY",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/cpy/CCPAURQY.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cpy/CCPAURQY.cpy:19"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/cpy); COPYed only by CDAUTHFR programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CIPAUDTY",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/cpy/CIPAUDTY.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cpy/CIPAUDTY.cpy:19"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/cpy); COPYed only by CDAUTHFR programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CIPAUSMY",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/cpy/CIPAUSMY.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cpy/CIPAUSMY.cpy:19"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/cpy); COPYed only by CDAUTHFR programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "IMSFUNCS",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/cpy/IMSFUNCS.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cpy/IMSFUNCS.cpy:17"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/cpy); COPYed only by CDAUTHFR programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "PADFLPCB",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/cpy/PADFLPCB.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cpy/PADFLPCB.CPY:17"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/cpy); COPYed only by CDAUTHFR programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "PASFLPCB",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/cpy/PASFLPCB.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cpy/PASFLPCB.CPY:17"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/cpy); COPYed only by CDAUTHFR programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "PAUTBPCB",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/cpy/PAUTBPCB.CPY",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/cpy/PAUTBPCB.CPY:17"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/cpy); COPYed only by CDAUTHFR programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CRDDEMO2",
+          "artifact": "csd",
+          "path": "app/app-authorization-ims-db2-mq/csd/CRDDEMO2.csd",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/csd/CRDDEMO2.csd:1"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/csd); COPYed only by CDAUTHFR programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "AUTHFRDS",
+          "artifact": "copybook",
+          "path": "app/app-authorization-ims-db2-mq/dcl/AUTHFRDS.dcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/dcl/AUTHFRDS.dcl:24"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/dcl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "AUTHFRDS",
+          "artifact": "ddl",
+          "path": "app/app-authorization-ims-db2-mq/ddl/AUTHFRDS.ddl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/ddl/AUTHFRDS.ddl:1"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/ddl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DBPAUTP0",
+          "artifact": "ims-dbd",
+          "path": "app/app-authorization-ims-db2-mq/ims/DBPAUTP0.dbd",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/ims/DBPAUTP0.dbd:18"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/ims)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DBPAUTX0",
+          "artifact": "ims-dbd",
+          "path": "app/app-authorization-ims-db2-mq/ims/DBPAUTX0.dbd",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/ims/DBPAUTX0.dbd:18"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/ims)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DLIGSAMP",
+          "artifact": "ims-psb",
+          "path": "app/app-authorization-ims-db2-mq/ims/DLIGSAMP.PSB",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/ims/DLIGSAMP.PSB:23"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/ims)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "PADFLDBD",
+          "artifact": "ims-dbd",
+          "path": "app/app-authorization-ims-db2-mq/ims/PADFLDBD.DBD",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/ims/PADFLDBD.DBD:20"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/ims)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "PASFLDBD",
+          "artifact": "ims-dbd",
+          "path": "app/app-authorization-ims-db2-mq/ims/PASFLDBD.DBD",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/ims/PASFLDBD.DBD:20"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/ims)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "PAUTBUNL",
+          "artifact": "ims-psb",
+          "path": "app/app-authorization-ims-db2-mq/ims/PAUTBUNL.PSB",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/ims/PAUTBUNL.PSB:21"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/ims)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "PSBPAUTB",
+          "artifact": "ims-psb",
+          "path": "app/app-authorization-ims-db2-mq/ims/PSBPAUTB.psb",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/ims/PSBPAUTB.psb:20"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/ims)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "PSBPAUTL",
+          "artifact": "ims-psb",
+          "path": "app/app-authorization-ims-db2-mq/ims/PSBPAUTL.psb",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/ims/PSBPAUTL.psb:20"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/ims)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CBPAUP0J",
+          "artifact": "job",
+          "path": "app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl:1"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/jcl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DBPAUTP0",
+          "artifact": "job",
+          "path": "app/app-authorization-ims-db2-mq/jcl/DBPAUTP0.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/jcl/DBPAUTP0.jcl:1"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/jcl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "LOADPADB",
+          "artifact": "job",
+          "path": "app/app-authorization-ims-db2-mq/jcl/LOADPADB.JCL",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/jcl/LOADPADB.JCL:1"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/jcl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "UNLDGSAM",
+          "artifact": "job",
+          "path": "app/app-authorization-ims-db2-mq/jcl/UNLDGSAM.JCL",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/jcl/UNLDGSAM.JCL:1"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/jcl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "UNLDPADB",
+          "artifact": "job",
+          "path": "app/app-authorization-ims-db2-mq/jcl/UNLDPADB.JCL",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-authorization-ims-db2-mq/jcl/UNLDPADB.JCL:1"
+          ],
+          "reasoning": "in the authorization sub-application's own directory (app/app-authorization-ims-db2-mq/jcl)",
+          "confirmed": null,
+          "alternatives": []
+        }
+      ]
+    },
+    {
+      "id": "CDTRNTYP",
+      "name": "Transaction-type maintenance (DB2) sub-application",
+      "naming": "proposed",
+      "what_it_does": "maintains the transaction type/category reference tables in DB2 online (list/update) and in batch, and extracts them back to the VSAM files the core uses",
+      "confidence": "derived",
+      "confirmed": null,
+      "evidence": [
+        "app/app-transaction-type-db2/README.md:1",
+        "app/app-transaction-type-db2/csd/CRDDEMOD.csd:1"
+      ],
+      "reasoning": "self-contained sub-tree with its own cbl/cpy/bms/csd/ddl/dcl/ctl/jcl directories and README",
+      "roots": {
+        "bms": [
+          "app/app-transaction-type-db2/bms"
+        ],
+        "src": [
+          "app/app-transaction-type-db2/cbl"
+        ],
+        "sql": [
+          "app/app-transaction-type-db2/cpy",
+          "app/app-transaction-type-db2/ctl",
+          "app/app-transaction-type-db2/ddl"
+        ],
+        "copybooks": [
+          "app/app-transaction-type-db2/cpy",
+          "app/app-transaction-type-db2/cpy-bms",
+          "app/app-transaction-type-db2/dcl"
+        ],
+        "csd": [
+          "app/app-transaction-type-db2/csd"
+        ],
+        "cntl": [
+          "app/app-transaction-type-db2/ctl"
+        ],
+        "jcl": [
+          "app/app-transaction-type-db2/jcl"
+        ]
+      },
+      "scan": "python3 -m mftb scan --module CDTRNTYP --from-catalog",
+      "members": [
+        {
+          "name": "COTRTLI",
+          "artifact": "mapset",
+          "path": "app/app-transaction-type-db2/bms/COTRTLI.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/bms/COTRTLI.bms:20"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/bms); COPYed only by CDTRNTYP programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRTUP",
+          "artifact": "mapset",
+          "path": "app/app-transaction-type-db2/bms/COTRTUP.bms",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/bms/COTRTUP.bms:20"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/bms); COPYed only by CDTRNTYP programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COBTUPDT",
+          "artifact": "program",
+          "path": "app/app-transaction-type-db2/cbl/COBTUPDT.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/cbl/COBTUPDT.cbl:23"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/cbl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRTLIC",
+          "artifact": "program",
+          "path": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:24"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/cbl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRTUPC",
+          "artifact": "program",
+          "path": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:22"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/cbl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRTLI",
+          "artifact": "copybook",
+          "path": "app/app-transaction-type-db2/cpy-bms/COTRTLI.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/cpy-bms/COTRTLI.cpy:17"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/cpy-bms); COPYed only by CDTRNTYP programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "COTRTUP",
+          "artifact": "copybook",
+          "path": "app/app-transaction-type-db2/cpy-bms/COTRTUP.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/cpy-bms/COTRTUP.cpy:17"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/cpy-bms); COPYed only by CDTRNTYP programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CSDB2RPY",
+          "artifact": "sql-script",
+          "path": "app/app-transaction-type-db2/cpy/CSDB2RPY.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/cpy/CSDB2RPY.cpy:24"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/cpy)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CSDB2RWY",
+          "artifact": "copybook",
+          "path": "app/app-transaction-type-db2/cpy/CSDB2RWY.cpy",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/cpy/CSDB2RWY.cpy:21"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/cpy); COPYed only by CDTRNTYP programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CRDDEMOD",
+          "artifact": "csd",
+          "path": "app/app-transaction-type-db2/csd/CRDDEMOD.csd",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/csd/CRDDEMOD.csd:1"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/csd); COPYed only by CDTRNTYP programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DB2CREAT",
+          "artifact": "ddl",
+          "path": "app/app-transaction-type-db2/ctl/DB2CREAT.ctl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/ctl/DB2CREAT.ctl:17"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/ctl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DB2FREE",
+          "artifact": "control-cards",
+          "path": "app/app-transaction-type-db2/ctl/DB2FREE.ctl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/ctl/DB2FREE.ctl:15"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/ctl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DB2LTCAT",
+          "artifact": "sql-seed",
+          "path": "app/app-transaction-type-db2/ctl/DB2LTCAT.ctl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/ctl/DB2LTCAT.ctl:15"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/ctl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DB2LTTYP",
+          "artifact": "sql-seed",
+          "path": "app/app-transaction-type-db2/ctl/DB2LTTYP.ctl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/ctl/DB2LTTYP.ctl:15"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/ctl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DB2TEP41",
+          "artifact": "control-cards",
+          "path": "app/app-transaction-type-db2/ctl/DB2TEP41.ctl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/ctl/DB2TEP41.ctl:15"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/ctl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DB2TIAD1",
+          "artifact": "control-cards",
+          "path": "app/app-transaction-type-db2/ctl/DB2TIAD1.ctl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/ctl/DB2TIAD1.ctl:15"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/ctl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "REPROCT",
+          "artifact": "control-cards",
+          "path": "app/app-transaction-type-db2/ctl/REPROCT.ctl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/ctl/REPROCT.ctl:15"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/ctl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DCLTRCAT",
+          "artifact": "copybook",
+          "path": "app/app-transaction-type-db2/dcl/DCLTRCAT.dcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/dcl/DCLTRCAT.dcl:28"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/dcl); COPYed only by CDTRNTYP programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "DCLTRTYP",
+          "artifact": "copybook",
+          "path": "app/app-transaction-type-db2/dcl/DCLTRTYP.dcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/dcl/DCLTRTYP.dcl:28"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/dcl); COPYed only by CDTRNTYP programs",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TRNTYCAT",
+          "artifact": "ddl",
+          "path": "app/app-transaction-type-db2/ddl/TRNTYCAT.ddl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/ddl/TRNTYCAT.ddl:1"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/ddl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TRNTYPE",
+          "artifact": "ddl",
+          "path": "app/app-transaction-type-db2/ddl/TRNTYPE.ddl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/ddl/TRNTYPE.ddl:1"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/ddl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CREADB21",
+          "artifact": "job",
+          "path": "app/app-transaction-type-db2/jcl/CREADB21.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/jcl/CREADB21.jcl:1"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/jcl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "MNTTRDB2",
+          "artifact": "job",
+          "path": "app/app-transaction-type-db2/jcl/MNTTRDB2.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/jcl/MNTTRDB2.jcl:1"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/jcl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "TRANEXTR",
+          "artifact": "job",
+          "path": "app/app-transaction-type-db2/jcl/TRANEXTR.jcl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-transaction-type-db2/jcl/TRANEXTR.jcl:1"
+          ],
+          "reasoning": "in the transaction-type DB2 sub-application's own directory (app/app-transaction-type-db2/jcl)",
+          "confirmed": null,
+          "alternatives": []
+        }
+      ]
+    },
+    {
+      "id": "CDVSAMMQ",
+      "name": "Account/date inquiry over MQ (VSAM/MQ) sub-application",
+      "naming": "proposed",
+      "what_it_does": "answers account and system-date inquiries arriving on MQ queues from the VSAM account file",
+      "confidence": "derived",
+      "confirmed": null,
+      "evidence": [
+        "app/app-vsam-mq/README.md:1",
+        "app/app-vsam-mq/csd/CRDDEMOM.csd:1"
+      ],
+      "reasoning": "self-contained sub-tree with its own cbl and csd directories and README",
+      "roots": {
+        "src": [
+          "app/app-vsam-mq/cbl"
+        ],
+        "csd": [
+          "app/app-vsam-mq/csd"
+        ]
+      },
+      "scan": "python3 -m mftb scan --module CDVSAMMQ --from-catalog",
+      "members": [
+        {
+          "name": "COACCT01",
+          "artifact": "program",
+          "path": "app/app-vsam-mq/cbl/COACCT01.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-vsam-mq/cbl/COACCT01.cbl:2"
+          ],
+          "reasoning": "in the VSAM/MQ sub-application's own directory (app/app-vsam-mq/cbl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CODATE01",
+          "artifact": "program",
+          "path": "app/app-vsam-mq/cbl/CODATE01.cbl",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-vsam-mq/cbl/CODATE01.cbl:2"
+          ],
+          "reasoning": "in the VSAM/MQ sub-application's own directory (app/app-vsam-mq/cbl)",
+          "confirmed": null,
+          "alternatives": []
+        },
+        {
+          "name": "CRDDEMOM",
+          "artifact": "csd",
+          "path": "app/app-vsam-mq/csd/CRDDEMOM.csd",
+          "confidence": "derived",
+          "evidence": [
+            "app/app-vsam-mq/csd/CRDDEMOM.csd:1"
+          ],
+          "reasoning": "in the VSAM/MQ sub-application's own directory (app/app-vsam-mq/csd)",
+          "confirmed": null,
+          "alternatives": []
+        }
+      ]
+    }
+  ],
+  "shared": [
+    {
+      "name": "COCOM01Y",
+      "artifact": "copybook",
+      "path": "app/cpy/COCOM01Y.cpy",
+      "used_by": [
+        "CARDDEMO",
+        "CDAUTHFR",
+        "CDTRNTYP"
+      ],
+      "evidence": [
+        "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:116",
+        "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl:109",
+        "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:375",
+        "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:292",
+        "app/cbl/COACTUPC.cbl:650",
+        "app/cbl/COACTVWC.cbl:211"
+      ],
+      "why": "record/communication layout COPYed by programs of CARDDEMO, CDAUTHFR, CDTRNTYP"
+    },
+    {
+      "name": "CSDAT01Y",
+      "artifact": "copybook",
+      "path": "app/cpy/CSDAT01Y.cpy",
+      "used_by": [
+        "CARDDEMO",
+        "CDAUTHFR",
+        "CDTRNTYP"
+      ],
+      "evidence": [
+        "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:135",
+        "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl:129",
+        "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:480",
+        "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:268",
+        "app/cbl/COACTUPC.cbl:626",
+        "app/cbl/COACTVWC.cbl:232"
+      ],
+      "why": "record/communication layout COPYed by programs of CARDDEMO, CDAUTHFR, CDTRNTYP"
+    },
+    {
+      "name": "CSUSR01Y",
+      "artifact": "copybook",
+      "path": "app/cpy/CSUSR01Y.cpy",
+      "used_by": [
+        "CARDDEMO",
+        "CDTRNTYP"
+      ],
+      "evidence": [
+        "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:485",
+        "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:277",
+        "app/cbl/COACTUPC.cbl:635",
+        "app/cbl/COACTVWC.cbl:241",
+        "app/cbl/COADM01C.cbl:58",
+        "app/cbl/COCRDLIC.cbl:285"
+      ],
+      "why": "record/communication layout COPYed by programs of CARDDEMO, CDTRNTYP"
+    },
+    {
+      "name": "CVACT01Y",
+      "artifact": "copybook",
+      "path": "app/cpy/CVACT01Y.cpy",
+      "used_by": [
+        "CARDDEMO",
+        "CDAUTHFR",
+        "CDVSAMMQ"
+      ],
+      "evidence": [
+        "app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl:206",
+        "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:144",
+        "app/app-vsam-mq/cbl/COACCT01.cbl:171",
+        "app/cbl/CBACT01C.cbl:89",
+        "app/cbl/CBACT04C.cbl:112",
+        "app/cbl/CBEXPORT.cbl:78"
+      ],
+      "why": "record/communication layout COPYed by programs of CARDDEMO, CDAUTHFR, CDVSAMMQ"
+    },
+    {
+      "name": "CVACT02Y",
+      "artifact": "copybook",
+      "path": "app/cpy/CVACT02Y.cpy",
+      "used_by": [
+        "CARDDEMO",
+        "CDAUTHFR",
+        "CDTRNTYP"
+      ],
+      "evidence": [
+        "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:147",
+        "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:490",
+        "app/cbl/CBACT02C.cbl:45",
+        "app/cbl/CBEXPORT.cbl:87",
+        "app/cbl/CBIMPORT.cbl:104",
+        "app/cbl/CBTRN01C.cbl:114"
+      ],
+      "why": "record/communication layout COPYed by programs of CARDDEMO, CDAUTHFR, CDTRNTYP"
+    },
+    {
+      "name": "CVACT03Y",
+      "artifact": "copybook",
+      "path": "app/cpy/CVACT03Y.cpy",
+      "used_by": [
+        "CARDDEMO",
+        "CDAUTHFR"
+      ],
+      "evidence": [
+        "app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl:203",
+        "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:150",
+        "app/cbl/CBACT03C.cbl:45",
+        "app/cbl/CBACT04C.cbl:102",
+        "app/cbl/CBEXPORT.cbl:81",
+        "app/cbl/CBIMPORT.cbl:94"
+      ],
+      "why": "record/communication layout COPYed by programs of CARDDEMO, CDAUTHFR"
+    },
+    {
+      "name": "CVCRD01Y",
+      "artifact": "copybook",
+      "path": "app/cpy/CVCRD01Y.cpy",
+      "used_by": [
+        "CARDDEMO",
+        "CDTRNTYP"
+      ],
+      "evidence": [
+        "app/app-transaction-type-db2/cbl/COTRTLIC.cbl:327",
+        "app/app-transaction-type-db2/cbl/COTRTUPC.cbl:241",
+        "app/cbl/COACTUPC.cbl:597",
+        "app/cbl/COACTVWC.cbl:207",
+        "app/cbl/COCRDLIC.cbl:221",
+        "app/cbl/COCRDSLC.cbl:194"
+      ],
+      "why": "record/communication layout COPYed by programs of CARDDEMO, CDTRNTYP"
+    },
+    {
+      "name": "CVCUS01Y",
+      "artifact": "copybook",
+      "path": "app/cpy/CVCUS01Y.cpy",
+      "used_by": [
+        "CARDDEMO",
+        "CDAUTHFR"
+      ],
+      "evidence": [
+        "app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl:209",
+        "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl:153",
+        "app/cbl/CBCUS01C.cbl:45",
+        "app/cbl/CBEXPORT.cbl:75",
+        "app/cbl/CBIMPORT.cbl:84",
+        "app/cbl/CBTRN01C.cbl:104"
+      ],
+      "why": "record/communication layout COPYed by programs of CARDDEMO, CDAUTHFR"
+    }
+  ],
+  "unplaced": [],
+  "cross_module": [
+    {
+      "from": "CARDDEMO",
+      "to": "CDAUTHFR",
+      "how": "main-menu option table names COPAUS0C; COMEN01C XCTLs to the selected option program",
+      "evidence": [
+        "app/cpy/COMEN02Y.cpy:89",
+        "app/cbl/COMEN01C.cbl:147"
+      ],
+      "why": "the core main menu is the online entry to the pending-authorization screens"
+    },
+    {
+      "from": "CARDDEMO",
+      "to": "CDTRNTYP",
+      "how": "admin-menu option table names COTRTLIC and COTRTUPC; COADM01C XCTLs to the selected option program",
+      "evidence": [
+        "app/cpy/COADM02Y.cpy:49",
+        "app/cpy/COADM02Y.cpy:53"
+      ],
+      "why": "the core admin menu is the online entry to transaction-type maintenance"
+    },
+    {
+      "from": "CARDDEMO",
+      "to": "CDAUTHFR",
+      "how": "the core CA 7 export schedules job CBPAUP0J",
+      "evidence": [
+        "app/scheduler/CardDemo.ca7:43"
+      ],
+      "why": "the purge of expired authorizations runs in the core batch schedule"
+    },
+    {
+      "from": "CARDDEMO",
+      "to": "CDTRNTYP",
+      "how": "the core Control-M export schedules MNTTRDB2 and TRANEXTR",
+      "evidence": [
+        "app/scheduler/CardDemo.controlm:27",
+        "app/scheduler/CardDemo.controlm:58"
+      ],
+      "why": "the DB2 reference-table maintenance and its extract back to VSAM run in the core schedule"
+    }
+  ]
+}

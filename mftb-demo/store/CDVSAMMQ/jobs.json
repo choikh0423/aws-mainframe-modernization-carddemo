@@ -1,0 +1,19 @@
+{
+  "meta": {
+    "module": "CDVSAMMQ",
+    "generated_at": "2026-10-28T13:46:01Z",
+    "tool": "mftb 0.2.3",
+    "inputs": {
+      "jcl": [],
+      "procs": [],
+      "cntl": []
+    }
+  },
+  "sources": [],
+  "procs": [],
+  "proc_defs": [],
+  "proc_facts": [],
+  "jobs": [],
+  "missing_includes": [],
+  "unrecognized": []
+}

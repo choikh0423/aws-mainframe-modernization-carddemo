@@ -1,0 +1,12 @@
+{
+  "meta": {
+    "module": "CDVSAMMQ",
+    "generated_at": "2026-10-28T13:46:01Z",
+    "tool": "mftb 0.2.3",
+    "inputs": {}
+  },
+  "summary": {
+    "sites": 0
+  },
+  "sites": []
+}

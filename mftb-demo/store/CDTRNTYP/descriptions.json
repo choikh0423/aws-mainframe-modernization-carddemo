@@ -1,0 +1,90 @@
+{
+  "meta": {
+    "module": "CDTRNTYP",
+    "generated_at": "2026-10-28T13:46:01Z",
+    "tool": "mftb 0.2.3",
+    "inputs": [
+      "programs.json",
+      "jobs.json"
+    ]
+  },
+  "author": "agent",
+  "summary": {
+    "subjects": 6,
+    "written": 0,
+    "unknown": 6,
+    "by_kind": {
+      "program": 3,
+      "jcl": 3,
+      "proc": 0
+    },
+    "with_key_points": 0,
+    "overviews": 1,
+    "overviews_written": 0
+  },
+  "overviews": [
+    {
+      "kind": "module",
+      "name": "CDTRNTYP",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    }
+  ],
+  "descriptions": [
+    {
+      "kind": "program",
+      "name": "COBTUPDT",
+      "path": "app/app-transaction-type-db2/cbl/COBTUPDT.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COTRTLIC",
+      "path": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "program",
+      "name": "COTRTUPC",
+      "path": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "CREADB2",
+      "path": "app/app-transaction-type-db2/jcl/CREADB21.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "MNTTRDB2",
+      "path": "app/app-transaction-type-db2/jcl/MNTTRDB2.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    },
+    {
+      "kind": "jcl",
+      "name": "TRANEXTR",
+      "path": "app/app-transaction-type-db2/jcl/TRANEXTR.jcl",
+      "description": "unknown",
+      "key_points": [],
+      "basis": [],
+      "written_by": "agent"
+    }
+  ]
+}
