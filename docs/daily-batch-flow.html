@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CardDemo — Daily Batch Flow</title>
+<style>
+  :root {
+    --red: #DB0011;
+    --red-dark: #A8000B;
+    --black: #000000;
+    --ink: #1a1a1a;
+    --grey: #4d4d4d;
+    --line: #d7d8d6;
+    --soft: #f3f3f3;
+    --white: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--white);
+    color: var(--black);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  a { color: var(--red); }
+  code {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.92em;
+    background: var(--soft);
+    padding: 1px 4px;
+    border-radius: 2px;
+    overflow-wrap: anywhere;
+  }
+
+  /* ---------- Header ---------- */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 0 32px;
+    height: 72px;
+    background: var(--white);
+    border-bottom: 4px solid var(--red);
+  }
+  .logo { width: 60px; height: 30px; flex: none; }
+  .topbar h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+  }
+  .topbar .sub {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--grey);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* ---------- Hero band ---------- */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    background: var(--red);
+    color: var(--white);
+    padding: 36px 32px 40px;
+  }
+  .hero h2 { margin: 0 0 8px; font-size: 30px; font-weight: 700; }
+  .hero p { margin: 0; max-width: 760px; font-size: 16px; }
+  .hero .hex-bg {
+    position: absolute;
+    right: -40px;
+    top: -30px;
+    width: 420px;
+    height: 220px;
+    opacity: 0.18;
+  }
+
+  /* ---------- Layout ---------- */
+  main { max-width: 1120px; margin: 0 auto; padding: 8px 32px 48px; }
+  nav.toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 14px;
+  }
+  nav.toc a { color: var(--black); text-decoration: none; font-weight: 700; }
+  nav.toc a:hover { color: var(--red); }
+
+  section { padding-top: 34px; }
+  section > h2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 14px;
+    font-size: 22px;
+    color: var(--red);
+  }
+  section > h2::before {
+    content: "";
+    width: 18px;
+    height: 16px;
+    background: var(--red);
+    clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+    flex: none;
+  }
+  h3 { font-size: 16px; margin: 22px 0 8px; }
+
+  .note {
+    border-left: 4px solid var(--red);
+    background: var(--soft);
+    padding: 10px 14px;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+  .note strong { color: var(--red); }
+
+  /* ---------- Overview phases ---------- */
+  .phases {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .phase {
+    border: 1px solid var(--line);
+    border-top: 4px solid var(--red);
+    padding: 12px 14px;
+  }
+  .phase b { display: block; font-size: 14px; margin-bottom: 4px; }
+  .phase span { font-size: 13px; color: var(--grey); }
+
+  /* ---------- Flow diagram ---------- */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 0 8px;
+  }
+  .job {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    max-width: 620px;
+    background: var(--white);
+    border: 2px solid var(--black);
+    padding: 10px 16px 10px 12px;
+  }
+  .job.edge { border-color: var(--red); background: #fff5f5; }
+  .hex {
+    flex: none;
+    width: 40px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--red);
+    color: var(--white);
+    font-weight: 700;
+    font-size: 14px;
+    clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+  }
+  .job .name { font-weight: 700; font-size: 16px; min-width: 96px; }
+  .job .pgm {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 13px;
+    background: var(--black);
+    color: var(--white);
+    padding: 2px 6px;
+    white-space: nowrap;
+  }
+  .job .desc { font-size: 13px; color: var(--grey); margin-left: auto; text-align: right; }
+
+  .arrow {
+    width: 2px;
+    height: 30px;
+    background: var(--red);
+    position: relative;
+  }
+  .arrow::after {
+    content: "";
+    position: absolute;
+    left: -6px;
+    bottom: -2px;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 10px solid var(--red);
+  }
+
+  .group {
+    width: 100%;
+    max-width: 860px;
+    border: 2px dashed var(--red);
+    padding: 14px 16px 16px;
+    position: relative;
+  }
+  .group .glabel {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .group .glabel small { font-weight: 400; color: var(--grey); }
+  .group-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+  }
+  .mini {
+    border: 1px solid var(--black);
+    padding: 7px 10px;
+    font-size: 13px;
+    background: var(--white);
+  }
+  .mini b { display: block; font-size: 14px; }
+  .mini span { color: var(--grey); }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    font-size: 13px;
+    color: var(--grey);
+    justify-content: center;
+    margin-top: 14px;
+  }
+  .legend i {
+    display: inline-block;
+    width: 14px;
+    height: 12px;
+    margin-right: 6px;
+    vertical-align: -1px;
+  }
+
+  /* ---------- Tables ---------- */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin-top: 8px;
+  }
+  thead th {
+    background: var(--red);
+    color: var(--white);
+    text-align: left;
+    padding: 9px 10px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  tbody td {
+    border-bottom: 1px solid var(--line);
+    padding: 8px 10px;
+    vertical-align: top;
+  }
+  tbody tr:nth-child(even) td { background: #fafafa; }
+  td.num { font-weight: 700; color: var(--red); text-align: center; width: 36px; }
+  td.job-name { font-weight: 700; white-space: nowrap; }
+  td.path code { white-space: nowrap; overflow-wrap: normal; }
+  .yes { color: #1a1a1a; font-weight: 700; }
+  .no  { color: var(--red); font-weight: 700; }
+
+  /* ---------- Optional cards ---------- */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+  }
+  .card {
+    border: 1px solid var(--line);
+    padding: 14px 16px;
+    position: relative;
+  }
+  .card::after {
+    content: "";
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 22px;
+    height: 19px;
+    background: var(--red);
+    clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+  }
+  .card h3 { margin: 0 0 6px; font-size: 17px; }
+  .card .tag {
+    display: inline-block;
+    font-size: 12px;
+    border: 1px solid var(--red);
+    color: var(--red);
+    padding: 1px 6px;
+    margin-bottom: 8px;
+  }
+  .card p { margin: 6px 0; font-size: 14px; }
+
+  pre {
+    background: var(--black);
+    color: var(--white);
+    padding: 14px 16px;
+    font-size: 13px;
+    overflow-x: auto;
+    border-left: 4px solid var(--red);
+  }
+
+  /* ---------- Footer ---------- */
+  footer {
+    border-top: 4px solid var(--red);
+    background: var(--black);
+    color: var(--white);
+    padding: 20px 32px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  footer .logo { width: 44px; height: 22px; }
+  footer p { margin: 0; }
+  footer .muted { color: #bdbdbd; margin-left: auto; }
+
+  @media (max-width: 640px) {
+    .topbar { padding: 0 16px; }
+    .topbar .sub { display: none; }
+    main { padding: 8px 16px 40px; }
+    .job { flex-wrap: wrap; }
+    .job .desc { margin-left: 54px; text-align: left; }
+  }
+  @media print {
+    .hero { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    thead th, .hex, .job .pgm, footer { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Reusable red-and-white hexagon mark -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="hexmark" viewBox="0 0 200 100">
+      <polygon points="0,50 50,0 50,100" fill="#DB0011"/>
+      <polygon points="200,50 150,0 150,100" fill="#DB0011"/>
+      <polygon points="50,0 150,0 100,50" fill="#DB0011"/>
+      <polygon points="50,100 150,100 100,50" fill="#DB0011"/>
+      <polygon points="50,0 100,50 50,100" fill="#FFFFFF"/>
+      <polygon points="150,0 100,50 150,100" fill="#FFFFFF"/>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="topbar">
+  <svg class="logo" role="img" aria-label="Hexagon mark"><use href="#hexmark"/></svg>
+  <h1>CardDemo — Daily Batch Flow</h1>
+  <span class="sub">Batch operations guide</span>
+</header>
+
+<div class="hero">
+  <svg class="hex-bg" viewBox="0 0 420 220" aria-hidden="true">
+    <g fill="none" stroke="#FFFFFF" stroke-width="3">
+      <polygon points="60,10 140,10 180,80 140,150 60,150 20,80"/>
+      <polygon points="190,70 270,70 310,140 270,210 190,210 150,140"/>
+      <polygon points="320,10 400,10 440,80 400,150 320,150 280,80"/>
+    </g>
+  </svg>
+  <h2>Main daily batch cycle</h2>
+  <p>The nightly sequence of JCL jobs that takes CardDemo's VSAM files away from CICS, refreshes
+     reference data, posts the day's transactions, calculates interest, backs up and combines
+     transactions, produces statements and hands the files back to the online region.</p>
+</div>
+
+<main>
+  <nav class="toc" aria-label="Contents">
+    <a href="#overview">Overview</a>
+    <a href="#flow">Flow diagram</a>
+    <a href="#jobs">Job reference</a>
+    <a href="#optional">Optional jobs</a>
+    <a href="#automation">Automation</a>
+  </nav>
+
+  <!-- ===================== OVERVIEW ===================== -->
+  <section id="overview">
+    <h2>Overview</h2>
+    <p>CardDemo's online application (CICS) and its batch programs share the same VSAM datasets.
+       Batch jobs cannot update those datasets safely while CICS has them open, so the daily cycle
+       is bracketed by a <b>close</b> and an <b>open</b> of the CICS files. In between it runs
+       these stages:</p>
+
+    <div class="phases">
+      <div class="phase"><b>1. Close CICS files</b><span>CLOSEFIL takes TRANSACT, CCXREF, ACCTDAT, CXACAIX and USRSEC away from region CICSAWSA.</span></div>
+      <div class="phase"><b>2. Refresh VSAM data</b><span>IDCAMS jobs delete, define and reload the account, card, cross-reference, customer, transaction and reference files from sample data.</span></div>
+      <div class="phase"><b>3. Post transactions</b><span>POSTTRAN validates the daily transaction file, posts to the transaction master and updates account and category balances.</span></div>
+      <div class="phase"><b>4. Calculate interest</b><span>INTCALC computes interest and fees from the transaction category balance file.</span></div>
+      <div class="phase"><b>5. Back up</b><span>TRANBKP copies the transaction master to a new generation of the backup GDG.</span></div>
+      <div class="phase"><b>6. Combine</b><span>COMBTRAN sorts the backup together with system-generated transactions and reloads the master.</span></div>
+      <div class="phase"><b>7. Produce statements</b><span>CREASTMT writes customer statements in text and HTML.</span></div>
+      <div class="phase"><b>8. Reopen files</b><span>TRANIDX rebuilds the alternate index, then OPENFIL gives the files back to CICS.</span></div>
+    </div>
+
+    <div class="note">
+      <strong>Source.</strong> The sequence follows the "Running Batch Jobs" table in
+      <code>README.md</code> and the submission order in <code>scripts/run_full_batch.sh</code>.
+      Program names come from the <code>EXEC PGM=</code> statements in <code>app/jcl/</code>.
+    </div>
+  </section>
+
+  <!-- ===================== FLOW ===================== -->
+  <section id="flow">
+    <h2>Flow diagram</h2>
+    <p>Jobs run top to bottom. Each job is submitted after the previous one ends. The dashed box is
+       the data-refresh group, whose ten jobs only reload files and have no data dependency on each other.</p>
+
+    <div class="flow" role="img" aria-label="Daily batch job sequence from CLOSEFIL to OPENFIL">
+
+      <div class="job edge">
+        <div class="hex">1</div>
+        <div class="name">CLOSEFIL</div>
+        <div class="pgm">IEFBR14 / SDSF</div>
+        <div class="desc">Close VSAM files in CICS</div>
+      </div>
+      <div class="arrow"></div>
+
+      <div class="group">
+        <div class="glabel"><div class="hex">2</div>Data refresh group <small>— all IDCAMS delete / define / REPRO loads</small></div>
+        <div class="group-grid">
+          <div class="mini"><b>ACCTFILE</b><span>Account master</span></div>
+          <div class="mini"><b>CARDFILE</b><span>Card master</span></div>
+          <div class="mini"><b>XREFFILE</b><span>Card ↔ account xref</span></div>
+          <div class="mini"><b>CUSTFILE</b><span>Customer master</span></div>
+          <div class="mini"><b>TRANBKP</b><span>Transaction master</span></div>
+          <div class="mini"><b>TRANCATG</b><span>Transaction categories</span></div>
+          <div class="mini"><b>TRANTYPE</b><span>Transaction types</span></div>
+          <div class="mini"><b>DISCGRP</b><span>Disclosure groups</span></div>
+          <div class="mini"><b>TCATBALF</b><span>Category balances</span></div>
+          <div class="mini"><b>DUSRSECJ</b><span>User security</span></div>
+        </div>
+      </div>
+      <div class="arrow"></div>
+
+      <div class="job">
+        <div class="hex">3</div>
+        <div class="name">POSTTRAN</div>
+        <div class="pgm">CBTRN02C</div>
+        <div class="desc">Core transaction posting</div>
+      </div>
+      <div class="arrow"></div>
+
+      <div class="job">
+        <div class="hex">4</div>
+        <div class="name">INTCALC</div>
+        <div class="pgm">CBACT04C</div>
+        <div class="desc">Interest calculation</div>
+      </div>
+      <div class="arrow"></div>
+
+      <div class="job">
+        <div class="hex">5</div>
+        <div class="name">TRANBKP</div>
+        <div class="pgm">IDCAMS</div>
+        <div class="desc">Transaction backup to GDG</div>
+      </div>
+      <div class="arrow"></div>
+
+      <div class="job">
+        <div class="hex">6</div>
+        <div class="name">COMBTRAN</div>
+        <div class="pgm">SORT</div>
+        <div class="desc">Combine system + daily transactions</div>
+      </div>
+      <div class="arrow"></div>
+
+      <div class="job">
+        <div class="hex">7</div>
+        <div class="name">CREASTMT</div>
+        <div class="pgm">CBSTM03A</div>
+        <div class="desc">Produce statements</div>
+      </div>
+      <div class="arrow"></div>
+
+      <div class="job">
+        <div class="hex">8</div>
+        <div class="name">TRANIDX</div>
+        <div class="pgm">IDCAMS</div>
+        <div class="desc">Define alternate index on transaction file</div>
+      </div>
+      <div class="arrow"></div>
+
+      <div class="job edge">
+        <div class="hex">9</div>
+        <div class="name">OPENFIL</div>
+        <div class="pgm">IEFBR14 / SDSF</div>
+        <div class="desc">Reopen files to CICS</div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><i style="background:#fff5f5;border:2px solid #DB0011"></i>CICS file close / open</span>
+      <span><i style="background:#fff;border:2px solid #000"></i>Processing job</span>
+      <span><i style="border:2px dashed #DB0011"></i>Data-refresh group</span>
+      <span><i style="background:#000"></i>Program / utility</span>
+    </div>
+
+    <div class="note">
+      <strong>CLOSEFIL / OPENFIL in the JCL.</strong> These are usually described as IEFBR14 jobs, but the
+      checked-in <code>app/jcl/CLOSEFIL.jcl</code> and <code>app/jcl/OPENFIL.jcl</code> run
+      <code>PGM=SDSF</code>. They issue <code>/F CICSAWSA,'CEMT SET FIL(...) CLO'</code> (or <code>OPE</code>)
+      for TRANSACT, CCXREF, ACCTDAT, CXACAIX and USRSEC.
+    </div>
+    <div class="note">
+      <strong>TRANBKP runs twice.</strong> The same <code>TRANBKP.jcl</code> appears in the refresh group and again
+      after INTCALC. Each run REPROs the transaction KSDS to a new generation
+      <code>AWS.M2.CARDDEMO.TRANSACT.BKUP(+1)</code>, deletes the KSDS and its alternate index, and
+      defines an empty KSDS. COMBTRAN then reloads it, and TRANIDX rebuilds the alternate index.
+    </div>
+  </section>
+
+  <!-- ===================== JOB TABLE ===================== -->
+  <section id="jobs">
+    <h2>Job reference</h2>
+    <p>Main daily flow in README order. "In script" shows whether <code>scripts/run_full_batch.sh</code> submits the job.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Jobname</th><th>Program / utility</th><th>Purpose</th><th>JCL file</th><th>In script</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="num">1</td><td class="job-name">CLOSEFIL</td><td>IEFBR14 (JCL: SDSF → CEMT)</td><td>Close the VSAM files opened by CICS</td><td class="path"><code>app/jcl/CLOSEFIL.jcl</code></td><td class="yes">Yes</td></tr>
+          <tr><td class="num">2</td><td class="job-name">ACCTFILE</td><td>IDCAMS</td><td>Load the account database from sample data</td><td class="path"><code>app/jcl/ACCTFILE.jcl</code></td><td class="yes">Yes</td></tr>
+          <tr><td class="num">2</td><td class="job-name">CARDFILE</td><td>IDCAMS</td><td>Load the card database with credit-card sample data</td><td class="path"><code>app/jcl/CARDFILE.jcl</code></td><td class="yes">Yes</td></tr>
+          <tr><td class="num">2</td><td class="job-name">XREFFILE</td><td>IDCAMS</td><td>Load the customer / card / account cross-reference to VSAM</td><td class="path"><code>app/jcl/XREFFILE.jcl</code></td><td class="yes">Yes</td></tr>
+          <tr><td class="num">2</td><td class="job-name">CUSTFILE</td><td>IDCAMS</td><td>Create the customer database</td><td class="path"><code>app/jcl/CUSTFILE.jcl</code></td><td class="yes">Yes</td></tr>
+          <tr><td class="num">2</td><td class="job-name">TRANBKP</td><td>IDCAMS</td><td>Create the transaction database (back up, delete, define)</td><td class="path"><code>app/jcl/TRANBKP.jcl</code></td><td class="yes">Yes</td></tr>
+          <tr><td class="num">2</td><td class="job-name">TRANCATG</td><td>IDCAMS</td><td>Copy the latest transaction-category file to VSAM</td><td class="path"><code>app/jcl/TRANCATG.jcl</code></td><td class="no">No</td></tr>
+          <tr><td class="num">2</td><td class="job-name">TRANTYPE</td><td>IDCAMS</td><td>Copy the latest transaction-type file to VSAM</td><td class="path"><code>app/jcl/TRANTYPE.jcl</code></td><td class="yes">Yes</td></tr>
+          <tr><td class="num">2</td><td class="job-name">DISCGRP</td><td>IDCAMS</td><td>Copy the initial disclosure-group file to VSAM</td><td class="path"><code>app/jcl/DISCGRP.jcl</code></td><td class="yes">Yes</td></tr>
+          <tr><td class="num">2</td><td class="job-name">TCATBALF</td><td>IDCAMS</td><td>Copy the initial transaction-category balance file to VSAM</td><td class="path"><code>app/jcl/TCATBALF.jcl</code></td><td class="yes">Yes</td></tr>
+          <tr><td class="num">2</td><td class="job-name">DUSRSECJ</td><td>IDCAMS (with IEFBR14, IEBGENER)</td><td>Set up the user security VSAM file</td><td class="path"><code>app/jcl/DUSRSECJ.jcl</code></td><td class="yes">Yes</td></tr>
+          <tr><td class="num">3</td><td class="job-name">POSTTRAN</td><td>CBTRN02C</td><td>Core posting: validate daily transactions, update the transaction master and the account and category balances, write rejects</td><td class="path"><code>app/jcl/POSTTRAN.jcl</code></td><td class="yes">Yes</td></tr>
+          <tr><td class="num">4</td><td class="job-name">INTCALC</td><td>CBACT04C</td><td>Compute interest and fees from category balances (<code>PARM='2022071800'</code>)</td><td class="path"><code>app/jcl/INTCALC.jcl</code></td><td class="yes">Yes</td></tr>
+          <tr><td class="num">5</td><td class="job-name">TRANBKP</td><td>IDCAMS</td><td>Back up the transaction master to the <code>TRANSACT.BKUP</code> GDG</td><td class="path"><code>app/jcl/TRANBKP.jcl</code></td><td class="yes">Yes</td></tr>
+          <tr><td class="num">6</td><td class="job-name">COMBTRAN</td><td>SORT (then IDCAMS REPRO)</td><td>Sort the backup with <code>SYSTRAN(0)</code> by TRAN-ID into <code>TRANSACT.COMBINED(+1)</code> and reload the master</td><td class="path"><code>app/jcl/COMBTRAN.jcl</code></td><td class="yes">Yes</td></tr>
+          <tr><td class="num">7</td><td class="job-name">CREASTMT</td><td>CBSTM03A (calls CBSTM03B)</td><td>Produce transaction statements as text (<code>STATEMNT.PS</code>) and HTML</td><td class="path"><code>app/jcl/CREASTMT.JCL</code></td><td class="no">No</td></tr>
+          <tr><td class="num">8</td><td class="job-name">TRANIDX</td><td>IDCAMS</td><td>Define, path and build the alternate index on the processed timestamp</td><td class="path"><code>app/jcl/TRANIDX.jcl</code></td><td class="yes">Yes</td></tr>
+          <tr><td class="num">9</td><td class="job-name">OPENFIL</td><td>IEFBR14 (JCL: SDSF → CEMT)</td><td>Make the files available to CICS again</td><td class="path"><code>app/jcl/OPENFIL.jcl</code></td><td class="yes">Yes</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note">
+      <strong>File-name case.</strong> The statement job is checked in as <code>CREASTMT.JCL</code> (upper-case extension),
+      unlike the other <code>*.jcl</code> members. <code>WAITSTEP</code> (<code>app/jcl/WAITSTEP.jcl</code>, program COBSWAIT)
+      is also in the README table. It is a utility that pauses for a set time and is not a processing stage.
+    </div>
+  </section>
+
+  <!-- ===================== OPTIONAL ===================== -->
+  <section id="optional">
+    <h2>Optional jobs</h2>
+    <p>These jobs belong to optional modules or run on demand. They are not part of the core nightly sequence.</p>
+    <div class="cards">
+      <div class="card">
+        <h3>TRANEXTR</h3>
+        <span class="tag">Db2: Transaction Type Mgmt</span>
+        <p>Extracts the latest transaction-type and category data from Db2 with the <b>DSNTIAUL</b> unload utility,
+           run under <code>IKJEFT01</code>. Runs before TRANCATG / TRANTYPE so that those jobs load current data.</p>
+        <p><code>app/app-transaction-type-db2/jcl/TRANEXTR.jcl</code></p>
+      </div>
+      <div class="card">
+        <h3>CBPAUP0J</h3>
+        <span class="tag">IMS-DB2-MQ: Pending Authorizations</span>
+        <p>Purges expired pending authorizations. It runs IMS BMP program <b>CBPAUP0C</b> through
+           <code>DFSRRC00</code> (<code>PARM='BMP,CBPAUP0C,PSBPAUTB'</code>).</p>
+        <p><code>app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl</code></p>
+      </div>
+      <div class="card">
+        <h3>TRANREPT</h3>
+        <span class="tag">Submitted from CICS</span>
+        <p>Transaction report (program <b>CBTRN03C</b>, proc <code>app/proc/TRANREPT.prc</code>). Users request it
+           online from the report screen <b>CORPT00C</b> (transaction CR00). That program writes the job to the
+           <code>JOBS</code> extra-partition TDQ, which submits it to JES.</p>
+        <p><code>app/jcl/TRANREPT.jcl</code></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== AUTOMATION ===================== -->
+  <section id="automation">
+    <h2>Automation: <code>scripts/run_full_batch.sh</code></h2>
+    <p>The script submits the whole cycle without manual steps. It checks that an FTP tunnel is listening on
+       local port <code>2121</code> and opens <code>tnftp localhost 2121</code>. It switches the FTP session to JES mode
+       with <code>quote site filetype=JES</code>, so each <code>put jcl/&lt;JOB&gt;.jcl</code> submits that member
+       as a batch job instead of storing it as a file.</p>
+<pre>quote site filetype=JES
+put jcl/CLOSEFIL.jcl     # then sleep 5
+put jcl/ACCTFILE.jcl     # data refresh ...
+put jcl/CARDFILE.jcl
+put jcl/XREFFILE.jcl
+put jcl/CUSTFILE.jcl
+put jcl/TRANBKP.jcl
+put jcl/DISCGRP.jcl
+put jcl/TCATBALF.jcl
+put jcl/TRANTYPE.jcl
+put jcl/DUSRSECJ.jcl     # then sleep 5
+put jcl/POSTTRAN.jcl     # then sleep 10
+put jcl/INTCALC.jcl      # then sleep 5
+put jcl/TRANBKP.jcl
+put jcl/COMBTRAN.jcl     # then sleep 5
+put jcl/TRANIDX.jcl      # then sleep 5
+put jcl/OPENFIL.jcl</pre>
+    <div class="note">
+      <strong>Differences from the README sequence.</strong> The script does not submit <b>TRANCATG</b> or
+      <b>CREASTMT</b>. It loads DISCGRP / TCATBALF / TRANTYPE in a different order from the README. It also uses
+      fixed <code>sleep</code> pauses between submissions and does not check each job's return code, so a failed
+      job does not stop later jobs. Related scripts <code>run_posting.sh</code> and
+      <code>run_interest_calc.sh</code> submit single stages.
+    </div>
+  </section>
+</main>
+
+<footer>
+  <svg class="logo" role="img" aria-label="Hexagon mark"><use href="#hexmark"/></svg>
+  <p>Documentation for the <b>AWS Mainframe Modernization CardDemo</b> sample application: main daily batch flow.</p>
+  <p class="muted">Source: README.md "Running Batch Jobs", scripts/run_full_batch.sh, app/jcl/</p>
+</footer>
+
+</body>
+</html>
