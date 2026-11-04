@@ -54,9 +54,12 @@ class MenuControllerIntegrationTest {
                 .andExpect(jsonPath("$.prompt").value(ScreenText.MENU_PROMPT))
                 .andExpect(jsonPath("$.optionLength").value(2))
                 .andExpect(jsonPath("$.pfKeys").value(ScreenText.MENU_PF_KEYS))
-                .andExpect(jsonPath("$.options.length()").value(11))
+                .andExpect(jsonPath("$.options.length()").value(12))
                 .andExpect(jsonPath("$.options[0].displayText")
-                        .value(MenuCatalog.MAIN_MENU.get(0).displayText()));
+                        .value(MenuCatalog.MAIN_MENU.get(0).displayText()))
+                .andExpect(jsonPath("$.options[11].displayText")
+                        .value(MenuCatalog.MAIN_MENU.get(11).displayText()))
+                .andExpect(jsonPath("$.options[11].programName").value("COSTM00C"));
     }
 
     /** FR-ADM-01, FR-ADM-02 */

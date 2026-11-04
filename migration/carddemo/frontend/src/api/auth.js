@@ -65,7 +65,7 @@ export async function getSignOnScreen() {
   return (await readBody(res)) || null;
 }
 
-/** COMEN01C — the 11 main-menu options from COMEN02Y, in copybook order. */
+/** COMEN01C — the 11 main-menu options from COMEN02Y in copybook order, then option 12 (Statements). */
 export async function getMainMenu() {
   const res = await fetch('/api/menu/main');
   return (await readBody(res)) || null;
