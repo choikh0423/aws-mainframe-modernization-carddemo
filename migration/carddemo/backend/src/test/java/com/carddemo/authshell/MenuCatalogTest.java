@@ -17,7 +17,7 @@ class MenuCatalogTest {
     }
 
     @Test
-    void mainMenuIsTheElevenRowsOfComen02y() {
+    void mainMenuIsTheElevenRowsOfComen02yPlusStatements() {
         assertThat(lines(MenuCatalog.MAIN_MENU)).containsExactly(
                 "1|Account View|COACTVWC|U",
                 "2|Account Update|COACTUPC|U",
@@ -29,7 +29,16 @@ class MenuCatalogTest {
                 "8|Transaction Add|COTRN02C|U",
                 "9|Transaction Reports|CORPT00C|U",
                 "10|Bill Payment|COBIL00C|U",
-                "11|Pending Authorization View|COPAUS0C|U");
+                "11|Pending Authorization View|COPAUS0C|U",
+                "12|Statements|COSTM00C|U");
+    }
+
+    /** Option 12 fills the twelfth CDEMO-MENU-OPT occurrence and the map's OPTN012 line. */
+    @Test
+    void statementsOptionLineFitsTheTwelfthSlot() {
+        assertThat(MenuCatalog.MAIN_MENU.get(11).displayText())
+                .hasSize(ScreenText.MENU_OPTION_LINE_LENGTH)
+                .isEqualTo("12. Statements" + " ".repeat(26));
     }
 
     /** COADM02Y has no CDEMO-ADMIN-OPT-USRTYPE column at all. */

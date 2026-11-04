@@ -162,6 +162,14 @@ export const SCREENS = [
     element: <PendingAuthDetailPage />,
   },
   {
+    program: 'COSTM00C',
+    tranId: 'CM00',
+    path: '/statements',
+    title: 'Statement List',
+    stream: 'S-21 OnlineStatements',
+    element: null,
+  },
+  {
     program: 'COUSR00C',
     tranId: 'CU00',
     path: '/admin/users',

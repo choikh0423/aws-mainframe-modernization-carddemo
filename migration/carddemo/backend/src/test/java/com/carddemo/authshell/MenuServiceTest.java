@@ -20,10 +20,21 @@ class MenuServiceTest {
             new MenuService(new ProgramInstallation("COPAUS0C"));
 
     @Test
-    void mainMenuCarriesTheElevenCopybookOptions() {
-        assertThat(service.mainMenu()).hasSize(11);
+    void mainMenuCarriesTheElevenCopybookOptionsPlusStatements() {
+        assertThat(service.mainMenu()).hasSize(12);
         assertThat(service.mainMenu().get(0).name()).isEqualTo("Account View");
         assertThat(service.mainMenu().get(10).programName()).isEqualTo("COPAUS0C");
+        assertThat(service.mainMenu().get(11).programName()).isEqualTo("COSTM00C");
+    }
+
+    @Test
+    void acceptsTheStatementsOptionForAnOrdinaryUser() {
+        MenuSelection selection = service.selectMainMenuOption("12", "U");
+        assertThat(selection.accepted()).isTrue();
+        assertThat(selection.option().name()).isEqualTo("Statements");
+        assertThat(selection.option().programName()).isEqualTo(MenuCatalog.STATEMENTS_PROGRAM);
+        assertThat(selection.message()).isEmpty();
+        assertThat(selection.optionEcho()).isEqualTo("12");
     }
 
     @Test
@@ -53,7 +64,7 @@ class MenuServiceTest {
 
     @Test
     void rejectsZeroTooHighAndNonNumericOptions() {
-        for (String typed : new String[] {null, "", "  ", "0", "00", "a", "1a", "12", "99"}) {
+        for (String typed : new String[] {null, "", "  ", "0", "00", "a", "1a", "13", "99"}) {
             MenuSelection selection = service.selectMainMenuOption(typed, "U");
             assertThat(selection.accepted())
                     .describedAs("option <%s>", typed).isFalse();

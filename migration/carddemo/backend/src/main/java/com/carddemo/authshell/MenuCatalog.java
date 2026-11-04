@@ -12,10 +12,18 @@ import java.util.List;
  * count field is the only guard the programs use, so the catalog carries exactly
  * the populated rows. The copybook's X(35) name padding is reproduced by
  * {@link MenuOption#paddedName()} where the COBOL depends on it.
+ *
+ * <p>Main-menu option 12 is a modernization extension, not a COMEN02Y row: it
+ * fills the copybook's spare twelfth occurrence (and the map's OPTN012 line)
+ * with {@code COSTM00C}, the Online Statements screen of stream S-21. Options
+ * 1-11 are unchanged.
  */
 public final class MenuCatalog {
 
-    /** COMEN02Y.cpy:23-92 — every option's CDEMO-MENU-OPT-USRTYPE is 'U'. */
+    /** The modern-only program behind main-menu option 12 (S-21 OnlineStatements). */
+    public static final String STATEMENTS_PROGRAM = "COSTM00C";
+
+    /** COMEN02Y.cpy:23-92 plus option 12 — every option's CDEMO-MENU-OPT-USRTYPE is 'U'. */
     public static final List<MenuOption> MAIN_MENU = List.of(
             new MenuOption(1, "Account View", "COACTVWC", "U"),
             new MenuOption(2, "Account Update", "COACTUPC", "U"),
@@ -27,7 +35,8 @@ public final class MenuCatalog {
             new MenuOption(8, "Transaction Add", "COTRN02C", "U"),
             new MenuOption(9, "Transaction Reports", "CORPT00C", "U"),
             new MenuOption(10, "Bill Payment", "COBIL00C", "U"),
-            new MenuOption(11, "Pending Authorization View", "COPAUS0C", "U"));
+            new MenuOption(11, "Pending Authorization View", "COPAUS0C", "U"),
+            new MenuOption(12, "Statements", STATEMENTS_PROGRAM, "U"));
 
     /** COADM02Y.cpy:26-54 — CDEMO-ADMIN-OPT has no user-type column at all. */
     public static final List<MenuOption> ADMIN_MENU = List.of(
