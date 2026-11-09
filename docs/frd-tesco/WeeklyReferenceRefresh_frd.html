@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tesco Bank — FRD — WeeklyReferenceRefresh</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    if (window.mermaid) {
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "base",
+        themeVariables: {
+          primaryColor: "#ffffff", primaryBorderColor: "#00539f", primaryTextColor: "#003366",
+          lineColor: "#333333", fontFamily: "Tesco Modern, Arial, Helvetica, sans-serif"
+        }
+      });
+    }
+  });
+</script>
+<style>
+  :root {
+    --tesco-blue: #00539f; --tesco-red: #ee1c2e; --black: #003366;
+    --ink: #333333; --muted: #666666; --line: #d6dde6; --bg: #ffffff;
+    --panel: #f2f6fa; --panel-2: #e5eef6;
+    --warn-bg: #e5eef6; --warn-line: #00539f;
+    --tag-batch: #00539f; --tag-online: #ee1c2e;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Tesco Modern", Arial, Helvetica, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.5; }
+  a { color: var(--tesco-blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Brand bar */
+  .brand-bar { background: var(--bg); border-bottom: 1px solid var(--line); }
+  .brand-bar .inner { max-width: 1080px; margin: 0 auto; padding: 14px 40px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand svg { height: 34px; width: auto; display: block; }
+  .brand .wordmark { font-weight: 700; font-size: 1.35em; letter-spacing: 0.02em; color: var(--black); line-height: 1; }
+  .brand .division { border-left: 1px solid var(--line); padding-left: 12px; margin-left: 4px; font-size: 0.82em; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .classification { font-size: 0.72em; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tesco-red); border: 1px solid var(--tesco-red); padding: 3px 10px; }
+  .red-rule { height: 5px; background: repeating-linear-gradient(90deg, var(--tesco-red) 0 72px, var(--bg) 72px 78px); }
+
+  .page { max-width: 1080px; margin: 0 auto; padding: 32px 40px 80px; }
+
+  header.doc-head { padding-bottom: 20px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
+  .doc-kicker { font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.12em; color: var(--tesco-blue); font-weight: 700; margin-bottom: 8px; }
+  h1 { font-size: 2em; font-weight: 300; margin: 0 0 6px; color: var(--black); letter-spacing: -0.01em; }
+  h1 strong { font-weight: 700; }
+  h2 { font-size: 1.25em; font-weight: 700; margin: 44px 0 12px; padding: 0 0 6px 14px; border-left: 4px solid var(--tesco-blue); border-bottom: 1px solid var(--line); color: var(--black); }
+  h3 { font-size: 1.02em; font-weight: 700; margin: 24px 0 8px; color: var(--black); }
+  .subtitle { color: var(--muted); font-size: 0.98em; }
+
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 0; color: #fff; font-size: 0.5em; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; vertical-align: middle; position: relative; top: -4px; }
+  .tag.batch { background: var(--tag-batch); }
+  .tag.online { background: var(--tag-online); }
+
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.92em; }
+  th, td { border: 0; border-bottom: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--tesco-blue); color: #fff; font-weight: 700; font-size: 0.85em; letter-spacing: 0.04em; text-transform: uppercase; border-bottom: 2px solid var(--tesco-red); }
+  tr:nth-child(even) td { background: var(--panel); }
+  code, .mono { font-family: "Consolas", "Menlo", monospace; font-size: 0.93em; background: var(--panel-2); padding: 1px 4px; border-radius: 0; color: var(--black); }
+
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin: 16px 0; }
+  .meta-grid .cell { background: var(--panel); border-top: 3px solid var(--tesco-blue); padding: 10px 12px; }
+  .meta-grid .cell .k { font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .meta-grid .cell .v { font-weight: 700; color: var(--black); }
+
+  .note { background: var(--warn-bg); border-left: 4px solid var(--warn-line); padding: 10px 14px; margin: 14px 0; font-size: 0.92em; color: var(--black); }
+  .guidance { color: var(--muted); font-style: italic; font-size: 0.9em; }
+  .diagram { background: var(--bg); border: 1px solid var(--line); border-top: 3px solid var(--tesco-blue); padding: 16px; overflow-x: auto; }
+
+  nav.toc { background: var(--panel); border-left: 4px solid var(--black); padding: 12px 20px; font-size: 0.92em; }
+  nav.toc strong { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.85em; color: var(--black); }
+  nav.toc ol { margin: 6px 0; padding-left: 20px; columns: 2; column-gap: 32px; }
+  nav.toc li { break-inside: avoid; }
+  nav.toc a { color: var(--ink); }
+  nav.toc a:hover { color: var(--tesco-blue); }
+
+  footer { margin-top: 60px; border-top: 1px solid var(--line); padding-top: 14px; color: var(--muted); font-size: 0.82em; display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+  footer .legal { max-width: 70%; }
+  footer .brand svg { height: 18px; }
+  footer .brand .wordmark { font-size: 0.95em; }
+
+  @media print {
+    .page { padding: 0 0 40px; }
+    h2 { break-after: avoid; }
+    table, .diagram, .note { break-inside: avoid; }
+  }
+  td, th, .cell .v, code, .mono { overflow-wrap: anywhere; }
+  th { overflow-wrap: normal; word-break: normal; }
+  td:not(.mono) { overflow-wrap: break-word; }
+  td:not(.mono) code { overflow-wrap: anywhere; }
+  td.id { white-space: nowrap; }
+  table { table-layout: auto; }
+  td ul { margin: 4px 0; padding-left: 18px; }
+</style>
+</head>
+<body>
+
+<div class="brand-bar">
+  <div class="inner">
+    <div class="brand">
+      <svg viewBox="0 0 168 56" role="img" aria-label="Tesco">
+        <text x="2" y="34" font-family="'Tesco Modern', Arial Black, Arial, Helvetica, sans-serif" font-weight="900" font-size="38" letter-spacing="1" fill="#00539f">TESCO</text>
+        <g fill="#ee1c2e"><rect x="4" y="42" width="40" height="5"/><rect x="48" y="42" width="34" height="5"/><rect x="86" y="42" width="28" height="5"/><rect x="118" y="42" width="20" height="5"/><rect x="142" y="42" width="12" height="5"/></g>
+      </svg>
+      <span class="wordmark">Tesco Bank</span>
+      <span class="division">Tesco Technology &mdash; Mainframe Modernisation</span>
+    </div>
+    <span class="classification">Tesco Confidential</span>
+  </div>
+</div>
+<div class="red-rule"></div>
+
+<div class="page">
+
+<header class="doc-head">
+  <div class="doc-kicker">Functional Requirement Document</div>
+  <h1><strong>WeeklyReferenceRefresh</strong> <span class="tag batch">Batch</span></h1>
+  <div class="subtitle">Weekly DB2 transaction-type refresh and disclosure-group reload. On Saturdays Control-M runs the DB2 transaction-type maintenance job <code>MNTTRDB2</code>; its completion releases two parallel branches: the flat-file re-extract <code>TRANEXTR</code>, and the CICS-bracketed disclosure-group (APR pricing group) VSAM reload <code>CLOSEFIL &rarr; DISCGRP &rarr; WAITSTEP &rarr; OPENFIL</code>.</div>
+</header>
+
+<div class="meta-grid">
+  <div class="cell"><div class="k">Stream type</div><div class="v">Batch cycle</div></div>
+  <div class="cell"><div class="k">Application</div><div class="v">CARDDEMO</div></div>
+  <div class="cell"><div class="k">Scheduler table / CICS group</div><div class="v">Control-M WEEKLY-TransactionTypesDBRefresh / WEEKLY-DisclosureGroupsRefresh (no CA-7 entry)</div></div>
+  <div class="cell"><div class="k">Owner</div><div class="v">Tesco Bank Cards Technology &mdash; Batch Operations (A); Control-M RUN_AS <code>xuemingh</code></div></div>
+  <div class="cell"><div class="k">Run window / availability</div><div class="v">Saturday overnight batch; TIMETO 23:00 (latest submission) per job, no FROM time; CICS files closed from CLOSEFIL to OPENFIL</div></div>
+  <div class="cell"><div class="k">Calendar / frequency</div><div class="v">Weekly, Saturdays (DAYS="SA" on both smart folders); the MNTTRDB2 job itself has no DAYS attribute</div></div>
+  <div class="cell"><div class="k">Criticality</div><div class="v">CRITICAL="0" on every job; feeds the monthly interest charge (A: supports an important business service)</div></div>
+  <div class="cell"><div class="k">Doc status</div><div class="v">DRAFT</div></div>
+</div>
+
+<table>
+  <tr><th>Version</th><th>Date</th><th>Author</th><th>Change</th></tr>
+  <tr><td>0.1</td><td>2026-11-09</td><td>Devin</td><td>Initial draft</td></tr>
+</table>
+
+<nav class="toc">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#purpose">Business purpose</a></li>
+    <li><a href="#flow">Flow diagram</a></li>
+    <li><a href="#inventory">Job / screen inventory</a></li>
+    <li><a href="#dependencies">Dependencies</a></li>
+    <li><a href="#requirements">Functional requirements</a></li>
+    <li><a href="#restart">Restart, recovery &amp; error handling</a></li>
+    <li><a href="#nfr">Non-functional requirements</a></li>
+    <li><a href="#interfaces">Interfaces &amp; data layouts</a></li>
+    <li><a href="#security">Security &amp; access</a></li>
+    <li><a href="#target">Target-state mapping</a></li>
+    <li><a href="#open">Assumptions, debt &amp; open questions</a></li>
+  </ol>
+</nav>
+
+<h2 id="purpose">1. Business purpose</h2>
+<p>On the Tesco Bank Clubcard Credit Card platform every card transaction (purchase, cash, payment, refund) carries a <strong>transaction type &amp; category code</strong>, and every credit card account belongs to an <strong>interest-rate (APR) pricing group</strong> &mdash; CardDemo's <em>disclosure group</em>. This weekly chain keeps both sets of reference data current.</p>
+<p>Transaction types are held twice. The master copy is in the DB2 tables <code>CARDDEMO.TRANSACTION_TYPE</code> and <code>CARDDEMO.TRANSACTION_TYPE_CATEGORY</code>, which colleagues maintain online (CTLI / CTTU) and in batch (<code>MNTTRDB2</code>). The second copy is a pair of 60-byte flat files that the base application loads into VSAM for transaction reporting; the module README calls this a "Dual Storage Strategy" in which TRANEXTR "creates VSAM-compatible files" (<code>app/app-transaction-type-db2/README.md:139-142</code>). Each Saturday the chain:</p>
+<ul>
+  <li>applies the week's batch add / update / delete records to the DB2 transaction-type table (MNTTRDB2);</li>
+  <li>backs up last week's extracts to GDGs and re-extracts both DB2 tables to their flat files (TRANEXTR);</li>
+  <li>rebuilds the APR pricing-group KSDS <code>DISCGRP.VSAM.KSDS</code> &mdash; the rate table the monthly interest charge reads &mdash; from its flat-file seed, with the cardholder-facing CICS files closed around the rebuild (CLOSEFIL &rarr; DISCGRP &rarr; WAITSTEP &rarr; OPENFIL).</li>
+</ul>
+<p><strong>If it does not run:</strong> batch transaction-type changes are not applied, DB2 changes never reach the flat files that feed the VSAM reference files used by transaction reporting, and the pricing-group KSDS is not rebuilt. <strong>If it stalls between CLOSEFIL and OPENFIL</strong>, the five CICS files (TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC) stay closed: colleague sign-on (<code>USRSEC</code>) and every VSAM-backed online card-account function is unavailable until an operator reopens them.</p>
+<table>
+  <tr><th>Business capability</th><th>How this stream serves it</th></tr>
+  <tr><td>Transaction type &amp; category maintenance</td><td>MNTTRDB2 applies add / update / delete records from <code>INPFILE</code> to <code>CARDDEMO.TRANSACTION_TYPE</code> (<code>app/app-transaction-type-db2/cbl/COBTUPDT.cbl:109-130</code>).</td></tr>
+  <tr><td>Card transaction reporting (TRANREPT / <code>CBTRN03C</code>)</td><td>TRANEXTR produces <code>TRANTYPE.PS</code> and <code>TRANCATG.PS</code> (<code>app/app-transaction-type-db2/jcl/TRANEXTR.jcl:65-122</code>). The TRANTYPE / TRANCATG jobs REPRO them into the KSDS files <code>CBTRN03C</code> reads (<code>app/jcl/TRANTYPE.jcl:54-61</code>, <code>app/jcl/TRANCATG.jcl:54-61</code>, <code>app/cbl/CBTRN03C.cbl:39-49</code>).</td></tr>
+  <tr><td>Monthly interest charge (INTCALC / <code>CBACT04C</code>)</td><td>DISCGRP rebuilds <code>DISCGRP.VSAM.KSDS</code>. <code>CBACT04C</code> reads it by group / type / category key and falls back to the <code>DEFAULT</code> group on a missing key (<code>app/jcl/DISCGRP.jcl:54-61</code>, <code>app/cbl/CBACT04C.cbl:415-440</code>).</td></tr>
+  <tr><td>Online availability for colleagues and cardholder servicing</td><td>CLOSEFIL / OPENFIL issue <code>CEMT SET FIL(..) CLO</code> / <code>OPE</code> through SDSF on region <code>CICSAWSA</code> (<code>app/jcl/CLOSEFIL.jcl:22-30</code>, <code>app/jcl/OPENFIL.jcl:22-30</code>).</td></tr>
+</table>
+
+<h2 id="flow">2. Flow diagram</h2>
+<div class="diagram">
+<pre class="mermaid">
+flowchart TD
+    P["CREADB21<br/>one-off DB2 set-up, not scheduled"] -.-> M
+    subgraph F1["FOLDER WEEKLY-TransactionTypesDBRefresh (TYPE 1, no DAYS)"]
+        M["MNTTRDB2<br/>IKJEFT01 to COBTUPDT"]
+    end
+    M -->|"OUTCOND +MNTTRDB2"| T
+    M -->|"OUTCOND +MNTTRDB2"| C
+    subgraph F2["SMART_FOLDER TransactionTypesDBRefresh (DAYS=SA)"]
+        T["TRANEXTR<br/>STEP10/20 IEBGENER backup to GDG +1<br/>STEP30 IEFBR14 delete, COND=(0,NE)<br/>STEP40 DSNTIAUL, COND=(0,NE)<br/>STEP50 DSNTIAUL, COND=(4,LT)"]
+    end
+    subgraph F3["SMART_FOLDER DisclosureGroupsRefresh (DAYS=SA)"]
+        C["CLOSEFIL<br/>SDSF CEMT CLO x5"] -->|"+CLOSEFIL"| D["DISCGRP<br/>IDCAMS DELETE / DEFINE / REPRO<br/>no COND on any step"]
+        D -->|"+DISCGRP, -CLOSEFIL"| W["WAITSTEP<br/>COBSWAIT to MVSWAIT, 36 s"]
+        W -->|"+WAITSTEP, -DISCGRP"| O["OPENFIL<br/>SDSF CEMT OPE x5"]
+    end
+    O -->|"-WAITSTEP"| E(("end"))
+    T -.->|"TRANTYPE.PS / TRANCATG.PS"| R["TRANTYPE / TRANCATG VSAM reload<br/>CA-7 SCHID 030/031, outside this chain"]
+    T -.->|"folder end: -MNTTRDB2"| X["condition MNTTRDB2<br/>deleted by both folders (Q-01)"]
+    O -.->|"folder end: -MNTTRDB2"| X
+</pre>
+</div>
+<div class="note"><strong>Gating conditions</strong> (Control-M, <code>app/scheduler/CardDemo.controlm</code>):
+<ul>
+<li><code>MNTTRDB2</code> has no INCOND; on completion it adds <code>WEEKLY-TransactionTypesDBRefresh-MNTTRDB2</code> (ODATE=ODAT, SIGN=+) (<code>:27-28</code>).</li>
+<li><code>TRANEXTR</code> (<code>:58-59</code>) and <code>CLOSEFIL</code> (<code>:33-34</code>) each have that condition as their only INCOND (AND_OR="A"), so one event releases both smart folders, which then run in parallel.</li>
+<li>Inside DisclosureGroupsRefresh each job adds its own <code>WEEKLY-DisclosureGroupsRefresh-&lt;job&gt;</code> condition and deletes its predecessor's (<code>:35, 39-41, 45-47, 51-52</code>).</li>
+<li>Each smart folder also carries a folder-level <code>OUTCOND &hellip;-MNTTRDB2 SIGN="-"</code> (<code>:55, :62</code>), so whichever folder ends first deletes the condition the other may still need (Q-01).</li>
+<li>No job has ON / DO statements, so a non-zero completion code is judged by the site's Control-M default, which is not in the repo (Q-08). <code>TIMETO="23:00"</code> is the latest submission time, not a completion deadline.</li>
+<li>JCL step gating: TRANEXTR STEP20/30/40 <code>COND=(0,NE)</code>, STEP50 <code>COND=(4,LT)</code> (<code>app/app-transaction-type-db2/jcl/TRANEXTR.jcl:42,53,65,95</code>). MNTTRDB2 and DISCGRP have no <code>COND=</code> on any step.</li>
+</ul></div>
+<div class="note"><strong>Scheduler sources:</strong> this chain exists only in Control-M; <code>app/scheduler/CardDemo.ca7</code> has no LJOB for MNTTRDB2, TRANEXTR or DISCGRP, and its CLOSEFIL / WAITSTEP / OPENFIL entries belong to other networks (SCHID 030/031/032). The two schedulers also disagree on the daily chain &mdash; CA-7 SCHID=030 is <code>CLOSEFIL &rarr; CBPAUP0J &rarr; POSTTRAN &rarr; WAITSTEP &rarr; OPENFIL</code> (<code>CardDemo.ca7:43,70,97,124</code>, no TRANBKP anywhere in the file) while Control-M DAILY-TransactionBackup is <code>CLOSEFIL &rarr; TRANBKP &rarr; WAITSTEP &rarr; OPENFIL</code> (<code>CardDemo.controlm:3-25</code>). This document records each as written and does not merge them (Q-03).</div>
+
+<h2 id="inventory">3. Job / screen inventory</h2>
+<table>
+  <colgroup><col style="width:6%"><col style="width:12%"><col style="width:17%"><col style="width:37%"><col style="width:28%"></colgroup>
+  <tr><th>Order</th><th>Job / Tranid</th><th>Program(s)</th><th>Function</th><th>Restart point / entry condition</th></tr>
+  <tr><td>0</td><td class="mono id">CREADB21</td><td class="mono">IKJEFT01 &rarr; DSNTIAD, DSNTEP4</td><td>One-off prerequisite: FREEPLN, CRCRDDB (create database / tables), RUNTEP2 / LDTCCAT (seed 7 types, 18 categories) (<code>app/app-transaction-type-db2/jcl/CREADB21.jcl:40-84</code>). Committed job card has <code>TYPRUN=SCAN</code> (<code>:2</code>).</td><td>Not scheduled; run once by hand with SCAN removed (Q-11).</td></tr>
+  <tr><td>1</td><td class="mono id">MNTTRDB2</td><td class="mono">IKJEFT01 &rarr; COBTUPDT, PLAN(CARDDEMO)</td><td>Reads 53-byte A/U/D/* records from <code>INPFILE</code> and applies them to <code>CARDDEMO.TRANSACTION_TYPE</code> (<code>MNTTRDB2.jcl:21-30</code>, <code>COBTUPDT.cbl:82-130</code>).</td><td>Chain head, no INCOND (<code>CardDemo.controlm:27</code>). Not idempotent: rerun STEP1 only with a corrected INPFILE (&sect;6.3).</td></tr>
+  <tr><td>2a</td><td class="mono id">TRANEXTR</td><td class="mono">IEBGENER &times;2, IEFBR14, IKJEFT01 &rarr; DSNTIAUL &times;2</td><td>STEP10/20 back up <code>TRANTYPE.PS</code> / <code>TRANCATG.PS</code> to GDG (+1); STEP30 deletes both; STEP40/50 unload both DB2 tables as 60-byte records (<code>TRANEXTR.jcl:31-122</code>).</td><td>INCOND <code>WEEKLY-TransactionTypesDBRefresh-MNTTRDB2</code> (<code>CardDemo.controlm:59</code>). Once STEP30 has run, restart at STEP40 (a rerun from STEP10 fails on the missing SYSUT1).</td></tr>
+  <tr><td>2b</td><td class="mono id">CLOSEFIL</td><td class="mono">SDSF</td><td>Issues <code>/F CICSAWSA,'CEMT SET FIL(x) CLO'</code> for TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC (<code>app/jcl/CLOSEFIL.jcl:22-30</code>). Not <code>IEFBR14</code>, whatever the README says.</td><td>INCOND <code>WEEKLY-TransactionTypesDBRefresh-MNTTRDB2</code> (<code>CardDemo.controlm:34</code>). Idempotent.</td></tr>
+  <tr><td>3</td><td class="mono id">DISCGRP</td><td class="mono">IDCAMS &times;3</td><td>STEP05 DELETE cluster (<code>SET MAXCC = 0</code>); STEP10 DEFINE KSDS <code>KEYS(16 0) RECORDSIZE(50 50)</code>; STEP15 REPRO <code>DISCGRP.PS &rarr; DISCGRP.VSAM.KSDS</code> (<code>app/jcl/DISCGRP.jcl:22-61</code>).</td><td>INCOND <code>WEEKLY-DisclosureGroupsRefresh-CLOSEFIL</code> (<code>CardDemo.controlm:39</code>). Fully rerunnable from STEP05.</td></tr>
+  <tr><td>4</td><td class="mono id">WAITSTEP</td><td class="mono">COBSWAIT &rarr; MVSWAIT (ASMWAIT &rarr; STIMER)</td><td>Waits the SYSIN value <code>00003600</code> centiseconds = 36 s (<code>app/jcl/WAITSTEP.jcl:22-26</code>).</td><td>INCOND <code>&hellip;-DISCGRP</code> (<code>CardDemo.controlm:45</code>). Idempotent.</td></tr>
+  <tr><td>5</td><td class="mono id">OPENFIL</td><td class="mono">SDSF</td><td>Issues <code>CEMT SET FIL(x) OPE</code> for the same five files (<code>app/jcl/OPENFIL.jcl:22-30</code>).</td><td>INCOND <code>&hellip;-WAITSTEP</code> (<code>CardDemo.controlm:51</code>). Idempotent; the operator's manual recovery path.</td></tr>
+</table>
+
+<h2 id="dependencies">4. Dependencies</h2>
+<h3>4.1 DB2 tables</h3>
+<table>
+  <tr><th>Table</th><th>Access</th><th>Used by</th><th>Notes</th></tr>
+  <tr><td class="mono">CARDDEMO.TRANSACTION_TYPE</td><td>R+W</td><td class="mono">COBTUPDT (MNTTRDB2); TRANEXTR STEP40</td><td><code>TR_TYPE CHAR(2)</code> PK, <code>TR_DESCRIPTION VARCHAR(50)</code> (<code>app/app-transaction-type-db2/ddl/TRNTYPE.ddl:1-4</code>; DCLGEN <code>dcl/DCLTRTYP.dcl:28-31</code>). Also updated online by CTLI / CTTU.</td></tr>
+  <tr><td class="mono">CARDDEMO.TRANSACTION_TYPE_CATEGORY</td><td>R</td><td class="mono">TRANEXTR STEP50</td><td>PK (<code>TRC_TYPE_CODE</code>, <code>TRC_TYPE_CATEGORY CHAR(4)</code>), FK to <code>TRANSACTION_TYPE</code> <code>ON DELETE RESTRICT</code> (<code>ddl/TRNTYCAT.ddl:1-7</code>). Blocks MNTTRDB2 deletes of types that still have categories.</td></tr>
+</table>
+<h3>4.2 VSAM files &amp; datasets</h3>
+<table>
+  <colgroup><col style="width:25%"><col style="width:9%"><col style="width:9%"><col style="width:15%"><col style="width:42%"></colgroup>
+  <tr><th>Dataset</th><th>Type</th><th>Access</th><th>Used by</th><th>Notes</th></tr>
+  <tr><td class="mono">INPFILE</td><td>PS (FB 53)</td><td>R</td><td class="mono">MNTTRDB2 STEP1</td><td>Placeholder DSN <code>DSN=INPFILE,DISP=SHR</code> (<code>MNTTRDB2.jcl:27</code>) (Q-05).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANTYPE.PS / TRANCATG.PS</td><td>PS (FB 60)</td><td>R, delete, W</td><td class="mono">TRANEXTR STEP10-50</td><td>Read as SYSUT1 (<code>TRANEXTR.jcl:34,45</code>), deleted <code>MOD,DELETE,DELETE</code> (<code>:54-61</code>), re-created <code>NEW,CATLG,DELETE</code> (<code>:72-74, 102-104</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANTYPE.BKUP / TRANCATG.PS.BKUP</td><td>GDG</td><td>W (+1)</td><td class="mono">TRANEXTR STEP10/20</td><td><code>LRECL=60, RECFM=FB, BLKSIZE=600</code> (<code>TRANEXTR.jcl:35-38, 46-49</code>). Bases <code>LIMIT(5) SCRATCH</code> defined by <code>app/jcl/DEFGDGD.jcl:27-31, 50-54</code>.</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.DISCGRP.PS</td><td>PS (FB 50)</td><td>R</td><td class="mono">DISCGRP STEP15</td><td><code>DISCGRP.jcl:56-57</code>, DISP=SHR. Static seed: 51 records, three groups of 17 (<code>A000000000</code>, <code>DEFAULT</code>, <code>ZEROAPR</code>) (<code>app/data/ASCII/discgrp.txt:1-51</code>). No job in the repo produces it (Q-12).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.DISCGRP.VSAM.KSDS</td><td>KSDS</td><td>delete, define, W</td><td class="mono">DISCGRP STEP05/10/15</td><td>DEFINE <code>CYLINDERS(1 5) VOLUMES(AWSHJ1) KEYS(16 0) RECORDSIZE(50 50) SHAREOPTIONS(2 3) ERASE INDEXED</code> (<code>DISCGRP.jcl:36-49</code>). Read by INTCALC (<code>app/jcl/INTCALC.jcl:35-36</code>). Not a CICS file: no DISCGRP entry in <code>app/csd/CARDDEMO.CSD</code>.</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.DISCGRP.BKUP</td><td>GDG</td><td>&mdash;</td><td>not used by this chain</td><td>Base at <code>DEFGDGD.jcl:73-77</code>; DEFGDGD STEP60 does write <code>DISCGRP.BKUP(+1)</code> from the seed (<code>:82-89</code>), but DISCGRP never backs up before deleting.</td></tr>
+  <tr><td class="mono">CICS files TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC</td><td>KSDS / AIX path</td><td>close / open only</td><td class="mono">CLOSEFIL, OPENFIL</td><td><code>CLOSEFIL.jcl:26-30</code> / <code>OPENFIL.jcl:26-30</code>. The chain neither reads nor writes them.</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.LOADLIB, .DBRMLIB; DB2 DAZ1 libraries</td><td>PDS</td><td>R</td><td class="mono">MNTTRDB2, TRANEXTR, WAITSTEP</td><td><code>MNTTRDB2.jcl:22-25</code>, <code>TRANEXTR.jcl:66-67, 96-97</code>, <code>WAITSTEP.jcl:23</code>.</td></tr>
+</table>
+<h3>4.3 Shared utilities &amp; copybooks</h3>
+<table>
+  <tr><th>Asset</th><th>Kind</th><th>Role</th></tr>
+  <tr><td class="mono">DCLTRTYP, SQLCA</td><td>DB2 includes</td><td>Included at <code>COBTUPDT.cbl:50-54</code>. The SQL binds the programme's own <code>INPUT-REC-*</code> fields, not the <code>DCL-</code> fields (<code>:145-146</code>).</td></tr>
+  <tr><td class="mono">CVTRA02Y</td><td>Copybook</td><td>50-byte <code>DIS-GROUP-RECORD</code>: key <code>X(10)+X(2)+9(4)</code>, <code>DIS-INT-RATE S9(04)V99</code>, <code>FILLER X(28)</code> (<code>app/cpy/CVTRA02Y.cpy:4-10</code>); copied by <code>CBACT04C.cbl:107</code>.</td></tr>
+  <tr><td class="mono">CVTRA03Y / CVTRA04Y</td><td>Copybooks</td><td>60-byte <code>TRAN-TYPE-RECORD</code> (<code>app/cpy/CVTRA03Y.cpy:4-7</code>) and <code>TRAN-CAT-RECORD</code> (<code>app/cpy/CVTRA04Y.cpy:4-9</code>); TRANEXTR's SELECTs reproduce these layouts.</td></tr>
+  <tr><td class="mono">COBSWAIT / MVSWAIT / ASMWAIT</td><td>COBOL program + Assembler subroutine + macro</td><td><code>ACCEPT PARM-VALUE FROM SYSIN</code>, <code>CALL 'MVSWAIT'</code> (<code>app/cbl/COBSWAIT.cbl:36-38</code>); MVSWAIT calls <code>ASMWAIT BINLBL</code> (<code>app/asm/MVSWAIT.asm:23</code>), which expands to <code>STIMER WAIT,BINTVL=</code> (<code>app/maclib/ASMWAIT.mac:19</code>); <code>SR 15,15</code> returns RC 0 (<code>MVSWAIT.asm:26</code>).</td></tr>
+  <tr><td class="mono">IKJEFT01, DSNTIAUL, IDCAMS, IEBGENER, IEFBR14, SDSF</td><td>System / DB2 utilities</td><td>TSO attach for DB2 (<code>MNTTRDB2.jcl:21</code>), SQL unload <code>PLAN(DSNTIAUL) PARMS('SQL')</code> (<code>TRANEXTR.jcl:88-90</code>), VSAM delete / define / REPRO (<code>DISCGRP.jcl:22,33,54</code>), GDG copy (<code>TRANEXTR.jcl:31,42</code>), dataset delete (<code>:53</code>), operator commands (<code>CLOSEFIL.jcl:22</code>).</td></tr>
+</table>
+<h3>4.4 Other applications &amp; external events</h3>
+<table>
+  <tr><th>Dependency</th><th>Direction</th><th>Mechanism</th><th>Notes</th></tr>
+  <tr><td>CICS region <code>CICSAWSA</code></td><td>Downstream</td><td>SDSF <code>/F</code> modify commands</td><td>CEMT response is not checked (&sect;6.2). Owned by Tesco Technology &mdash; Mainframe Platform (A).</td></tr>
+  <tr><td>Online transaction-type maintenance CTLI / CTTU (<code>COTRTLIC</code>, <code>COTRTUPC</code>)</td><td>Upstream (concurrent writer)</td><td>Same DB2 table</td><td>TRANEXTR extracts whatever the table holds when it runs.</td></tr>
+  <tr><td>TRANTYPE / TRANCATG VSAM reload jobs</td><td>Downstream</td><td>File feed TRANTYPE.PS, TRANCATG.PS</td><td>Not in this Control-M chain; CA-7 triggers them in SCHID 030 / 031 (<code>CardDemo.ca7:162,244</code>) (Q-06).</td></tr>
+  <tr><td>TRANREPT (<code>CBTRN03C</code>)</td><td>Downstream</td><td>VSAM TRANTYPE / TRANCATG KSDS</td><td><code>app/jcl/TRANREPT.jcl:69-72</code>.</td></tr>
+  <tr><td>INTCALC (<code>CBACT04C</code>), Control-M MONTHLY-InterestCalculation</td><td>Downstream</td><td>VSAM DISCGRP KSDS</td><td>Monthly interest charge; folder at <code>CardDemo.controlm:64</code>.</td></tr>
+  <tr><td>DEFGDGD (GDG bases), CREADB21 (DB2 objects)</td><td>Upstream, one-off</td><td>IDCAMS DEFINE GDG; DSNTIAD / DSNTEP4</td><td>Must run before the first TRANEXTR, or STEP10/20 cannot allocate <code>(+1)</code> and STEP40/50 have no tables.</td></tr>
+  <tr><td>Developer scripts <code>scripts/run_full_batch.sh</code>, <code>scripts/remote_refresh.sh</code></td><td>Out of band</td><td>FTP &rarr; JES submit</td><td>Both upload <code>jcl/DISCGRP.jcl</code> (<code>:32</code>) outside the scheduler with their own ordering and no RC checks (Q-16).</td></tr>
+</table>
+
+<h2 id="requirements">5. Functional requirements</h2>
+<table>
+  <colgroup><col style="width:7%"><col style="width:38%"><col style="width:22%"><col style="width:33%"></colgroup>
+  <tr><th>ID</th><th>Requirement</th><th>Source</th><th>Acceptance criteria</th></tr>
+  <tr><td class="id">FR-01</td><td>MNTTRDB2 is the chain head. On completion the scheduler adds <code>WEEKLY-TransactionTypesDBRefresh-MNTTRDB2</code> for the order date; TRANEXTR and CLOSEFIL each wait on that condition only, so the same event releases both.</td><td class="mono">app/scheduler/CardDemo.controlm:27-28, 33-34, 58-59</td><td>For a given ODAT neither TRANEXTR nor CLOSEFIL starts before MNTTRDB2 ends; after it ends both become eligible together.</td></tr>
+  <tr><td class="id">FR-02</td><td>DisclosureGroupsRefresh runs strictly in sequence CLOSEFIL &rarr; DISCGRP &rarr; WAITSTEP &rarr; OPENFIL; each job adds its own condition and its successor deletes it.</td><td class="mono">CardDemo.controlm:35, 39-41, 45-47, 51-52</td><td>No two jobs of the folder are active together; after OPENFIL no <code>WEEKLY-DisclosureGroupsRefresh-*</code> condition remains for that ODAT.</td></tr>
+  <tr><td class="id">FR-03</td><td>COBTUPDT reads <code>INPFILE</code> sequentially as fixed 53-byte records (col 1 operation, cols 2-3 type code, cols 4-53 description) until end of file.</td><td class="mono">COBTUPDT.cbl:31-34, 39-46, 91-107; MNTTRDB2.jcl:11-18</td><td>A file of N records produces N <code>PROCESSING   &lt;record&gt;</code> lines in file order.</td></tr>
+  <tr><td class="id">FR-04</td><td>The operation code dispatches each record: <code>A</code> insert, <code>U</code> update, <code>D</code> delete, <code>*</code> comment (<code>IGNORING COMMENTED LINE</code>). Any other value displays <code>ERROR: TYPE NOT VALID</code> and performs <code>9999-ABEND</code>.</td><td class="mono">COBTUPDT / 1003-TREAT-RECORD (:109-130)</td><td>A <code>*</code> record changes nothing and leaves RC unchanged; a <code>Z</code> record changes nothing, logs the error and sets RC 4.</td></tr>
+  <tr><td class="id">FR-05</td><td><code>A</code> inserts (<code>TR_TYPE</code>, <code>TR_DESCRIPTION</code>). SQLCODE 0 displays <code>RECORD INSERTED SUCCESSFULLY</code>; a negative SQLCODE (e.g. duplicate key) displays <code>Error accessing: TRANSACTION_TYPE table. SQLCODE:</code> plus the code and sets RC 4.</td><td class="mono">COBTUPDT / 10031-INSERT-DB (:132-164)</td><td>A new code creates exactly one row; a duplicate code leaves the table unchanged and sets RC 4.</td></tr>
+  <tr><td class="id">FR-06</td><td><code>U</code> sets <code>TR_DESCRIPTION</code> where <code>TR_TYPE</code> matches. +100 displays <code>No records found.</code> and sets RC 4; a negative SQLCODE sets RC 4 with the error text.</td><td class="mono">COBTUPDT / 10032-UPDATE-DB (:166-195)</td><td>Updating <code>01</code> changes only that row; updating a missing code changes nothing and sets RC 4.</td></tr>
+  <tr><td class="id">FR-07</td><td><code>D</code> deletes where <code>TR_TYPE</code> matches. +100 displays <code>No records found.</code> and sets RC 4; a negative SQLCODE (including the <code>ON DELETE RESTRICT</code> violation) sets RC 4 and leaves the row.</td><td class="mono">COBTUPDT / 10033-DELETE-DB (:196-226); ddl/TRNTYCAT.ddl:6-7</td><td>Deleting a type that still has categories leaves both tables unchanged and sets RC 4.</td></tr>
+  <tr><td class="id">FR-08</td><td>Errors do not stop the run: <code>9999-ABEND</code> displays the message, moves 4 to <code>RETURN-CODE</code> and returns to the read loop. The programme issues no COMMIT or ROLLBACK, so accepted changes commit when the step ends normally.</td><td class="mono">COBTUPDT / 9999-ABEND (:230-233); :93-96</td><td>For input [valid A, invalid op, valid U] both valid changes are in the table after the run and the invalid record is logged (step RC: see Q-15).</td></tr>
+  <tr><td class="id">FR-09</td><td>No field is validated before SQL: the type code is passed as two characters with no numeric check (the JCL comment says "NUMERIC VALUE"); the description is the fixed 50-byte host variable, trailing blanks included.</td><td class="mono">COBTUPDT.cbl:71-77, 145-146, 173-174; MNTTRDB2.jcl:16</td><td>Record <code>AXYtest</code> inserts <code>TR_TYPE='XY'</code>; stored description length is 50 (Q-13 covers the target's trimming).</td></tr>
+  <tr><td class="id">FR-10</td><td>If <code>INPFILE</code> fails to open, the programme displays <code>OPEN FILE NOT OK</code> and carries on; FILE STATUS is never tested after a READ.</td><td class="mono">COBTUPDT / 0001-OPEN-FILES (:82-89); 1002-READ-RECORDS (:100-107)</td><td>When INPFILE cannot be opened the message appears in SYSOUT and COBTUPDT's own logic does not abend (Q-07).</td></tr>
+  <tr><td class="id">FR-11</td><td>TRANEXTR STEP10 / STEP20 copy the current <code>TRANTYPE.PS</code> and <code>TRANCATG.PS</code> to GDG generation (+1) as <code>LRECL=60, RECFM=FB, BLKSIZE=600</code>, <code>DISP=(NEW,CATLG)</code>; STEP20 runs only if STEP10 ended RC 0.</td><td class="mono">TRANEXTR.jcl:31-49</td><td>After the job, generation n+1 of each GDG is byte-identical to the PS as it was before the run; a missing SYSUT1 gives a JCL error.</td></tr>
+  <tr><td class="id">FR-12</td><td>STEP30 deletes both PS datasets (<code>DISP=(MOD,DELETE,DELETE)</code>) so the unload can recreate them; it is bypassed if any earlier step ended non-zero.</td><td class="mono">TRANEXTR.jcl:53-61</td><td>If STEP10 or STEP20 fails, both PS datasets are left untouched.</td></tr>
+  <tr><td class="id">FR-13</td><td>STEP40 unloads <code>TRANSACTION_TYPE</code> into a new <code>TRANTYPE.PS</code> as <code>CHAR(60)</code> records ordered by <code>TR_TYPE</code>: <code>TR_TYPE</code> + <code>CAST(TR_DESCRIPTION AS CHAR(50))</code> + <code>REPEAT('0',8)</code>, matching <code>TRAN-TYPE-RECORD</code>.</td><td class="mono">TRANEXTR.jcl:65-91; CVTRA03Y.cpy:4-7</td><td>With the 7 seeded types the file holds 7 &times; 60 bytes in ascending code order, each ending in eight zeros.</td></tr>
+  <tr><td class="id">FR-14</td><td>STEP50 unloads <code>TRANSACTION_TYPE_CATEGORY</code> into a new <code>TRANCATG.PS</code> as <code>CHAR(60)</code> records ordered by code, category: <code>TRC_TYPE_CODE</code>(2) + <code>TRC_TYPE_CATEGORY</code>(4) + <code>CAST(TRC_CAT_DATA AS CHAR(50))</code> + <code>'0000'</code>, matching <code>TRAN-CAT-RECORD</code>.</td><td class="mono">TRANEXTR.jcl:95-122; CVTRA04Y.cpy:4-9</td><td>With the 18 seeded categories the file holds 18 &times; 60 bytes in key order.</td></tr>
+  <tr><td class="id">FR-15</td><td>Step gating: STEP20, STEP30, STEP40 are bypassed if any earlier step ended RC &ne; 0 (<code>COND=(0,NE)</code>); STEP50 is bypassed only if an earlier step ended RC &gt; 4 (<code>COND=(4,LT)</code>).</td><td class="mono">TRANEXTR.jcl:42, 53, 65, 95</td><td>If STEP40 ends RC 4, STEP50 still runs. If STEP10/20 end non-zero (&le; 4), STEP30 is flushed but STEP50 still tries <code>NEW,CATLG</code> on a still-catalogued TRANCATG.PS and fails (Q-09).</td></tr>
+  <tr><td class="id">FR-16</td><td>CLOSEFIL issues <code>CEMT SET FIL(x) CLO</code> via <code>PGM=SDSF</code> on <code>CICSAWSA</code> for TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC; OPENFIL issues the matching <code>OPE</code> for the same five.</td><td class="mono">app/jcl/CLOSEFIL.jcl:22-30; app/jcl/OPENFIL.jcl:22-30</td><td>After CLOSEFIL <code>CEMT INQ FIL</code> shows all five CLOSED; after OPENFIL all five OPEN and ENABLED.</td></tr>
+  <tr><td class="id">FR-17</td><td>DISCGRP STEP05 deletes the existing cluster and forces <code>SET MAXCC = 0</code>, so a missing cluster is not an error.</td><td class="mono">app/jcl/DISCGRP.jcl:22-28</td><td>STEP05 ends RC 0 both on a first run with an empty catalogue and on a rerun over an existing cluster.</td></tr>
+  <tr><td class="id">FR-18</td><td>STEP10 defines <code>AWS.M2.CARDDEMO.DISCGRP.VSAM.KSDS</code> <code>INDEXED, KEYS(16 0), RECORDSIZE(50 50), SHAREOPTIONS(2 3), ERASE, CYLINDERS(1 5)</code> on <code>AWSHJ1</code>, with <code>.DATA</code> / <code>.INDEX</code> components. The 16-byte key is <code>DIS-ACCT-GROUP-ID</code> + <code>DIS-TRAN-TYPE-CD</code> + <code>DIS-TRAN-CAT-CD</code>.</td><td class="mono">DISCGRP.jcl:33-49; CVTRA02Y.cpy:5-8</td><td>LISTCAT shows these attributes.</td></tr>
+  <tr><td class="id">FR-19</td><td>STEP15 REPROs <code>DISCGRP.PS</code> into the new KSDS. The seed holds 51 records &mdash; 17 each for pricing groups <code>A000000000</code>, <code>DEFAULT</code> and <code>ZEROAPR</code> &mdash; and must be unique and in ascending key order. The <code>DEFAULT</code> rows are the fallback for the interest charge.</td><td class="mono">DISCGRP.jcl:54-61; app/data/ASCII/discgrp.txt:1-51 (DEFAULT 18-34); CBACT04C.cbl:436-438</td><td>After the job the KSDS count equals the PS count (51 for the seed) and a keyed read of <code>DEFAULT   010001</code> returns <code>DIS-INT-RATE</code> +0015.00.</td></tr>
+  <tr><td class="id">FR-20</td><td>None of DISCGRP's three steps has <code>COND=</code>, so each runs whatever the previous step's RC.</td><td class="mono">DISCGRP.jcl:22, 33, 54</td><td>If STEP10 fails, STEP15 still runs and fails opening DISCVSAM; the job's max CC reflects both failures.</td></tr>
+  <tr><td class="id">FR-21</td><td>WAITSTEP suspends the chain for the SYSIN value in centiseconds (<code>00003600</code> = 36 s): COBSWAIT moves the 8-byte value to <code>PIC 9(8) COMP</code> and calls MVSWAIT, which issues <code>STIMER WAIT</code> and returns RC 0.</td><td class="mono">WAITSTEP.jcl:22-26; COBSWAIT.cbl:30-38; MVSWAIT.asm:17-27; ASMWAIT.mac:19</td><td>Elapsed time &ge; 36 s, step RC 0, OPENFIL does not start before WAITSTEP ends.</td></tr>
+  <tr><td class="id">FR-22</td><td>Both smart folders are ordered only on Saturdays (<code>DAYS="SA"</code>, all months). Every job carries <code>MAXWAIT="7"</code>, <code>MAXRERUN="5"</code>, <code>TIMETO="23:00"</code>.</td><td class="mono">CardDemo.controlm:27, 32-33, 57-58</td><td>TRANEXTR and the DisclosureGroupsRefresh jobs appear only for Saturday ODATs; a job waiting longer than 7 days is removed.</td></tr>
+  <tr><td class="id">FR-23</td><td>CREADB21 is a prerequisite, not part of the weekly chain: the CARDDEMO database, both tables and seed rows (7 types, 18 categories) must exist before the first MNTTRDB2 / TRANEXTR run.</td><td class="mono">CREADB21.jcl:40-84; ctl/DB2LTTYP.ctl:15-24</td><td>On a fresh subsystem, CREADB21 (SCAN removed) then TRANEXTR yields a 7-record TRANTYPE.PS and an 18-record TRANCATG.PS.</td></tr>
+</table>
+
+<h2 id="restart">6. Restart, recovery &amp; error handling</h2>
+<h3>6.1 Return-code conventions</h3>
+<table>
+  <tr><th>RC</th><th>Meaning</th><th>Downstream effect</th></tr>
+  <tr><td class="mono">0</td><td>All steps clean, for every job in the chain.</td><td>OUTCOND added and successor released (<code>CardDemo.controlm:28,35,41,47</code>).</td></tr>
+  <tr><td class="mono">4 (MNTTRDB2 STEP1)</td><td>COBTUPDT rejected at least one INPFILE record (<code>MOVE 4 TO RETURN-CODE</code>, <code>COBTUPDT.cbl:232</code>); accepted records are still applied.</td><td>Whether Control-M treats CC 4 as OK is not in the repo; the job has no ON/DO (Q-08). The final RC may be reset by later SQL calls (Q-15).</td></tr>
+  <tr><td class="mono">&ne; 0 (TRANEXTR STEP10/20)</td><td>IEBGENER could not copy (e.g. SYSUT1 missing).</td><td>Later <code>COND=(0,NE)</code> steps flushed; STEP50 still attempted (<code>COND=(4,LT)</code>) and fails on allocation (FR-15).</td></tr>
+  <tr><td class="mono">4 (TRANEXTR STEP40)</td><td>DSNTIAUL warning.</td><td>STEP50 still runs (<code>TRANEXTR.jcl:95</code>).</td></tr>
+  <tr><td class="mono">8 (DISCGRP STEP05)</td><td>DELETE of a cluster that does not exist.</td><td>Reset to 0 by <code>SET MAXCC = 0</code> (<code>DISCGRP.jcl:27</code>).</td></tr>
+  <tr><td class="mono">&gt; 0 (DISCGRP STEP10/15)</td><td>DEFINE or REPRO failure: space, duplicate name, key out of sequence, open failure.</td><td>No COND protection. WAITSTEP and OPENFIL are not released, so the five CICS files stay CLOSED until an operator runs OPENFIL.</td></tr>
+  <tr><td class="mono">0 (CLOSEFIL / OPENFIL)</td><td>SDSF accepted the modify commands; the CEMT outcome is not inspected.</td><td>Successor released even if CICS rejected a command.</td></tr>
+  <tr><td class="mono">0 (WAITSTEP)</td><td>MVSWAIT clears R15 before returning (<code>MVSWAIT.asm:26</code>).</td><td>OPENFIL released after at least 36 s.</td></tr>
+</table>
+<h3>6.2 Abends</h3>
+<table>
+  <tr><th>Abend</th><th>Job / Program</th><th>Meaning</th><th>Recovery</th></tr>
+  <tr><td class="mono">JCL error (SYSUT1 not found)</td><td class="mono">TRANEXTR STEP10/20</td><td>Previous PS missing (first run, or rerun after STEP30 deleted it) (<code>TRANEXTR.jcl:34,45</code>).</td><td>Restart at STEP40, or restore the PS from GDG generation (0). Procedure not in the repo (Q-10).</td></tr>
+  <tr><td class="mono">JCL error (dataset already catalogued)</td><td class="mono">TRANEXTR STEP40/50</td><td>PS still exists because STEP30 was flushed (<code>TRANEXTR.jcl:72-74, 102-104</code>).</td><td>Delete the PS by hand, then restart at the failed step.</td></tr>
+  <tr><td class="mono">DSN / plan failure</td><td class="mono">MNTTRDB2; TRANEXTR STEP40/50</td><td>DB2 <code>DAZ1</code> unavailable, or <code>PLAN(CARDDEMO)</code> / <code>PLAN(DSNTIAUL)</code> not bound (<code>MNTTRDB2.jcl:29-30</code>, <code>TRANEXTR.jcl:87-90</code>).</td><td>Rerun once DB2 is available; MNTTRDB2 applied nothing.</td></tr>
+  <tr><td class="mono">IDCAMS DEFINE / REPRO failure</td><td class="mono">DISCGRP STEP10/15</td><td>No space on AWSHJ1, cluster in use, or seed out of key sequence (<code>DISCGRP.jcl:36-49, 61</code>).</td><td>Fix and rerun DISCGRP from STEP05, then release WAITSTEP / OPENFIL. Until then the pricing-group KSDS is absent and INTCALC cannot run.</td></tr>
+  <tr><td class="mono">CEMT rejected / region down</td><td class="mono">CLOSEFIL, OPENFIL</td><td>The SDSF step ends RC 0 whatever the response (<code>CLOSEFIL.jcl:22-30</code>).</td><td>Operator checks <code>CEMT INQ FIL</code> and runs OPENFIL by hand; not documented in the repo.</td></tr>
+  <tr><td class="mono">None in COBTUPDT</td><td class="mono">MNTTRDB2</td><td><code>9999-ABEND</code> is a misnomer: it sets RC 4 and processing continues (<code>COBTUPDT.cbl:230-233</code>).</td><td>Review SYSOUT for <code>ERROR</code>, <code>No records found.</code> and <code>Error accessing:</code> lines.</td></tr>
+</table>
+<h3>6.3 Restart / checkpoint semantics</h3>
+<ul>
+<li>No job in the chain takes checkpoints.</li>
+<li>COBTUPDT issues no COMMIT or ROLLBACK (none in <code>COBTUPDT.cbl</code>), so all successful statements commit together when the IKJEFT01 step ends normally.</li>
+<li>Rerunning MNTTRDB2 with the same INPFILE is not idempotent: applied <code>A</code> records now fail as duplicates, <code>D</code> records fail with +100, and the job ends RC 4.</li>
+<li>TRANEXTR is restartable at STEP40 once STEP30 has run, not from STEP10.</li>
+<li>DISCGRP is fully rerunnable from STEP05; CLOSEFIL, WAITSTEP and OPENFIL are idempotent.</li>
+<li>Control-M allows up to 5 reruns per job (<code>MAXRERUN="5"</code>).</li>
+</ul>
+
+<h2 id="nfr">7. Non-functional requirements</h2>
+<table>
+  <colgroup><col style="width:9%"><col style="width:17%"><col style="width:74%"></colgroup>
+  <tr><th>ID</th><th>Category</th><th>Requirement</th></tr>
+  <tr><td class="id">NFR-01</td><td>Volume</td><td>Reference data is small: 7 types, 18 categories (<code>ctl/DB2LTTYP.ctl:15-24</code>; <code>app/data/ASCII/trantype.txt</code>, <code>trancatg.txt</code>) and 51 pricing-group records. Allocations <code>TRK(1,1)</code> (<code>TRANEXTR.jcl:38,74,104</code>) and <code>CYLINDERS(1 5)</code> (<code>DISCGRP.jcl:37</code>). Tesco Bank production volumes are not in the repo.</td></tr>
+  <tr><td class="id">NFR-02</td><td>Window</td><td>Every job has <code>TIMETO="23:00"</code> (latest submission) and no FROM time (<code>CardDemo.controlm:27,33,38,44,50,58</code>). No SLA in the repo (Q-10).</td></tr>
+  <tr><td class="id">NFR-03</td><td>Frequency</td><td>Weekly on Saturdays (<code>DAYS="SA"</code>, <code>CardDemo.controlm:32,57</code>). The MNTTRDB2 job has no DAYS attribute (<code>:26-31</code>) (Q-02).</td></tr>
+  <tr><td class="id">NFR-04</td><td>Availability / operational resilience</td><td>TRANSACT, CCXREF, ACCTDAT, CXACAIX and USRSEC are closed from CLOSEFIL to OPENFIL &mdash; at least DISCGRP's run time plus 36 s (<code>CLOSEFIL.jcl:26-30</code>, <code>WAITSTEP.jcl:26</code>). Colleague sign-on and online card-account servicing are unavailable for that interval. Under PRA SS1/21 and FCA PS21/3 this outage counts against the impact tolerance of any important business service that depends on these files; the tolerance itself is not defined in the repo (A, Q-10).</td></tr>
+  <tr><td class="id">NFR-05</td><td>Retention / record keeping</td><td>Five generations each of <code>TRANTYPE.BKUP</code> and <code>TRANCATG.PS.BKUP</code> (<code>DEFGDGD.jcl:27-31, 50-54</code>, <code>LIMIT(5)</code>); DISCGRP keeps no backup of the rates it overwrites. Evidence of which APR set was live on a given date is needed for FCA SYSC 9 record keeping and complaint handling (A, Q-12).</td></tr>
+  <tr><td class="id">NFR-06</td><td>Scheduling resilience</td><td>Each job <code>MAXWAIT="7"</code>, <code>MAXRERUN="5"</code>, <code>AUTOARCH="1"</code>; smart folders <code>PRIORITY="AA"</code>, <code>REMOVEATONCE="Y"</code>, <code>DAYSKEEPINNOTOK="1"</code> (<code>CardDemo.controlm:27,32,57</code>).</td></tr>
+  <tr><td class="id">NFR-07</td><td>Throughput</td><td>Not in the repo. MNTTRDB2 issues one SQL statement per record with no commit batching (<code>COBTUPDT.cbl:91-96</code>); STEP1 runs <code>REGION=0M</code> (<code>MNTTRDB2.jcl:21</code>).</td></tr>
+  <tr><td class="id">NFR-08</td><td>Pricing integrity</td><td>The KSDS must be a faithful copy of the approved APR pricing groups: the interest charge applies whatever rate it finds (<code>CBACT04C.cbl:415-440</code>). Under FCA Consumer Duty (PRIN 2A, price and value) and CCA 1974 / CONC disclosure, the rate charged must match the rate disclosed to the cardholder; the chain itself has no approval or reconciliation control (A, Q-12).</td></tr>
+</table>
+
+<h2 id="interfaces">8. Interfaces &amp; data layouts</h2>
+<table>
+  <tr><th>Interface</th><th>Layout (copybook)</th><th>Producer</th><th>Consumer</th></tr>
+  <tr><td class="mono">INPFILE (53 bytes)</td><td class="mono">FD WS-INPUT-VARS: INPUT-TYPE X(1), INPUT-TR-NUMBER X(2), INPUT-TR-DESC X(50) &mdash; COBTUPDT.cbl:39-46; MNTTRDB2.jcl:11-18</td><td>Not in the repo (placeholder DSN, <code>MNTTRDB2.jcl:27</code>) (Q-05)</td><td>COBTUPDT (MNTTRDB2)</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANTYPE.PS (60 bytes)</td><td class="mono">CVTRA03Y TRAN-TYPE-RECORD: TRAN-TYPE X(02), TRAN-TYPE-DESC X(50), FILLER X(08) &mdash; CVTRA03Y.cpy:4-7</td><td>TRANEXTR STEP40 (DSNTIAUL)</td><td>TRANTYPE.jcl REPRO &rarr; TRANTYPE.VSAM.KSDS &rarr; CBTRN03C; next week's TRANEXTR STEP10</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANCATG.PS (60 bytes)</td><td class="mono">CVTRA04Y TRAN-CAT-RECORD: TRAN-TYPE-CD X(02), TRAN-CAT-CD 9(04), TRAN-CAT-TYPE-DESC X(50), FILLER X(04) &mdash; CVTRA04Y.cpy:4-9</td><td>TRANEXTR STEP50 (DSNTIAUL)</td><td>TRANCATG.jcl REPRO &rarr; TRANCATG.VSAM.KSDS &rarr; CBTRN03C; next week's TRANEXTR STEP20</td></tr>
+  <tr><td class="mono">TRANTYPE.BKUP / TRANCATG.PS.BKUP (GDG)</td><td class="mono">Same 60-byte layouts; LRECL=60 RECFM=FB BLKSIZE=600 &mdash; TRANEXTR.jcl:37,48</td><td>TRANEXTR STEP10/20</td><td>Manual restore only; no consumer job in the repo</td></tr>
+  <tr><td class="mono">DISCGRP.PS &rarr; DISCGRP.VSAM.KSDS (50 bytes)</td><td class="mono">CVTRA02Y DIS-GROUP-RECORD: DIS-ACCT-GROUP-ID X(10), DIS-TRAN-TYPE-CD X(02), DIS-TRAN-CAT-CD 9(04), DIS-INT-RATE S9(04)V99, FILLER X(28) &mdash; CVTRA02Y.cpy:4-10</td><td>Static seed (Q-12); KSDS written by DISCGRP STEP15</td><td>CBACT04C via INTCALC (<code>CBACT04C.cbl:47-51, 415-440</code>)</td></tr>
+  <tr><td class="mono">WAITSTEP SYSIN</td><td class="mono">PARM-VALUE X(8), centiseconds; in-stream "00003600" &mdash; COBSWAIT.cbl:31,36; WAITSTEP.jcl:26</td><td>WAITSTEP.jcl in-stream data</td><td>COBSWAIT &rarr; MVSWAIT</td></tr>
+  <tr><td class="mono">SDSF ISFIN modify commands</td><td class="mono">/F CICSAWSA,'CEMT SET FIL(name ) CLO|OPE' &mdash; CLOSEFIL.jcl:26-30, OPENFIL.jcl:26-30</td><td>CLOSEFIL / OPENFIL</td><td>CICS region CICSAWSA</td></tr>
+  <tr><td class="mono">Control-M conditions</td><td class="mono">WEEKLY-TransactionTypesDBRefresh-MNTTRDB2; WEEKLY-DisclosureGroupsRefresh-{CLOSEFIL, DISCGRP, WAITSTEP}; ODATE=ODAT &mdash; CardDemo.controlm:28-62</td><td>Each job's OUTCOND</td><td>Successor INCOND; folder-level SIGN=- removal (<code>:55, :62</code>)</td></tr>
+</table>
+<p>Rates are stored unitless as <code>S9(04)V99</code> (e.g. <code>00150{</code> = +0015.00 in <code>discgrp.txt:18</code>); CardDemo holds no currency field, so no GBP handling is implied.</p>
+
+<h2 id="security">9. Security &amp; access</h2>
+<table>
+  <colgroup><col style="width:24%"><col style="width:76%"></colgroup>
+  <tr><th>Item</th><th>Value</th></tr>
+  <tr><td>Job owner / RACF identity</td><td class="mono">Control-M RUN_AS="xuemingh" on every job and smart folder (CardDemo.controlm:27,32,33,38,44,50,57,58). JCL uses NOTIFY=&amp;SYSUID with no USER= (MNTTRDB2.jcl:2, DISCGRP.jcl:2). Target owner: Tesco Bank Cards Technology &mdash; Batch Operations (A); RACF profiles owned by Tesco Bank Information Security (A), not in the repo.</td></tr>
+  <tr><td>Required authorities</td><td>EXECUTE on DB2 <code>PLAN(CARDDEMO)</code> and <code>PLAN(DSNTIAUL)</code> (<code>MNTTRDB2.jcl:30</code>, <code>TRANEXTR.jcl:88-89</code>); INSERT / UPDATE / DELETE / SELECT on <code>CARDDEMO.TRANSACTION_TYPE</code>, SELECT on <code>TRANSACTION_TYPE_CATEGORY</code>; ALTER on <code>AWS.M2.CARDDEMO.DISCGRP.**</code>, <code>TRANTYPE.**</code>, <code>TRANCATG.**</code>; SDSF operator-command authority for <code>/F CICSAWSA</code> (<code>CLOSEFIL.jcl:26</code>).</td></tr>
+  <tr><td>Sensitive data handled</td><td>None directly: the chain moves only reference data (type / category codes and descriptions, interest rates per pricing group). It closes and reopens the CICS files that hold PANs (CCXREF / CXACAIX), balances (ACCTDAT) and colleague credentials (USRSEC) but never reads them.</td></tr>
+  <tr><td>Regulatory obligations</td><td>None stated in the repo; the following apply in Tesco Bank's context (A):
+    <ul>
+      <li><strong>FCA Consumer Duty (PRIN 2A) and CONC</strong> &mdash; DISCGRP rates drive the monthly interest charge; an unapproved or stale APR set would mis-price cardholders. Changes to <code>DISCGRP.PS</code> need Tesco Bank Cards Product &amp; Pricing approval.</li>
+      <li><strong>CCA 1974 s.78(4) / s.77A and APR per CONC App 1</strong> &mdash; the rate applied must match what statements disclose.</li>
+      <li><strong>FCA SYSC 9</strong> &mdash; keep a record of which rate set was live when (DISCGRP keeps none, NFR-05).</li>
+      <li><strong>PRA SS1/21 / FCA PS21/3</strong> &mdash; the CICS-closed window is planned unavailability of online servicing (NFR-04).</li>
+      <li><strong>PCI DSS v4.0</strong> &mdash; SDSF operator authority over a region holding PAN files is privileged access to be restricted and logged.</li>
+      <li>UK GDPR / DPA 2018 and MLR 2017 are not engaged: no personal data is read or written.</li>
+    </ul></td></tr>
+</table>
+
+<h2 id="target">10. Target-state mapping</h2>
+<p>Target code lives in <code>migration/carddemo/backend</code> (Spring Boot / Spring Batch) on <code>devin/carddemo-integration</code>. No runtime scheduler is migrated: jobs expose process exit codes only, 0 on completion and 12 on failure (<code>com/carddemo/batch/BatchJobLauncher.java:46,81</code>).</p>
+<table>
+  <colgroup><col style="width:20%"><col style="width:12%"><col style="width:44%"><col style="width:24%"></colgroup>
+  <tr><th>Legacy asset</th><th>Disposition</th><th>Target component</th><th>Test evidence</th></tr>
+  <tr><td class="mono">MNTTRDB2.jcl / COBTUPDT.cbl</td><td>Rewrite</td><td>Spring Batch job <code>MNTTRDB2</code>, tasklet step <code>STEP1</code> (<code>migration/carddemo/backend/src/main/java/com/carddemo/trantype/batch/TranTypeMaintenanceJobConfiguration.java:79, 105</code>); each record in its own <code>REQUIRES_NEW</code> transaction (<code>:74</code>); step exit status <code>RC=4</code> (<code>:58, 97</code>). Table <code>db2_transaction_type</code> (<code>src/main/resources/db/migration/V1__baseline_carddemo_estate.sql:167</code>).</td><td><code>src/test/java/com/carddemo/trantype/batch/TranTypeMaintenanceJobTest.java</code></td></tr>
+  <tr><td class="mono">TRANEXTR.jcl (STEP10-50)</td><td>Rewrite</td><td>Spring Batch job <code>TRANEXTR</code>, steps <code>STEP10</code>..<code>STEP50</code> (<code>trantype/batch/TranTypeExtractJobConfiguration.java:91, 110-182</code>). Tables <code>db2_transaction_type</code> / <code>db2_transaction_type_category</code> (<code>V1__baseline_carddemo_estate.sql:167,174</code>).</td><td><code>trantype/batch/TranTypeExtractJobTest.java</code></td></tr>
+  <tr><td class="mono">CREADB21.jcl (prerequisite)</td><td>Rewrite</td><td>Spring Batch job <code>CREADB21</code> (<code>trantype/batch/CreateDb2TablesJobConfiguration.java</code>); schema by Flyway <code>V1__baseline_carddemo_estate.sql</code>.</td><td><code>trantype/batch/CreateDb2TablesJobTest.java</code></td></tr>
+  <tr><td class="mono">DISCGRP.jcl + DISCGRP.PS / KSDS (CVTRA02Y)</td><td>Rewrite (inside a full reload only)</td><td>Step <code>LOADDISC</code> of job <code>DATALOAD</code> loads <code>discgrp.txt</code> (50 bytes) into <code>disclosure_groups</code> after <code>PREDEL</code> clears it together with all master and reference tables (<code>batch/dataload/DataLoadJobConfiguration.java:64-68, 93, 100, 233-236</code>; <code>V1__baseline_carddemo_estate.sql:127</code>). The weekly pricing-group refresh as a standalone unit is <strong>not yet migrated</strong>: running DATALOAD weekly would wipe live account data.</td><td><code>batch/dataload/DataLoadJobTest.java</code></td></tr>
+  <tr><td class="mono">CLOSEFIL.jcl / OPENFIL.jcl</td><td>Retire</td><td>No CICS file open / close in the target.</td><td><code>batch/operations/FileControlJobsRemovedTest.java:28-31</code> asserts no OPENFIL / CLOSEFIL / CLOSEFIL1 / CLOSEFIL2 job</td></tr>
+  <tr><td class="mono">WAITSTEP.jcl / COBSWAIT / MVSWAIT</td><td>Rewrite</td><td>Spring Batch job <code>WAITSTEP</code> reads <code>--sysin</code> or the packaged <code>ctl/WAITSTEP.sysin</code> (<code>batch/operations/WaitStepJobConfiguration.java:41-54</code>).</td><td><code>batch/operations/WaitStepJobTest.java</code>, <code>WaitControlCardTest.java</code></td></tr>
+  <tr><td class="mono">Control-M FOLDER / SMART_FOLDERs (both WEEKLY folders)</td><td>Rewrite (documented graph only)</td><td><code>batch/operations/OperationsChainSchedule.java:37-46</code> encodes MNTTRDB2 &rarr; TRANEXTR and MNTTRDB2 &rarr; CLOSEFIL &rarr; DISCGRP &rarr; WAITSTEP &rarr; OPENFIL as <code>JobTrigger</code> records; prose contract in <code>docs/migration/streams/OperationsChain/OperationsChain_orchestration_contract.md:36-51</code>. No runtime scheduler.</td><td><code>batch/operations/OperationsChainScheduleTest.java</code></td></tr>
+  <tr><td class="mono">TRANTYPE.PS / TRANCATG.PS &rarr; VSAM reload</td><td>Not yet migrated</td><td>The online target reads <code>transaction_types</code> / <code>transaction_categories</code> (<code>V1__baseline_carddemo_estate.sql:136,143</code>), loaded by DATALOAD from seed files. No job copies TRANEXTR output into them, so the DB2-side and VSAM-side tables drift apart in the target (Q-13).</td><td>&mdash;</td></tr>
+</table>
+<p>The daily-chain Spring Batch jobs <code>DAILYTRN</code> and <code>TRANBKP</code> exist only on unmerged PR #70 (branch <code>devin/1792495071-daily-transaction-chain</code>), not on <code>devin/carddemo-integration</code>; they are not relied on here.</p>
+
+<h2 id="open">11. Assumptions, technical debt &amp; open questions</h2>
+<table>
+  <colgroup><col style="width:7%"><col style="width:11%"><col style="width:54%"><col style="width:20%"><col style="width:8%"></colgroup>
+  <tr><th>ID</th><th>Type</th><th>Description</th><th>Owner</th><th>Status</th></tr>
+  <tr><td class="id">Q-01</td><td>Question</td><td>Both smart folders delete <code>WEEKLY-TransactionTypesDBRefresh-MNTTRDB2</code> on completion (<code>CardDemo.controlm:55, 62</code>). If TRANEXTR's folder ends before CLOSEFIL is submitted (or the reverse), the other folder's first job loses its only INCOND and waits until MAXWAIT expires. Should only the last folder delete it?</td><td>Tesco Technology &mdash; Mainframe Platform</td><td>Open</td></tr>
+  <tr><td class="id">Q-02</td><td>Question</td><td>MNTTRDB2 sits in a plain FOLDER (TYPE="1") with <code>RULE_BASED_CALENDARS NAME="*"</code> and no DAYS (<code>CardDemo.controlm:26-31</code>), while both consumer folders run only on Saturdays; the target contract calls it a "smart folder, Saturdays" (<code>OperationsChain_orchestration_contract.md:36</code>). How and on which days is MNTTRDB2 ordered?</td><td>Tesco Technology &mdash; Mainframe Platform</td><td>Open</td></tr>
+  <tr><td class="id">Q-03</td><td>Debt</td><td>Scheduler sources disagree on the daily chain (CA-7 SCHID=030 vs Control-M DAILY-TransactionBackup, &sect;2). Which scheduler is authoritative for the Tesco Bank estate?</td><td>Tesco Technology &mdash; Mainframe Platform</td><td>Open</td></tr>
+  <tr><td class="id">Q-04</td><td>Question</td><td>CLOSEFIL / OPENFIL close TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC, but <code>DISCGRP.VSAM.KSDS</code> is not a CICS file and only batch INTCALC reads it. The bracket protects nothing this chain touches yet takes colleague sign-on offline every Saturday. Is it required?</td><td>Tesco Bank Operational Resilience</td><td>Open</td></tr>
+  <tr><td class="id">Q-05</td><td>Question</td><td><code>//INPFILE DD DSN=INPFILE,DISP=SHR</code> (<code>MNTTRDB2.jcl:27</code>) is a placeholder. Which dataset is really used, who prepares it, and how is it emptied after a run? Otherwise every Saturday reapplies the same records and ends RC 4.</td><td>Tesco Bank Cards Technology &mdash; Batch Operations</td><td>Open</td></tr>
+  <tr><td class="id">Q-06</td><td>Debt</td><td>TRANEXTR's comment says it "runs once a day" (<code>TRANEXTR.jcl:19-21</code>) but its folder is weekly; the jobs that load its output into VSAM (TRANTYPE, TRANCATG) are CA-7 SCHID 030 / 031 (<code>CardDemo.ca7:162,244</code>), outside this chain.</td><td>Tesco Bank Cards Technology &mdash; Batch Operations</td><td>Open</td></tr>
+  <tr><td class="id">Q-07</td><td>Debt</td><td>In COBTUPDT an OPEN failure is not fatal (<code>:82-89</code>), READ status is never tested (<code>:100-107</code>), and <code>9999-ABEND</code> continues with RC 4 (<code>:230-233</code>). The target keeps "partial apply, RC 4". Intended?</td><td>Tesco Bank Cards Technology &mdash; Batch Operations</td><td>Open</td></tr>
+  <tr><td class="id">Q-08</td><td>Question</td><td>No job has ON / DO (<code>CardDemo.controlm:27-30</code>); whether CC 4 counts as OK (releasing TRANEXTR and CLOSEFIL) depends on the site default, not in the repo.</td><td>Tesco Technology &mdash; Mainframe Platform</td><td>Open</td></tr>
+  <tr><td class="id">Q-09</td><td>Debt</td><td>TRANEXTR mixes <code>COND=(0,NE)</code> (STEP20/30/40) and <code>COND=(4,LT)</code> (STEP50) (<code>TRANEXTR.jcl:42,53,65,95</code>). If STEP10/20 end non-zero, STEP30 is flushed but STEP50 still tries <code>NEW,CATLG</code> on a still-catalogued TRANCATG.PS and fails; neither extract is refreshed.</td><td>Tesco Bank Cards Technology &mdash; Batch Operations</td><td>Open</td></tr>
+  <tr><td class="id">Q-10</td><td>Assumption</td><td>Run window, SLA, impact tolerance, RACF profiles, production volumes and the restore-from-GDG procedure are not in the repo. Only Control-M attributes are recorded: TIMETO 23:00, MAXWAIT 7, MAXRERUN 5.</td><td>Tesco Bank Operational Resilience</td><td>Open</td></tr>
+  <tr><td class="id">Q-11</td><td>Debt</td><td>CREADB21 is committed with <code>TYPRUN=SCAN</code> (<code>CREADB21.jcl:2</code>). The seed spells type 06 <code>REVERAL</code> (<code>ctl/DB2LTTYP.ctl:22</code>), and TRANEXTR copies that spelling into TRANTYPE.PS.</td><td>Tesco Bank Cards Technology &mdash; Batch Operations</td><td>Open</td></tr>
+  <tr><td class="id">Q-12</td><td>Question</td><td>DISCGRP "refreshes" the APR pricing-group KSDS from a static seed <code>DISCGRP.PS</code> that no job produces; <code>DISCGRP.BKUP</code> is written only by DEFGDGD STEP60 (<code>DEFGDGD.jcl:82-89</code>) and DISCGRP never backs up before deleting. Who approves pricing-group changes, how do they reach <code>DISCGRP.PS</code>, and is a weekly reload of unchanged data intended?</td><td>Tesco Bank Cards Product &amp; Pricing</td><td>Open</td></tr>
+  <tr><td class="id">Q-13</td><td>Question (target parity)</td><td>Target MNTTRDB2 strips trailing blanks from the description (<code>TranTypeMaintenanceJobConfiguration.java:118</code>) whereas COBTUPDT stores the fixed 50-byte field (FR-09); it maps constraint violations to fixed SQLCODE texts -803 / -530 / -532 (<code>:150-153, 178-179</code>); <code>RC=4</code> is a step exit status only, so the process exit code is 0 (<code>BatchJobLauncher.java:81</code>); and nothing reloads <code>transaction_types</code> from TRANEXTR output.</td><td>Migration team</td><td>Open</td></tr>
+  <tr><td class="id">Q-14</td><td>Debt</td><td>The Control-M export is inconsistent: TRANEXTR says <code>PARENT_FOLDER="WEEKLY-DisclosureGroupsRefresh"</code> but sits in SMART_FOLDER TransactionTypesDBRefresh (<code>CardDemo.controlm:57-58</code>); that smart folder reuses <code>FOLDER_NAME="WEEKLY-TransactionTypesDBRefresh"</code>, the same name as MNTTRDB2's plain FOLDER (<code>:26, :57</code>); DisclosureGroupsRefresh says <code>PARENT_FOLDER="WEEKLY-TransactionTypesDBRefresh"</code> (<code>:32</code>). Which structure is real?</td><td>Tesco Technology &mdash; Mainframe Platform</td><td>Open</td></tr>
+  <tr><td class="id">Q-15</td><td>Question</td><td>COBTUPDT sets RC 4 once and never resets it, but each later <code>EXEC SQL</code> is a CALL to the DB2 language interface, which may update the <code>RETURN-CODE</code> special register. Is the final CC 4 reliable? Needs confirming on the target compiler / DB2 coprocessor.</td><td>Tesco Bank Cards Technology &mdash; Batch Operations</td><td>Open</td></tr>
+  <tr><td class="id">Q-16</td><td>Question</td><td><code>scripts/run_full_batch.sh</code> and <code>scripts/remote_refresh.sh</code> submit <code>DISCGRP.jcl</code> directly over FTP &rarr; JES (<code>:32</code>) without CLOSEFIL / OPENFIL or RC checks. Are they developer-only, or used to refresh pricing groups outside the scheduler?</td><td>Tesco Bank Cards Technology &mdash; Batch Operations</td><td>Open</td></tr>
+  <tr><td class="id">A-01</td><td>Assumption</td><td>Tesco profile items are assumptions, not source facts: division line "Tesco Technology &mdash; Mainframe Modernisation", classification "Tesco Confidential", all owner team names, disclosure group = APR pricing group, the framing of CardDemo as the Tesco Bank Clubcard Credit Card platform (Barclays-operated under the Tesco Bank brand since Nov 2024), GBP as currency (CardDemo amounts and rates are unitless), and the regulatory mapping in &sect;7 and &sect;9. No Clubcard points logic exists in CardDemo.</td><td>Tesco Bank Finance &amp; Regulatory Reporting</td><td>Open</td></tr>
+  <tr><td class="id">A-02</td><td>Assumption</td><td>RACI for this chain (A): Responsible &mdash; Tesco Bank Cards Technology, Batch Operations; Accountable &mdash; Tesco Bank Cards Product &amp; Pricing (rates in <code>DISCGRP.PS</code>); Consulted &mdash; Tesco Technology, Mainframe Platform (Control-M, CICS) and Tesco Bank Information Security (RACF / SDSF); Informed &mdash; Tesco Bank Operational Resilience and Tesco Bank Customer Communications (statements quote the APR).</td><td>Tesco Bank Cards Technology &mdash; Batch Operations</td><td>Open</td></tr>
+</table>
+
+<footer>
+  <div class="legal">
+    Functional Requirement Document &mdash; WeeklyReferenceRefresh &mdash; aws-mainframe-modernization-carddemo. Part of the Tesco Bank batch-chain FRD set (<a href="index.html">index</a>).<br>
+    Classification: TESCO CONFIDENTIAL. &copy; Tesco Bank (Tesco Personal Finance plc). For colleague use only.
+  </div>
+  <div class="brand">
+    <svg viewBox="0 0 168 56" role="img" aria-label="Tesco">
+        <text x="2" y="34" font-family="'Tesco Modern', Arial Black, Arial, Helvetica, sans-serif" font-weight="900" font-size="38" letter-spacing="1" fill="#00539f">TESCO</text>
+        <g fill="#ee1c2e"><rect x="4" y="42" width="40" height="5"/><rect x="48" y="42" width="34" height="5"/><rect x="86" y="42" width="28" height="5"/><rect x="118" y="42" width="20" height="5"/><rect x="142" y="42" width="12" height="5"/></g>
+      </svg>
+    <span class="wordmark">Tesco Bank</span>
+  </div>
+</footer>
+
+</div>
+</body>
+</html>
