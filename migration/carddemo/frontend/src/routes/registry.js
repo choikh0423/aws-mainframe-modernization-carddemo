@@ -22,7 +22,9 @@ import TranTypeListPage from '../pages/trantype/TranTypeListPage';
 import TranTypeUpdatePage from '../pages/trantype/TranTypeUpdatePage';
 
 /**
- * The route registry: one entry per legacy online screen, in menu order.
+ * The route registry: one entry per legacy online screen, in menu order,
+ * plus the modern-only S-21 OnlineStatements screens (COSTM00C/COSTM01C,
+ * Main Menu option 12), which have no legacy COBOL program behind them.
  *
  * A stream session migrating a screen adds its page component under
  * `src/pages/<stream>/` and edits exactly one line here — the entry's
@@ -160,6 +162,22 @@ export const SCREENS = [
     title: 'View Authorization Details',
     stream: 'S-09 PendingAuthorizations',
     element: <PendingAuthDetailPage />,
+  },
+  {
+    program: 'COSTM00C',
+    tranId: 'CM00',
+    path: '/statements',
+    title: 'Statement List',
+    stream: 'S-21 OnlineStatements',
+    element: null,
+  },
+  {
+    program: 'COSTM01C',
+    tranId: 'CM00',
+    path: '/statements/view',
+    title: 'Statement View',
+    stream: 'S-21 OnlineStatements',
+    element: null,
   },
   {
     program: 'COUSR00C',

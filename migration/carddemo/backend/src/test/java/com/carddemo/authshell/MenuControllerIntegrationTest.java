@@ -54,9 +54,11 @@ class MenuControllerIntegrationTest {
                 .andExpect(jsonPath("$.prompt").value(ScreenText.MENU_PROMPT))
                 .andExpect(jsonPath("$.optionLength").value(2))
                 .andExpect(jsonPath("$.pfKeys").value(ScreenText.MENU_PF_KEYS))
-                .andExpect(jsonPath("$.options.length()").value(11))
+                .andExpect(jsonPath("$.options.length()").value(12))
                 .andExpect(jsonPath("$.options[0].displayText")
-                        .value(MenuCatalog.MAIN_MENU.get(0).displayText()));
+                        .value(MenuCatalog.MAIN_MENU.get(0).displayText()))
+                .andExpect(jsonPath("$.options[11].displayText")
+                        .value("12. Statements" + " ".repeat(26)));
     }
 
     /** FR-ADM-01, FR-ADM-02 */
@@ -145,6 +147,29 @@ class MenuControllerIntegrationTest {
                 .andExpect(jsonPath("$.pgmContext").value(0));
     }
 
+    /** Option 12, the modern-only Statements screen, transfers like any other option. */
+    @Test
+    void selectingOptionTwelveHandsTheCommareaToStatements() throws Exception {
+        MockMvc mockMvc = mockMvc();
+        MockHttpSession session = signOn(mockMvc, "USER0001", "PASSWORD");
+        mockMvc.perform(get("/api/menu/main").session(session)).andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/menu/main/select")
+                        .session(session)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(selection("12")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accepted").value(true))
+                .andExpect(jsonPath("$.optionNumber").value(12))
+                .andExpect(jsonPath("$.optionName").value("Statements"))
+                .andExpect(jsonPath("$.programName").value("COSTM00C"))
+                .andExpect(jsonPath("$.optionEcho").value("12"));
+
+        mockMvc.perform(get("/api/auth/session").session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nextProgram").value("COSTM00C"));
+    }
+
     /** FR-ADM-09, FR-NAV-03 */
     @Test
     void selectingAnAdminOptionHandsTheCommareaToTheTargetProgram() throws Exception {
@@ -201,6 +226,16 @@ class MenuControllerIntegrationTest {
                 .andExpect(jsonPath("$.accepted").value(false))
                 .andExpect(jsonPath("$.message").value(CardDemoMessages.MENU_INVALID_OPTION))
                 .andExpect(jsonPath("$.messageColour").value("RED"));
+
+        mockMvc.perform(post("/api/menu/main/select")
+                        .session(session)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(selection("13")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accepted").value(false))
+                .andExpect(jsonPath("$.message").value("Please enter a valid option number..."))
+                .andExpect(jsonPath("$.messageColour").value("RED"))
+                .andExpect(jsonPath("$.optionEcho").value("13"));
 
         mockMvc.perform(get("/api/auth/session").session(session)).andExpect(status().isOk());
     }
