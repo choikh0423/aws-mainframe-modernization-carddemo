@@ -12,10 +12,20 @@ import java.util.List;
  * count field is the only guard the programs use, so the catalog carries exactly
  * the populated rows. The copybook's X(35) name padding is reproduced by
  * {@link MenuOption#paddedName()} where the COBOL depends on it.
+ *
+ * <p>Main Menu option 12, "Statements" ({@code COSTM00C}, stream S-21
+ * OnlineStatements), is a modernization extension beyond COMEN02Y: it has no
+ * copybook row and COSTM00C is a modern-only program id, not a legacy program.
+ * It takes the twelfth occurrence COMEN02Y declares but leaves unpopulated
+ * (and the twelfth OPTN field on the map), so options 1-11 and every legacy
+ * message literal are unchanged; only the count guard now admits 12.
  */
 public final class MenuCatalog {
 
-    /** COMEN02Y.cpy:23-92 — every option's CDEMO-MENU-OPT-USRTYPE is 'U'. */
+    /**
+     * COMEN02Y.cpy:23-92 — every option's CDEMO-MENU-OPT-USRTYPE is 'U' — plus
+     * the modern-only option 12 (see the class comment).
+     */
     public static final List<MenuOption> MAIN_MENU = List.of(
             new MenuOption(1, "Account View", "COACTVWC", "U"),
             new MenuOption(2, "Account Update", "COACTUPC", "U"),
@@ -27,7 +37,8 @@ public final class MenuCatalog {
             new MenuOption(8, "Transaction Add", "COTRN02C", "U"),
             new MenuOption(9, "Transaction Reports", "CORPT00C", "U"),
             new MenuOption(10, "Bill Payment", "COBIL00C", "U"),
-            new MenuOption(11, "Pending Authorization View", "COPAUS0C", "U"));
+            new MenuOption(11, "Pending Authorization View", "COPAUS0C", "U"),
+            new MenuOption(12, "Statements", MenuCatalog.STATEMENTS_PROGRAM, "U"));
 
     /** COADM02Y.cpy:26-54 — CDEMO-ADMIN-OPT has no user-type column at all. */
     public static final List<MenuOption> ADMIN_MENU = List.of(
@@ -43,6 +54,9 @@ public final class MenuCatalog {
      * before transferring to it (COMEN01C.cbl:147-151).
      */
     public static final String INQUIRED_PROGRAM = "COPAUS0C";
+
+    /** Main Menu option 12's target: modern-only, no legacy COBOL program. */
+    public static final String STATEMENTS_PROGRAM = "COSTM00C";
 
     /** The prefix that marks a placeholder program in both tables. */
     public static final String DUMMY_PREFIX = "DUMMY";
