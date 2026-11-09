@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: bill-payment
+  datasource:
+    url: jdbc:h2:mem:billpayment;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+
+server:
+  port: ${PORT:8080}

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CB00 Bill Payment: CICS vs Java side by side</title>
+<style>
+  body { margin: 0; font-family: system-ui, sans-serif; background: #eef1ee; color: #1d241d; }
+  header { background: #0b3d0b; color: #fff; padding: 10px 18px; display: flex; align-items: baseline; gap: 16px; }
+  header h1 { font-size: 18px; margin: 0; }
+  header span { opacity: .8; font-size: 13px; }
+  .panes { display: grid; grid-template-columns: auto 1fr; gap: 14px; padding: 14px; }
+  .pane { background: #fff; border: 1px solid #cfd8cf; border-radius: 6px; overflow: hidden; }
+  .pane h2 { margin: 0; font-size: 14px; padding: 8px 12px; background: #e3eae3; display: flex; justify-content: space-between; }
+  .pane h2 small { font-weight: normal; color: #4a5a4a; }
+  .term { position: relative; background: #000; font-family: 'Courier New', monospace; font-size: 15px;
+          line-height: 20px; width: calc(80ch + 20px); padding: 10px; white-space: pre; }
+  .term .row { height: 20px; }
+  .term input { position: absolute; height: 20px; padding: 0; border: 0; background: transparent; outline: none;
+                font: inherit; color: #39ff14; text-decoration: underline; caret-color: #fff; }
+  .term input:focus { background: #102010; }
+  .c-BLUE { color: #7890f0; } .c-RED { color: #ff4040; } .c-GREEN { color: #39ff14; } .c-YELLOW { color: #ffff00; }
+  .c-TURQUOISE { color: #40e0d0; } .c-NEUTRAL { color: #fff; } .c-PINK { color: #ff70ff; } .brt { font-weight: bold; }
+  .ul { text-decoration: underline; }
+  .oia { background: #0b1d0b; color: #8fbf8f; font: 12px 'Courier New', monospace; padding: 3px 10px; }
+  iframe { width: 100%; height: 520px; border: 0; background: #f0f0f0; }
+  .bar { margin: 0 14px; background: #fff; border: 1px solid #cfd8cf; border-radius: 6px; padding: 10px 12px;
+         display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .bar input { font-family: monospace; padding: 4px; }
+  button { padding: 5px 10px; cursor: pointer; }
+  .lower { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 14px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  td, th { border-bottom: 1px solid #e3e8e3; padding: 4px 8px; text-align: left; vertical-align: top; }
+  td.v { font-family: monospace; white-space: pre; }
+  .ok { color: #0a7a0a; font-weight: bold; } .bad { color: #c00020; font-weight: bold; } .known { color: #a36b00; font-weight: bold; }
+  .trace { font: 12px monospace; max-height: 260px; overflow: auto; padding: 6px 10px; }
+  .scroll { max-height: 420px; overflow: auto; }
+  .rec { font: 11px monospace; word-break: break-all; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<header><h1>CB00 Bill Payment: legacy CICS vs migrated Java</h1>
+  <span>Left: real COBIL00C + COBIL00 BMS map running in a CICS region (GnuCOBOL). Right: Spring Boot + React.</span></header>
+
+<div class="panes">
+  <div class="pane">
+    <h2>Legacy: CICS 3270 (COBIL00C) <small id="lt-status"></small></h2>
+    <div class="term" id="term" tabindex="0"></div>
+    <div class="oia" id="oia">&nbsp;</div>
+  </div>
+  <div class="pane">
+    <h2>Migrated: React + Spring Boot <small>/app</small></h2>
+    <iframe id="java" src="/app/index.html" title="Migrated Bill Payment"></iframe>
+  </div>
+</div>
+
+<div class="bar">
+  <b>Drive both:</b>
+  Acct ID <input id="d-acct" size="12" maxlength="11" value="00000000001">
+  Confirm <input id="d-conf" size="2" maxlength="1">
+  <button data-aid="ENTER">ENTER</button><button data-aid="PF3">F3</button><button data-aid="PF4">F4</button>
+  <button data-aid="PF5">F5</button>
+  <span style="flex:1"></span>
+  <button id="start">Start CB00 on both</button>
+  <button id="reset">Reset data (both)</button>
+  <button id="parity">Run parity suite</button>
+</div>
+
+<div class="lower">
+  <div class="pane"><h2>Live screen parity <small id="live-sum"></small></h2><div class="scroll"><table id="live"></table></div></div>
+  <div class="pane"><h2>On file after this step <small>ACCTDAT / TRANSACT</small></h2><div class="scroll"><table id="data"></table></div></div>
+  <div class="pane"><h2>CICS trace (last task)</h2><div class="trace" id="trace"></div></div>
+  <div class="pane"><h2>Parity suite <small id="suite-sum"></small></h2><div class="scroll"><table id="suite"></table></div></div>
+</div>
+
+<script>
+const TERM = 'T001';
+let legacy = null, javaScreen = null;
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+const post = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(body || {}) }).then((r) => r.json());
+
+function renderTerm(state) {
+  legacy = state;
+  const scr = state.screen;
+  const cells = scr.rows.map((r) => [...r].map((ch) => ({ ch, cls: '' })));
+  const inputs = [];
+  for (const f of scr.fields) {
+    const start = (f.row - 1) * 80 + f.col;
+    if (!f.protected) { inputs.push(f); continue; }
+    for (let i = 0; i < f.length; i++) {
+      const p = start + i; if (p >= 1920) break;
+      cells[Math.floor(p / 80)][p % 80].cls = 'c-' + f.color + (f.intensity === 'BRT' ? ' brt' : '') + (f.hilight === 'UNDERLINE' ? ' ul' : '');
+    }
+  }
+  const t = $('term');
+  t.innerHTML = cells.map((row) => '<div class="row">' + row.map((c) =>
+    c.cls ? `<span class="${c.cls}">${esc(c.ch)}</span>` : esc(c.ch)).join('') + '</div>').join('');
+  for (const f of inputs) {
+    const p = (f.row - 1) * 80 + f.col;
+    const el = document.createElement('input');
+    el.maxLength = f.length; el.dataset.field = f.name; el.value = f.value.replace(/\s+$/, '');
+    el.style.top = (10 + Math.floor(p / 80) * 20) + 'px';
+    el.style.left = `calc(10px + ${p % 80}ch)`; el.style.width = `${f.length}ch`;
+    el.className = 'c-' + f.color;
+    t.appendChild(el);
+  }
+  const cur = scr.cursor;
+  const focus = inputs.find((f) => f.row === cur.row && f.col + 1 === cur.col);
+  if (focus) setTimeout(() => t.querySelector(`input[data-field="${focus.name}"]`)?.focus(), 0);
+  $('lt-status').textContent = `${state.last.program || ''} ${scr.map ? 'map ' + scr.map : ''} next TRANSID ${state.nextTransid || '-'}`;
+  $('oia').textContent = `4A  ${TERM}  cursor ${cur.row},${cur.col}` + (state.last.abend ? `  ABEND ${state.last.abend}` : '');
+  $('trace').innerHTML = state.trace.map((x) => `${String(x.seq).padStart(2)} ${esc(x.program || '').padEnd(8)} ` +
+    `<b>${esc(x.cmd)}</b> ${esc(x.target)} <span class="${x.resp === 'NORMAL' ? 'ok' : 'bad'}">${esc(x.resp)}</span> ${esc(x.detail)}`).join('<br>');
+  compare();
+}
+
+function termFields() {
+  const out = {};
+  $('term').querySelectorAll('input').forEach((el) => { out[el.dataset.field] = el.value; });
+  return out;
+}
+
+async function legacyKey(aid, fields) {
+  renderTerm(await post('/api/legacy/input', { termid: TERM, aid, fields: fields || termFields() }));
+}
+
+$('term').addEventListener('keydown', (e) => {
+  const m = { Enter: 'ENTER', Escape: 'CLEAR' }[e.key] || (/^F\d+$/.test(e.key) ? 'PF' + e.key.slice(1) : null);
+  if (m) { e.preventDefault(); legacyKey(m); }
+});
+
+function legacyView() {
+  if (!legacy) return {};
+  const scr = legacy.screen;
+  if (scr.map !== 'COBIL0A') return { program: legacy.last.program };
+  const f = Object.fromEntries(scr.fields.filter((x) => x.name).map((x) => [x.name, x]));
+  const cur = scr.cursor;
+  const cursor = Object.keys(f).find((n) => f[n].row === cur.row && f[n].col + 1 === cur.col) || null;
+  const tr = (s) => s.replace(/\s+$/, '');
+  return { program: 'COBIL00C', acctId: tr(f.ACTIDIN.value), currentBalance: tr(f.CURBAL.value),
+    confirm: tr(f.CONFIRM.value), message: tr(f.ERRMSG.value), messageColor: f.ERRMSG.color, cursor };
+}
+
+function javaView() {
+  const s = javaScreen; if (!s) return {};
+  if (s.nextProgram) return { program: s.nextProgram };
+  return { program: 'COBIL00C', acctId: s.acctId, currentBalance: s.currentBalance, confirm: s.confirm,
+    message: s.message, messageColor: s.messageColor, cursor: s.cursor };
+}
+
+function compare() {
+  const a = legacyView(), b = javaView();
+  const keys = [...new Set([...Object.keys(a), ...Object.keys(b)])];
+  let bad = 0;
+  $('live').innerHTML = '<tr><th>Field</th><th>Legacy (CICS)</th><th>Java</th><th></th></tr>' + keys.map((k) => {
+    const ok = a[k] === b[k]; if (!ok) bad++;
+    return `<tr><td>${k}</td><td class="v">${esc(a[k])}</td><td class="v">${esc(b[k])}</td><td class="${ok ? 'ok' : 'bad'}">${ok ? 'match' : 'DIFF'}</td></tr>`;
+  }).join('');
+  $('live-sum').innerHTML = keys.length ? (bad ? `<span class="bad">${bad} difference(s)</span>` : '<span class="ok">screens match</span>') : '';
+  refreshData();
+}
+
+let dataTimer = null;
+function refreshData() {
+  clearTimeout(dataTimer);
+  dataTimer = setTimeout(async () => {
+    const acct = (legacyView().acctId || $('d-acct').value || '00000000001').padStart(11, '0');
+    const get = (u) => fetch(u).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    const [la, ja, lt, jt] = await Promise.all([get('/api/legacy/accounts/' + acct), get('/api/demo/accounts/' + acct),
+      get('/api/legacy/transactions/latest?limit=1'), get('/api/demo/transactions/latest?limit=1')]);
+    const row = (w, x, y, cls) => `<tr><td>${w}</td><td class="${cls || 'v'}">${esc(x)}</td><td class="${cls || 'v'}">${esc(y)}</td>` +
+      `<td class="${x === y ? 'ok' : 'bad'}">${x === y ? 'match' : 'DIFF'}</td></tr>`;
+    const lrec = lt && lt[0] ? lt[0].record : '', jrec = jt && jt[0] ? jt[0].record : '';
+    const strip = (r) => r.slice(0, 278) + r.slice(330);
+    $('data').innerHTML = '<tr><th>Item</th><th>Legacy (VSAM)</th><th>Java (H2)</th><th></th></tr>' +
+      row(`ACCTDAT ${acct} ACCT-CURR-BAL`, la && la.currentBalance, ja && ja.currentBalance) +
+      row('TRANSACT newest TRAN-ID', lt && lt[0] && lt[0].tranId, jt && jt[0] && jt[0].tranId) +
+      `<tr><td>TRANSACT newest record (350 bytes, timestamps excluded)</td><td class="rec">${esc(lrec)}</td><td class="rec">${esc(jrec)}</td>` +
+      `<td class="${strip(lrec) === strip(jrec) ? 'ok' : 'bad'}">${strip(lrec) === strip(jrec) ? 'match' : 'DIFF'}</td></tr>`;
+  }, 150);
+}
+
+window.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'cb00-java-screen') { javaScreen = e.data.screen; compare(); }
+});
+
+const java = (msg) => $('java').contentWindow.postMessage({ type: 'cb00-drive', ...msg }, '*');
+
+document.querySelectorAll('.bar button[data-aid]').forEach((b) => b.addEventListener('click', () => {
+  const aid = b.dataset.aid, acctId = $('d-acct').value, confirm = $('d-conf').value;
+  const fields = aid === 'ENTER' ? { ACTIDIN: acctId, CONFIRM: confirm } : termFields();
+  legacyKey(aid, fields);
+  java(aid === 'ENTER' ? { aid, acctId, confirm } : { aid });
+}));
+
+async function startBoth() {
+  renderTerm(await post('/api/legacy/start', { termid: TERM }));
+  java({ aid: 'START' });
+}
+$('start').onclick = startBoth;
+$('reset').onclick = async () => { await post('/api/legacy/reset'); await post('/api/demo/reset'); await startBoth(); };
+
+$('parity').onclick = async () => {
+  $('suite-sum').textContent = 'running...';
+  const rep = await post('/api/parity/run');
+  const pass = rep.filter((r) => r.status === 'PASS').length;
+  $('suite-sum').innerHTML = `<span class="${pass === rep.length ? 'ok' : 'known'}">${pass}/${rep.length} PASS</span>`;
+  $('suite').innerHTML = '<tr><th>Scenario</th><th>Result</th><th>Detail</th></tr>' + rep.map((r) => {
+    const diffs = r.steps.flatMap((s) => s.fields.filter((f) => !f.match).map((f) => `${f.field}: legacy=${JSON.stringify(f.legacy)} java=${JSON.stringify(f.java)}`))
+      .concat(r.data.filter((d) => !d.match).map((d) => d.what));
+    const checks = r.steps.reduce((n, s) => n + s.fields.length, 0) + r.data.length;
+    return `<tr><td>${esc(r.name)}</td><td class="${r.status === 'PASS' ? 'ok' : r.status === 'KNOWN' ? 'known' : 'bad'}">${r.status}</td>` +
+      `<td>${checks} checks${diffs.length ? '<br>' + esc(diffs.join('; ')) : ''}${r.note ? '<br><i>' + esc(r.note) + '</i>' : ''}</td></tr>`;
+  }).join('');
+  await startBoth();
+};
+
+$('java').addEventListener('load', () => setTimeout(startBoth, 300));
+</script>
+</body>
+</html>

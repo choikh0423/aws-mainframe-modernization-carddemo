@@ -1,0 +1,75 @@
+name: Bill Payment CI
+
+on:
+  push:
+    branches:
+      - "devin/**"
+    paths:
+      - "migration/bill-payment/**"
+      - "app/cbl/COBIL00C.cbl"
+      - "app/bms/COBIL00.bms"
+      - ".github/workflows/bill-payment-ci.yml"
+  pull_request:
+    paths:
+      - "migration/bill-payment/**"
+      - "app/cbl/COBIL00C.cbl"
+      - "app/bms/COBIL00.bms"
+      - ".github/workflows/bill-payment-ci.yml"
+
+jobs:
+  backend:
+    name: Backend (Spring Boot + H2) - mvn test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: migration/bill-payment/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - run: mvn -B test
+
+  frontend:
+    name: Frontend (React) - build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: migration/bill-payment/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install --no-audit --no-fund
+      - run: CI=true npx react-scripts test --watchAll=false
+      - run: CI=false npm run build
+
+  parity:
+    name: Legacy COBIL00C (GnuCOBOL CICS region) vs Java parity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - name: Install GnuCOBOL
+        run: sudo apt-get update && sudo apt-get install -y gnucobol3 libcob4-dev
+      - name: Translate + compile COBIL00C and COMEN01C
+        working-directory: migration/bill-payment/legacy-runtime
+        run: ./build.sh
+      - name: Start Java service
+        working-directory: migration/bill-payment/backend
+        run: |
+          mvn -B -q package -DskipTests
+          nohup java -jar target/bill-payment-1.0.0.jar > /tmp/java.log 2>&1 &
+          for i in $(seq 60); do curl -sf http://localhost:8080/api/bill-payment && break; sleep 2; done
+      - name: Region tests + parity suite
+        working-directory: migration/bill-payment/legacy-runtime
+        env:
+          JAVA_URL: http://localhost:8080
+        run: python3 -m unittest -v tests.test_region
