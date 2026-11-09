@@ -1,6 +1,6 @@
 # Bill Payment (CB00 / COBIL00C) — end-to-end migration plan
 
-Scope: CardDemo Main Menu option 11, **Bill Payment**: program `app/cbl/COBIL00C.cbl`,
+Scope: CardDemo Main Menu option 10, **Bill Payment**: program `app/cbl/COBIL00C.cbl`,
 mapset `app/bms/COBIL00.bms`, symbolic map `app/cpy-bms/COBIL00.CPY`.
 Files touched by the legacy program: `ACCTDAT` (READ UPDATE / REWRITE),
 `CXACAIX` (READ via the CCXREF alternate index), `TRANSACT` (STARTBR / READPREV / ENDBR / WRITE).
