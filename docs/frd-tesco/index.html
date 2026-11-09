@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tesco Bank — FRD Index — CardDemo batch chains</title>
+<style>
+  :root {
+    --tesco-blue: #00539f; --tesco-red: #ee1c2e; --black: #003366;
+    --ink: #333333; --muted: #666666; --line: #d6dde6; --bg: #ffffff;
+    --panel: #f2f6fa; --panel-2: #e5eef6;
+    --warn-bg: #e5eef6; --warn-line: #00539f;
+    --tag-batch: #00539f; --tag-online: #ee1c2e;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Tesco Modern", Arial, Helvetica, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.5; }
+  a { color: var(--tesco-blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Brand bar */
+  .brand-bar { background: var(--bg); border-bottom: 1px solid var(--line); }
+  .brand-bar .inner { max-width: 1080px; margin: 0 auto; padding: 14px 40px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand svg { height: 34px; width: auto; display: block; }
+  .brand .wordmark { font-weight: 700; font-size: 1.35em; letter-spacing: 0.02em; color: var(--black); line-height: 1; }
+  .brand .division { border-left: 1px solid var(--line); padding-left: 12px; margin-left: 4px; font-size: 0.82em; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .classification { font-size: 0.72em; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tesco-red); border: 1px solid var(--tesco-red); padding: 3px 10px; }
+  .red-rule { height: 5px; background: repeating-linear-gradient(90deg, var(--tesco-red) 0 72px, var(--bg) 72px 78px); }
+
+  .page { max-width: 1080px; margin: 0 auto; padding: 32px 40px 80px; }
+
+  header.doc-head { padding-bottom: 20px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
+  .doc-kicker { font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.12em; color: var(--tesco-blue); font-weight: 700; margin-bottom: 8px; }
+  h1 { font-size: 2em; font-weight: 300; margin: 0 0 6px; color: var(--black); letter-spacing: -0.01em; }
+  h1 strong { font-weight: 700; }
+  h2 { font-size: 1.25em; font-weight: 700; margin: 44px 0 12px; padding: 0 0 6px 14px; border-left: 4px solid var(--tesco-blue); border-bottom: 1px solid var(--line); color: var(--black); }
+  h3 { font-size: 1.02em; font-weight: 700; margin: 24px 0 8px; color: var(--black); }
+  .subtitle { color: var(--muted); font-size: 0.98em; }
+
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 0; color: #fff; font-size: 0.5em; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; vertical-align: middle; position: relative; top: -4px; }
+  .tag.batch { background: var(--tag-batch); }
+  .tag.online { background: var(--tag-online); }
+
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.92em; }
+  th, td { border: 0; border-bottom: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--tesco-blue); color: #fff; font-weight: 700; font-size: 0.85em; letter-spacing: 0.04em; text-transform: uppercase; border-bottom: 2px solid var(--tesco-red); }
+  tr:nth-child(even) td { background: var(--panel); }
+  code, .mono { font-family: "Consolas", "Menlo", monospace; font-size: 0.93em; background: var(--panel-2); padding: 1px 4px; border-radius: 0; color: var(--black); }
+
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin: 16px 0; }
+  .meta-grid .cell { background: var(--panel); border-top: 3px solid var(--tesco-blue); padding: 10px 12px; }
+  .meta-grid .cell .k { font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .meta-grid .cell .v { font-weight: 700; color: var(--black); }
+
+  .note { background: var(--warn-bg); border-left: 4px solid var(--warn-line); padding: 10px 14px; margin: 14px 0; font-size: 0.92em; color: var(--black); }
+  .guidance { color: var(--muted); font-style: italic; font-size: 0.9em; }
+  .diagram { background: var(--bg); border: 1px solid var(--line); border-top: 3px solid var(--tesco-blue); padding: 16px; overflow-x: auto; }
+
+  nav.toc { background: var(--panel); border-left: 4px solid var(--black); padding: 12px 20px; font-size: 0.92em; }
+  nav.toc strong { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.85em; color: var(--black); }
+  nav.toc ol { margin: 6px 0; padding-left: 20px; columns: 2; column-gap: 32px; }
+  nav.toc li { break-inside: avoid; }
+  nav.toc a { color: var(--ink); }
+  nav.toc a:hover { color: var(--tesco-blue); }
+
+  footer { margin-top: 60px; border-top: 1px solid var(--line); padding-top: 14px; color: var(--muted); font-size: 0.82em; display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+  footer .legal { max-width: 70%; }
+  footer .brand svg { height: 18px; }
+  footer .brand .wordmark { font-size: 0.95em; }
+
+  @media print {
+    .page { padding: 0 0 40px; }
+    h2 { break-after: avoid; }
+    table, .diagram, .note { break-inside: avoid; }
+  }
+  td, th, .cell .v, code, .mono { overflow-wrap: anywhere; }
+  th { overflow-wrap: normal; }
+</style>
+</head>
+<body>
+
+
+<div class="brand-bar">
+  <div class="inner">
+    <div class="brand">
+      <svg viewBox="0 0 168 56" role="img" aria-label="Tesco">
+        <text x="2" y="34" font-family="'Tesco Modern', Arial Black, Arial, Helvetica, sans-serif" font-weight="900" font-size="38" letter-spacing="1" fill="#00539f">TESCO</text>
+        <g fill="#ee1c2e"><rect x="4" y="42" width="40" height="5"/><rect x="48" y="42" width="34" height="5"/><rect x="86" y="42" width="28" height="5"/><rect x="118" y="42" width="20" height="5"/><rect x="142" y="42" width="12" height="5"/></g>
+      </svg>
+      <span class="wordmark">Tesco Bank</span>
+      <span class="division">Tesco Technology &mdash; Mainframe Modernisation</span>
+    </div>
+    <span class="classification">Tesco Confidential</span>
+  </div>
+</div>
+<div class="red-rule"></div>
+
+<div class="page">
+
+<header class="doc-head">
+  <div class="doc-kicker">Functional Requirement Documents</div>
+  <h1><strong>CardDemo</strong> batch chains <span class="tag batch">Batch</span></h1>
+  <div class="subtitle">One FRD per scheduler-defined (or manually triggered) batch chain of the CardDemo estate, read as the Tesco Bank Clubcard Credit Card platform. Each document is instantiated from <a href="frd-template.html">frd-template.html</a> and cites JCL / PROC / COBOL / scheduler source by file and line.</div>
+</header>
+
+<div class="meta-grid">
+  <div class="cell"><div class="k">Application</div><div class="v">CARDDEMO</div></div>
+  <div class="cell"><div class="k">Scheduler sources</div><div class="v" style="font-size:0.9em;word-break:break-all"><code>app/scheduler/CardDemo.ca7</code><br><code>app/scheduler/CardDemo.controlm</code></div></div>
+  <div class="cell"><div class="k">Chains documented</div><div class="v">8 (4 CA-7 networks, 3 Control-M folders, 1 manual)</div></div>
+  <div class="cell"><div class="k">Doc status</div><div class="v">DRAFT</div></div>
+</div>
+
+<div class="note"><strong>Scheduler sources disagree on the overnight daily chain.</strong> The CA-7 SCHID=030 network is <code>CLOSEFIL → CBPAUP0J → POSTTRAN → WAITSTEP → OPENFIL</code> (no TRANBKP anywhere in <code>CardDemo.ca7</code>); the Control-M <code>DAILY-TransactionBackup</code> folder is <code>CLOSEFIL → TRANBKP → WAITSTEP → OPENFIL</code> (no POSTTRAN). The two daily FRDs document each source as written and raise the reconciliation as an open question; no combined daily chain is asserted anywhere.</div>
+<div class="note"><strong>Third ordering for month-end interest.</strong> <code>scripts/run_interest_calc.sh</code> submits <code>CLOSEFIL → INTCALC → TRANBKP → COMBTRAN → TRANIDX → OPENFIL</code> (no WAITSTEP), which differs from the Control-M <code>MONTHLY-InterestCalculation</code> folder. The MonthlyInterestCalculation FRD follows Control-M and records the script as an open question.</div>
+
+<h2>FRD inventory</h2>
+<table>
+  <colgroup><col style="width:3%"><col style="width:20%"><col style="width:22%"><col style="width:15%"><col style="width:26%"><col style="width:14%"></colgroup>
+  <tr><th>#</th><th>Chain / FRD</th><th>Tesco Bank business view</th><th>Scheduler source</th><th>Job sequence</th><th>Business programs</th></tr>
+<tr><td>1</td><td><a href="DailyTransactionPosting_frd.html"><strong>DailyTransactionPosting</strong></a><br><span class="subtitle">Daily transaction posting</span></td><td>Overnight posting of the day&rsquo;s Clubcard Credit Card transactions to card accounts, after purging expired pending authorisations.</td><td>CA-7 SCHID=030</td><td class="mono">CLOSEFIL → CBPAUP0J → POSTTRAN → WAITSTEP → OPENFIL</td><td class="mono">CBPAUP0C, CBTRN02C, COBSWAIT</td></tr>
+<tr><td>2</td><td><a href="DailyTransactionBackup_frd.html"><strong>DailyTransactionBackup</strong></a><br><span class="subtitle">Daily transaction file backup &amp; re-define</span></td><td>Nightly back-up of the card transaction master to a generation data group, then an empty file is re-defined for the next day.</td><td>Control-M DAILY-TransactionBackup</td><td class="mono">CLOSEFIL → TRANBKP → WAITSTEP → OPENFIL</td><td class="mono">IDCAMS, COBSWAIT</td></tr>
+<tr><td>3</td><td><a href="ReferenceLoadAndFileReads_frd.html"><strong>ReferenceLoadAndFileReads</strong></a><br><span class="subtitle">Reference-file load and master-file read utilities</span></td><td>Reload of transaction type, category and category-balance reference data, then read-back listings of the account, card, cardholder and card-link masters.</td><td>CA-7 SCHID=030/031/032</td><td class="mono">CLOSEFIL → TRANTYPE → WAITSTEP → { CLOSEFIL1 → TRANCATG → WAITSTEP | CLOSEFIL2 → TCATBALF → WAITSTEP } → CLOSEFIL → READACCT → READCARD → READCUST → READXREF → WAITSTEP → OPENFIL</td><td class="mono">CBACT01C, CBACT02C, CBCUS01C, CBACT03C</td></tr>
+<tr><td>4</td><td><a href="StatementGeneration_frd.html"><strong>StatementGeneration</strong></a><br><span class="subtitle">Customer statement generation (text / HTML / PDF)</span></td><td>Monthly card statements for Clubcard Credit Card customers (CCA 1974 s.78(4) periodic statement).</td><td>CA-7 SCHID=030</td><td class="mono">CLOSEFIL → CREASTMT → TXT2PDF1 → WAITSTEP → OPENFIL</td><td class="mono">CBSTM03A, CBSTM03B</td></tr>
+<tr><td>5</td><td><a href="TransactionReporting_frd.html"><strong>TransactionReporting</strong></a><br><span class="subtitle">Transaction report (online-submitted) and category-balance print</span></td><td>Colleague-requested transaction report for a date range, and a print of balances by transaction category.</td><td>CICS internal reader (CR00 / CORPT00C); CA-7 SCHID=031</td><td class="mono">CORPT00C → INTRDR → TRANREPT; CLOSEFIL → PRTCATBL → WAITSTEP → OPENFIL</td><td class="mono">CORPT00C, CBTRN03C</td></tr>
+<tr><td>6</td><td><a href="WeeklyReferenceRefresh_frd.html"><strong>WeeklyReferenceRefresh</strong></a><br><span class="subtitle">Weekly DB2 transaction-type refresh and disclosure-group reload</span></td><td>Weekly refresh of transaction-type codes from DB2 and reload of the interest-rate (APR) pricing groups.</td><td>Control-M WEEKLY-TransactionTypesDBRefresh / DisclosureGroupsRefresh</td><td class="mono">MNTTRDB2 → TRANEXTR; MNTTRDB2 ⇒ CLOSEFIL → DISCGRP → WAITSTEP → OPENFIL</td><td class="mono">COBTUPDT, IDCAMS</td></tr>
+<tr><td>7</td><td><a href="MonthlyInterestCalculation_frd.html"><strong>MonthlyInterestCalculation</strong></a><br><span class="subtitle">Monthly interest calculation and merge into transactions</span></td><td>Month-end interest charge on card balances by APR group, posted back as transactions.</td><td>Control-M MONTHLY-InterestCalculation</td><td class="mono">CLOSEFIL → INTCALC → COMBTRAN → WAITSTEP → OPENFIL</td><td class="mono">CBACT04C, SORT, IDCAMS</td></tr>
+<tr><td>8</td><td><a href="DataExportImport_frd.html"><strong>DataExportImport</strong></a><br><span class="subtitle">Master-data export, transfer and import</span></td><td>Extract and reload of the card portfolio master data, e.g. for a platform or portfolio data transfer (assumption).</td><td>Manual (no scheduler entry)</td><td class="mono">CBEXPORT → FTPJCL → CBIMPORT</td><td class="mono">CBEXPORT, CBIMPORT</td></tr>
+</table>
+
+<h2>Out of scope</h2>
+<table>
+  <tr><th>Item</th><th>Why no FRD</th></tr>
+  <tr><td>Dataset definition / one-off load JCL (ACCTFILE, CARDFILE, CUSTFILE, XREFFILE, DEFGDGB, DEFGDGD, DUSRSECJ, CREADB21, …)</td><td>Set-up jobs with no chain logic; covered by <code>docs/migration/CardDemo_inventory.md</code> stream S-18.</td></tr>
+  <tr><td>IMS pending-authorisation DB load / unload (LOADPADB, UNLDPADB, UNLDGSAM, DBPAUTP0)</td><td>Environment build jobs for the authorisation add-on; CBPAUP0J (the purge) is covered in DailyTransactionPosting.</td></tr>
+  <tr><td>Compile / bind / CSD install JCL</td><td>Build tooling, not a business batch process.</td></tr>
+  <tr><td><code>scripts/run_full_batch.sh</code>, <code>scripts/run_posting.sh</code></td><td>Developer FTP-to-JES submission scripts, not scheduler definitions; their orderings differ from CA-7 / Control-M and are noted in the affected FRDs.</td></tr>
+</table>
+
+<h2>Related material</h2>
+<ul>
+  <li><a href="../migration/CardDemo_inventory.md">CardDemo inventory</a> — streams S-11 … S-20 and the job/program counts.</li>
+  <li><a href="../migration/CardDemo_target_state.md">Target-state design</a> — what the section 10 mappings point at.</li>
+  <li><a href="../migration/streams/">Stream analyses</a> — Markdown deep-dives the FRDs were cross-checked against.</li>
+</ul>
+
+<footer>
+  <div class="legal">
+    FRD index &mdash; aws-mainframe-modernization-carddemo, branch <code>devin/carddemo-integration</code>.<br>
+    Classification: TESCO CONFIDENTIAL. &copy; Tesco Bank (Tesco Personal Finance plc). For colleague use only.
+  </div>
+  <div class="brand">
+    <svg viewBox="0 0 168 56" role="img" aria-label="Tesco">
+        <text x="2" y="34" font-family="'Tesco Modern', Arial Black, Arial, Helvetica, sans-serif" font-weight="900" font-size="38" letter-spacing="1" fill="#00539f">TESCO</text>
+        <g fill="#ee1c2e"><rect x="4" y="42" width="40" height="5"/><rect x="48" y="42" width="34" height="5"/><rect x="86" y="42" width="28" height="5"/><rect x="118" y="42" width="20" height="5"/><rect x="142" y="42" width="12" height="5"/></g>
+      </svg>
+    <span class="wordmark">Tesco Bank</span>
+  </div>
+
+</footer>
+
+</div>
+</body>
+</html>
