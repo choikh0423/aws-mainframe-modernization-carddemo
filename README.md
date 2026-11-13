@@ -17,6 +17,7 @@ CardDemo is a comprehensive mainframe application that simulates a credit card m
   - [Admin Functions](#admin-functions)
   - [Application Inventory](#application-inventory)
   - [Application Screens](#application-screens)
+- [Documentation](#documentation)
 - [Technical Highlights](#technical-highlights)
 - [Support](#support)
 - [Roadmap](#roadmap)
@@ -342,6 +343,11 @@ Admin users can perform the following functions:
 ![Admin Menu](./diagrams/Admin-Menu.png "Admin Menu")
 
 **Note**: Options 5 and 6 will be enabled only if you install the Transaction Type Management with DB2 optional feature (transactions CTTU and CTLI).
+
+## Documentation
+
+- [CICS Transaction Index](docs/transactions/README.md): one document per CICS transaction (base application and optional modules), grouped by module.
+- [Transaction documentation template](docs/templates/TRANSACTION_DOC_TEMPLATE.md): reusable Tesco template for documenting new or changed transactions.
 
 ## Technical Highlights
 
