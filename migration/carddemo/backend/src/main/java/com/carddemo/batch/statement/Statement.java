@@ -1,5 +1,6 @@
 package com.carddemo.batch.statement;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -19,4 +20,18 @@ public record Statement(String cardNumber,
                         String customerRecord,
                         String accountRecord,
                         List<String> transactionRecords) {
+
+    /** ACCT-ID PIC 9(11) of the account record. */
+    public long accountId() {
+        return Long.parseLong(AccountLayout.accountId(accountRecord));
+    }
+
+    /** The sum of the card's TRNX-AMTs: the value printed as Total EXP. */
+    public BigDecimal totalAmount() {
+        BigDecimal total = BigDecimal.ZERO;
+        for (String record : transactionRecords) {
+            total = total.add(TrnxLayout.amount(record));
+        }
+        return total;
+    }
 }
