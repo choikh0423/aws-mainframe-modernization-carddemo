@@ -74,6 +74,11 @@ spring:
     enabled: true
     # db/seed carries the ASCII-derived reference data (replaces S-18 DataLoadAndSetup).
     locations: classpath:db/migration,classpath:db/seed
+carddemo:
+  statements:
+    # S-21: run CREASTMT for the previous and current cycle at boot so the
+    # Statements screens (Main Menu option 12) have data (StatementDemoSeed).
+    seed-on-startup: true
 
 ---
 spring:

@@ -206,3 +206,59 @@ These are deliberately unimplemented, and are the only "not yet built" things in
 `.github/workflows/carddemo-ci.yml` runs `mvn -B test` (H2) for the backend and `npm ci && CI=true npm run build`
 for the frontend on every push to `devin/**` and every PR touching `migration/carddemo/**`. Both must be
 green before a stream PR merges; `CI=true` makes React build warnings fatal, so keep the build warning-free.
+
+## 10. Online Statements (S-21)
+
+A non-legacy feature on top of the migrated CREASTMT (S-13): every CREASTMT run archives one statement per
+card per cycle in `statement_archive` (Flyway `V2100`), a REST API serves them as JSON, HTML and PDF, and
+two screens list and show them. It is Main Menu option 12 "Statements" for user type `U`. The PDF closes
+boundary B-13 (TXT2PDF1.JCL). Code: `com.carddemo.statements` and `frontend/src/pages/statements/`.
+CREASTMT's own text and HTML files are unchanged.
+
+| Screen | Route | What it does |
+| --- | --- | --- |
+| COSTM00C Statement List | `/statements` | Account number + ENTER lists its cycles, newest first, 10 per page (F7/F8). `S` + ENTER opens one. |
+| COSTM01C Statement View | `/statements/view?stmtId=` | Header fields, the stored HTML statement in a sandboxed frame, Download PDF / Download HTML. |
+
+API (needs a signed-on session; errors are the shared `ErrorResponse`):
+
+| Request | Returns |
+| --- | --- |
+| `GET /api/statements?acctId=00000000001&page=0` | One page of the account's statements, newest cycle first |
+| `GET /api/statements/{stmtId}` | One statement with its account and customer header fields |
+| `GET /api/statements/{stmtId}/html` | The archived HTML statement (`text/html`, no-script CSP) |
+| `GET /api/statements/{stmtId}/pdf` | The archived text statement rendered to PDF (attachment) |
+
+Archiving a cycle: CREASTMT takes `cycle=YYYY-MM` (default: the current month). Rerunning a cycle replaces
+it; other cycles are kept.
+
+```bash
+cd migration/carddemo/backend
+mvn -B -DskipTests package
+java -jar target/carddemo.jar --spring.main.web-application-type=none \
+     --spring.profiles.active=postgres --spring.batch.job.name=CREASTMT cycle=2026-10
+```
+
+Demo data: in the `h2` profile `carddemo.statements.seed-on-startup=true` (off in every other profile)
+runs CREASTMT for the previous and the current cycle while the app boots, before it serves requests
+(`StatementDemoSeed`), so every seeded account has two statements. The stock seed's five CT02 fixture
+cards (`4111…`–`4555…`) have no customer or account, which CBSTM03A abends on (`ERROR READING CUSTFILE`);
+the seed sets those card_xref rows aside for its runs and puts them back. A command-line CREASTMT on the
+H2 seed still abends on them, as the legacy program does.
+
+Click path, from a fresh clone (two terminals):
+
+```bash
+cd migration/carddemo/backend && mvn spring-boot:run                  # :8080, H2 + seed + 2 statement cycles
+cd migration/carddemo/frontend && npm ci && npm start                 # :3000
+```
+
+1. Open http://localhost:3000 and sign on as `USER0001` / `PASSWORD` (user type `U`).
+2. Main Menu: enter `12` (Statements) + ENTER.
+3. Account Number: `00000000001` + ENTER. The current and the previous cycle are listed.
+4. Type `S` beside a cycle + ENTER to open it in the Statement View.
+5. Click **Download PDF**.
+
+`src/setupProxy.js` sends every `/api` request from the dev server to :8080; without it the dev server
+answers the statement frame and the download links (browser navigations, `Accept: text/html`) with
+`index.html`.

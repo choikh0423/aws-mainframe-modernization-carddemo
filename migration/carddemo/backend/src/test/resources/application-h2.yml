@@ -1,0 +1,5 @@
+# Tests own their data: the S-21 demo seed (StatementDemoSeed) that the h2
+# profile turns on for `mvn spring-boot:run` stays off under test.
+carddemo:
+  statements:
+    seed-on-startup: false
