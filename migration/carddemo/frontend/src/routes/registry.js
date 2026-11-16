@@ -20,6 +20,7 @@ import PendingAuthListPage from '../pages/pendingauth/PendingAuthListPage';
 import PendingAuthDetailPage from '../pages/pendingauth/PendingAuthDetailPage';
 import TranTypeListPage from '../pages/trantype/TranTypeListPage';
 import TranTypeUpdatePage from '../pages/trantype/TranTypeUpdatePage';
+import StatementListPage from '../pages/statements/StatementListPage';
 
 /**
  * The route registry: one entry per legacy online screen, in menu order,
@@ -169,7 +170,7 @@ export const SCREENS = [
     path: '/statements',
     title: 'Statement List',
     stream: 'S-21 OnlineStatements',
-    element: null,
+    element: <StatementListPage />,
   },
   {
     program: 'COSTM01C',

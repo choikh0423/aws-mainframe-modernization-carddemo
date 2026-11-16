@@ -22,3 +22,7 @@ test('programs and paths stay unique', () => {
   expect(new Set(programs).size).toBe(programs.length);
   expect(new Set(paths).size).toBe(paths.length);
 });
+
+test('COSTM00C renders the migrated Statement List, not the placeholder', () => {
+  expect(screenForProgram('COSTM00C').element).not.toBeNull();
+});
