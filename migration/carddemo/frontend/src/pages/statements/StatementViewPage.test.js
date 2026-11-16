@@ -155,6 +155,32 @@ describe('COSTM01C Statement View', () => {
 });
 
 describe('toSummary', () => {
+  test('reads the CMD-4 StatementDetailResponse shape (masked card, nested account/customer)', () => {
+    expect(toSummary({
+      stmtId: 1,
+      acctId: '00000000001',
+      cardNum: '************3697',
+      cycle: '2026-10',
+      txnCount: 0,
+      totalAmount: 0.0,
+      generatedTs: '2026-11-01T02:15:30',
+      account: { activeStatus: 'Y', currBal: 194.0, creditLimit: 2020.0 },
+      customer: { custId: '000000001', firstName: 'Immanuel', middleName: 'Madeline', lastName: 'Kessler' },
+    })).toEqual({
+      stmtId: 1,
+      acctId: '00000000001',
+      custId: '000000001',
+      customerName: 'Immanuel Madeline Kessler',
+      cardNum: '************3697',
+      cycle: '2026-10',
+      txnCount: 0,
+      totalAmount: 0.0,
+      currBal: 194.0,
+      creditLimit: 2020.0,
+      generatedTs: '2026-11-01T02:15:30',
+    });
+  });
+
   test('reads account/customer header fields nested under account / customer', () => {
     expect(toSummary({
       stmtId: 5,
