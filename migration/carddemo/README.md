@@ -38,6 +38,7 @@ Backend package per stream:
 | S-08 TransactionTypeManagement | `com.carddemo.transactiontype` | S-18 DataLoadAndSetup | `com.carddemo.batch.dataload` (done — copy it) |
 | S-09 PendingAuthorizations | `com.carddemo.pendingauth` | S-19 TransactionTypeDB2Refresh | `com.carddemo.batch.db2refresh` |
 | S-10 MQInquiry | `com.carddemo.mqinquiry` | S-20 PendingAuthPurgeAndIMSLoad | `com.carddemo.batch.authpurge` |
+| | | S-21 OnlineStatements | `com.carddemo.statements` |
 
 ---
 
@@ -85,6 +86,7 @@ two sessions never collide on a version number:
 | S-08 TransactionTypeManagement | `V800`–`V899` | S-18 DataLoadAndSetup | `V1800`–`V1899` |
 | S-09 PendingAuthorizations | `V900`–`V999` | S-19 TransactionTypeDB2Refresh | `V1900`–`V1999` |
 | | | S-20 PendingAuthPurgeAndIMSLoad | `V2000`–`V2099` |
+| | | S-21 OnlineStatements | `V2100`–`V2199` |
 
 Rules: the band is for **additive** migrations your stream genuinely needs (an index, a stream-private
 table). Never edit `V1`, never renumber someone else's file, and never alter a shared table's columns —
