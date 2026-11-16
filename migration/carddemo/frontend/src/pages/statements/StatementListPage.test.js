@@ -229,6 +229,22 @@ describe('COSTM00C Statement List', () => {
     expect(backend.callsTo('GET', '/api/statements')).toHaveLength(1);
   });
 
+  test('Enter typed in a Sel box submits the screen like the ENTER key', async () => {
+    const backend = stubBackend();
+    backend.get('/api/statements', PAGE_0);
+    const { location } = renderScreen(<StatementListPage />, { route: '/statements' });
+
+    await search();
+    await screen.findByText('Page 1');
+    const sel = screen.getByLabelText('select statement 2026-11');
+    fireEvent.change(sel, { target: { value: 'S' } });
+    expect(sel.form).not.toBeNull();
+    fireEvent.submit(sel.form);
+
+    await waitFor(() => expect(currentUrl(location))
+      .toEqual(`/statements/view?stmtId=1002&acctId=${ACCT}`));
+  });
+
   test('?acctId= lists that account without an ENTER (return from Statement View)', async () => {
     const backend = stubBackend();
     backend.get('/api/statements', PAGE_0);

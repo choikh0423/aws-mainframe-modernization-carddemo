@@ -31,10 +31,10 @@ const EMPTY_LIST = { acctId: null, rows: [], page: 0, hasNext: false };
 const MONO = "'Courier New', Courier, monospace";
 
 const styles = {
-  form: { fontFamily: MONO, marginBottom: '16px' },
+  form: { fontFamily: MONO },
   label: { display: 'inline-block', width: '160px' },
   input: { fontFamily: MONO, fontSize: '14px', padding: '4px 6px', width: '160px' },
-  keys: { marginTop: '12px', display: 'flex', gap: '8px' },
+  keys: { marginTop: '12px', marginBottom: '16px', display: 'flex', gap: '8px' },
   button: { fontFamily: MONO, fontSize: '13px', padding: '6px 12px', cursor: 'pointer' },
   info: { color: '#0b3d0b', fontFamily: MONO, minHeight: '20px', marginBottom: '4px' },
   error: {
@@ -217,51 +217,50 @@ export default function StatementListPage() {
           <button type="button" style={styles.button} onClick={pageBackward}>F7=Backward</button>
           <button type="button" style={styles.button} onClick={pageForward}>F8=Forward</button>
         </div>
-      </form>
+        <div style={styles.info} role="status">{info}</div>
+        <div style={styles.error} role="alert">{error}</div>
 
-      <div style={styles.info} role="status">{info}</div>
-      <div style={styles.error} role="alert">{error}</div>
-
-      {list.rows.length > 0 ? (
-        <>
-          <div style={styles.page}>{`Page ${list.page + 1}`}</div>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th} scope="col">Sel</th>
-                <th style={styles.th} scope="col">Cycle</th>
-                <th style={styles.th} scope="col">Card</th>
-                <th style={styles.thNum} scope="col">Transactions</th>
-                <th style={styles.thNum} scope="col">Total</th>
-                <th style={styles.th} scope="col">Generated</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.rows.map((row) => (
-                <tr key={row.stmtId}>
-                  <td style={styles.td}>
-                    <input
-                      aria-label={`select statement ${row.cycle}`}
-                      style={styles.selInput}
-                      maxLength={1}
-                      value={flags[row.stmtId] || ''}
-                      onChange={(e) => {
-                        const { value } = e.target;
-                        setFlags((prev) => ({ ...prev, [row.stmtId]: value }));
-                      }}
-                    />
-                  </td>
-                  <td style={styles.td}>{row.cycle}</td>
-                  <td style={styles.td}>{maskCard(row.cardNum)}</td>
-                  <td style={styles.tdNum}>{row.txnCount}</td>
-                  <td style={styles.tdNum}>{formatAmount(row.totalAmount)}</td>
-                  <td style={styles.td}>{formatTimestamp(row.generatedTs)}</td>
+        {list.rows.length > 0 ? (
+          <>
+            <div style={styles.page}>{`Page ${list.page + 1}`}</div>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th} scope="col">Sel</th>
+                  <th style={styles.th} scope="col">Cycle</th>
+                  <th style={styles.th} scope="col">Card</th>
+                  <th style={styles.thNum} scope="col">Transactions</th>
+                  <th style={styles.thNum} scope="col">Total</th>
+                  <th style={styles.th} scope="col">Generated</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </>
-      ) : null}
+              </thead>
+              <tbody>
+                {list.rows.map((row) => (
+                  <tr key={row.stmtId}>
+                    <td style={styles.td}>
+                      <input
+                        aria-label={`select statement ${row.cycle}`}
+                        style={styles.selInput}
+                        maxLength={1}
+                        value={flags[row.stmtId] || ''}
+                        onChange={(e) => {
+                          const { value } = e.target;
+                          setFlags((prev) => ({ ...prev, [row.stmtId]: value }));
+                        }}
+                      />
+                    </td>
+                    <td style={styles.td}>{row.cycle}</td>
+                    <td style={styles.td}>{maskCard(row.cardNum)}</td>
+                    <td style={styles.tdNum}>{row.txnCount}</td>
+                    <td style={styles.tdNum}>{formatAmount(row.totalAmount)}</td>
+                    <td style={styles.td}>{formatTimestamp(row.generatedTs)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        ) : null}
+      </form>
     </Layout>
   );
 }
