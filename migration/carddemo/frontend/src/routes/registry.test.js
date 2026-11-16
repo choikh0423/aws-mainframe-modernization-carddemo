@@ -26,3 +26,7 @@ test('programs and paths stay unique', () => {
 test('COSTM00C renders the migrated Statement List, not the placeholder', () => {
   expect(screenForProgram('COSTM00C').element).not.toBeNull();
 });
+
+test('COSTM01C renders the migrated Statement View, not the placeholder', () => {
+  expect(screenForProgram('COSTM01C').element).not.toBeNull();
+});

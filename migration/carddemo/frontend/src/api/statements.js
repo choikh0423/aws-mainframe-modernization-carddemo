@@ -63,3 +63,30 @@ export async function listStatements({ acctId, page = 0 }) {
   }
   return toPage(body, page);
 }
+
+/** COSTM01C — the stored HTML statement, served text/html under a no-script CSP. */
+export function statementHtmlUrl(stmtId) {
+  return `/api/statements/${encodeURIComponent(stmtId)}/html`;
+}
+
+/** COSTM01C — the text statement rendered to PDF (CMD-5, boundary B-13). */
+export function statementPdfUrl(stmtId) {
+  return `/api/statements/${encodeURIComponent(stmtId)}/pdf`;
+}
+
+/**
+ * COSTM01C — GET /api/statements/{stmtId}: one statement plus its account and
+ * customer header fields. A 404 (the statement no longer exists) throws the
+ * API's ErrorResponse `message`, or `notFoundMessage` when there is none.
+ */
+export async function getStatement(stmtId, { notFoundMessage } = {}) {
+  const res = await fetch(`/api/statements/${encodeURIComponent(stmtId)}`);
+  const body = await readBody(res);
+  if (!res.ok) {
+    const fallback = res.status === 404 && notFoundMessage
+      ? notFoundMessage
+      : 'Unable to lookup statement...';
+    throw new Error((body && body.message) || fallback);
+  }
+  return body || {};
+}
