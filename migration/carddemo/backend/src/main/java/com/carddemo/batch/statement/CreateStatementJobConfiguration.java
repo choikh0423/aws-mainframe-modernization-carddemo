@@ -55,8 +55,9 @@ import java.util.Map;
  *      --spring.profiles.active=postgres --spring.batch.job.name=CREASTMT
  * </pre>
  *
- * <p>The PDF rendering of app/jcl/TXT2PDF1.JCL is boundary B-13 and is not part of
- * this job; see the stream's migration plan.
+ * <p>The PDF rendering of app/jcl/TXT2PDF1.JCL (boundary B-13) is not part of this job: it is
+ * now served online by S-21 OnlineStatements, {@code GET /api/statements/{stmtId}/pdf}
+ * ({@code com.carddemo.statements.service.StatementPdfRenderer}), from the archived text statement.
  */
 @Configuration
 public class CreateStatementJobConfiguration {

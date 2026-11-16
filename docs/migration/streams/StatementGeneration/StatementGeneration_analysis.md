@@ -284,3 +284,9 @@ three cells per transaction (6000, 675-723) → footer (4000, 439-454).
 'AWS.M2.CARDDEMO.STATEMNT.PS.PDF'` (`TXT2PDF1.JCL:24-40`). The renderer is a licensed TSO/REXX load library
 (`AWS.M2.LBD.TXT2PDF.LOAD`) that is not part of this repository, and the consolidated backend has no PDF
 dependency in `migration/carddemo/backend/pom.xml`. See the migration plan for the deferral decision.
+
+**Update (S-21 OnlineStatements):** B-13 is now served online. `GET /api/statements/{stmtId}/pdf` renders
+the archived text statement (`statement_archive.text_body`) to PDF with Apache PDFBox
+(`com.carddemo.statements.service.StatementPdfRenderer`): Courier, one statement per document, a page
+break every 60 lines, downloaded as `STMT-<acctId>-<cycle>.pdf`. CREASTMT itself is unchanged and still
+writes only the text and HTML files.
