@@ -12,6 +12,7 @@ import com.carddemo.statements.StatementFormat;
 import com.carddemo.statements.StatementMessages;
 import com.carddemo.statements.dto.StatementDetailResponse;
 import com.carddemo.statements.dto.StatementPageResponse;
+import com.carddemo.statements.dto.StatementPdf;
 import com.carddemo.statements.dto.StatementSummary;
 import com.carddemo.statements.exception.StatementNotFoundException;
 import com.carddemo.statements.exception.StatementRequestException;
@@ -20,7 +21,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Reads the statement archive for the list, detail and HTML endpoints. */
+/** Reads the statement archive for the list, detail, HTML and PDF endpoints. */
 @Service
 @Transactional(readOnly = true)
 public class StatementService {
@@ -31,13 +32,16 @@ public class StatementService {
     private final AccountRepository accounts;
     private final CardXrefRepository cardXrefs;
     private final CustomerRepository customers;
+    private final StatementPdfRenderer pdfRenderer;
 
     public StatementService(StatementArchiveRepository archive, AccountRepository accounts,
-                            CardXrefRepository cardXrefs, CustomerRepository customers) {
+                            CardXrefRepository cardXrefs, CustomerRepository customers,
+                            StatementPdfRenderer pdfRenderer) {
         this.archive = archive;
         this.accounts = accounts;
         this.cardXrefs = cardXrefs;
         this.customers = customers;
+        this.pdfRenderer = pdfRenderer;
     }
 
     public StatementPageResponse list(String acctId, String page) {
@@ -67,6 +71,13 @@ public class StatementService {
 
     public String html(String stmtId) {
         return find(stmtId).getHtmlBody();
+    }
+
+    public StatementPdf pdf(String stmtId) {
+        StatementArchiveRecord statement = find(stmtId);
+        String name = "STMT-" + StatementFormat.accountId(statement.getAcctId()) + "-"
+                + statement.getCycle();
+        return new StatementPdf(name + ".pdf", pdfRenderer.render(statement.getTextBody(), name));
     }
 
     private StatementArchiveRecord find(String stmtId) {

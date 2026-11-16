@@ -1,5 +1,8 @@
 package com.carddemo.statements;
 
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +16,10 @@ import org.springframework.web.context.WebApplicationContext;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
@@ -34,6 +40,9 @@ class StatementControllerIntegrationTest {
 
     private static final String ACCOUNT_ID = "00000000001";
     private static final String CARD = "9680294154603697";
+    /** STATEMENT-LINES ST-LINE0, CBSTM03A.CBL:85-87. */
+    private static final String FIRST_LINE =
+            "*******************************START OF STATEMENT*******************************";
     private static final String HTML = "<!DOCTYPE html>\n<html lang=\"en\">\n<body style=\"margin:0px;\">"
             + "<p style=\"font-size:16px\">Bank of XYZ</p></body>\n</html>";
 
@@ -195,6 +204,79 @@ class StatementControllerIntegrationTest {
     }
 
     @Test
+    void pdfIsTheTextStatementAsAnAttachment() throws Exception {
+        StatementArchiveRecord statement = archive("2026-10", 3, "1234.56");
+        statement.setTextBody(String.join("\n", textStatement(20)) + "\n");
+        repository.saveAndFlush(statement);
+
+        byte[] pdf = mockMvc.perform(get("/api/statements/{id}/pdf", statement.getStmtId())
+                        .session(session))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF))
+                .andExpect(header().string("Content-Disposition",
+                        "attachment; filename=\"STMT-00000000001-2026-10.pdf\""))
+                .andExpect(header().string("X-Content-Type-Options", "nosniff"))
+                .andExpect(header().string("Cache-Control", "private, no-store"))
+                .andReturn().getResponse().getContentAsByteArray();
+
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            assertThat(document.getNumberOfPages()).isEqualTo(1);
+            assertThat(document.getDocumentInformation().getTitle())
+                    .isEqualTo("STMT-00000000001-2026-10");
+            String text = new PDFTextStripper().getText(document);
+            assertThat(text.lines().findFirst()).hasValue(FIRST_LINE);
+            assertThat(text).contains("Account ID         :" + ACCOUNT_ID);
+            assertThat(text).contains("Immanuel Madeline Kessler");
+            assertThat(text).contains("********************************END OF STATEMENT"
+                    + "********************************");
+        }
+    }
+
+    @Test
+    void pdfBreaksThePageEverySixtyLines() throws Exception {
+        List<String> lines = textStatement(130);
+        StatementArchiveRecord statement = archive("2026-10", 130, "1234.56");
+        statement.setTextBody(String.join("\n", lines));
+        repository.saveAndFlush(statement);
+
+        byte[] pdf = mockMvc.perform(get("/api/statements/{id}/pdf", statement.getStmtId())
+                        .session(session))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray();
+
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            assertThat(document.getNumberOfPages()).isEqualTo((lines.size() + 59) / 60);
+            for (int page = 1; page <= document.getNumberOfPages(); page++) {
+                PDFTextStripper stripper = new PDFTextStripper();
+                stripper.setStartPage(page);
+                stripper.setEndPage(page);
+                List<String> pageLines = stripper.getText(document).lines().toList();
+                int from = (page - 1) * 60;
+                assertThat(pageLines).hasSize(Math.min(60, lines.size() - from));
+                assertThat(pageLines.get(0)).isEqualTo(lines.get(from).stripTrailing());
+            }
+        }
+    }
+
+    @Test
+    void pdfOfAnUnknownStatementIsNotFound() throws Exception {
+        long missing = repository.findAll().stream().mapToLong(StatementArchiveRecord::getStmtId)
+                .max().orElse(0L) + 1000;
+
+        mockMvc.perform(get("/api/statements/{id}/pdf", missing).session(session))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(header().doesNotExist("Content-Disposition"))
+                .andExpect(jsonPath("$.message").value("Statement " + missing + " not found"));
+        mockMvc.perform(get("/api/statements/{id}/pdf", missing).session(session)
+                        .accept(MediaType.APPLICATION_PDF, MediaType.ALL))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/statements/{id}/pdf", "abc").session(session))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(StatementMessages.INVALID_STATEMENT_ID));
+    }
+
+    @Test
     void unknownStatementIdIsNotFound() throws Exception {
         long missing = repository.findAll().stream().mapToLong(StatementArchiveRecord::getStmtId)
                 .max().orElse(0L) + 1000;
@@ -224,10 +306,35 @@ class StatementControllerIntegrationTest {
         mockMvc.perform(get("/api/statements/{id}/html", statement.getStmtId()))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().string(not(containsString("Bank of XYZ"))));
+        mockMvc.perform(get("/api/statements/{id}/pdf", statement.getStmtId()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("Content-Disposition"))
+                .andExpect(jsonPath("$.message").value(StatementMessages.SIGN_ON_REQUIRED));
 
         mockMvc.perform(post("/api/auth/signoff").session(session)).andExpect(status().isOk());
         mockMvc.perform(get("/api/statements").param("acctId", ACCOUNT_ID).session(session))
                 .andExpect(status().isUnauthorized());
+    }
+
+    /** A CBSTM03A text statement (X(80) records, blank padded) with {@code size} lines in all. */
+    private static List<String> textStatement(int size) {
+        List<String> head = List.of(FIRST_LINE,
+                "Immanuel Madeline Kessler",
+                "618 Deshaun Route",
+                "Apt. 802",
+                "NC USA 12546",
+                "-".repeat(80),
+                " ".repeat(33) + "Basic Details " + " ".repeat(33),
+                "-".repeat(80),
+                "Account ID         :" + ACCOUNT_ID + " ".repeat(40),
+                "Current Balance    :0000194.00" + " ".repeat(47));
+        String last = "********************************END OF STATEMENT********************************";
+        List<String> lines = new ArrayList<>(head);
+        for (int i = 1; lines.size() < size - 1; i++) {
+            lines.add("%016d %-51s$%11s".formatted(i, "LINE " + i, "10.00"));
+        }
+        lines.add(last);
+        return lines;
     }
 
     private StatementArchiveRecord archive(String cycle, int txnCount, String total) {

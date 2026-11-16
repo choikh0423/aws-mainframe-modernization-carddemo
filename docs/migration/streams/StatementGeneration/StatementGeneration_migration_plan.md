@@ -132,7 +132,12 @@ Total EXP:                                                        $        3.75-
 
 ## 5. Boundary decisions and deferrals
 
-- **B-13 — PDF rendering is deferred.** `TXT2PDF1.JCL` renders the text statement to PDF with
+- **B-13 — PDF rendering is served online by S-21 OnlineStatements** (superseding the deferral below):
+  `GET /api/statements/{stmtId}/pdf` renders the archived text statement to PDF with Apache PDFBox
+  (`com.carddemo.statements.service.StatementPdfRenderer`; monospace, one statement per document, a page
+  break every 60 lines, `Content-Disposition: attachment; filename="STMT-<acctId>-<cycle>.pdf"`). This
+  stream's CREASTMT job is unchanged and still produces the text and HTML statements only.
+- *Original decision —* **B-13 — PDF rendering is deferred.** `TXT2PDF1.JCL` renders the text statement to PDF with
   `IKJEFT1B` driving the TSO/REXX `TXT2PDF` utility (`TXT2PDF1.JCL:24-40`). It is a separate job, not a
   step of `CREASTMT`, and the backend has no PDF library on its classpath. Adding one (OpenPDF, PDFBox) is
   a new dependency and a new rendering contract, neither of which is pinned by the target state, so this
