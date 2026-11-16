@@ -1,6 +1,7 @@
 package com.carddemo.common.session;
 
 import jakarta.servlet.http.HttpSession;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
@@ -17,7 +18,7 @@ public class CommareaSession {
 
     private final HttpSession httpSession;
 
-    public CommareaSession(HttpSession httpSession) {
+    public CommareaSession(@Lazy HttpSession httpSession) {
         this.httpSession = httpSession;
     }
 

@@ -18,6 +18,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
 
@@ -134,6 +136,26 @@ class CreateStatementJobTest {
         assertThat(workTransactions.count()).isEqualTo(2);
         assertThat(workTransactions.findAll()).extracting(work -> work.getCardNum() + work.getTranId())
                 .containsExactlyInAnyOrder(CARD + "0000000000000042", CARD + "0000000000000043");
+    }
+
+    /**
+     * SHA-256 of both reports for this fixture, taken on the commit before the
+     * S-21 statement archive was wired into STEP040: archiving must not move a byte.
+     */
+    @Test
+    void legacyReportsAreByteIdenticalToTheRunBeforeTheArchive() throws Exception {
+        JobExecution execution = jobLauncherTestUtils.launchJob(uniqueParameters());
+
+        assertThat(execution.getStatus()).isEqualTo(BatchStatus.COMPLETED);
+        assertThat(sha256(CreateStatementJobConfiguration.TEXT_FILE))
+                .isEqualTo("f412fb7eff2c659e962fca33d94ac3ed511379999eb46a9ee377a160934781c4");
+        assertThat(sha256(CreateStatementJobConfiguration.HTML_FILE))
+                .isEqualTo("5fd51de735b0cadedfdb80da53670a1709e1f387a9197eac7586b5ededdb96b5");
+    }
+
+    private static String sha256(String fileName) throws Exception {
+        return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+                .digest(Files.readAllBytes(OUTPUT_DIR.resolve(fileName))));
     }
 
     private static JobParameters uniqueParameters() {

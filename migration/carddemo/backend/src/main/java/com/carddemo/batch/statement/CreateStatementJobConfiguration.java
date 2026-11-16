@@ -2,12 +2,16 @@ package com.carddemo.batch.statement;
 
 import com.carddemo.common.domain.TransactionRecord;
 import com.carddemo.common.repository.TransactionRepository;
+import com.carddemo.statements.StatementArchiveWriter;
+import com.carddemo.statements.StatementCycle;
 import jakarta.persistence.EntityManagerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.Tasklet;
@@ -50,9 +54,14 @@ import java.util.Map;
  *   <tr><td>STEP040</td><td>CBSTM03A - write the text and HTML statements</td></tr>
  * </table>
  *
+ * <p>STEP040 also archives every rendered statement per card for the job
+ * parameter {@code cycle} ({@code YYYY-MM}, default the current month) through
+ * S-21 OnlineStatements' {@link StatementArchiveWriter}. That is not a legacy
+ * step: the two report files are unchanged by it.
+ *
  * <pre>
  * java -jar carddemo.jar --spring.main.web-application-type=none \
- *      --spring.profiles.active=postgres --spring.batch.job.name=CREASTMT
+ *      --spring.profiles.active=postgres --spring.batch.job.name=CREASTMT cycle=2026-10
  * </pre>
  *
  * <p>The PDF rendering of app/jcl/TXT2PDF1.JCL is boundary B-13 and is not part of
@@ -82,6 +91,8 @@ public class CreateStatementJobConfiguration {
     private final StatementFileAccess files;
     private final StatementAbend abend;
     private final StatementRenderer renderer;
+    private final StatementCycle cycle;
+    private final StatementArchiveWriter archiveWriter;
     private final Path outputDir;
 
     public CreateStatementJobConfiguration(JobRepository jobRepository,
@@ -92,6 +103,8 @@ public class CreateStatementJobConfiguration {
                                            StatementFileAccess files,
                                            StatementAbend abend,
                                            StatementRenderer renderer,
+                                           StatementCycle cycle,
+                                           StatementArchiveWriter archiveWriter,
                                            @Value("${carddemo.batch.statement.output-dir:target/statements}")
                                            String outputDir) {
         this.jobRepository = jobRepository;
@@ -102,12 +115,16 @@ public class CreateStatementJobConfiguration {
         this.files = files;
         this.abend = abend;
         this.renderer = renderer;
+        this.cycle = cycle;
+        this.archiveWriter = archiveWriter;
         this.outputDir = Path.of(outputDir);
     }
 
     @Bean
     public Job createStatementJob() {
         return new JobBuilder("CREASTMT", jobRepository)
+                .incrementer(new RunIdIncrementer())
+                .listener(cycle)
                 .start(deleteDefineStep())
                 .next(sortStep())
                 .next(reproStep())
@@ -220,12 +237,13 @@ public class CreateStatementJobConfiguration {
                 .shouldDeleteIfExists(true)
                 .saveState(false)
                 .build();
-        CompositeItemWriter<Statement> writer = new CompositeItemWriter<>(List.of(textWriter, htmlWriter));
+        CompositeItemWriter<Statement> writer = new CompositeItemWriter<>(List.of(textWriter, htmlWriter, archiveWriter));
 
         return new StepBuilder("STEP040", jobRepository)
                 .<Statement, Statement>chunk(CHUNK_SIZE, transactionManager)
                 .reader(new StatementItemReader(files, abend))
                 .writer(writer)
+                .listener((StepExecutionListener) archiveWriter)
                 .build();
     }
 
