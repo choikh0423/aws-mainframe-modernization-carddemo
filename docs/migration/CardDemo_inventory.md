@@ -300,7 +300,7 @@ and one each of `IKJEFT1B`, `FTP`, `DFHCSDUP`, `COBSWAIT`, `CBTRN02C`, `CBSTM03A
 | `DFHCSDUP` | 1 | CICS resource definition; there is no CICS region in the target. |
 | `FTP` | 1 | File transport for the export/import hand-off — boundary **B-12**; the target exposes the directory and leaves transport to operations. |
 | `COBSWAIT` | 1 | Assembler timer — boundary **B-04**, deferred to the target scheduler. The `WAITSTEP` job configuration keeps the control-card contract. |
-| `IKJEFT1B` | 1 | TXT2PDF statement rendering — boundary **B-13**, deferred: the licensed TSO/REXX load library is not in the repository. |
+| `IKJEFT1B` | 1 | TXT2PDF statement rendering — boundary **B-13**, deferred in S-13 (the licensed TSO/REXX load library is not in the repository); now served online by S-21 OnlineStatements, `GET /api/statements/{stmtId}/pdf`. |
 | **Total** | **96** | |
 
 ### 9.4 Steps that do carry business logic — 23
