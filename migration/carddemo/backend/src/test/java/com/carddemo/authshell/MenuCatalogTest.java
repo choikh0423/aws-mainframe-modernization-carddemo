@@ -16,8 +16,9 @@ class MenuCatalogTest {
                 .toList();
     }
 
+    /** The eleven COMEN02Y rows, unchanged, then the modern-only option 12. */
     @Test
-    void mainMenuIsTheElevenRowsOfComen02y() {
+    void mainMenuIsTheElevenRowsOfComen02yPlusStatements() {
         assertThat(lines(MenuCatalog.MAIN_MENU)).containsExactly(
                 "1|Account View|COACTVWC|U",
                 "2|Account Update|COACTUPC|U",
@@ -29,7 +30,8 @@ class MenuCatalogTest {
                 "8|Transaction Add|COTRN02C|U",
                 "9|Transaction Reports|CORPT00C|U",
                 "10|Bill Payment|COBIL00C|U",
-                "11|Pending Authorization View|COPAUS0C|U");
+                "11|Pending Authorization View|COPAUS0C|U",
+                "12|Statements|COSTM00C|U");
     }
 
     /** COADM02Y has no CDEMO-ADMIN-OPT-USRTYPE column at all. */
@@ -53,6 +55,8 @@ class MenuCatalogTest {
                 .isEqualTo("01. Account View" + " ".repeat(24));
         assertThat(MenuCatalog.MAIN_MENU.get(9).displayText().stripTrailing())
                 .isEqualTo("10. Bill Payment");
+        assertThat(MenuCatalog.MAIN_MENU.get(11).displayText())
+                .isEqualTo("12. Statements" + " ".repeat(26));
         assertThat(MenuCatalog.ADMIN_MENU.get(4).displayText().stripTrailing())
                 .isEqualTo("05. Transaction Type List/Update (Db2)");
 
