@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gartner — FRD — ReferenceLoadAndFileReads</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    if (window.mermaid) {
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "base",
+        themeVariables: {
+          primaryColor: "#ffffff", primaryBorderColor: "#002856", primaryTextColor: "#000000",
+          lineColor: "#333333", fontFamily: "Graphik, Helvetica Neue, Arial, Helvetica, sans-serif"
+        }
+      });
+    }
+  });
+</script>
+<style>
+  :root {
+    --g-navy: #002856; --g-blue: #0068e0; --black: #002856;
+    --ink: #2b2f36; --muted: #6b7280; --line: #d9dee7; --bg: #ffffff;
+    --panel: #f4f6fa; --panel-2: #e8edf5;
+    --warn-bg: #eaf2fd; --warn-line: #0068e0;
+    --tag-batch: #002856; --tag-online: #0068e0;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Graphik", "Helvetica Neue", Arial, Helvetica, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.5; }
+  a { color: var(--g-blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Brand bar */
+  .brand-bar { background: var(--bg); border-bottom: 1px solid var(--line); }
+  .brand-bar .inner { max-width: 1080px; margin: 0 auto; padding: 14px 40px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand svg { height: 34px; width: auto; display: block; }
+  .brand .wordmark { font-weight: 700; font-size: 1.35em; letter-spacing: 0.02em; color: var(--black); line-height: 1; }
+  .brand .division { border-left: 1px solid var(--line); padding-left: 12px; margin-left: 4px; font-size: 0.82em; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .classification { font-size: 0.72em; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--g-blue); border: 1px solid var(--g-blue); padding: 3px 10px; }
+  .red-rule { height: 4px; background: linear-gradient(90deg, var(--g-navy), var(--g-blue)); }
+
+  .page { max-width: 1080px; margin: 0 auto; padding: 32px 40px 80px; }
+
+  header.doc-head { padding-bottom: 20px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
+  .doc-kicker { font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.12em; color: var(--g-blue); font-weight: 700; margin-bottom: 8px; }
+  h1 { font-size: 2em; font-weight: 300; margin: 0 0 6px; color: var(--black); letter-spacing: -0.01em; }
+  h1 strong { font-weight: 700; }
+  h2 { font-size: 1.25em; font-weight: 700; margin: 44px 0 12px; padding: 0 0 6px 14px; border-left: 4px solid var(--g-blue); border-bottom: 1px solid var(--line); color: var(--black); }
+  h3 { font-size: 1.02em; font-weight: 700; margin: 24px 0 8px; color: var(--black); }
+  .subtitle { color: var(--muted); font-size: 0.98em; }
+
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 0; color: #fff; font-size: 0.5em; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; vertical-align: middle; position: relative; top: -4px; }
+  .tag.batch { background: var(--tag-batch); }
+  .tag.online { background: var(--tag-online); }
+
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.92em; }
+  th, td { border: 0; border-bottom: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--black); color: #fff; font-weight: 700; font-size: 0.85em; letter-spacing: 0.04em; text-transform: uppercase; border-bottom: 2px solid var(--g-blue); }
+  tr:nth-child(even) td { background: var(--panel); }
+  code, .mono { font-family: "Consolas", "Menlo", monospace; font-size: 0.93em; background: var(--panel-2); padding: 1px 4px; border-radius: 0; color: var(--black); }
+
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin: 16px 0; }
+  .meta-grid .cell { background: var(--panel); border-top: 3px solid var(--g-blue); padding: 10px 12px; }
+  .meta-grid .cell .k { font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .meta-grid .cell .v { font-weight: 700; color: var(--black); }
+
+  .note { background: var(--warn-bg); border-left: 4px solid var(--warn-line); padding: 10px 14px; margin: 14px 0; font-size: 0.92em; color: var(--black); }
+  .guidance { color: var(--muted); font-style: italic; font-size: 0.9em; }
+  .diagram { background: var(--bg); border: 1px solid var(--line); border-top: 3px solid var(--g-blue); padding: 16px; overflow-x: auto; }
+
+  nav.toc { background: var(--panel); border-left: 4px solid var(--black); padding: 12px 20px; font-size: 0.92em; }
+  nav.toc strong { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.85em; color: var(--black); }
+  nav.toc ol { margin: 6px 0; padding-left: 20px; columns: 2; column-gap: 32px; }
+  nav.toc li { break-inside: avoid; }
+  nav.toc a { color: var(--ink); }
+  nav.toc a:hover { color: var(--g-blue); }
+
+  footer { margin-top: 60px; border-top: 1px solid var(--line); padding-top: 14px; color: var(--muted); font-size: 0.82em; display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+  footer .legal { max-width: 70%; }
+  footer .brand svg { height: 18px; }
+  footer .brand .wordmark { font-size: 0.95em; }
+
+  @media print {
+    .page { padding: 0 0 40px; }
+    h2 { break-after: avoid; }
+    table, .diagram, .note { break-inside: avoid; }
+  }
+  td, th, .cell .v, code, .mono { overflow-wrap: anywhere; }
+  th { overflow-wrap: normal; word-break: normal; }
+  td:not(.mono) { overflow-wrap: break-word; }
+  table.inv td:first-child, table.open td:first-child, table.open td:nth-child(2) { white-space: nowrap; }
+  table col { min-width: 48px; }
+</style>
+</head>
+<body>
+
+<div class="brand-bar">
+  <div class="inner">
+    <div class="brand">
+      <svg viewBox="0 0 158 48" role="img" aria-label="Gartner">
+        <text x="2" y="36" font-family="Graphik, 'Helvetica Neue', Arial, Helvetica, sans-serif" font-weight="700" font-size="38" letter-spacing="-0.5" fill="#002856">Gartner</text>
+        <circle cx="149" cy="33" r="4.5" fill="#0068e0"/>
+      </svg>
+      <span class="wordmark">Gartner, Inc.</span>
+      <span class="division">Gartner IT &mdash; Finance Systems Modernization</span>
+    </div>
+    <span class="classification">Gartner Confidential</span>
+  </div>
+</div>
+<div class="red-rule"></div>
+
+<div class="page">
+
+<header class="doc-head">
+  <div class="doc-kicker">Functional Requirement Document</div>
+  <h1><strong>ReferenceLoadAndFileReads</strong> <span class="tag batch">Batch</span></h1>
+  <div class="subtitle">Reload of charge-type, revenue-category and category-balance reference data, then read-back listings of the billing-account, seat, client and seat-link masters. CA-7 network SCHID 030 with parallel branches 031 / 032, run inside a CICS file close / open bracket.</div>
+</header>
+
+<div class="meta-grid">
+  <div class="cell"><div class="k">Stream type</div><div class="v">Batch cycle</div></div>
+  <div class="cell"><div class="k">Application</div><div class="v">CARDDEMO</div></div>
+  <div class="cell"><div class="k">Scheduler table / CICS group</div><div class="v">CA-7 SCHID 030 (branches 031 / 032), <code>app/scheduler/CardDemo.ca7:159-455</code>; no Control-M folder; CICS group CARDDEMO</div></div>
+  <div class="cell"><div class="k">Owner</div><div class="v">Gartner IT &ndash; Finance Systems (application); Gartner IT &ndash; Batch Operations / Scheduling (run) &mdash; assumed; CA-7 shows <code>OWNER= *NONE*</code> (<code>CardDemo.ca7:181</code>)</div></div>
+  <div class="cell"><div class="k">Run window / availability</div><div class="v">Not defined in repo. CICS files TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC are unavailable to associates from CLOSEFIL to OPENFIL</div></div>
+  <div class="cell"><div class="k">Calendar / frequency</div><div class="v">Not defined in repo (CA-7 listing has no calendar; no Control-M entry)</div></div>
+  <div class="cell"><div class="k">Criticality</div><div class="v">Not defined in repo (every job &ldquo;JOB MARKED AS MAINT ONLY&rdquo;, <code>CardDemo.ca7:174</code>); proposed: SOX-relevant, supports order-to-cash and revenue reporting (Q-14)</div></div>
+  <div class="cell"><div class="k">Doc status</div><div class="v">DRAFT</div></div>
+</div>
+
+<table>
+  <tr><th>Version</th><th>Date</th><th>Author</th><th>Change</th></tr>
+  <tr><td>0.1</td><td>2026-11-17</td><td>Devin</td><td>Initial draft</td></tr>
+</table>
+
+<nav class="toc">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#purpose">Business purpose</a></li>
+    <li><a href="#flow">Flow diagram</a></li>
+    <li><a href="#inventory">Job / screen inventory</a></li>
+    <li><a href="#dependencies">Dependencies</a></li>
+    <li><a href="#requirements">Functional requirements</a></li>
+    <li><a href="#restart">Restart, recovery &amp; error handling</a></li>
+    <li><a href="#nfr">Non-functional requirements</a></li>
+    <li><a href="#interfaces">Interfaces &amp; data layouts</a></li>
+    <li><a href="#security">Security &amp; access</a></li>
+    <li><a href="#target">Target-state mapping</a></li>
+    <li><a href="#open">Assumptions, debt &amp; open questions</a></li>
+  </ol>
+</nav>
+
+<h2 id="purpose">1. Business purpose</h2>
+<p>Read as Gartner&rsquo;s client billing and receivables (order-to-cash) estate (assumption A-01), this chain refreshes the reference data that every billable event is classified against. It rebuilds three VSAM files from sequential unloads: the charge types (Research subscription invoice, Conferences registration, Consulting fee, client payment, credit / adjustment; <code>AWS.M2.CARDDEMO.TRANTYPE.VSAM.KSDS</code>), the revenue categories within each charge type, which carry the Research / Conferences / Consulting revenue lines (<code>AWS.M2.CARDDEMO.TRANCATG.VSAM.KSDS</code>), and the open balance per client billing account, charge type and revenue category (<code>AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS</code>). IDCAMS deletes, redefines and reloads each file (<code>app/jcl/TRANTYPE.jcl:22-61</code>, <code>app/jcl/TRANCATG.jcl:22-61</code>, <code>app/jcl/TCATBALF.jcl:22-61</code>).</p>
+<p>Later Gartner batch depends on these files. Billable-event posting (POSTTRAN / CBTRN02C) updates the balance-by-category file (<code>app/cbl/CBTRN02C.cbl:57</code>). The month-end late-payment finance charge (INTCALC / CBACT04C) reads it to work out the charge per revenue category on overdue balances (<code>app/cbl/CBACT04C.cbl:28</code>). The billable-event report used by Revenue Accounting (TRANREPT / CBTRN03C) reads the charge-type and revenue-category tables to describe each event (<code>app/cbl/CBTRN03C.cbl:39</code>, <code>:45</code>). If the chain does not run, those jobs use stale or missing codes, and billable events can be reported under the wrong revenue line. If it runs at the wrong time, every open receivable by category that changed since the unload was taken is reset to the unload value. That changes the finance charge a client is billed, the monthly client statement and the receivable balances that feed Gartner&rsquo;s SEC filings.</p>
+<p>After the loads, four read-only listing utilities run one after another: READACCT / CBACT01C (client billing accounts: open receivable, approved client credit line, cash credit limit), READCARD / CBACT02C (research seats: seat ID, subscription term end), READCUST / CBCUS01C (client organizations and contacts) and READXREF / CBACT03C (seat-to-account links). Each reads one master KSDS in key order and prints every record to SYSOUT. READACCT also writes three billing-account extract datasets (<code>app/jcl/READACCT.jcl:37-48</code>). These listings are the estate&rsquo;s only batch evidence of master-file content after a reload, which makes them candidate SOX 404 control evidence. The whole network sits between a CLOSEFIL job, which closes five CICS files in region CICSAWSA, and an OPENFIL job, which reopens them (<code>app/jcl/CLOSEFIL.jcl:26-30</code>, <code>app/jcl/OPENFIL.jcl:26-30</code>). While the chain runs, Billing &amp; Collections associates cannot use the online screens that need those files.</p>
+<table>
+  <tr><th>Business capability</th><th>How this stream serves it</th></tr>
+  <tr><td>Charge types &amp; revenue lines</td><td>TRANTYPE and TRANCATG fully replace the charge-type and revenue-category tables (<code>app/cpy/CVTRA03Y.cpy</code>, <code>app/cpy/CVTRA04Y.cpy</code>) that TRANREPT / CBTRN03C uses to describe billable events. These codes decide which revenue line (Research, Conferences, Consulting) an event is reported under for ASC 606 disaggregation.</td></tr>
+  <tr><td>Open receivable by revenue category</td><td>TCATBALF fully replaces the per-account / charge-type / category balance file (<code>app/cpy/CVTRA01Y.cpy</code>) that POSTTRAN updates and INTCALC uses for the month-end finance charge.</td></tr>
+  <tr><td>Operational check of the order-to-cash masters</td><td>READACCT, READCARD, READCUST and READXREF list every billing account, seat, client and seat link record for Batch Operations and Finance &ndash; Order-to-Cash to check after a reload.</td></tr>
+  <tr><td>Billing-account extracts</td><td>READACCT writes fixed (107-byte), array (110-byte) and variable-length (12 / 39-byte) account extracts (<code>app/cbl/CBACT01C.cbl:57-78</code>, <code>:123-130</code>). No consumer exists in the repo.</td></tr>
+  <tr><td>Online / batch file isolation</td><td>CLOSEFIL / OPENFIL quiesce and release CICS files TRANSACT, CCXREF, ACCTDAT, CXACAIX and USRSEC around the batch work.</td></tr>
+</table>
+
+<h2 id="flow">2. Flow diagram</h2>
+<div class="diagram">
+<pre class="mermaid">
+flowchart TD
+    CF0["CLOSEFIL (030)<br/>SDSF: CEMT SET FIL(x) CLO x5"] -->|"trigger SCHID 030"| TT["TRANTYPE<br/>IDCAMS DELETE / DEFINE / REPRO<br/>charge types"]
+    TT -->|"trigger SCHID 030"| W0["WAITSTEP<br/>COBSWAIT 00003600 cs = 36 s"]
+    W0 -->|"trigger SCHID 031"| CF1["CLOSEFIL1<br/>JCL member CLOSEFIL"]
+    W0 -->|"trigger SCHID 032"| CF2["CLOSEFIL2<br/>JCL member CLOSEFIL"]
+    subgraph B031["Branch SCHID 031"]
+        CF1 -->|"031"| TC["TRANCATG<br/>IDCAMS DELETE / DEFINE / REPRO<br/>revenue categories"]
+        TC -->|"031"| W1["WAITSTEP (031)"]
+    end
+    subgraph B032["Branch SCHID 032"]
+        CF2 -->|"032"| TB["TCATBALF<br/>IDCAMS DELETE / DEFINE / REPRO<br/>balance by category"]
+        TB -->|"032"| W2["WAITSTEP (032)"]
+    end
+    W1 -->|"trigger SCHID 030"| CF3["CLOSEFIL (030)<br/>run again, files already closed"]
+    W2 -->|"trigger SCHID 030<br/>(separate trigger, no AND-join)"| CF3
+    CF3 -->|"030"| RA["READACCT<br/>PREDEL IEFBR14 + STEP05 CBACT01C"]
+    RA -->|"030"| RC["READCARD<br/>CBACT02C"]
+    RC -->|"030"| RU["READCUST<br/>CBCUS01C"]
+    RU -->|"030"| RX["READXREF<br/>CBACT03C"]
+    RX -->|"030"| W3["WAITSTEP (030)<br/>36 s"]
+    W3 -->|"030"| OF["OPENFIL<br/>SDSF: CEMT SET FIL(x) OPE x5<br/>triggers nothing"]
+</pre>
+</div>
+<div class="note"><strong>Gating conditions:</strong> every edge is a CA-7 completion trigger (<code>TRIGGERED JOBS &hellip; SCHID=nnn QTM=0100 LEADTM=0000</code>) in <code>app/scheduler/CardDemo.ca7</code>: CLOSEFIL&rarr;TRANTYPE <code>:162</code>, TRANTYPE&rarr;WAITSTEP <code>:189</code>, WAITSTEP&rarr;CLOSEFIL1 / CLOSEFIL2 <code>:216-217</code>, CLOSEFIL1&rarr;TRANCATG <code>:244</code>, CLOSEFIL2&rarr;TCATBALF <code>:271</code>, TRANCATG&rarr;WAITSTEP (031) <code>:298</code>, WAITSTEP&rarr;CLOSEFIL (030) <code>:303</code>, TCATBALF&rarr;WAITSTEP (032) <code>:330</code>, WAITSTEP&rarr;CLOSEFIL (030) <code>:335</code>, CLOSEFIL&rarr;READACCT <code>:340</code>, READACCT&rarr;READCARD <code>:367</code>, READCARD&rarr;READCUST <code>:394</code>, READCUST&rarr;READXREF <code>:421</code>, READXREF&rarr;WAITSTEP <code>:448</code>, WAITSTEP&rarr;OPENFIL <code>:453</code>. The OPENFIL job block reads <code>N -- COMP TRIGGERS OTHER JOBS</code> (<code>:138</code>), so the network ends there. No trigger has a condition-code qualifier and no step in any member of the chain codes <code>COND=</code>, so a job is released when its predecessor completes. The only return-code handling is <code>SET MAXCC = 0</code> after the IDCAMS DELETE (<code>TRANTYPE.jcl:27</code>, <code>TRANCATG.jcl:27</code>, <code>TCATBALF.jcl:27</code>), so a first load with no existing cluster still ends RC 0. Each branch WAITSTEP triggers CLOSEFIL (030) on its own; the listing defines no AND-join (Q-03).</div>
+<div class="note"><strong>Scheduler sources disagree.</strong> This network exists only in CA-7. <code>app/scheduler/CardDemo.controlm</code> has no folder with TRANTYPE, TRANCATG, TCATBALF or any READ* job. For the daily cycle, CA-7 SCHID 030 is CLOSEFIL&rarr;CBPAUP0J&rarr;POSTTRAN&rarr;WAITSTEP&rarr;OPENFIL (<code>CardDemo.ca7:43</code>, <code>:70</code>, <code>:97</code>, <code>:124</code>; no TRANBKP anywhere in the file), while Control-M <code>DAILY-TransactionBackup</code> is CLOSEFIL&rarr;TRANBKP&rarr;WAITSTEP&rarr;OPENFIL (<code>CardDemo.controlm:3-25</code>). This FRD documents each source as written and does not assert a combined chain (Q-02). The developer script <code>scripts/run_full_batch.sh</code> uses a third ordering: it submits TCATBALF before TRANTYPE, never submits TRANCATG or any READ* job, and only sleeps between submissions (<code>run_full_batch.sh:35</code>, <code>:38</code>; Q-10).</div>
+<div class="note"><strong>Job sequence checked against source.</strong> The sequence in the Gartner FRD index matches the CA-7 listing at <code>CardDemo.ca7:159-455</code> job for job, including CLOSEFIL1 / CLOSEFIL2 at the head of each branch (CA-7 JCL MEMBER column = CLOSEFIL, <code>:225</code>, <code>:252</code>). <code>docs/migration/CardDemo_inventory.md:84</code> draws a different path (<code>OPENFIL &rarr; TRANTYPE &rarr; (CLOSEFIL1 &rarr; TRANCATG | CLOSEFIL2 &rarr; TCATBALF) &rarr; READACCT</code>) with an OPENFIL&rarr;TRANTYPE edge the listing does not have and without the WAITSTEPs; it is wrong (Q-12).</div>
+
+<h2 id="inventory">3. Job / screen inventory</h2>
+<table class="inv">
+  <colgroup><col style="width:6%"><col style="width:12%"><col style="width:15%"><col style="width:47%"><col style="width:20%"></colgroup>
+  <tr><th>Order</th><th>Job / Tranid</th><th>Program(s)</th><th>Function</th><th>Restart point / entry condition</th></tr>
+  <tr><td>1</td><td class="mono">CLOSEFIL</td><td class="mono">STEP1 / SDSF</td><td>Issues <code>/F CICSAWSA,'CEMT SET FIL(x) CLO'</code> for TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC (<code>app/jcl/CLOSEFIL.jcl:22-30</code>). Triggers TRANTYPE (<code>CardDemo.ca7:162</code>).</td><td>SCHID 030. Rerun; CEMT command is repeatable.</td></tr>
+  <tr><td>2</td><td class="mono">TRANTYPE</td><td class="mono">STEP05 / STEP10 / STEP15 IDCAMS</td><td>DELETE, DEFINE (<code>KEYS(2 0)</code>, <code>RECORDSIZE(60 60)</code>, <code>SHAREOPTIONS(1 4)</code>) and REPRO from <code>AWS.M2.CARDDEMO.TRANTYPE.PS</code> (<code>app/jcl/TRANTYPE.jcl:22-61</code>). Charge types.</td><td>SCHID 030. Rerun from STEP05 (full replace).</td></tr>
+  <tr><td>3</td><td class="mono">WAITSTEP</td><td class="mono">WAIT / COBSWAIT</td><td>Waits <code>00003600</code> centiseconds = 36 s (<code>app/jcl/WAITSTEP.jcl:22-26</code>). Triggers CLOSEFIL1 (031) and CLOSEFIL2 (032) (<code>CardDemo.ca7:216-217</code>).</td><td>SCHID 030. Rerun.</td></tr>
+  <tr><td>4</td><td class="mono">CLOSEFIL1</td><td class="mono">JCL member CLOSEFIL / SDSF</td><td>CA-7 job name over JCL member CLOSEFIL (<code>CardDemo.ca7:225</code>); same five CEMT closes. Triggers TRANCATG (<code>:244</code>).</td><td>SCHID 031. Rerun; CEMT command is repeatable.</td></tr>
+  <tr><td>5</td><td class="mono">TRANCATG</td><td class="mono">STEP05 / STEP10 / STEP15 IDCAMS</td><td>Same pattern with <code>KEYS(6 0)</code>, <code>RECORDSIZE(60 60)</code>, <code>SHAREOPTIONS(2 3)</code> from <code>AWS.M2.CARDDEMO.TRANCATG.PS</code> (<code>app/jcl/TRANCATG.jcl:22-61</code>). Revenue categories. Triggers WAITSTEP (031) (<code>:298</code>).</td><td>SCHID 031. Rerun from STEP05 (full replace).</td></tr>
+  <tr><td>6</td><td class="mono">WAITSTEP</td><td class="mono">WAIT / COBSWAIT</td><td>36 s wait. Triggers CLOSEFIL (030) (<code>CardDemo.ca7:303</code>).</td><td>SCHID 031. Rerun.</td></tr>
+  <tr><td>7</td><td class="mono">CLOSEFIL2</td><td class="mono">JCL member CLOSEFIL / SDSF</td><td>CA-7 job name over JCL member CLOSEFIL (<code>CardDemo.ca7:252</code>). Triggers TCATBALF (<code>:271</code>).</td><td>SCHID 032. Rerun; CEMT command is repeatable.</td></tr>
+  <tr><td>8</td><td class="mono">TCATBALF</td><td class="mono">STEP05 / STEP10 / STEP15 IDCAMS</td><td>Same pattern with <code>KEYS(17 0)</code>, <code>RECORDSIZE(50 50)</code>, <code>SHAREOPTIONS(2 3)</code> from <code>AWS.M2.CARDDEMO.TCATBALF.PS</code> (<code>app/jcl/TCATBALF.jcl:22-61</code>). Open receivable by revenue category. Triggers WAITSTEP (032) (<code>:330</code>).</td><td>SCHID 032. Rerun from STEP05 (full replace).</td></tr>
+  <tr><td>9</td><td class="mono">WAITSTEP</td><td class="mono">WAIT / COBSWAIT</td><td>36 s wait. Triggers CLOSEFIL (030) (<code>CardDemo.ca7:335</code>).</td><td>SCHID 032. Rerun.</td></tr>
+  <tr><td>10</td><td class="mono">CLOSEFIL</td><td class="mono">STEP1 / SDSF</td><td>Second run of the same job; the five files are already closed. Triggers READACCT (<code>CardDemo.ca7:340</code>).</td><td>SCHID 030. Rerun; CEMT command is repeatable.</td></tr>
+  <tr><td>11</td><td class="mono">READACCT</td><td class="mono">PREDEL / IEFBR14; STEP05 / CBACT01C</td><td>PREDEL deletes the three prior extracts (<code>app/jcl/READACCT.jcl:22-31</code>); STEP05 lists every billing account and writes <code>ACCTDATA.PSCOMP</code>, <code>.ARRYPS</code>, <code>.VBPS</code> (<code>:32-48</code>). Triggers READCARD (<code>:367</code>).</td><td>SCHID 030. Rerun from PREDEL.</td></tr>
+  <tr><td>12</td><td class="mono">READCARD</td><td class="mono">STEP05 / CBACT02C</td><td>Lists every seat record from <code>CARDDATA.VSAM.KSDS</code> (<code>app/jcl/READCARD.jcl:22-27</code>). Triggers READCUST (<code>:394</code>).</td><td>SCHID 030. Rerun from the top (read-only).</td></tr>
+  <tr><td>13</td><td class="mono">READCUST</td><td class="mono">STEP05 / CBCUS01C</td><td>Lists every client record from <code>CUSTDATA.VSAM.KSDS</code> (<code>app/jcl/READCUST.jcl:21-26</code>). Triggers READXREF (<code>:421</code>).</td><td>SCHID 030. Rerun from the top (read-only).</td></tr>
+  <tr><td>14</td><td class="mono">READXREF</td><td class="mono">STEP05 / CBACT03C</td><td>Lists every seat-to-account link from <code>CARDXREF.VSAM.KSDS</code> (<code>app/jcl/READXREF.jcl:22-26</code>). Triggers WAITSTEP (<code>:448</code>).</td><td>SCHID 030. Rerun from the top (read-only).</td></tr>
+  <tr><td>15</td><td class="mono">WAITSTEP</td><td class="mono">WAIT / COBSWAIT</td><td>36 s wait. Triggers OPENFIL (<code>CardDemo.ca7:453</code>).</td><td>SCHID 030. Rerun.</td></tr>
+  <tr><td>16</td><td class="mono">OPENFIL</td><td class="mono">STEP1 / SDSF</td><td>Issues <code>CEMT SET FIL(x) OPE</code> for the same five files (<code>app/jcl/OPENFIL.jcl:22-30</code>). Triggers nothing (<code>CardDemo.ca7:138</code>).</td><td>SCHID 030. Rerun; CEMT command is repeatable.</td></tr>
+</table>
+<div class="note">The README batch table labels CLOSEFIL and OPENFIL as IEFBR14 jobs (<code>README.md:313-318</code>). The JCL runs <code>PGM=SDSF</code> with CEMT commands, and the JCL is authoritative (Q-11).</div>
+
+<h2 id="dependencies">4. Dependencies</h2>
+<h3>4.1 DB2 tables</h3>
+<table>
+  <tr><th>Table</th><th>Access</th><th>Used by</th><th>Notes</th></tr>
+  <tr><td class="mono">None</td><td>&ndash;</td><td class="mono">&ndash;</td><td>No job runs DSNTIAD or a DB2 plan, and none of CBACT01C, CBACT02C, CBCUS01C, CBACT03C contains <code>EXEC SQL</code>. No IMS or MQ use either.</td></tr>
+</table>
+<h3>4.2 VSAM files &amp; datasets</h3>
+<table class="ids">
+  <colgroup><col style="width:30%"><col style="width:13%"><col style="width:13%"><col style="width:14%"><col style="width:30%"></colgroup>
+  <tr><th>Dataset</th><th>Type</th><th>Access</th><th>Used by</th><th>Notes</th></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANTYPE.PS</td><td>PS, 60</td><td>R</td><td class="mono">TRANTYPE</td><td>Charge-type unload: 7 records / 420 bytes in <code>app/data/EBCDIC</code>; ASCII copy <code>trantype.txt</code>. Producer not in repo (Q-09).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANTYPE.VSAM.KSDS</td><td>KSDS 60, key 2</td><td>Delete / define / W</td><td class="mono">TRANTYPE</td><td>Later read by CBTRN03C (<code>CBTRN03C.cbl:39</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANCATG.PS</td><td>PS, 60</td><td>R</td><td class="mono">TRANCATG</td><td>Revenue-category unload: 18 records / 1080 bytes.</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TRANCATG.VSAM.KSDS</td><td>KSDS 60, key 6</td><td>Delete / define / W</td><td class="mono">TRANCATG</td><td>Later read by CBTRN03C (<code>CBTRN03C.cbl:45</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TCATBALF.PS</td><td>PS, 50</td><td>R</td><td class="mono">TCATBALF</td><td>Balance-by-category unload: 50 records / 2500 bytes.</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS</td><td>KSDS 50, key 17</td><td>Delete / define / W</td><td class="mono">TCATBALF</td><td>Later updated by CBTRN02C (<code>CBTRN02C.cbl:57</code>) and read by CBACT04C (<code>CBACT04C.cbl:28</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS</td><td>KSDS 300, key 11</td><td>R (sequential)</td><td class="mono">CBACT01C</td><td>Client billing accounts; CICS file ACCTDAT (closed by CLOSEFIL). 50 sample records (<code>app/jcl/ACCTFILE.jcl:40-41</code>).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.ACCTDATA.PSCOMP / .ARRYPS / .VBPS</td><td>PS FB 107 / FB 110 / VB 84</td><td>Delete, then W</td><td class="mono">IEFBR14, CBACT01C</td><td>Billing-account extracts (<code>READACCT.jcl:37-48</code>). No consumer in the repo.</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.CARDDATA.VSAM.KSDS</td><td>KSDS 150, key 16</td><td>R (sequential)</td><td class="mono">CBACT02C</td><td>Research seats; CICS file CARDDAT (not closed by CLOSEFIL, Q-15).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.CUSTDATA.VSAM.KSDS</td><td>KSDS 500, key 9</td><td>R (sequential)</td><td class="mono">CBCUS01C</td><td>Client organizations / contacts; CICS file CUSTDAT (not closed by CLOSEFIL, Q-15).</td></tr>
+  <tr><td class="mono">AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</td><td>KSDS 50, key 16</td><td>R (sequential)</td><td class="mono">CBACT03C</td><td>Seat-to-account links; CICS file CCXREF (closed by CLOSEFIL).</td></tr>
+</table>
+<h3>4.3 Shared utilities &amp; copybooks</h3>
+<table class="ids">
+  <colgroup><col style="width:18%"><col style="width:14%"><col style="width:68%"></colgroup>
+  <tr><th>Asset</th><th>Kind</th><th>Role</th></tr>
+  <tr><td class="mono">CVTRA03Y</td><td>Copybook</td><td>Charge-type record, 60 bytes (<code>app/cpy/CVTRA03Y.cpy:4-7</code>).</td></tr>
+  <tr><td class="mono">CVTRA04Y</td><td>Copybook</td><td>Revenue-category record, 60 bytes, 6-byte key (<code>app/cpy/CVTRA04Y.cpy:4-9</code>).</td></tr>
+  <tr><td class="mono">CVTRA01Y</td><td>Copybook</td><td>Balance-by-category record, 50 bytes, 17-byte key (<code>app/cpy/CVTRA01Y.cpy:4-10</code>).</td></tr>
+  <tr><td class="mono">CVACT01Y</td><td>Copybook</td><td>Billing-account record, 300 bytes (<code>app/cpy/CVACT01Y.cpy:4-18</code>); CBACT01C.</td></tr>
+  <tr><td class="mono">CVACT02Y</td><td>Copybook</td><td>Seat record, 150 bytes, with <code>CARD-NUM X(16)</code>, <code>CARD-CVV-CD 9(03)</code>, <code>CARD-EXPIRAION-DATE</code> (<code>app/cpy/CVACT02Y.cpy:4-11</code>); CBACT02C.</td></tr>
+  <tr><td class="mono">CVCUS01Y</td><td>Copybook</td><td>Client record, 500 bytes, with <code>CUST-SSN</code>, government-issued ID, date of birth, FICO score (<code>app/cpy/CVCUS01Y.cpy:4-23</code>); CBCUS01C.</td></tr>
+  <tr><td class="mono">CVACT03Y</td><td>Copybook</td><td>Seat-link record, 50 bytes (<code>app/cpy/CVACT03Y.cpy:4-8</code>); CBACT03C.</td></tr>
+  <tr><td class="mono">CODATECN</td><td>Copybook</td><td>Date-conversion call area (<code>app/cpy/CODATECN.cpy:17-52</code>).</td></tr>
+  <tr><td class="mono">COBDATFT</td><td>Assembler subroutine</td><td>Reformats the reissue date for CBACT01C (<code>CBACT01C.cbl:231</code>; <code>app/asm/COBDATFT.asm:51-56</code>).</td></tr>
+  <tr><td class="mono">COBSWAIT</td><td>COBOL program</td><td>Reads 8 digits from SYSIN and calls MVSWAIT (<code>app/cbl/COBSWAIT.cbl:30-38</code>).</td></tr>
+  <tr><td class="mono">MVSWAIT / ASMWAIT</td><td>Assembler / macro</td><td><code>STIMER WAIT,BINTVL=</code> (<code>app/maclib/ASMWAIT.mac:19</code>); zeroes R15 (<code>app/asm/MVSWAIT.asm:26</code>).</td></tr>
+  <tr><td class="mono">CEE3ABD</td><td>LE service</td><td>User abend 999 in all four READ programs (<code>CBACT01C.cbl:409-410</code>, <code>CBACT02C.cbl:157-158</code>, <code>CBCUS01C.cbl:157-158</code>, <code>CBACT03C.cbl:157-158</code>).</td></tr>
+  <tr><td class="mono">IDCAMS / IEFBR14 / SDSF</td><td>System utilities</td><td>Reference loads; READACCT PREDEL; CEMT command issuer.</td></tr>
+</table>
+<h3>4.4 Other applications &amp; external events</h3>
+<table>
+  <colgroup><col style="width:28%"><col style="width:14%"><col style="width:22%"><col style="width:36%"></colgroup>
+  <tr><th>Dependency</th><th>Direction</th><th>Mechanism</th><th>Notes</th></tr>
+  <tr><td>Producer of the three <code>.PS</code> unloads</td><td>Upstream</td><td>File feed</td><td>No job in the repo writes them (Q-09).</td></tr>
+  <tr><td>CICS region CICSAWSA (online billing &amp; collections screens)</td><td>Both</td><td>SDSF / CEMT close and open</td><td>TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC unavailable to associates from CLOSEFIL to OPENFIL.</td></tr>
+  <tr><td>POSTTRAN / CBTRN02C (billable-event posting)</td><td>Downstream</td><td>Shared KSDS</td><td>Updates TCATBALF. No scheduler link to this network.</td></tr>
+  <tr><td>INTCALC / CBACT04C (finance charge)</td><td>Downstream</td><td>Shared KSDS</td><td>Reads TCATBALF.</td></tr>
+  <tr><td>TRANREPT / CBTRN03C (billable-event report)</td><td>Downstream</td><td>Shared KSDS</td><td>Reads TRANTYPE and TRANCATG.</td></tr>
+</table>
+
+<h2 id="requirements">5. Functional requirements</h2>
+<table>
+  <colgroup><col style="width:7%"><col style="width:41%"><col style="width:20%"><col style="width:32%"></colgroup>
+  <tr><th>ID</th><th>Requirement</th><th>Source</th><th>Acceptance criterion</th></tr>
+  <tr><td>FR-01</td><td>Before any reference reload, close CICS files TRANSACT, CCXREF, ACCTDAT, CXACAIX and USRSEC in region CICSAWSA, in that order.</td><td class="mono">app/jcl/CLOSEFIL.jcl:26-30</td><td>Five <code>CEMT SET FIL(x) CLO</code> commands are issued; CEMT INQ shows each file CLOSED before TRANTYPE starts.</td></tr>
+  <tr><td>FR-02</td><td>After the last listing and wait, reopen the same five files.</td><td class="mono">app/jcl/OPENFIL.jcl:26-30</td><td>Five <code>OPE</code> commands are issued; each file is OPEN and enabled when OPENFIL ends; OPENFIL triggers no job.</td></tr>
+  <tr><td>FR-03</td><td>Replace the charge-type file in full: delete the cluster, set MAXCC to 0, define it with key 2 at offset 0, record 60 / 60, then REPRO the unload.</td><td class="mono">app/jcl/TRANTYPE.jcl:22-61</td><td>After the run the KSDS holds exactly the unload's 7 records, in key order, and no record from before the run survives.</td></tr>
+  <tr><td>FR-04</td><td>Replace the revenue-category file in full with key 6 at offset 0, record 60 / 60.</td><td class="mono">app/jcl/TRANCATG.jcl:22-61</td><td>The KSDS holds exactly the unload's 18 records keyed by type + category.</td></tr>
+  <tr><td>FR-05</td><td>Replace the balance-by-category file in full with key 17 at offset 0, record 50 / 50.</td><td class="mono">app/jcl/TCATBALF.jcl:22-61</td><td>The KSDS holds exactly the unload's 50 records; a balance changed since the unload was taken now equals the unload value.</td></tr>
+  <tr><td>FR-06</td><td>A missing cluster on DELETE must not fail the reload job.</td><td class="mono">TRANTYPE.jcl:27 (also TRANCATG / TCATBALF :27)</td><td>On an empty catalog the job ends RC 0 and the cluster is defined and loaded.</td></tr>
+  <tr><td>FR-07</td><td>Each WAITSTEP pauses for the SYSIN value in centiseconds (<code>00003600</code> = 36 s) and returns RC 0.</td><td class="mono">app/jcl/WAITSTEP.jcl:22-26; COBSWAIT.cbl:30-38</td><td>Elapsed time is &ge; 36 s and the step ends RC 0.</td></tr>
+  <tr><td>FR-08</td><td>Run TRANTYPE before both branches; after the first WAITSTEP start SCHID 031 (CLOSEFIL1 &rarr; TRANCATG &rarr; WAITSTEP) and SCHID 032 (CLOSEFIL2 &rarr; TCATBALF &rarr; WAITSTEP) as parallel branches.</td><td class="mono">CardDemo.ca7:162, :189, :216-217, :244, :271</td><td>TRANCATG and TCATBALF both start only after TRANTYPE ends; neither waits for the other.</td></tr>
+  <tr><td>FR-09</td><td>Start the listings (CLOSEFIL &rarr; READACCT) only after both branches are complete. The legacy listing has two independent triggers and no AND-join; the target must state which behavior it keeps (Q-03).</td><td class="mono">CardDemo.ca7:303, :335, :340</td><td>READACCT never runs while TRANCATG or TCATBALF is running; READACCT runs once per network.</td></tr>
+  <tr><td>FR-10</td><td>Run the listings in the order READACCT, READCARD, READCUST, READXREF, then WAITSTEP, then OPENFIL.</td><td class="mono">CardDemo.ca7:367, :394, :421, :448, :453</td><td>Job start times follow that order; each starts after its predecessor ends.</td></tr>
+  <tr><td>FR-11</td><td>READACCT deletes the three previous extracts before the program runs.</td><td class="mono">app/jcl/READACCT.jcl:22-31</td><td>A rerun does not fail on <code>DISP=(NEW,CATLG)</code> for an existing DSN.</td></tr>
+  <tr><td>FR-12</td><td>CBACT01C reads ACCTDATA in key order, displays each billing-account record and ends at file status 10.</td><td class="mono">CBACT01C / 1000-ACCTFILE-GET-NEXT, 1100-DISPLAY-ACCT-RECORD (cbl:151, :180-181, :200-213)</td><td>SYSOUT holds one formatted block per account (50 for the sample data) between the start and end banners (<code>:141</code>, <code>:158</code>).</td></tr>
+  <tr><td>FR-13</td><td>CBACT01C writes one 107-byte fixed record per account; the reissue date is converted by COBDATFT; a zero current-cycle debit is written as the literal 2525.00 (kept as debt, Q-06).</td><td class="mono">CBACT01C / 1300-POPUL-ACCT-RECORD (cbl:215-240)</td><td>PSCOMP has one record per account; an account with cycle debit 0 shows 2525.00, others their own value.</td></tr>
+  <tr><td>FR-14</td><td>CBACT01C writes one 110-byte array record per account with the current balance and the constants 1005.00, 1525.00, -1025.00, -2500.00 in the occurrences.</td><td class="mono">CBACT01C / 1400-POPUL-ARRAY-RECORD (cbl:253-260)</td><td>ARRYPS byte layout matches the legacy output for the sample data.</td></tr>
+  <tr><td>FR-15</td><td>CBACT01C writes two variable-length records per account: a 12-byte ID + status record and a 39-byte ID + balance + credit line + reissue year record.</td><td class="mono">CBACT01C / 1500-POPUL-VBRC-RECORD, 1550 / 1575 (cbl:276-315)</td><td>VBPS has two records per account with record lengths 12 and 39.</td></tr>
+  <tr><td>FR-16</td><td>CBACT02C reads CARDDATA in key order and displays each seat record once (the second DISPLAY is commented out).</td><td class="mono">CBACT02C.cbl:78, :96</td><td>SYSOUT holds exactly one line per seat (50 for the sample data).</td></tr>
+  <tr><td>FR-17</td><td>CBCUS01C and CBACT03C read CUSTDATA and CARDXREF in key order and display each record twice (once in the read paragraph, once in the main loop).</td><td class="mono">CBCUS01C.cbl:78, :96; CBACT03C.cbl:78, :96</td><td>SYSOUT holds two identical lines per client and per seat link (Q-05).</td></tr>
+  <tr><td>FR-18</td><td>All four READ programs open their KSDS for input only and never write, rewrite or delete master records.</td><td class="mono">CBACT01C.cbl:319; CBACT02C / CBCUS01C / CBACT03C .cbl:120</td><td>Master-file record counts and content are identical before and after the listings.</td></tr>
+  <tr><td>FR-19</td><td>On an open, read (other than EOF) or close error, display the error text and the file status, then abend with user code 999 through CEE3ABD.</td><td class="mono">CBACT02C.cbl:110, :129, :147, :154-158 (same lines in CBCUS01C / CBACT03C; CBACT01C.cbl:406-410)</td><td>With the KSDS missing, the job ends U0999 and SYSOUT shows <code>ERROR OPENING &hellip;</code> plus <code>FILE STATUS IS:</code>.</td></tr>
+</table>
+
+<h2 id="restart">6. Restart, recovery &amp; error handling</h2>
+<h3>6.1 Return-code conventions</h3>
+<table>
+  <colgroup><col style="width:14%"><col style="width:43%"><col style="width:43%"></colgroup>
+  <tr><th>RC</th><th>Meaning</th><th>Downstream effect</th></tr>
+  <tr><td class="mono">0</td><td>Normal end of every job. IDCAMS forces it after the DELETE with <code>SET MAXCC = 0</code> (<code>TRANTYPE.jcl:27</code>), so a missing cluster or a failed delete is hidden. WAITSTEP always ends 0 (<code>MVSWAIT.asm:26</code>).</td><td>Successor released by the CA-7 completion trigger.</td></tr>
+  <tr><td class="mono">8 / 12</td><td>IDCAMS DEFINE or REPRO failure in TRANTYPE, TRANCATG or TCATBALF.</td><td>Not defined in the repo: no trigger has an RC qualifier and no step codes <code>COND=</code> (Q-04).</td></tr>
+</table>
+<h3>6.2 Abends</h3>
+<table>
+  <colgroup><col style="width:12%"><col style="width:20%"><col style="width:34%"><col style="width:34%"></colgroup>
+  <tr><th>Abend</th><th>Job / Program</th><th>Meaning</th><th>Recovery</th></tr>
+  <tr><td class="mono">U0999</td><td class="mono">READACCT / CBACT01C, READCARD / CBACT02C, READCUST / CBCUS01C, READXREF / CBACT03C</td><td>Open, read (other than EOF) or close error; the program displays the error text and file status, then calls CEE3ABD (FR-19).</td><td>Fix the dataset, rerun the job from the top (READACCT from PREDEL). The listings are read-only, so no backout is needed.</td></tr>
+  <tr><td class="mono">System (e.g. S013, S0C7)</td><td class="mono">any</td><td>Dataset or data errors not trapped by the programs.</td><td>Fix and rerun; then let the network continue or run OPENFIL by hand.</td></tr>
+</table>
+<h3>6.3 Restart / checkpoint semantics</h3>
+<ul>
+  <li><strong>Checkpoint / commit:</strong> none. IDCAMS REPRO loads the whole file in one pass, and the READ programs are read-only.</li>
+  <li><strong>Reference load rerun:</strong> safe from STEP05 because DELETE / DEFINE / REPRO is a full replace. A failed REPRO leaves the cluster partly loaded; rerun against the same unload. Rerunning TCATBALF after POSTTRAN has posted billable events resets those balances to the unload value, so Finance &ndash; Order-to-Cash must approve it.</li>
+  <li><strong>Listing rerun:</strong> safe. READACCT PREDEL removes earlier extracts; the other three write only SYSOUT.</li>
+  <li><strong>Files left closed:</strong> if any job fails before OPENFIL, the five CICS files stay closed and associates cannot sign on. Rerun the failed job and let the network complete, or submit OPENFIL by hand.</li>
+  <li><strong>Backout:</strong> no backup is taken before the delete; the <code>.PS</code> unloads are the only recovery source.</li>
+</ul>
+
+<h2 id="nfr">7. Non-functional requirements</h2>
+<table>
+  <colgroup><col style="width:9%"><col style="width:17%"><col style="width:74%"></colgroup>
+  <tr><th>ID</th><th>Category</th><th>Requirement</th></tr>
+  <tr><td>NFR-01</td><td>Volume</td><td>Sample data: 7 charge types, 18 revenue categories, 50 category balances, 50 billing accounts, 50 seats, 50 clients, 50 seat links (<code>app/data/ASCII/*.txt</code>). Production volumes for Gartner&rsquo;s client base are not in the repo (Q-14). The target must handle the full client and seat population without changing these record layouts.</td></tr>
+  <tr><td>NFR-02</td><td>Run window</td><td>The online outage runs from CLOSEFIL to OPENFIL and includes four fixed 36 s waits (at least 144 s). The run window must be agreed with Finance &ndash; Order-to-Cash so it does not fall in month-end close or on a day when Billing &amp; Collections associates need the online screens.</td></tr>
+  <tr><td>NFR-03</td><td>Availability</td><td>OPENFIL must run (or be run by hand) after any failure, so CICS files are never left closed into the business day (section 6).</td></tr>
+  <tr><td>NFR-04</td><td>Concurrency</td><td>TRANCATG and TCATBALF run in parallel. No job may update TCATBALF (POSTTRAN, INTCALC) while it is being reloaded; the legacy chain relies on the CICS close and on scheduling to achieve this.</td></tr>
+  <tr><td>NFR-05</td><td>Idempotency</td><td>Each reference load is a full replace and gives the same result when rerun against the same unload. The listings are read-only.</td></tr>
+  <tr><td>NFR-06</td><td>Data integrity (SOX 404)</td><td>Gartner is an SEC registrant that files 10-K and 10-Q reports, so management assesses internal control over financial reporting under SOX Section 404. The charge-type, revenue-category and balance-by-category files feed posted receivables and finance charges, so a reload is a change to financially significant reference data. Required controls: approved unload source, record count reconciled between the <code>.PS</code> unload and the loaded KSDS, and the listings kept as evidence.</td></tr>
+  <tr><td>NFR-07</td><td>Revenue (ASC 606)</td><td>Billable events are classified by charge type and revenue category. Those codes drive how revenue is broken down into the Research (subscription, recognized ratably over the term), Conferences and Consulting revenue lines. Any change to TRANTYPE / TRANCATG content needs Finance &ndash; Revenue Accounting sign-off before it is loaded.</td></tr>
+  <tr><td>NFR-08</td><td>Payment data (PCI DSS v4.0)</td><td>The seat record carries a 16-digit <code>CARD-NUM</code> and a <code>CARD-CVV-CD</code> (<code>CVACT02Y.cpy:5-7</code>), and CBACT02C / CBACT03C print them in clear text. Until Information Security confirms the field holds no real PANs, treat it as cardholder data: Req. 3.3.1.2 (no card verification code kept after authorization), Req. 3.4.1 (mask PAN when displayed) and Req. 3.5.1 (render PAN unreadable where stored) apply to SYSOUT and extracts.</td></tr>
+  <tr><td>NFR-09</td><td>Client PII (GDPR / UK GDPR, CCPA/CPRA)</td><td>CBCUS01C prints client contact names, addresses, phone numbers, <code>CUST-SSN</code>, government-issued ID and date of birth (<code>CVCUS01Y.cpy:4-23</code>). For EU / UK client contacts, GDPR Art. 5(1)(c) data minimization and Art. 32 security apply; for California residents, SSN and government ID are sensitive personal information under CCPA/CPRA. The target listing must mask or omit these fields.</td></tr>
+  <tr><td>NFR-10</td><td>Retention &amp; audit</td><td>Keep job logs, listings and reload evidence for the period set by the Gartner records-retention policy (assumption A-04); limit access to SYSOUT that holds PII or card data.</td></tr>
+  <tr><td>NFR-11</td><td>Resilience</td><td>Keep the <code>.PS</code> unloads until the next successful reload so a failed REPRO can be rerun (section 6).</td></tr>
+</table>
+
+<h2 id="interfaces">8. Interfaces &amp; data layouts</h2>
+<table class="ids">
+  <colgroup><col style="width:20%"><col style="width:42%"><col style="width:18%"><col style="width:20%"></colgroup>
+  <tr><th>Interface</th><th>Layout (copybook)</th><th>Producer</th><th>Consumer</th></tr>
+  <tr><td class="mono">TRANTYPE.PS / KSDS</td><td><code>CVTRA03Y</code>: <code>TRAN-TYPE X(02)</code> (key), <code>TRAN-TYPE-DESC X(50)</code>, filler 8 = 60 bytes.</td><td>Unknown unload (Q-09); TRANTYPE REPRO</td><td>CBTRN03C</td></tr>
+  <tr><td class="mono">TRANCATG.PS / KSDS</td><td><code>CVTRA04Y</code>: key <code>TRAN-TYPE-CD X(02)</code> + <code>TRAN-CAT-CD 9(04)</code>, <code>TRAN-CAT-TYPE-DESC X(50)</code>, filler 4 = 60 bytes.</td><td>Unknown unload; TRANCATG REPRO</td><td>CBTRN03C</td></tr>
+  <tr><td class="mono">TCATBALF.PS / KSDS</td><td><code>CVTRA01Y</code>: key <code>TRANCAT-ACCT-ID 9(11)</code> + <code>TRANCAT-TYPE-CD X(02)</code> + <code>TRANCAT-CD 9(04)</code>, <code>TRAN-CAT-BAL S9(09)V99</code>, filler 22 = 50 bytes.</td><td>Unknown unload; TCATBALF REPRO</td><td>CBTRN02C, CBACT04C</td></tr>
+  <tr><td class="mono">ACCTDATA.PSCOMP</td><td>FB 107 (inline FD <code>OUT-ACCT-REC</code>, <code>CBACT01C.cbl:57-70</code>): account ID, status, open receivable, approved client credit line, cash credit limit, open / expiry / reissue dates, cycle credit, cycle debit (COMP-3), group ID.</td><td>CBACT01C</td><td>None in repo</td></tr>
+  <tr><td class="mono">ACCTDATA.ARRYPS</td><td>FB 110 (<code>ARR-ARRAY-REC</code>, <code>CBACT01C.cbl:72-78</code>): account ID + 5 &times; (balance, COMP-3 cycle debit) + filler 4.</td><td>CBACT01C</td><td>None in repo</td></tr>
+  <tr><td class="mono">ACCTDATA.VBPS</td><td>VB 84 (<code>VBRC-REC1</code> / <code>VBRC-REC2</code>, <code>CBACT01C.cbl:123-130</code>): 12-byte ID + status; 39-byte ID + balance + credit line + reissue year.</td><td>CBACT01C</td><td>None in repo</td></tr>
+  <tr><td class="mono">SYSOUT listings</td><td>Formatted account blocks (<code>CVACT01Y</code>) and raw record images (<code>CVACT02Y</code>, <code>CVCUS01Y</code>, <code>CVACT03Y</code>). Clear-text PAN-format seat IDs, CVV, SSN, government ID, date of birth.</td><td>CBACT01C, CBACT02C, CBCUS01C, CBACT03C</td><td>Batch Operations, Finance &ndash; Order-to-Cash</td></tr>
+  <tr><td class="mono">WAITSTEP SYSIN</td><td>Eight digits, columns 1-8, centiseconds (<code>00003600</code>) into <code>MVSWAIT-TIME PIC 9(8) COMP</code> (<code>COBSWAIT.cbl:30-38</code>).</td><td>JCL in-stream data</td><td>COBSWAIT</td></tr>
+  <tr><td class="mono">SDSF command stream</td><td><code>/F CICSAWSA,'CEMT SET FIL(name) CLO|OPE'</code> for TRANSACT, CCXREF, ACCTDAT, CXACAIX, USRSEC (<code>CLOSEFIL.jcl:26-30</code>, <code>OPENFIL.jcl:26-30</code>).</td><td>CLOSEFIL, OPENFIL</td><td>CICSAWSA</td></tr>
+</table>
+<p>Relationships: a billing account (<code>ACCT-ID 9(11)</code>) has many seats (<code>CARD-ACCT-ID</code>) and many category balances (<code>TRANCAT-ACCT-ID</code>); CARDXREF links each seat ID (<code>XREF-CARD-NUM X(16)</code>) to one client (<code>XREF-CUST-ID 9(09)</code>) and one account (<code>XREF-ACCT-ID 9(11)</code>). TCATBALF type and category codes refer to TRANTYPE and TRANCATG keys, but the reload does not check these references.</p>
+
+<h2 id="security">9. Security &amp; access</h2>
+<table>
+  <colgroup><col style="width:26%"><col style="width:74%"></colgroup>
+  <tr><th>Item</th><th>Value</th></tr>
+  <tr><td>Job owner / RACF identity</td><td class="mono">CA-7 <code>OWNER= *NONE*</code> (<code>CardDemo.ca7:181</code>); assumed run owner Gartner IT &ndash; Batch Operations / Scheduling. Needs ALTER on the three reference clusters, READ on the unloads and four masters, SDSF / console authority for CEMT on CICSAWSA.</td></tr>
+  <tr><td>Sensitive data handled</td><td>PAN-format seat IDs and CVV (<code>CVACT02Y</code>); client contact PII: names, addresses, phones, SSN, government ID, date of birth (<code>CVCUS01Y</code>); open receivable and credit line amounts (<code>CVACT01Y</code>); balances by revenue category (<code>CVTRA01Y</code>).</td></tr>
+  <tr><td>Regulatory obligations</td><td>SOX Section 404 ICFR (Gartner files 10-K / 10-Q with the SEC); ASC 606 revenue disaggregation by revenue line; PCI DSS v4.0 Req. 3.3.1.2, 3.4.1, 3.5.1, 7, 10; GDPR / UK GDPR Art. 5(1)(c), Art. 32; CCPA/CPRA sensitive personal information; Gartner records-retention policy (assumption A-04).</td></tr>
+</table>
+<h3>Owner teams (assumed, A-02)</h3>
+<table class="sec">
+  <colgroup><col style="width:30%"><col style="width:70%"></colgroup>
+  <tr><th>Role (assumed)</th><th>Responsibility</th></tr>
+  <tr><td>Gartner IT &ndash; Finance Systems</td><td>Application owner: JCL, programs, record layouts and the target migration.</td></tr>
+  <tr><td>Gartner IT &ndash; Batch Operations / Scheduling</td><td>Run owner: CA-7 network 030 / 031 / 032, reruns, manual OPENFIL.</td></tr>
+  <tr><td>Finance &ndash; Order-to-Cash (Billing &amp; Collections)</td><td>Business owner: approves the reload and its timing, reviews the listings.</td></tr>
+  <tr><td>Finance &ndash; Revenue Accounting</td><td>Approves charge-type and revenue-category content (ASC 606 revenue lines).</td></tr>
+  <tr><td>Information Security (CISO office)</td><td>PCI DSS v4.0 scoping of seat IDs / CVV, PII masking, SYSOUT access.</td></tr>
+  <tr><td>Internal Audit / SOX PMO</td><td>Tests the reload control and evidence under SOX 404.</td></tr>
+</table>
+<h3>RACI</h3>
+<table>
+  <colgroup><col style="width:28%"><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:12%"></colgroup>
+  <tr><th>Activity</th><th>Fin. Systems</th><th>Batch Ops</th><th>O2C</th><th>Rev. Acctg</th><th>InfoSec</th><th>Audit / SOX</th></tr>
+  <tr><td>Approve unload &amp; reload</td><td>C</td><td>I</td><td>A</td><td>R</td><td>I</td><td>I</td></tr>
+  <tr><td>Run network / rerun / OPENFIL</td><td>C</td><td>A / R</td><td>I</td><td>I</td><td>&ndash;</td><td>&ndash;</td></tr>
+  <tr><td>Review listings &amp; reconcile counts</td><td>R</td><td>R</td><td>A</td><td>C</td><td>&ndash;</td><td>I</td></tr>
+  <tr><td>Change JCL / programs / layouts</td><td>A / R</td><td>C</td><td>C</td><td>C</td><td>C</td><td>I</td></tr>
+  <tr><td>Mask PAN / PII in output</td><td>R</td><td>I</td><td>C</td><td>&ndash;</td><td>A</td><td>I</td></tr>
+  <tr><td>Test reload control (ICFR)</td><td>C</td><td>C</td><td>C</td><td>C</td><td>&ndash;</td><td>A / R</td></tr>
+</table>
+<ul>
+  <li><strong>Access:</strong> the repo has no RACF profiles for the datasets or the job (<code>OWNER= *NONE*</code>, <code>CardDemo.ca7:181</code>). The job needs ALTER on the three reference clusters, READ on the four masters and on the unloads, and SDSF / console authority to issue CEMT commands to CICSAWSA.</li>
+  <li><strong>SOX 404:</strong> the reload changes financially significant reference data; only associates in the batch run role may submit it, and the approval and record-count evidence must be kept.</li>
+  <li><strong>PCI DSS v4.0:</strong> Req. 3.4.1 / 3.5.1 / 3.3.1.2 for PAN-format seat IDs and CVV in listings; Req. 7 (least-privilege access) and Req. 10 (logging) for SYSOUT.</li>
+  <li><strong>GDPR / UK GDPR, CCPA/CPRA:</strong> client contact PII (SSN, government ID, date of birth, address, phone) must not be printed in clear text in the target listings.</li>
+</ul>
+
+<h2 id="target">10. Target-state mapping</h2>
+<table class="ids">
+  <colgroup><col style="width:20%"><col style="width:13%"><col style="width:42%"><col style="width:25%"></colgroup>
+  <tr><th>Legacy asset</th><th>Disposition</th><th>Target component</th><th>Test evidence</th></tr>
+  <tr><td class="mono">CLOSEFIL, CLOSEFIL1, CLOSEFIL2, OPENFIL</td><td>Retire</td><td>No CICS file quiescing in the target; no job of these names is registered (<code>docs/migration/streams/OperationsChain/OperationsChain_functional_requirement.md:41</code>, <code>OperationsChain_migration_plan.md:38-43</code>).</td><td><code>FileControlJobsRemovedTest.noFileOpenOrCloseJobExistsInTheTarget</code></td></tr>
+  <tr><td class="mono">WAITSTEP / COBSWAIT / MVSWAIT</td><td>Rewrite</td><td>Spring Batch job <code>WAITSTEP</code> (<code>migration/carddemo/backend/src/main/java/com/carddemo/batch/operations/WaitStepJobConfiguration.java:72</code>) reading <code>src/main/resources/ctl/WAITSTEP.sysin</code> (<code>00003600</code>).</td><td><code>WaitStepJobTest.waitsForTheRequestedNumberOfCentisecondsAndCompletes</code>, <code>WaitControlCardTest.readsTheEightValueColumnsAsCentiseconds</code></td></tr>
+  <tr><td class="mono">CA-7 network 030 / 031 / 032</td><td>Rewrite (contract only)</td><td>Trigger list in <code>OperationsChainSchedule.java:61-76</code> and <code>docs/migration/streams/OperationsChain/OperationsChain_orchestration_contract.md</code>. No scheduler is migrated; the contract keeps both branch triggers to CLOSEFIL without an AND-join and without RC gates (Q-03, Q-04).</td><td><code>OperationsChainScheduleTest.contractDocumentListsEveryTrigger</code></td></tr>
+  <tr><td class="mono">TRANTYPE, TRANCATG, TCATBALF jobs</td><td>Not yet migrated (partial)</td><td>No Spring Batch job of these names exists. Their data is loaded only by steps <code>LOADTRTP</code>, <code>LOADTRCT</code>, <code>LOADTCAT</code> inside <code>DATALOAD</code> (<code>migration/carddemo/backend/src/main/java/com/carddemo/batch/dataload/DataLoadJobConfiguration.java:92-103</code>). <strong>DATALOAD is not a reference-only reload:</strong> its <code>PREDEL</code> step clears all nine tables, including <code>accounts</code>, <code>cards</code>, <code>customers</code>, <code>card_xref</code> and <code>daily_transactions</code> (<code>DataLoadJobConfiguration.java:65-68</code>, <code>:106-114</code>). Running it to refresh reference data would wipe live client, seat and billing data (Q-07).</td><td><code>DataLoadJobTest.loadsEveryMasterFileFromTheAsciiUnloads</code> (whole-estate load only)</td></tr>
+  <tr><td class="mono">TRANTYPE / TRANCATG / TCATBALF KSDS</td><td>Rewrite</td><td>Tables <code>transaction_types</code>, <code>transaction_categories</code>, <code>transaction_category_balances</code>.</td><td><code>DataLoadJobTest</code></td></tr>
+  <tr><td class="mono">EBCDIC <code>.PS</code> unloads</td><td>Retire</td><td>Replaced by ASCII files <code>trantype.txt</code>, <code>trancatg.txt</code>, <code>tcatbal.txt</code> read by DATALOAD (<code>DataLoadJobConfiguration.java:92-103</code>).</td><td><code>DataLoadJobTest.loadsEveryMasterFileFromTheAsciiUnloads</code></td></tr>
+  <tr><td class="mono">READACCT / CBACT01C (+ COBDATFT, CODATECN)</td><td>Rewrite</td><td>Job <code>READACCT</code> (<code>migration/carddemo/backend/src/main/java/com/carddemo/batch/filereads/ReadAcctJobConfiguration.java:39</code>, <code>:68</code>) with <code>AccountExtractBuilder</code>, <code>AccountExtractWriter</code>.</td><td><code>ReadAcctJobTest.printsEveryAccountAndWritesTheThreeOutputDatasets</code>, <code>ReadAcctJobTest.deletesThePreviousOutputDatasetsInThePredeleteStep</code>, <code>AccountExtractBuilderTest.buildsTheHundredAndSevenByteAccountRecord</code></td></tr>
+  <tr><td class="mono">READCARD / CBACT02C</td><td>Rewrite</td><td>Job <code>READCARD</code> (<code>filereads/ReadCardJobConfiguration.java:22</code>, <code>:43</code>).</td><td><code>ReadCardJobTest.printsEveryCardOnceInKeyOrder</code></td></tr>
+  <tr><td class="mono">READCUST / CBCUS01C</td><td>Rewrite</td><td>Job <code>READCUST</code> (<code>filereads/ReadCustJobConfiguration.java:22</code>, <code>:43</code>).</td><td><code>ReadCustJobTest.printsEveryCustomerTwiceInKeyOrder</code></td></tr>
+  <tr><td class="mono">READXREF / CBACT03C</td><td>Rewrite</td><td>Job <code>READXREF</code> (<code>filereads/ReadXrefJobConfiguration.java:22</code>, <code>:43</code>).</td><td><code>ReadXrefJobTest.printsEveryCrossReferenceTwiceInKeyOrder</code></td></tr>
+  <tr><td class="mono">CEE3ABD U0999</td><td>Rewrite</td><td><code>filereads/FileReadAbend.java</code>, <code>filereads/IoStatusFormatter.java</code>.</td><td><code>FileReadAbendTest.abendsWithTheProgramsOpenLiteralWhenTheBrowseCannotBeOpened</code>, <code>FileReadJobLaunchTest.exitsTwelveWhenTheJobFails</code></td></tr>
+  <tr><td class="mono">ACCTDATA / CARDDATA / CUSTDATA / CARDXREF KSDS</td><td>Rewrite</td><td>Tables <code>accounts</code>, <code>cards</code>, <code>customers</code>, <code>card_xref</code>; stream docs <code>docs/migration/streams/FileReadUtilities/</code>.</td><td><code>DataLoadJobTest</code></td></tr>
+  <tr><td class="mono">ACCTDATA.PSCOMP / .ARRYPS / .VBPS</td><td>Rewrite</td><td>Written by <code>filereads/AccountExtractWriter.java</code>.</td><td><code>ReadAcctJobTest.writesFixedAndVariableLengthOutputRecords</code></td></tr>
+  <tr><td class="mono">PII / PAN masking of listings</td><td>Not yet migrated</td><td>The target file-read jobs print the same fields as legacy; no masking exists in <code>batch/filereads</code> (Q-08).</td><td>None</td></tr>
+</table>
+
+<h2 id="open">11. Assumptions, technical debt &amp; open questions</h2>
+<table class="open">
+  <colgroup><col style="width:7%"><col style="width:12%"><col style="width:57%"><col style="width:16%"><col style="width:8%"></colgroup>
+  <tr><th>ID</th><th>Type</th><th>Description</th><th>Owner</th><th>Status</th></tr>
+  <tr><td>A-01</td><td>Assumption</td><td>The Gartner reading of CardDemo is an assumption: CUSTDATA = client organization / contact, ACCTDATA = client billing account (credit limit = approved client credit line, balance = open receivable), CARDDATA = research seat / license entitlement (card number = seat ID, expiry = subscription term end), CARDXREF = seat-to-account link, TRANSACT / DALYTRAN = billable events and payments, TRANTYPE / TRANCATG = charge types and revenue lines, TCATBALF = balances by revenue category. Legacy identifiers are unchanged.</td><td>Finance Systems / O2C</td><td>Open</td></tr>
+  <tr><td>A-02</td><td>Assumption</td><td>Owner team names in sections 9 and the meta grid (Gartner IT &ndash; Finance Systems, Gartner IT &ndash; Batch Operations / Scheduling, Finance &ndash; Order-to-Cash, Finance &ndash; Revenue Accounting, Information Security, Internal Audit / SOX PMO) are assumed; the repo names no owner.</td><td>Finance Systems</td><td>Open</td></tr>
+  <tr><td>A-03</td><td>Assumption</td><td>The CA-7 blocks at <code>CardDemo.ca7:159-455</code> form one network; every CLOSEFIL trigger shares SCHID 030 with the daily chain, so the two networks are told apart only by block order.</td><td>Batch Operations</td><td>Open</td></tr>
+  <tr><td>A-04</td><td>Assumption</td><td>Retention periods follow the Gartner records-retention policy; the policy itself is not in the repo.</td><td>Internal Audit / SOX PMO</td><td>Open</td></tr>
+  <tr><td>Q-01</td><td>Question</td><td>CLOSEFIL1 and CLOSEFIL2 are CA-7 job names over JCL member CLOSEFIL (<code>CardDemo.ca7:225</code>, <code>:252</code>). They close files that are already closed. Is anything other than branch ordering needed from them?</td><td>Batch Operations</td><td>Open</td></tr>
+  <tr><td>Q-02</td><td>Question</td><td>The schedulers disagree on the daily chain: CA-7 030 is CLOSEFIL&rarr;CBPAUP0J&rarr;POSTTRAN&rarr;WAITSTEP&rarr;OPENFIL, Control-M <code>DAILY-TransactionBackup</code> is CLOSEFIL&rarr;TRANBKP&rarr;WAITSTEP&rarr;OPENFIL. Which is the production daily chain, and where does this network run relative to it?</td><td>Batch Operations</td><td>Open</td></tr>
+  <tr><td>Q-03</td><td>Question</td><td>Both branch WAITSTEPs trigger CLOSEFIL (030) separately (<code>:303</code>, <code>:335</code>). Is an AND-join required, and is a second listing run per network acceptable?</td><td>Batch Operations</td><td>Open</td></tr>
+  <tr><td>Q-04</td><td>Question</td><td>No trigger has an RC qualifier and no step codes <code>COND=</code>. Must a failed TRANTYPE / TRANCATG / TCATBALF stop the listings and OPENFIL?</td><td>Batch Operations</td><td>Open</td></tr>
+  <tr><td>Q-05</td><td>Debt</td><td>CBCUS01C and CBACT03C print each record twice; CBACT02C once (<code>:78</code>, <code>:96</code>). Keep or fix in the target?</td><td>Finance Systems</td><td>Open</td></tr>
+  <tr><td>Q-06</td><td>Debt</td><td>CBACT01C writes the literal 2525.00 when cycle debit is zero and fixed constants in the array record (<code>CBACT01C.cbl:236-237</code>, <code>:253-260</code>), and never closes its three output files (only <code>9000-ACCTFILE-CLOSE</code>, <code>:388-390</code>).</td><td>Finance Systems</td><td>Open</td></tr>
+  <tr><td>Q-07</td><td>Question</td><td>The target has no reference-only reload; DATALOAD clears all nine tables. Is a reference-only reload of charge types, revenue categories and category balances required, and must TCATBALF be reloadable at all once posting runs in the target?</td><td>O2C / Revenue Accounting</td><td>Open</td></tr>
+  <tr><td>Q-08</td><td>Debt</td><td>Listings print PAN-format seat IDs, CVV, SSN, government ID and date of birth in clear text; the target file-read jobs do not mask them. Information Security to confirm masking rules (PCI DSS v4.0, GDPR, CCPA/CPRA).</td><td>Information Security</td><td>Open</td></tr>
+  <tr><td>Q-09</td><td>Question</td><td>Who produces and approves the three <code>.PS</code> unloads, and how is their provenance evidenced for SOX 404?</td><td>O2C / Internal Audit</td><td>Open</td></tr>
+  <tr><td>Q-10</td><td>Debt</td><td><code>scripts/run_full_batch.sh</code> runs TCATBALF before TRANTYPE, omits TRANCATG and the READ jobs, and uses sleeps instead of RC checks.</td><td>Finance Systems</td><td>Open</td></tr>
+  <tr><td>Q-11</td><td>Debt</td><td>README says CLOSEFIL / OPENFIL are IEFBR14 (<code>README.md:313-318</code>); the JCL runs SDSF. README to be corrected.</td><td>Finance Systems</td><td>Open</td></tr>
+  <tr><td>Q-12</td><td>Debt</td><td><code>docs/migration/CardDemo_inventory.md:84</code> draws an OPENFIL&rarr;TRANTYPE path and drops the WAITSTEPs; <code>:142</code> places FileReadUtilities after posting. Both differ from the CA-7 listing.</td><td>Finance Systems</td><td>Open</td></tr>
+  <tr><td>Q-13</td><td>Debt</td><td><code>READCUST.jcl:2</code> codes <code>NOTIFY=&amp;SYUID</code> (typo for <code>&amp;SYSUID</code>).</td><td>Finance Systems</td><td>Open</td></tr>
+  <tr><td>Q-14</td><td>Question</td><td>Run window, calendar, frequency, criticality and production volumes are not in the repo. Finance &ndash; Order-to-Cash and Batch Operations to supply them.</td><td>O2C / Batch Operations</td><td>Open</td></tr>
+  <tr><td>Q-15</td><td>Question</td><td>CLOSEFIL closes TRANSACT, CCXREF, ACCTDAT, CXACAIX and USRSEC, but not CARDDAT or CUSTDAT, which READCARD and READCUST read. Is the read of files still open in CICS acceptable?</td><td>Finance Systems</td><td>Open</td></tr>
+</table>
+
+<footer>
+  <div class="legal">
+    Functional Requirement Document &mdash; ReferenceLoadAndFileReads (CARDDEMO), aws-mainframe-modernization-carddemo. DRAFT 0.1, 2026-11-17.<br>
+    Classification: GARTNER CONFIDENTIAL. &copy; Gartner, Inc. and/or its affiliates. For internal associate use only.
+  </div>
+  <div class="brand">
+    <svg viewBox="0 0 158 48" role="img" aria-label="Gartner">
+        <text x="2" y="36" font-family="Graphik, 'Helvetica Neue', Arial, Helvetica, sans-serif" font-weight="700" font-size="38" letter-spacing="-0.5" fill="#002856">Gartner</text>
+        <circle cx="149" cy="33" r="4.5" fill="#0068e0"/>
+      </svg>
+    <span class="wordmark">Gartner, Inc.</span>
+  </div>
+</footer>
+
+</div>
+</body>
+</html>
